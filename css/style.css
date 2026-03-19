@@ -153,9 +153,10 @@ input, select, textarea { font-family: inherit; }
   align-items: center;
   transition: var(--transition);
   padding: 0 1.5rem;
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(8, 8, 8, 0.95);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .navbar .nav-links a,
 .navbar .nav-links a.active,
@@ -391,11 +392,17 @@ input, select, textarea { font-family: inherit; }
 .hero-title .gold { color: var(--accent-gold); }
 .hero-desc {
   font-size: 1.1rem;
-  color: rgba(255,255,255,0.82);
-  max-width: 460px;
+  color: rgba(255,255,255,0.95);
+  max-width: 480px;
   margin-bottom: 2.5rem;
   animation: fadeUp 0.8s ease 0.3s both;
-  text-shadow: 0 1px 14px rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.55);
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  line-height: 1.6;
 }
 .hero-actions {
   display: flex;
