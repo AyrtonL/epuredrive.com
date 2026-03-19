@@ -1,4 +1,4 @@
-# Épure Drive Web Platform
+# éPure Drive Web Platform
 
 Premium luxury car rental frontend platform specifically designed for the South Florida market.
 Built with HTML5, CSS3, Vanilla JS, and optimized with lightweight interactive components.
