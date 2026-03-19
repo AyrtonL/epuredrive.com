@@ -153,19 +153,17 @@ input, select, textarea { font-family: inherit; }
   align-items: center;
   transition: var(--transition);
   padding: 0 1.5rem;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
-.navbar:not(.scrolled) {
-  background: rgba(0,0,0,0.52);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-.navbar:not(.scrolled) .nav-links a,
-.navbar:not(.scrolled) .nav-links a.active,
-.navbar:not(.scrolled) .nav-links a:hover {
+.navbar .nav-links a,
+.navbar .nav-links a.active,
+.navbar .nav-links a:hover {
   color: #fff !important;
   text-shadow: 0 1px 6px rgba(0,0,0,0.8);
 }
-.navbar:not(.scrolled) .navbar-phone { color: rgba(255,255,255,0.92); }
+.navbar .navbar-phone { color: rgba(255,255,255,0.92); }
 .navbar.scrolled {
   background: rgba(8, 8, 8, 0.95);
   backdrop-filter: blur(20px);
