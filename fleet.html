@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Fleet — éPure Drive - Rental</title>
+  <meta name="description" content="Browse our luxury car fleet in Miami — Porsche Cayenne, Audi Q3, Audi A3, Volkswagen Atlas. Available for rent in Aventura with delivery to MIA & FLL." />
+  <meta name="keywords" content="luxury car fleet miami, rent porsche miami, rent audi miami, car rental aventura florida" />
+  <meta name="robots" content="index, follow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="fleet">
+
+  <!-- ===================== NAVBAR ===================== -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="navbar-inner">
+      <a href="index.html" class="navbar-logo">
+        <img src="assets/logo.png" alt="Épure Drive" class="navbar-img-logo">
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="fleet.html" class="active">Our Fleet</a></li>
+        <li><a href="index.html#why-us">Why Us</a></li>
+        <li><a href="index.html#testimonials">Reviews</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+      </ul>
+
+      <div class="navbar-actions">
+        <span class="navbar-phone">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 .97h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          +1 (855) 899-5678
+        </span>
+        <a href="index.html#contact" class="btn btn-primary">Contact Us</a>
+      </div>
+
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html">Home</a>
+    <a href="fleet.html">Our Fleet</a>
+    <a href="index.html#why-us">Why Us</a>
+    <a href="index.html#testimonials">Reviews</a>
+    <a href="index.html#contact">Contact</a>
+  </div>
+
+  <!-- ===================== PAGE HEADER ===================== -->
+  <div class="page-header">
+    <div class="container">
+      <span class="section-label" style="font-size:0.72rem;">Our Fleet</span>
+      <h1 class="section-title">Vehicles for<br/>Every Journey</h1>
+      <p class="section-subtitle" style="margin-top:0.75rem;">Browse our curated collection of modern, reliable automobiles ready for your next trip.</p>
+    </div>
+  </div>
+
+  <!-- ===================== FLEET GRID ===================== -->
+  <section class="section" style="padding-top: 2rem;">
+    <div class="container">
+      <!-- Filters -->
+      <div class="filter-bar">
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+          <span class="filter-bar-label">Brand:</span>
+          <button class="filter-btn active" data-filter-brand="all">All</button>
+          <button class="filter-btn" data-filter-brand="audi">Audi</button>
+          <button class="filter-btn" data-filter-brand="porsche">Porsche</button>
+          <button class="filter-btn" data-filter-brand="volkswagen">Volkswagen</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-left:auto;">
+          <span class="filter-bar-label">Category:</span>
+          <button class="filter-btn active" data-filter-category="all">All</button>
+          <button class="filter-btn" data-filter-category="suv">SUV</button>
+          <button class="filter-btn" data-filter-category="sedan">Sedan</button>
+        </div>
+      </div>
+
+      <!-- Cars Grid (rendered by JS) -->
+      <div class="cars-grid stagger-fade" id="cars-grid"></div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="index.html" class="navbar-logo">
+            <img src="assets/logo.png" alt="Épure Drive" class="navbar-img-logo">
+          </a>
+          <p>Premium luxury car rentals. Serving Aventura, MIA, FLL, and the greater South Florida area.</p>
+          <div class="footer-social">
+            <a href="#" class="social-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
+            <a href="#" class="social-link"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+            <a href="#" class="social-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="fleet.html">Our Fleet</a></li>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">FAQ</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Brands</h4>
+          <ul>
+            <li><a href="#">Lamborghini</a></li>
+            <li><a href="#">Ferrari</a></li>
+            <li><a href="#">Rolls-Royce</a></li>
+            <li><a href="#">Bentley</a></li>
+            <li><a href="#">Porsche</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Categories</h4>
+          <ul>
+            <li><a href="#">Sports Cars</a></li>
+            <li><a href="#">Luxury SUVs</a></li>
+            <li><a href="#">Executive Sedans</a></li>
+            <li><a href="#">Convertibles</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2024 Épure Drive. All rights reserved. Miami, FL.</p>
+        <div class="footer-bottom-links">
+          <a href="#">Privacy Policy</a>
+          <a href="terms.html">Terms &amp; Conditions</a>
+          <a href="rental-agreement.html">Rental Agreement</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/fleet.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

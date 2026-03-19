@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /checkout.html
+
+# Sitemap location
+Sitemap: https://epuredrive.com/sitemap.xml

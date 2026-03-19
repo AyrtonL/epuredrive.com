@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reserve a Car — éPure Drive - Rental</title>
+  <meta name="description" content="Reserve your premium luxury car in Miami. Instant booking, flexible pickup in Aventura or delivery to MIA & FLL airports. Transparent pricing." />
+  <meta name="robots" content="index, follow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="detail">
+
+  <!-- ===================== NAVBAR ===================== -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="navbar-inner">
+      <a href="index.html" class="navbar-logo">
+        <img src="assets/logo.png" alt="Épure Drive" class="navbar-img-logo">
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="fleet.html" class="active">Our Fleet</a></li>
+        <li><a href="index.html#why-us">Why Us</a></li>
+        <li><a href="index.html#testimonials">Reviews</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+      </ul>
+
+      <div class="navbar-actions">
+        <span class="navbar-phone">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 .97h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          +1 (855) 899-5678
+        </span>
+        <a href="fleet.html" class="btn btn-outline">← Back to Fleet</a>
+      </div>
+
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html">Home</a>
+    <a href="fleet.html">Our Fleet</a>
+    <a href="index.html#why-us">Why Us</a>
+    <a href="index.html#contact">Contact</a>
+  </div>
+
+  <!-- ===================== DETAIL HERO ===================== -->
+  <div class="detail-hero">
+    <div class="detail-gallery" style="display:flex; flex-direction:column; align-items:center;">
+      <img id="detail-img" src="" alt="Vehicle" onerror="this.src='https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200&q=80'" style="width:100%; max-height:600px; object-fit:cover; border-radius:12px;" />
+      <div id="detail-thumbnails" class="detail-thumbnails" style="width:100%; max-width:800px;"></div>
+    </div>
+  </div>
+
+  <!-- ===================== DETAIL CONTENT ===================== -->
+  <section>
+    <div class="container">
+      <div class="detail-content">
+        
+        <!-- Left: Car Info -->
+        <div class="detail-info fade-in">
+          <div class="detail-badge-row">
+            <span class="detail-badge available">● Available Now</span>
+            <span class="detail-badge category" id="detail-category">Sports</span>
+          </div>
+
+          <h1 class="detail-title" id="detail-title">Loading…</h1>
+          <p class="detail-make" id="detail-make"></p>
+
+          <!-- Specs Grid -->
+          <div class="detail-specs">
+            <div class="detail-spec">
+              <div class="detail-spec-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" stroke-width="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
+              <div class="detail-spec-val" id="spec-hp">—</div>
+              <div class="detail-spec-label">Horsepower</div>
+            </div>
+            <div class="detail-spec">
+              <div class="detail-spec-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div class="detail-spec-val" id="spec-topSpeed">—</div>
+              <div class="detail-spec-label">Top Speed</div>
+            </div>
+            <div class="detail-spec">
+              <div class="detail-spec-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div class="detail-spec-val" id="spec-seats">—</div>
+              <div class="detail-spec-label">Passengers</div>
+            </div>
+            <div class="detail-spec">
+              <div class="detail-spec-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </div>
+              <div class="detail-spec-val" id="spec-trans">—</div>
+              <div class="detail-spec-label">Transmission</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <p class="detail-desc" id="detail-desc"></p>
+
+          <!-- Features -->
+          <div class="detail-features">
+            <h3>Included Features</h3>
+            <ul id="detail-features"></ul>
+          </div>
+
+          <!-- Policies Info -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-top:2rem;">
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;">
+              <div style="color:var(--accent-gold);margin-bottom:0.4rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary)">Fully Insured</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">Comprehensive coverage</div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;">
+              <div style="color:var(--accent-gold);margin-bottom:0.4rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              </div>
+              <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary)">Free Delivery</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">To your location</div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;">
+              <div style="color:var(--accent-gold);margin-bottom:0.4rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              </div>
+              <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary)">Free Cancel</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">48h before pickup</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Booking Widget -->
+        <aside class="booking-widget fade-in">
+          <div class="booking-widget-price">
+            <div style="display:flex;align-items:baseline;gap:0.4rem;">
+              <div class="price-big" id="detail-price">—</div>
+              <div class="price-period">/ day</div>
+            </div>
+            <div class="price-week" id="detail-price-week"></div>
+          </div>
+
+          <h3>Reserve This Vehicle</h3>
+
+          <form id="booking-form" class="booking-form" action="checkout.html" method="GET">
+            <input type="hidden" name="id" id="car-id-input">
+            <div class="form-group">
+              <label>Pickup Date</label>
+              <input type="date" class="form-control" name="start" id="pickup-date" required />
+            </div>
+            <div class="form-group">
+              <label>Return Date</label>
+              <input type="date" class="form-control" name="end" id="return-date" required />
+            </div>
+            <div class="form-group">
+              <label>Pickup Location</label>
+              <select class="form-control" name="loc" required>
+                <option value="aventura">Pick-up in Aventura (Free)</option>
+                <option value="mia">Delivery to MIA ($120)</option>
+                <option value="fll">Delivery to FLL ($120)</option>
+              </select>
+            </div>
+
+            <div class="booking-total">
+              <span>Estimated Rate</span>
+              <strong id="booking-total-amount">Select dates</strong>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:1rem;">
+              Continue to Checkout
+            </button>
+          </form>
+
+          <p style="font-size:0.75rem;color:var(--text-muted);text-align:center;margin-top:1rem;line-height:1.5;">
+            No payment required today · Free cancellation · Real-time availability
+          </p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RELATED CARS ===================== -->
+  <section class="section" style="padding-top:0;">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="section-label">You Might Also Like</span>
+        <h2 class="section-title" style="font-size:1.8rem;">More Luxury Vehicles</h2>
+      </div>
+      <div class="cars-grid stagger-fade" id="related-grid"></div>
+      <div style="text-align:center;margin-top:2rem;" class="fade-in">
+        <a href="fleet.html" class="btn btn-outline">View Full Fleet →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="index.html" class="navbar-logo">
+            <img src="assets/logo.png" alt="Épure Drive" class="navbar-img-logo">
+          </a>
+          <p>Premium luxury car rentals. Serving Aventura, MIA, and FLL.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="fleet.html">Our Fleet</a></li>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Brands</h4>
+          <ul>
+            <li><a href="fleet.html">Lamborghini</a></li>
+            <li><a href="fleet.html">Ferrari</a></li>
+            <li><a href="fleet.html">Rolls-Royce</a></li>
+            <li><a href="fleet.html">Bentley</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Categories</h4>
+          <ul>
+            <li><a href="fleet.html">Sports Cars</a></li>
+            <li><a href="fleet.html">Luxury SUVs</a></li>
+            <li><a href="fleet.html">Sedans</a></li>
+            <li><a href="fleet.html">Convertibles</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2024 Épure Drive. All rights reserved. Aventura, FL.</p>
+        <div class="footer-bottom-links">
+          <a href="#">Privacy Policy</a>
+          <a href="terms.html">Terms &amp; Conditions</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/fleet.js"></script>
+  <script>
+    // Render related cars (exclude current car)
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const currentId = parseInt(params.get('id')) || 1;
+      const related = CARS.filter(c => c.id !== currentId).slice(0, 4);
+      renderCars(related, 'related-grid');
+    });
+  </script>
+  <script src="js/main.js"></script>
+</body>
+</html>
