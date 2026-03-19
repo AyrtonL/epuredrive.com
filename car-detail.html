@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 </head>
 <body data-page="detail">
 
@@ -154,13 +155,17 @@
 
           <form id="booking-form" class="booking-form" action="checkout.html" method="GET">
             <input type="hidden" name="id" id="car-id-input">
+            <input type="hidden" name="protection" id="val-protection" value="0">
+            <input type="hidden" name="toll" id="val-toll" value="0">
+            <input type="hidden" name="fuel" id="val-fuel" value="0">
+
             <div class="form-group">
               <label>Pickup Date</label>
-              <input type="date" class="form-control" name="start" id="pickup-date" required />
+              <input type="text" class="form-control" name="start" id="pickup-date" placeholder="Select date…" required readonly />
             </div>
             <div class="form-group">
               <label>Return Date</label>
-              <input type="date" class="form-control" name="end" id="return-date" required />
+              <input type="text" class="form-control" name="end" id="return-date" placeholder="Select date…" required readonly />
             </div>
             <div class="form-group">
               <label>Pickup Location</label>
@@ -171,8 +176,46 @@
               </select>
             </div>
 
+            <!-- Add-ons -->
+            <div class="addon-section">
+              <div class="addon-section-label">Optional Add-ons</div>
+              <label class="addon-item">
+                <input type="checkbox" id="opt-protection">
+                <div class="addon-item-info">
+                  <div class="addon-item-name">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Standard Protection
+                  </div>
+                  <div class="addon-item-desc">Collision coverage, $1,000 deductible</div>
+                </div>
+                <span class="addon-item-price">+$30/day</span>
+              </label>
+              <label class="addon-item">
+                <input type="checkbox" id="opt-toll">
+                <div class="addon-item-info">
+                  <div class="addon-item-name">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Toll Package
+                  </div>
+                  <div class="addon-item-desc">All Florida tolls covered, no invoices</div>
+                </div>
+                <span class="addon-item-price">+$10/day</span>
+              </label>
+              <label class="addon-item">
+                <input type="checkbox" id="opt-fuel">
+                <div class="addon-item-info">
+                  <div class="addon-item-name">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 22V6l5-4 5 4v16"/><path d="M13 22V12h4l2 3v7"/><line x1="3" y1="12" x2="13" y2="12"/></svg>
+                    Prepaid Fuel
+                  </div>
+                  <div class="addon-item-desc">Return at any fuel level, no charge</div>
+                </div>
+                <span class="addon-item-price">$80 flat</span>
+              </label>
+            </div>
+
             <div class="booking-total">
-              <span>Estimated Rate</span>
+              <span>Estimated Total</span>
               <strong id="booking-total-amount">Select dates</strong>
             </div>
 
@@ -234,13 +277,64 @@
   </footer>
 
   <script src="js/fleet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script>
-    // Render related cars (exclude current car)
     document.addEventListener('DOMContentLoaded', () => {
+      // Related cars
       const params = new URLSearchParams(window.location.search);
       const currentId = parseInt(params.get('id')) || 1;
-      const related = CARS.filter(c => c.id !== currentId).slice(0, 4);
-      renderCars(related, 'related-grid');
+      renderCars(CARS.filter(c => c.id !== currentId).slice(0, 4), 'related-grid');
+
+      // Flatpickr date pickers
+      const today = new Date();
+      const fpPickup = flatpickr('#pickup-date', {
+        minDate: 'today',
+        dateFormat: 'Y-m-d',
+        disableMobile: true,
+        onChange: ([date]) => {
+          fpReturn.set('minDate', date);
+          calcBookingTotal();
+        },
+      });
+      const fpReturn = flatpickr('#return-date', {
+        minDate: 'today',
+        dateFormat: 'Y-m-d',
+        disableMobile: true,
+        onChange: () => calcBookingTotal(),
+      });
+
+      // Add-on checkboxes
+      ['protection', 'toll', 'fuel'].forEach(id => {
+        document.getElementById('opt-' + id).addEventListener('change', () => {
+          document.getElementById('val-' + id).value =
+            document.getElementById('opt-' + id).checked ? '1' : '0';
+          calcBookingTotal();
+        });
+      });
+
+      function calcBookingTotal() {
+        const pickup = document.getElementById('pickup-date').value;
+        const ret    = document.getElementById('return-date').value;
+        const totalEl = document.getElementById('booking-total-amount');
+        if (!pickup || !ret) { totalEl.textContent = 'Select dates'; return; }
+
+        const params = new URLSearchParams(window.location.search);
+        const car = CARS.find(c => c.id === parseInt(params.get('id'))) || CARS[0];
+        const days = Math.max(1, Math.round((new Date(ret) - new Date(pickup)) / 86400000));
+
+        const protection = document.getElementById('opt-protection').checked ? days * 30 : 0;
+        const toll       = document.getElementById('opt-toll').checked       ? days * 10 : 0;
+        const fuel       = document.getElementById('opt-fuel').checked       ? 80         : 0;
+        const total      = (days * car.price) + protection + toll + fuel;
+
+        totalEl.textContent = `$${total.toLocaleString()} · ${days} day${days !== 1 ? 's' : ''}`;
+      }
+
+      // Override fleet.js calcTotal with our version (fleet.js already runs loadCarDetail)
+      const pickupEl = document.getElementById('pickup-date');
+      const returnEl = document.getElementById('return-date');
+      if (pickupEl) pickupEl.addEventListener('change', calcBookingTotal);
+      if (returnEl) returnEl.addEventListener('change', calcBookingTotal);
     });
   </script>
   <script src="js/main.js"></script>
