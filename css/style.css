@@ -155,10 +155,13 @@ input, select, textarea { font-family: inherit; }
   padding: 0 1.5rem;
 }
 .navbar:not(.scrolled) {
-  background: linear-gradient(to bottom, rgba(4,4,4,0.82) 0%, transparent 100%);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 65%, transparent 100%);
 }
-.navbar:not(.scrolled) .nav-links a { color: rgba(255,255,255,0.92); }
-.navbar:not(.scrolled) .navbar-phone { color: rgba(255,255,255,0.85); }
+.navbar:not(.scrolled) .nav-links a {
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.95), 0 0 24px rgba(0,0,0,0.8);
+}
+.navbar:not(.scrolled) .navbar-phone { color: rgba(255,255,255,0.92); }
 .navbar.scrolled {
   background: rgba(8, 8, 8, 0.95);
   backdrop-filter: blur(20px);
