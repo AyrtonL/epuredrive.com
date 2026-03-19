@@ -411,6 +411,116 @@ async function syncTuro() {
   btn.textContent = 'Sync All Turo Calendars';
 }
 
+// ====================================================
+//  GOOGLE CALENDAR SYNC
+// ====================================================
+async function syncGoogleCalendar() {
+  const btn    = document.getElementById('sync-gcal-btn');
+  const status = document.getElementById('gcal-status');
+  const url    = document.getElementById('gcal-url')?.value.trim();
+  const carId  = document.getElementById('gcal-car')?.value;
+
+  if (!url) { status.textContent = '⚠ Paste a Google Calendar iCal URL first.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Syncing…';
+  status.textContent = '';
+
+  try {
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res  = await fetch(proxyUrl);
+    const json = await res.json();
+    if (!json.contents) throw new Error('Empty response from calendar URL');
+
+    // Parse iCal — if carId is 'all', try to match car names in event titles
+    const events = parseGcalIcal(json.contents, carId);
+
+    if (!events.length) {
+      status.textContent = 'No upcoming events found in this calendar.';
+    } else {
+      // Remove existing gcal-sourced reservations for affected cars and re-insert
+      const affectedCars = [...new Set(events.map(e => e.car_id))];
+      for (const cid of affectedCars) {
+        await sb.from('reservations').delete().eq('car_id', cid).eq('source', 'turo');
+      }
+      await sb.from('reservations').insert(events);
+      status.textContent = `✓ ${events.length} event(s) imported from Google Calendar.`;
+    }
+
+    await refresh();
+  } catch (err) {
+    status.textContent = '✗ Could not fetch calendar — check the URL and try again.';
+    console.error(err);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Sync Google Calendar';
+}
+
+function parseGcalIcal(icsText, selectedCarId) {
+  const events  = [];
+  const today   = todayStr();
+  const vevents = icsText.split('BEGIN:VEVENT').slice(1);
+
+  // Keywords to auto-detect which car an event belongs to
+  const CAR_KEYWORDS = {
+    1: ['q3', 'audi q3'],
+    2: ['a3', 'audi a3'],
+    3: ['cayenne', 'porsche'],
+    4: ['atlas', 'volkswagen', 'vw'],
+  };
+
+  vevents.forEach(block => {
+    const get = (key) => {
+      const m = block.match(new RegExp(key + '[^:]*:([^\\r\\n]+)'));
+      return m ? m[1].trim() : null;
+    };
+
+    const dtstart  = get('DTSTART');
+    const dtend    = get('DTEND');
+    const summary  = get('SUMMARY') || 'Turo Reservation';
+    const desc     = (get('DESCRIPTION') || '').toLowerCase();
+
+    if (!dtstart || !dtend) return;
+
+    const toDate = (s) => {
+      const raw = s.replace(/[TZ]/g, '').slice(0, 8);
+      return `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}`;
+    };
+
+    const start = toDate(dtstart);
+    const end   = toDate(dtend);
+    if (end < today) return;  // skip past events
+
+    // Determine car_id
+    let resolvedCar = selectedCarId !== 'all' ? parseInt(selectedCarId) : null;
+    if (!resolvedCar) {
+      const searchText = (summary + ' ' + desc).toLowerCase();
+      for (const [cid, keywords] of Object.entries(CAR_KEYWORDS)) {
+        if (keywords.some(kw => searchText.includes(kw))) {
+          resolvedCar = parseInt(cid);
+          break;
+        }
+      }
+    }
+    if (!resolvedCar) resolvedCar = 1; // fallback
+
+    events.push({
+      car_id:         resolvedCar,
+      customer_name:  summary,
+      customer_email: '',
+      customer_phone: '',
+      pickup_date:    start,
+      return_date:    end,
+      status:         'confirmed',
+      source:         'turo',
+      notes:          'Imported from Google Calendar',
+    });
+  });
+
+  return events;
+}
+
 function parseIcal(icsText, carId) {
   const events = [];
   const vevents = icsText.split('BEGIN:VEVENT').slice(1);
@@ -453,7 +563,7 @@ function parseIcal(icsText, carId) {
 const TAB_TITLES = {
   calendar:     'Calendar &amp; Availability',
   reservations: 'All Reservations',
-  turo:         'Turo Sync',
+  turo:         'Calendar Sync',
 };
 
 function switchTab(tab) {
@@ -564,8 +674,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('status-filter')?.addEventListener('change', renderTable);
   document.getElementById('car-filter')?.addEventListener('change', renderTable);
 
-  // Turo sync button
+  // Calendar sync buttons
   document.getElementById('sync-turo-btn').addEventListener('click', syncTuro);
+  document.getElementById('sync-gcal-btn').addEventListener('click', syncGoogleCalendar);
 
   // Close modals on backdrop click
   document.querySelectorAll('.modal').forEach(modal =>
