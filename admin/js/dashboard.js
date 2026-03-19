@@ -101,8 +101,8 @@ function buildEvents() {
     .map(r => ({
       id: r.id,
       title: `${CAR_NAMES[r.car_id] || 'Car'} · ${r.customer_name}`,
-      start: r.pickup_date,
-      end: dateAdd(r.return_date, 1),
+      start: r.pickup_date + 'T' + (r.pickup_time || '10:00'),
+      end:   r.return_date  + 'T' + (r.return_time  || '10:00'),
       backgroundColor: CAR_COLORS[r.car_id] || '#6B7280',
       borderColor:     CAR_COLORS[r.car_id] || '#6B7280',
       textColor: '#fff',
@@ -197,7 +197,7 @@ function renderTable() {
           <span class="car-dot-inline" style="background:${CAR_COLORS[r.car_id] || '#666'}"></span>
           ${CAR_NAMES[r.car_id] || '—'}
         </td>
-        <td>${fmtDate(r.pickup_date)} → ${fmtDate(r.return_date)}</td>
+        <td>${fmtDate(r.pickup_date)} ${r.pickup_time || '10:00'} → ${fmtDate(r.return_date)} ${r.return_time || '10:00'}</td>
         <td>${days}d</td>
         <td>${r.total_amount ? '$' + Number(r.total_amount).toLocaleString() : '—'}</td>
         <td><span class="badge ${statusMap[r.status] || 'badge-gray'}">${r.status}</span></td>
@@ -230,8 +230,10 @@ function openEdit(id) {
   document.getElementById('f-name').value     = r.customer_name;
   document.getElementById('f-email').value    = r.customer_email || '';
   document.getElementById('f-phone').value    = r.customer_phone || '';
-  document.getElementById('f-pickup').value   = r.pickup_date;
-  document.getElementById('f-return').value   = r.return_date;
+  document.getElementById('f-pickup').value       = r.pickup_date;
+  document.getElementById('f-pickup-time').value  = r.pickup_time || '10:00';
+  document.getElementById('f-return').value       = r.return_date;
+  document.getElementById('f-return-time').value  = r.return_time  || '10:00';
   document.getElementById('f-location').value = r.pickup_location || 'Aventura';
   document.getElementById('f-amount').value   = r.total_amount || '';
   document.getElementById('f-status').value   = r.status;
@@ -249,7 +251,9 @@ async function saveReservation(e) {
     customer_email:  document.getElementById('f-email').value.trim(),
     customer_phone:  document.getElementById('f-phone').value.trim(),
     pickup_date:     document.getElementById('f-pickup').value,
+    pickup_time:     document.getElementById('f-pickup-time').value || '10:00',
     return_date:     document.getElementById('f-return').value,
+    return_time:     document.getElementById('f-return-time').value  || '10:00',
     pickup_location: document.getElementById('f-location').value,
     total_amount:    parseFloat(document.getElementById('f-amount').value) || null,
     status:          document.getElementById('f-status').value,
@@ -319,8 +323,8 @@ function showDetail(r) {
     <div class="detail-row"><span>Email</span>${r.customer_email ? `<a href="mailto:${esc(r.customer_email)}">${esc(r.customer_email)}</a>` : '—'}</div>
     <div class="detail-row"><span>Phone</span>${r.customer_phone ? `<a href="tel:${esc(r.customer_phone)}">${esc(r.customer_phone)}</a>` : '—'}</div>
     <div class="detail-row"><span>Vehicle</span><strong><span class="car-dot-inline" style="background:${CAR_COLORS[r.car_id]}"></span>${CAR_NAMES[r.car_id]}</strong></div>
-    <div class="detail-row"><span>Pickup</span>${fmtDateLong(r.pickup_date)}</div>
-    <div class="detail-row"><span>Return</span>${fmtDateLong(r.return_date)}</div>
+    <div class="detail-row"><span>Pickup</span>${fmtDateLong(r.pickup_date)} at ${r.pickup_time || '10:00'}</div>
+    <div class="detail-row"><span>Return</span>${fmtDateLong(r.return_date)} at ${r.return_time || '10:00'}</div>
     <div class="detail-row"><span>Duration</span>${days} day${days !== 1 ? 's' : ''}</div>
     <div class="detail-row"><span>Location</span>${esc(r.pickup_location || 'Aventura')}</div>
     <div class="detail-row"><span>Total</span><strong>${r.total_amount ? '$' + Number(r.total_amount).toLocaleString() : '—'}</strong></div>
@@ -665,7 +669,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('block-form').addEventListener('submit', saveBlockedDates);
 
   // Auto-calc on date/car change
-  ['f-pickup', 'f-return', 'f-car'].forEach(id =>
+  ['f-pickup', 'f-pickup-time', 'f-return', 'f-return-time', 'f-car'].forEach(id =>
     document.getElementById(id)?.addEventListener('change', autoCalc)
   );
 
