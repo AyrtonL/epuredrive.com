@@ -565,6 +565,7 @@ function parseIcal(icsText, carId) {
 //  TABS
 // ====================================================
 const TAB_TITLES = {
+  main:         'Dashboard Overview',
   calendar:     'Calendar &amp; Availability',
   reservations: 'All Reservations',
   turo:         'Calendar Sync',

@@ -6,6 +6,7 @@
   <title>Dashboard — éPure Drive Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -15,7 +16,7 @@
       --surface-2: #181818;
       --surface-3: #202020;
       --border:    rgba(255,255,255,0.07);
-      --accent:    #c9a84c;
+      --accent:    #00d2ff;
       --text:      #f0f0f0;
       --muted:     #666;
       --muted-2:   #999;
@@ -27,6 +28,25 @@
       --red:       #EF4444;
       --orange:    #F97316;
     }
+
+    body.light-mode {
+      --bg:        #f3f4f6;
+      --surface:   #ffffff;
+      --surface-2: #f9fafb;
+      --surface-3: #e5e7eb;
+      --border:    rgba(0,0,0,0.08);
+      --accent:    #00a8cc;
+      --text:      #111827;
+      --muted:     #6b7280;
+      --muted-2:   #4b5563;
+    }
+    body.light-mode .fc .fc-button-primary:not(:disabled).fc-button-active,
+    body.light-mode .fc .fc-button-primary:not(:disabled):active {
+      background: rgba(0, 168, 204, 0.1) !important;
+    }
+    body.light-mode .nav-item.active { background: rgba(0, 168, 204, 0.08) !important; border-color: var(--accent) !important; }
+    body.light-mode .car-btn.active { background: rgba(0, 168, 204, 0.08) !important; }
+    body.light-mode .fc .fc-day-today { background: rgba(0,168,204,0.06) !important; }
 
     body {
       font-family: 'Outfit', sans-serif;
@@ -132,8 +152,47 @@
       padding: 1.25rem 1.5rem;
     }
     .stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
-    .stat-value { font-size: 2rem; font-weight: 700; line-height: 1; }
-    .stat-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; }
+    .stat-value { font-size: 2.2rem; font-weight: 700; line-height: 1; margin: 0.8rem 0; color: var(--text); }
+    .stat-value span { font-size: 1rem; color: var(--muted); font-weight: 400; margin-left: 0.3rem; }
+    .stat-sub { font-size: 0.8rem; color: var(--teal); font-weight: 500; display:flex; align-items:center; gap: 0.3rem;}
+    .stat-sub.negative { color: var(--red); }
+    .stat-sub span { color: var(--muted); font-weight:400; font-size:0.75rem;}
+
+    /* ---- DASHBOARD TAB ---- */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .dash-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+    .dash-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .dash-card p { font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+    .chart-container { position: relative; height: 300px; width: 100%; }
+    
+    .recent-bookings-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .booking-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .booking-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .b-customer { font-weight: 600; font-size: 0.95rem; }
+    .b-car { font-size: 0.85rem; color: var(--muted); margin-top:0.2rem; }
+    .b-price { font-weight: 600; font-size: 0.95rem; }
 
     /* ---- CAR FILTER ---- */
     .car-filters {
@@ -492,7 +551,11 @@
       <span>Admin Panel</span>
     </div>
     <nav class="sidebar-nav">
-      <button class="nav-item active" data-tab="calendar">
+      <button class="nav-item active" data-tab="main">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-tab="calendar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Calendar
       </button>
@@ -518,8 +581,11 @@
 
     <!-- TOPBAR -->
     <div class="topbar">
-      <span class="topbar-title" id="topbar-title">Calendar &amp; Availability</span>
+      <span class="topbar-title" id="topbar-title">Dashboard Overview</span>
       <div class="topbar-actions">
+        <button class="btn btn-outline" id="theme-btn" title="Toggle Light/Dark Theme">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
         <button class="btn btn-outline" id="block-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
           Block Dates
@@ -534,31 +600,99 @@
     <div class="content">
 
       <!-- STATS -->
+      <span id="stat-total" style="display:none"></span>
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-label">Total Active</div>
-          <div class="stat-value" id="stat-total">—</div>
-          <div class="stat-sub">all time reservations</div>
+          <div class="stat-label">Total Cars</div>
+          <div class="stat-value">4</div>
+          <div class="stat-sub stat-growth">+0% <span>from last month</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">On Rent Now</div>
-          <div class="stat-value" style="color:var(--teal)" id="stat-active">—</div>
-          <div class="stat-sub">currently rented</div>
+          <div class="stat-label">Active Bookings</div>
+          <div class="stat-value" id="stat-active">—</div>
+          <div class="stat-sub stat-growth">+12% <span>from last week</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Upcoming</div>
-          <div class="stat-value" style="color:var(--blue)" id="stat-upcoming">—</div>
-          <div class="stat-sub">next 30 days</div>
+          <div class="stat-label">Upcoming Bookings</div>
+          <div class="stat-value" id="stat-upcoming">—</div>
+          <div class="stat-sub stat-growth">+5% <span>from last week</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Revenue This Month</div>
-          <div class="stat-value" style="color:var(--accent)" id="stat-revenue">—</div>
-          <div class="stat-sub">confirmed bookings</div>
+          <div class="stat-label">Monthly Revenue</div>
+          <div class="stat-value" id="stat-revenue">—</div>
+          <div class="stat-sub stat-growth">+8.2% <span>from last month</span></div>
+        </div>
+      </div>
+
+      <!-- MAIN TAB -->
+      <div class="tab-content active" id="tab-main">
+        <div class="dash-grid">
+          <div class="dash-card">
+            <h3>Revenue & Bookings Trend</h3>
+            <p>Monthly performance over the last 6 months</p>
+            <div class="chart-container">
+              <canvas id="trendChart"></canvas>
+            </div>
+          </div>
+          <div class="dash-card">
+            <h3>Fleet Distribution</h3>
+            <p>Cars by category</p>
+            <div class="chart-container">
+              <canvas id="distChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="recent-bookings-card">
+          <h3 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 0.3rem;">Recent Bookings</h3>
+          <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem;">Latest car rental bookings</p>
+          <div id="recent-bookings-list">
+            <div class="booking-row">
+              <div>
+                <div class="b-customer">John Smith</div>
+                <div class="b-car">Audi Q3 • BK001</div>
+              </div>
+              <div style="display:flex; align-items:center; gap: 1rem;">
+                <span class="badge badge-blue" style="background:var(--surface-3); color:var(--text); border:1px solid var(--border)">Active</span>
+                <span class="b-price">$320</span>
+              </div>
+            </div>
+            <div class="booking-row">
+              <div>
+                <div class="b-customer">Sarah Wilson</div>
+                <div class="b-car">VW Atlas • BK002</div>
+              </div>
+              <div style="display:flex; align-items:center; gap: 1rem;">
+                <span class="badge badge-gray" style="background:var(--surface-2); color:var(--muted)">Completed</span>
+                <span class="b-price">$850</span>
+              </div>
+            </div>
+            <div class="booking-row">
+              <div>
+                <div class="b-customer">Emily Davis</div>
+                <div class="b-car">Porsche Cayenne • BK004</div>
+              </div>
+              <div style="display:flex; align-items:center; gap: 1rem;">
+                <span class="badge badge-blue" style="background:var(--surface-3); color:var(--text); border:1px solid var(--border)">Active</span>
+                <span class="b-price">$620</span>
+              </div>
+            </div>
+            <div class="booking-row">
+              <div>
+                <div class="b-customer">David Brown</div>
+                <div class="b-car">Audi A3 • BK005</div>
+              </div>
+              <div style="display:flex; align-items:center; gap: 1rem;">
+                <span class="badge badge-yellow" style="background:var(--surface-2); color:var(--muted)">Pending</span>
+                <span class="b-price">$340</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- CALENDAR TAB -->
-      <div class="tab-content active" id="tab-calendar">
+      <div class="tab-content" id="tab-calendar">
 
         <!-- Car filter -->
         <div class="car-filters">
@@ -839,5 +973,78 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
   <script src="js/dashboard.js"></script>
+  <script>
+    // Theme toggle Logic
+    const themeBtn = document.getElementById('theme-btn');
+    if (localStorage.getItem('adminTheme') === 'light') {
+      document.body.classList.add('light-mode');
+    }
+    
+    let trendChart, distChart;
+
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-mode');
+      const isLight = document.body.classList.contains('light-mode');
+      localStorage.setItem('adminTheme', isLight ? 'light' : 'dark');
+      
+      // Update chart text colors
+      const newColor = isLight ? '#111827' : '#f0f0f0';
+      Chart.defaults.color = newColor;
+      if (trendChart) {
+        trendChart.options.scales.x.ticks.color = newColor;
+        trendChart.options.scales.y.ticks.color = newColor;
+        trendChart.update();
+      }
+      if (distChart) distChart.update();
+    });
+
+    // Render Charts
+    document.addEventListener("DOMContentLoaded", () => {
+      Chart.defaults.color = document.body.classList.contains('light-mode') ? '#111827' : '#f0f0f0';
+      Chart.defaults.font.family = 'Outfit';
+
+      const ctxTrend = document.getElementById('trendChart').getContext('2d');
+      trendChart = new Chart(ctxTrend, {
+        type: 'bar',
+        data: {
+          labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+          datasets: [{
+            label: 'Revenue',
+            data: [45000, 52000, 48000, 61000, 55000, 67000],
+            backgroundColor: '#00d2ff',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,0.1)' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+
+      const ctxDist = document.getElementById('distChart').getContext('2d');
+      distChart = new Chart(ctxDist, {
+        type: 'doughnut',
+        data: {
+          labels: ['Luxury 50%', 'SUVs 25%', 'Compact 25%'],
+          datasets: [{
+            data: [50, 25, 25],
+            backgroundColor: ['#00d2ff', '#F59E0B', '#10B981'],
+            borderWidth: 0,
+            cutout: '75%'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } }
+        }
+      });
+    });
+  </script>
 </body>
 </html>
