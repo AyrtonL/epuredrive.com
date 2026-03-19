@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — éPure Drive Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0a;
+      --surface:   #111111;
+      --surface-2: #181818;
+      --surface-3: #202020;
+      --border:    rgba(255,255,255,0.07);
+      --accent:    #c9a84c;
+      --text:      #f0f0f0;
+      --muted:     #666;
+      --muted-2:   #999;
+      --sidebar:   200px;
+      --blue:      #3B82F6;
+      --purple:    #8B5CF6;
+      --gold:      #F59E0B;
+      --teal:      #10B981;
+      --red:       #EF4444;
+      --orange:    #F97316;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ---- SIDEBAR ---- */
+    .sidebar {
+      width: var(--sidebar);
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 1.5rem 1.25rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo img { height: 28px; }
+    .sidebar-logo span {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 0.35rem;
+    }
+    .sidebar-nav { flex: 1; padding: 1rem 0; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.65rem 1.25rem;
+      color: var(--muted-2);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 0;
+      transition: all 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      text-decoration: none;
+    }
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-item.active { color: var(--accent); background: rgba(201,168,76,0.08); border-left: 2px solid var(--accent); }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); }
+    #logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 0;
+      transition: color 0.2s;
+    }
+    #logout-btn:hover { color: var(--red); }
+
+    /* ---- MAIN ---- */
+    .main {
+      margin-left: var(--sidebar);
+      flex: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .topbar {
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+    }
+    .topbar-title { font-size: 1.1rem; font-weight: 600; }
+    .topbar-actions { display: flex; gap: 0.75rem; }
+    .content { padding: 2rem; flex: 1; }
+
+    /* ---- STATS ---- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+    }
+    .stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+    .stat-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; }
+
+    /* ---- CAR FILTER ---- */
+    .car-filters {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .car-filters span { font-size: 0.75rem; color: var(--muted); margin-right: 0.25rem; }
+    .car-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--muted-2);
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .car-btn .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .car-btn:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
+    .car-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(201,168,76,0.08); }
+
+    /* ---- LEGEND ---- */
+    .legend {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--muted-2); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ---- CALENDAR ---- */
+    .calendar-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .cal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* FullCalendar dark overrides */
+    .fc { color: var(--text); }
+    .fc .fc-toolbar-title { font-size: 1rem; font-weight: 600; color: var(--text); }
+    .fc .fc-button {
+      background: var(--surface-3) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--muted-2) !important;
+      font-family: inherit !important;
+      font-size: 0.78rem !important;
+      padding: 0.35rem 0.75rem !important;
+      box-shadow: none !important;
+      text-transform: capitalize;
+    }
+    .fc .fc-button:hover { color: var(--text) !important; background: var(--surface-2) !important; }
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:not(:disabled):active {
+      background: rgba(201,168,76,0.15) !important;
+      border-color: var(--accent) !important;
+      color: var(--accent) !important;
+    }
+    .fc-theme-standard td, .fc-theme-standard th,
+    .fc-theme-standard .fc-scrollgrid { border-color: var(--border) !important; }
+    .fc .fc-daygrid-day { background: transparent; }
+    .fc .fc-daygrid-day:hover { background: rgba(255,255,255,0.02); }
+    .fc .fc-day-today { background: rgba(201,168,76,0.06) !important; }
+    .fc .fc-day-today .fc-daygrid-day-number { color: var(--accent) !important; font-weight: 600; }
+    .fc .fc-daygrid-day-number, .fc .fc-col-header-cell-cushion {
+      color: var(--muted-2);
+      font-size: 0.8rem;
+      text-decoration: none;
+    }
+    .fc .fc-col-header-cell { background: var(--surface-2); }
+    .fc .fc-daygrid-event {
+      border-radius: 4px;
+      font-size: 0.72rem;
+      padding: 1px 4px;
+      font-family: inherit;
+    }
+    .fc .fc-list-event:hover td { background: rgba(255,255,255,0.03); }
+    .fc .fc-list-day-cushion { background: var(--surface-2); }
+    .fc .fc-list-empty { background: var(--surface); color: var(--muted); }
+    .fc .fc-list-table td { border-color: var(--border); color: var(--text); }
+    .fc .fc-list-event-time { color: var(--muted); }
+
+    /* ---- TABLE ---- */
+    .table-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .table-header h3 { font-size: 0.95rem; font-weight: 600; }
+    .table-filters { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+    .search-input {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.85rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+      outline: none;
+      width: 200px;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .filter-select {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.75rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+      outline: none;
+      cursor: pointer;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 0.6rem 1rem;
+      text-align: left;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+    }
+    tbody td {
+      padding: 0.85rem 1rem;
+      font-size: 0.84rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,0.02); }
+    tbody td small { color: var(--muted); font-size: 0.75rem; }
+
+    .car-dot-inline {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 0.4rem;
+      vertical-align: middle;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .badge-blue    { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+    .badge-green   { background: rgba(16,185,129,0.15);  color: #34D399; }
+    .badge-yellow  { background: rgba(245,158,11,0.15);  color: #FCD34D; }
+    .badge-gray    { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+    .badge-red     { background: rgba(239,68,68,0.15);   color: #F87171; }
+    .source-badge {
+      font-size: 0.68rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .source-manual { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+    .source-turo   { background: rgba(249,115,22,0.15);  color: #FB923C; }
+    .source-web    { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+
+    .actions { display: flex; gap: 0.4rem; }
+    .btn-icon {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.3rem 0.5rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: background 0.15s;
+    }
+    .btn-icon:hover { background: var(--surface-2); }
+    .btn-icon.danger:hover { background: rgba(239,68,68,0.12); border-color: var(--red); }
+
+    /* ---- BUTTONS ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1.1rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+      text-decoration: none;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted-2); }
+    .btn-outline:hover { color: var(--text); border-color: rgba(255,255,255,0.2); opacity: 1; }
+    .btn-danger  { background: rgba(239,68,68,0.15); color: var(--red); }
+
+    /* ---- MODALS ---- */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-box.wide { max-width: 640px; }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .modal-header h3 { font-size: 1rem; font-weight: 600; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 0; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.4rem;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--accent); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
+
+    /* ---- DETAIL MODAL ---- */
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row span:first-child { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em; }
+    .detail-row a { color: var(--accent); text-decoration: none; }
+
+    /* ---- TURO SYNC ---- */
+    .turo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .turo-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    .turo-card .car-name { font-size: 0.82rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+    .turo-card input { font-size: 0.8rem; padding: 0.45rem 0.7rem; }
+    .turo-card .last-sync { font-size: 0.7rem; color: var(--muted); margin-top: 0.35rem; }
+
+    /* ---- TAB CONTENT ---- */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ---- EMPTY STATE ---- */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+    }
+    .empty-state svg { opacity: 0.3; margin-bottom: 1rem; }
+    .empty-state p { font-size: 0.88rem; }
+
+    /* ---- SCROLLBAR ---- */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../assets/logo.png" alt="éPure Drive">
+      <span>Admin Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="calendar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Calendar
+      </button>
+      <button class="nav-item" data-tab="reservations">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Reservations
+      </button>
+      <button class="nav-item" data-tab="turo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Turo Sync
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logout-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <span class="topbar-title" id="topbar-title">Calendar &amp; Availability</span>
+      <div class="topbar-actions">
+        <button class="btn btn-outline" id="block-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          Block Dates
+        </button>
+        <button class="btn btn-primary" id="add-res-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Reservation
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- STATS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Active</div>
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-sub">all time reservations</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">On Rent Now</div>
+          <div class="stat-value" style="color:var(--teal)" id="stat-active">—</div>
+          <div class="stat-sub">currently rented</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Upcoming</div>
+          <div class="stat-value" style="color:var(--blue)" id="stat-upcoming">—</div>
+          <div class="stat-sub">next 30 days</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Revenue This Month</div>
+          <div class="stat-value" style="color:var(--accent)" id="stat-revenue">—</div>
+          <div class="stat-sub">confirmed bookings</div>
+        </div>
+      </div>
+
+      <!-- CALENDAR TAB -->
+      <div class="tab-content active" id="tab-calendar">
+
+        <!-- Car filter -->
+        <div class="car-filters">
+          <span>Filter:</span>
+          <button class="car-btn active" data-car-filter="all">All Cars</button>
+          <button class="car-btn" data-car-filter="1"><span class="dot" style="background:var(--blue)"></span>Audi Q3</button>
+          <button class="car-btn" data-car-filter="2"><span class="dot" style="background:var(--purple)"></span>Audi A3</button>
+          <button class="car-btn" data-car-filter="3"><span class="dot" style="background:var(--gold)"></span>Porsche Cayenne</button>
+          <button class="car-btn" data-car-filter="4"><span class="dot" style="background:var(--teal)"></span>VW Atlas</button>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Audi Q3</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Audi A3</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Porsche Cayenne</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>VW Atlas</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Blocked</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>Turo</div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="calendar-wrap">
+          <div id="calendar"></div>
+        </div>
+      </div>
+
+      <!-- RESERVATIONS TAB -->
+      <div class="tab-content" id="tab-reservations">
+        <div class="table-section">
+          <div class="table-header">
+            <h3>All Reservations</h3>
+            <div class="table-filters">
+              <input type="text" class="search-input" id="search-input" placeholder="Search customer…" />
+              <select class="filter-select" id="status-filter">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <select class="filter-select" id="car-filter">
+                <option value="">All Cars</option>
+                <option value="1">Audi Q3</option>
+                <option value="2">Audi A3</option>
+                <option value="3">Porsche Cayenne</option>
+                <option value="4">VW Atlas</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Vehicle</th>
+                  <th>Dates</th>
+                  <th>Days</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Source</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="res-tbody">
+                <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TURO TAB -->
+      <div class="tab-content" id="tab-turo">
+        <div class="table-section" style="padding:1.5rem;">
+          <div style="margin-bottom:1.5rem;">
+            <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:0.4rem;">Turo Calendar Sync</h3>
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.5;">
+              Paste the iCal export URL from each Turo vehicle listing.<br>
+              Find it at: <strong style="color:var(--muted-2)">turo.com → Your vehicle → Calendar → Export calendar</strong>
+            </p>
+          </div>
+          <div class="turo-grid" id="turo-grid">
+            <!-- rendered by JS -->
+          </div>
+          <button class="btn btn-primary" id="sync-turo-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            Sync All Turo Calendars
+          </button>
+          <div id="sync-status" style="margin-top:0.75rem;font-size:0.8rem;color:var(--muted);"></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+
+  <!-- MODAL: Add / Edit Reservation -->
+  <div class="modal" id="reservation-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-title">New Reservation</h3>
+        <button class="modal-close" onclick="closeModal('reservation-modal')">✕</button>
+      </div>
+      <form id="reservation-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Vehicle</label>
+            <select id="f-car" required>
+              <option value="">Select vehicle…</option>
+              <option value="1">Audi Q3 — $120/day</option>
+              <option value="2">Audi A3 — $100/day</option>
+              <option value="3">Porsche Cayenne — $250/day</option>
+              <option value="4">Volkswagen Atlas — $130/day</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Customer Name</label>
+            <input type="text" id="f-name" placeholder="John Smith" required />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="f-email" placeholder="john@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" id="f-phone" placeholder="(305) 555-0000" />
+          </div>
+          <div class="form-group">
+            <label>Pickup Date</label>
+            <input type="date" id="f-pickup" required />
+          </div>
+          <div class="form-group">
+            <label>Return Date</label>
+            <input type="date" id="f-return" required />
+          </div>
+          <div class="form-group">
+            <label>Pickup Location</label>
+            <select id="f-location">
+              <option value="Aventura">Aventura</option>
+              <option value="MIA Airport">MIA Airport</option>
+              <option value="FLL Airport">FLL Airport</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Total Amount ($)</label>
+            <input type="number" id="f-amount" placeholder="Auto-calculated" step="0.01" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="f-status">
+              <option value="pending">Pending</option>
+              <option value="confirmed" selected>Confirmed</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Notes</label>
+            <textarea id="f-notes" placeholder="Any additional notes…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('reservation-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Reservation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Block Dates -->
+  <div class="modal" id="block-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Block Dates</h3>
+        <button class="modal-close" onclick="closeModal('block-modal')">✕</button>
+      </div>
+      <form id="block-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Vehicle</label>
+            <select id="b-car" required>
+              <option value="all">All Vehicles</option>
+              <option value="1">Audi Q3</option>
+              <option value="2">Audi A3</option>
+              <option value="3">Porsche Cayenne</option>
+              <option value="4">Volkswagen Atlas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" id="b-start" required />
+          </div>
+          <div class="form-group">
+            <label>End Date</label>
+            <input type="date" id="b-end" required />
+          </div>
+          <div class="form-group full">
+            <label>Reason</label>
+            <select id="b-reason">
+              <option value="Maintenance">Maintenance</option>
+              <option value="Personal Use">Personal Use</option>
+              <option value="Cleaning">Cleaning</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('block-modal')">Cancel</button>
+          <button type="submit" class="btn btn-danger">Block These Dates</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Reservation Detail -->
+  <div class="modal" id="detail-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Reservation Details</h3>
+        <button class="modal-close" onclick="closeModal('detail-modal')">✕</button>
+      </div>
+      <div id="detail-content"></div>
+      <div class="modal-footer" id="detail-actions"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
