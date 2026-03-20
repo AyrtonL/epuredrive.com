@@ -652,28 +652,36 @@
     </div>
     <nav class="sidebar-nav">
       <button class="nav-item active" data-tab="main">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         Dashboard
       </button>
-      <button class="nav-item" data-tab="calendar">
+      <button class="nav-item" data-tab="bookings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Calendar
-      </button>
-      <button class="nav-item" data-tab="reservations">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-        Reservations
-      </button>
-      <button class="nav-item" data-tab="turo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-        Calendar Sync
-      </button>
-      <button class="nav-item" data-tab="consignments">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-        Consignments
+        Bookings
       </button>
       <button class="nav-item" data-tab="cars">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
         Cars
+      </button>
+      <button class="nav-item" data-tab="maintenance">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        Maintenance
+      </button>
+      <button class="nav-item" data-tab="customers">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Customers
+      </button>
+      <button class="nav-item" data-tab="consignments">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+        Consignments
+      </button>
+      <button class="nav-item" data-tab="reports">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Reports
+      </button>
+      <button class="nav-item" data-tab="turo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Sync
       </button>
     </nav>
     <div class="sidebar-footer">
@@ -732,75 +740,19 @@
         </div>
       </div>
 
-      <!-- MAIN TAB -->
+      <!-- DASHBOARD TAB -->
       <div class="tab-content active" id="tab-main">
-        <div class="dash-grid">
-          <div class="dash-card">
-            <h3>Revenue & Bookings Trend</h3>
-            <p>Monthly performance over the last 6 months</p>
-            <div class="chart-container">
-              <canvas id="trendChart"></canvas>
-            </div>
-          </div>
-          <div class="dash-card">
-            <h3>Fleet Distribution</h3>
-            <p>Cars by category</p>
-            <div class="chart-container">
-              <canvas id="distChart"></canvas>
-            </div>
-          </div>
-        </div>
-
         <div class="recent-bookings-card">
-          <h3 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 0.3rem;">Recent Bookings</h3>
-          <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem;">Latest car rental bookings</p>
+          <h3 style="font-size:1.05rem;font-weight:600;margin-bottom:0.3rem;">Recent Bookings</h3>
+          <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1.5rem;">Latest activity across all vehicles</p>
           <div id="recent-bookings-list">
-            <div class="booking-row">
-              <div>
-                <div class="b-customer">John Smith</div>
-                <div class="b-car">Audi Q3 • BK001</div>
-              </div>
-              <div style="display:flex; align-items:center; gap: 1rem;">
-                <span class="badge badge-blue" style="background:var(--surface-3); color:var(--text); border:1px solid var(--border)">Active</span>
-                <span class="b-price">$320</span>
-              </div>
-            </div>
-            <div class="booking-row">
-              <div>
-                <div class="b-customer">Sarah Wilson</div>
-                <div class="b-car">VW Atlas • BK002</div>
-              </div>
-              <div style="display:flex; align-items:center; gap: 1rem;">
-                <span class="badge badge-gray" style="background:var(--surface-2); color:var(--muted)">Completed</span>
-                <span class="b-price">$850</span>
-              </div>
-            </div>
-            <div class="booking-row">
-              <div>
-                <div class="b-customer">Emily Davis</div>
-                <div class="b-car">Porsche Cayenne • BK004</div>
-              </div>
-              <div style="display:flex; align-items:center; gap: 1rem;">
-                <span class="badge badge-blue" style="background:var(--surface-3); color:var(--text); border:1px solid var(--border)">Active</span>
-                <span class="b-price">$620</span>
-              </div>
-            </div>
-            <div class="booking-row">
-              <div>
-                <div class="b-customer">David Brown</div>
-                <div class="b-car">Audi A3 • BK005</div>
-              </div>
-              <div style="display:flex; align-items:center; gap: 1rem;">
-                <span class="badge badge-yellow" style="background:var(--surface-2); color:var(--muted)">Pending</span>
-                <span class="b-price">$340</span>
-              </div>
-            </div>
+            <div style="text-align:center;color:var(--muted);padding:2rem;font-size:0.85rem;">Loading…</div>
           </div>
         </div>
       </div>
 
-      <!-- CALENDAR TAB -->
-      <div class="tab-content" id="tab-calendar">
+      <!-- BOOKINGS TAB (calendar + list) -->
+      <div class="tab-content" id="tab-bookings">
 
         <!-- Car filter -->
         <div class="car-filters">
@@ -826,13 +778,11 @@
         <div class="calendar-wrap">
           <div id="calendar"></div>
         </div>
-      </div>
 
-      <!-- RESERVATIONS TAB -->
-      <div class="tab-content" id="tab-reservations">
-        <div class="table-section">
+        <!-- Bookings list -->
+        <div class="table-section" style="margin-top:2rem;">
           <div class="table-header">
-            <h3>All Reservations</h3>
+            <h3>All Bookings</h3>
             <div class="table-filters">
               <input type="text" class="search-input" id="search-input" placeholder="Search customer…" />
               <select class="filter-select" id="status-filter">
@@ -1006,19 +956,30 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
           <div>
             <h3 style="font-size:1rem;font-weight:600;">Fleet Vehicles</h3>
-            <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Vehicle details, documents and maintenance status</p>
+            <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Vehicle details, documents and expiry status</p>
           </div>
-          <button class="btn btn-outline" id="add-service-btn-top">
+        </div>
+        <div class="cars-grid" id="cars-grid">
+          <div class="empty-state"><p>Loading…</p></div>
+        </div>
+      </div>
+
+      <!-- MAINTENANCE TAB -->
+      <div class="tab-content" id="tab-maintenance">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+          <div>
+            <h3 style="font-size:1rem;font-weight:600;">Maintenance & Service</h3>
+            <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Service records and upcoming maintenance for all vehicles</p>
+          </div>
+          <button class="btn btn-primary" id="add-service-btn-top">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Service Record
           </button>
         </div>
 
-        <div class="cars-grid" id="cars-grid">
-          <div class="empty-state"><p>Loading…</p></div>
-        </div>
+        <!-- Upcoming services alert -->
+        <div id="maintenance-alerts" style="margin-bottom:1.25rem;"></div>
 
-        <!-- Service History -->
         <div class="table-section">
           <div class="table-header">
             <h3>Service History</h3>
@@ -1059,6 +1020,81 @@
               </thead>
               <tbody id="services-tbody">
                 <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTOMERS TAB -->
+      <div class="tab-content" id="tab-customers">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+          <div>
+            <h3 style="font-size:1rem;font-weight:600;">Customers</h3>
+            <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Customer database and rental history</p>
+          </div>
+          <button class="btn btn-primary" id="add-customer-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Customer
+          </button>
+        </div>
+        <div class="table-section">
+          <div class="table-header">
+            <h3>All Customers</h3>
+            <div class="table-filters">
+              <input type="text" class="search-input" id="customer-search" placeholder="Search name, email…" />
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>License / ID</th>
+                  <th>Total Bookings</th>
+                  <th>Total Spent</th>
+                  <th>Notes</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="customers-tbody">
+                <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORTS TAB -->
+      <div class="tab-content" id="tab-reports">
+        <div style="margin-bottom:1.5rem;">
+          <h3 style="font-size:1rem;font-weight:600;">Reports & Analytics</h3>
+          <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Revenue trends and fleet performance</p>
+        </div>
+        <div class="dash-grid" style="margin-bottom:1.5rem;">
+          <div class="dash-card">
+            <h3>Revenue Trend</h3>
+            <p>Monthly revenue over the last 6 months</p>
+            <div class="chart-container"><canvas id="trendChart"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <h3>Fleet Distribution</h3>
+            <p>Bookings by vehicle</p>
+            <div class="chart-container"><canvas id="distChart"></canvas></div>
+          </div>
+        </div>
+        <!-- Revenue by car table -->
+        <div class="table-section">
+          <div class="table-header"><h3>Revenue by Vehicle</h3></div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr><th>Vehicle</th><th>Bookings</th><th>Total Revenue</th><th>Avg per Booking</th><th>% of Total</th></tr>
+              </thead>
+              <tbody id="revenue-tbody">
+                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
               </tbody>
             </table>
           </div>
@@ -1204,6 +1240,48 @@
       </div>
       <div id="detail-content"></div>
       <div class="modal-footer" id="detail-actions"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: Customer -->
+  <div class="modal" id="customer-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="customer-modal-title">New Customer</h3>
+        <button class="modal-close" onclick="closeModal('customer-modal')">✕</button>
+      </div>
+      <form id="customer-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Full Name</label>
+            <input type="text" id="cust-name" placeholder="John Smith" required />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="cust-email" placeholder="john@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" id="cust-phone" placeholder="(305) 555-0000" />
+          </div>
+          <div class="form-group">
+            <label>Driver's License / ID</label>
+            <input type="text" id="cust-license" placeholder="D12345678" />
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <input type="text" id="cust-address" placeholder="123 Main St, Miami FL" />
+          </div>
+          <div class="form-group full">
+            <label>Notes</label>
+            <textarea id="cust-notes" placeholder="Any relevant notes…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('customer-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Customer</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1454,38 +1532,29 @@
       document.body.classList.toggle('light-mode');
       const isLight = document.body.classList.contains('light-mode');
       localStorage.setItem('adminTheme', isLight ? 'light' : 'dark');
-      
-      // Update chart text colors
       const newColor = isLight ? '#111827' : '#f0f0f0';
       Chart.defaults.color = newColor;
-      if (trendChart) {
-        trendChart.options.scales.x.ticks.color = newColor;
-        trendChart.options.scales.y.ticks.color = newColor;
-        trendChart.update();
+      if (window._trendChart) {
+        window._trendChart.options.scales.x.ticks.color = newColor;
+        window._trendChart.options.scales.y.ticks.color = newColor;
+        window._trendChart.update();
       }
-      if (distChart) distChart.update();
+      if (window._distChart) window._distChart.update();
     });
 
-    // Render Charts
+    // Init charts (canvases are in tab-reports, hidden but in DOM)
     document.addEventListener("DOMContentLoaded", () => {
       Chart.defaults.color = document.body.classList.contains('light-mode') ? '#111827' : '#f0f0f0';
       Chart.defaults.font.family = 'Outfit';
 
-      const ctxTrend = document.getElementById('trendChart').getContext('2d');
-      trendChart = new Chart(ctxTrend, {
+      window._trendChart = new Chart(document.getElementById('trendChart').getContext('2d'), {
         type: 'bar',
         data: {
-          labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
-          datasets: [{
-            label: 'Revenue',
-            data: [45000, 52000, 48000, 61000, 55000, 67000],
-            backgroundColor: '#00d2ff',
-            borderRadius: 6
-          }]
+          labels: ['—', '—', '—', '—', '—', '—'],
+          datasets: [{ label: 'Revenue', data: [0,0,0,0,0,0], backgroundColor: '#00d2ff', borderRadius: 6 }]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
+          responsive: true, maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
             y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,0.1)' } },
@@ -1494,23 +1563,13 @@
         }
       });
 
-      const ctxDist = document.getElementById('distChart').getContext('2d');
-      distChart = new Chart(ctxDist, {
+      window._distChart = new Chart(document.getElementById('distChart').getContext('2d'), {
         type: 'doughnut',
         data: {
-          labels: ['Luxury 50%', 'SUVs 25%', 'Compact 25%'],
-          datasets: [{
-            data: [50, 25, 25],
-            backgroundColor: ['#00d2ff', '#F59E0B', '#10B981'],
-            borderWidth: 0,
-            cutout: '75%'
-          }]
+          labels: ['Audi Q3', 'Audi A3', 'Porsche Cayenne', 'VW Atlas'],
+          datasets: [{ data: [1,1,1,1], backgroundColor: ['#3B82F6','#8B5CF6','#F59E0B','#10B981'], borderWidth: 0, cutout: '75%' }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
     });
   </script>

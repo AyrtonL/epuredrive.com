@@ -22,6 +22,7 @@ let allConsignments = [];
 let allExpenses     = [];
 let allCars         = [];   // rows from cars table (with extra detail columns)
 let allServices     = [];   // rows from car_services
+let allCustomers    = [];   // rows from customers table
 
 // ====================================================
 //  AUTH
@@ -793,6 +794,232 @@ async function deleteExpense(id) {
 }
 
 // ====================================================
+//  CUSTOMERS
+// ====================================================
+async function loadCustomers() {
+  const { data, error } = await sb.from('customers').select('*').order('name');
+  if (!error) allCustomers = data || [];
+}
+
+function renderCustomers() {
+  const tbody  = document.getElementById('customers-tbody');
+  if (!tbody) return;
+  const search = (document.getElementById('customer-search')?.value || '').toLowerCase();
+
+  const list = allCustomers.filter(c =>
+    !search ||
+    c.name.toLowerCase().includes(search) ||
+    (c.email || '').toLowerCase().includes(search) ||
+    (c.phone || '').includes(search)
+  );
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2.5rem">No customers found</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(c => {
+    const bookings = allReservations.filter(r =>
+      r.customer_email === c.email || r.customer_phone === c.phone || r.customer_name === c.name
+    );
+    const spent = bookings.reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
+    return `
+      <tr>
+        <td><strong>${esc(c.name)}</strong></td>
+        <td>${c.email ? `<a href="mailto:${esc(c.email)}" style="color:var(--accent)">${esc(c.email)}</a>` : '—'}</td>
+        <td>${c.phone ? `<a href="tel:${esc(c.phone)}" style="color:var(--accent)">${esc(c.phone)}</a>` : '—'}</td>
+        <td style="color:var(--muted-2);">${esc(c.id_number || '—')}</td>
+        <td style="text-align:center;">${bookings.length}</td>
+        <td style="font-weight:600;">${spent > 0 ? '$' + spent.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—'}</td>
+        <td style="color:var(--muted-2);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.notes || '—')}</td>
+        <td class="actions">
+          <button class="btn-icon" onclick="openEditCustomer('${c.id}')" title="Edit">✏️</button>
+          <button class="btn-icon danger" onclick="deleteCustomer('${c.id}')" title="Delete">🗑️</button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function openAddCustomer() {
+  document.getElementById('customer-form').reset();
+  delete document.getElementById('customer-form').dataset.editId;
+  document.getElementById('customer-modal-title').textContent = 'New Customer';
+  openModal('customer-modal');
+}
+
+function openEditCustomer(id) {
+  const c = allCustomers.find(x => x.id === id);
+  if (!c) return;
+  const form = document.getElementById('customer-form');
+  form.dataset.editId = id;
+  document.getElementById('customer-modal-title').textContent = 'Edit Customer';
+  document.getElementById('cust-name').value    = c.name;
+  document.getElementById('cust-email').value   = c.email    || '';
+  document.getElementById('cust-phone').value   = c.phone    || '';
+  document.getElementById('cust-license').value = c.id_number || '';
+  document.getElementById('cust-address').value = c.address  || '';
+  document.getElementById('cust-notes').value   = c.notes    || '';
+  openModal('customer-modal');
+}
+
+async function saveCustomer(e) {
+  e.preventDefault();
+  const form   = document.getElementById('customer-form');
+  const editId = form.dataset.editId;
+  const payload = {
+    name:       document.getElementById('cust-name').value.trim(),
+    email:      document.getElementById('cust-email').value.trim(),
+    phone:      document.getElementById('cust-phone').value.trim(),
+    id_number:  document.getElementById('cust-license').value.trim(),
+    address:    document.getElementById('cust-address').value.trim(),
+    notes:      document.getElementById('cust-notes').value.trim(),
+  };
+  const btn = e.submitter;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const { error } = editId
+    ? await sb.from('customers').update(payload).eq('id', editId)
+    : await sb.from('customers').insert(payload);
+  if (error) { alert('Error: ' + error.message); }
+  else { closeModal('customer-modal'); await loadCustomers(); renderCustomers(); }
+  btn.disabled = false; btn.textContent = 'Save Customer';
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('Delete this customer?')) return;
+  await sb.from('customers').delete().eq('id', id);
+  await loadCustomers();
+  renderCustomers();
+}
+
+// ====================================================
+//  REPORTS
+// ====================================================
+function renderReports() {
+  // Revenue by vehicle table
+  const tbody = document.getElementById('revenue-tbody');
+  if (!tbody) return;
+
+  const totalRevenue = allReservations
+    .filter(r => r.status !== 'cancelled')
+    .reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
+
+  const rows = [1, 2, 3, 4].map(id => {
+    const bookings = allReservations.filter(r => r.car_id === id && r.status !== 'cancelled');
+    const revenue  = bookings.reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
+    const avg      = bookings.length ? revenue / bookings.length : 0;
+    const pct      = totalRevenue > 0 ? (revenue / totalRevenue * 100) : 0;
+    return { id, bookings: bookings.length, revenue, avg, pct };
+  });
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td><span class="car-dot-inline" style="background:${CAR_COLORS[r.id]}"></span><strong>${CAR_NAMES[r.id]}</strong></td>
+      <td style="text-align:center;">${r.bookings}</td>
+      <td style="font-weight:600;">$${r.revenue.toLocaleString('en-US', { maximumFractionDigits: 0 })}</td>
+      <td style="color:var(--muted-2);">$${r.avg.toLocaleString('en-US', { maximumFractionDigits: 0 })}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <div style="flex:1;height:6px;background:var(--surface-3);border-radius:3px;overflow:hidden;">
+            <div style="width:${r.pct.toFixed(1)}%;height:100%;background:${CAR_COLORS[r.id]};border-radius:3px;"></div>
+          </div>
+          <span style="font-size:0.75rem;color:var(--muted-2);min-width:35px;">${r.pct.toFixed(1)}%</span>
+        </div>
+      </td>
+    </tr>`).join('');
+
+  // Refresh charts with real data if chart.js is loaded
+  if (typeof Chart !== 'undefined') {
+    refreshCharts();
+  }
+}
+
+function refreshCharts() {
+  // Revenue by month (last 6 months from real data)
+  const months = [];
+  const revenues = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    const ym = d.toISOString().slice(0, 7);
+    const label = d.toLocaleDateString('en-US', { month: 'short' });
+    const rev = allReservations
+      .filter(r => r.pickup_date?.startsWith(ym) && r.status !== 'cancelled')
+      .reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
+    months.push(label);
+    revenues.push(rev);
+  }
+
+  if (window._trendChart) {
+    window._trendChart.data.labels   = months;
+    window._trendChart.data.datasets[0].data = revenues;
+    window._trendChart.update();
+  }
+
+  // Distribution by car bookings
+  const carBookings = [1, 2, 3, 4].map(id =>
+    allReservations.filter(r => r.car_id === id && r.status !== 'cancelled').length
+  );
+  if (window._distChart) {
+    window._distChart.data.datasets[0].data = carBookings;
+    window._distChart.data.labels = [1, 2, 3, 4].map(id => CAR_NAMES[id]);
+    window._distChart.data.datasets[0].backgroundColor = [1, 2, 3, 4].map(id => CAR_COLORS[id]);
+    window._distChart.update();
+  }
+}
+
+// ====================================================
+//  DASHBOARD RECENT BOOKINGS
+// ====================================================
+function renderRecentBookings() {
+  const el = document.getElementById('recent-bookings-list');
+  if (!el) return;
+  const recent = [...allReservations]
+    .filter(r => r.status !== 'cancelled')
+    .sort((a, b) => b.pickup_date < a.pickup_date ? -1 : 1)
+    .slice(0, 6);
+  if (!recent.length) {
+    el.innerHTML = `<div style="text-align:center;color:var(--muted);padding:2rem;font-size:0.85rem;">No bookings yet.</div>`;
+    return;
+  }
+  const statusMap = { pending: 'badge-yellow', confirmed: 'badge-blue', active: 'badge-green', completed: 'badge-gray', cancelled: 'badge-red' };
+  el.innerHTML = recent.map(r => `
+    <div class="booking-row">
+      <div>
+        <div class="b-customer">${esc(r.customer_name)}</div>
+        <div class="b-car">
+          <span class="car-dot-inline" style="background:${CAR_COLORS[r.car_id]}"></span>
+          ${CAR_NAMES[r.car_id]} · ${fmtDate(r.pickup_date)} → ${fmtDate(r.return_date)}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <span class="badge ${statusMap[r.status] || 'badge-gray'}">${r.status}</span>
+        <span class="b-price">${r.total_amount ? '$' + Number(r.total_amount).toLocaleString() : '—'}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ====================================================
+//  MAINTENANCE ALERTS
+// ====================================================
+function renderMaintenanceAlerts() {
+  const el = document.getElementById('maintenance-alerts');
+  if (!el) return;
+  const upcoming = allServices.filter(s => {
+    if (!s.next_service_date) return false;
+    return expiryClass(s.next_service_date) !== 'expiry-ok';
+  });
+  if (!upcoming.length) { el.innerHTML = ''; return; }
+  el.innerHTML = upcoming.map(s => {
+    const cls = expiryClass(s.next_service_date);
+    const color = cls === 'expiry-danger' ? 'var(--red)' : '#FCD34D';
+    return `<div style="background:rgba(255,255,255,0.04);border:1px solid ${color};border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.5rem;font-size:0.82rem;display:flex;align-items:center;gap:0.75rem;">
+      <span style="color:${color};font-size:1rem;">⚠</span>
+      <span><strong>${CAR_NAMES[s.car_id]}</strong> — ${esc(s.service_type)} due <strong style="color:${color};">${fmtDate(s.next_service_date)}</strong>${s.provider ? ' at ' + esc(s.provider) : ''}</span>
+    </div>`;
+  }).join('');
+}
+
+// ====================================================
 //  CARS & MAINTENANCE
 // ====================================================
 async function loadCars() {
@@ -1055,11 +1282,13 @@ async function deleteService(id) {
 // ====================================================
 const TAB_TITLES = {
   main:         'Dashboard Overview',
-  calendar:     'Calendar &amp; Availability',
-  reservations: 'All Reservations',
+  bookings:     'Bookings',
+  cars:         'Fleet Vehicles',
+  maintenance:  'Maintenance &amp; Service',
+  customers:    'Customers',
+  consignments: 'Consignments',
+  reports:      'Reports &amp; Analytics',
   turo:         'Calendar Sync',
-  consignments: 'Consignment Contracts',
-  cars:         'Fleet Vehicles &amp; Maintenance',
 };
 
 function switchTab(tab) {
@@ -1068,10 +1297,13 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).classList.add('active');
   document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
   document.getElementById('topbar-title').innerHTML = TAB_TITLES[tab];
-  if (tab === 'calendar' && calendar) calendar.updateSize();
+  if (tab === 'bookings' && calendar) calendar.updateSize();
   if (tab === 'turo') renderTuroGrid();
   if (tab === 'consignments') { renderConsignments(); renderExpensesTable(); }
-  if (tab === 'cars') { renderCarCards(); renderServicesTable(); }
+  if (tab === 'cars') renderCarCards();
+  if (tab === 'maintenance') { renderServicesTable(); renderMaintenanceAlerts(); }
+  if (tab === 'customers') renderCustomers();
+  if (tab === 'reports') renderReports();
 }
 
 // ====================================================
@@ -1121,6 +1353,7 @@ async function refresh() {
   updateStats();
   renderTable();
   refreshCalendar();
+  renderRecentBookings();
   renderConsignments(); // re-render cards with updated revenue totals
 }
 
@@ -1130,11 +1363,12 @@ async function refresh() {
 window.addEventListener('DOMContentLoaded', async () => {
   if (!(await checkAuth())) return;
 
-  await Promise.all([loadReservations(), loadBlockedDates(), loadTuroFeeds(), loadConsignments(), loadExpenses(), loadCars(), loadServices()]);
+  await Promise.all([loadReservations(), loadBlockedDates(), loadTuroFeeds(), loadConsignments(), loadExpenses(), loadCars(), loadServices(), loadCustomers()]);
 
   updateStats();
   initCalendar();
   renderTable();
+  renderRecentBookings();
 
   // Sidebar tabs
   document.querySelectorAll('.nav-item[data-tab]').forEach(btn =>
@@ -1196,6 +1430,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('service-form')?.addEventListener('submit', saveService);
   document.getElementById('service-car-filter')?.addEventListener('change', renderServicesTable);
   document.getElementById('service-type-filter')?.addEventListener('change', renderServicesTable);
+
+  // Customers
+  document.getElementById('add-customer-btn')?.addEventListener('click', openAddCustomer);
+  document.getElementById('customer-form')?.addEventListener('submit', saveCustomer);
+  document.getElementById('customer-search')?.addEventListener('input', renderCustomers);
 
   // Close modals on backdrop click
   document.querySelectorAll('.modal').forEach(modal =>
