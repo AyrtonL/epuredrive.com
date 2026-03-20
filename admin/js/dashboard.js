@@ -20,6 +20,8 @@ let activeCarFilter = 'all';
 let turoFeeds       = {};   // { carId: { url, lastSynced } }
 let allConsignments = [];
 let allExpenses     = [];
+let allCars         = [];   // rows from cars table (with extra detail columns)
+let allServices     = [];   // rows from car_services
 
 // ====================================================
 //  AUTH
@@ -791,6 +793,264 @@ async function deleteExpense(id) {
 }
 
 // ====================================================
+//  CARS & MAINTENANCE
+// ====================================================
+async function loadCars() {
+  const { data, error } = await sb.from('cars').select('*').order('id');
+  if (!error) allCars = data || [];
+}
+
+async function loadServices() {
+  const { data, error } = await sb.from('car_services').select('*').order('service_date', { ascending: false });
+  if (!error) allServices = data || [];
+}
+
+function expiryClass(dateStr) {
+  if (!dateStr) return '';
+  const today = new Date(todayStr());
+  const d     = new Date(dateStr + 'T12:00:00');
+  const days  = Math.round((d - today) / 86400000);
+  if (days < 0)  return 'expiry-danger';
+  if (days < 30) return 'expiry-warn';
+  return 'expiry-ok';
+}
+
+function expiryLabel(dateStr) {
+  if (!dateStr) return '—';
+  const today = new Date(todayStr());
+  const d     = new Date(dateStr + 'T12:00:00');
+  const days  = Math.round((d - today) / 86400000);
+  const base  = fmtDate(dateStr);
+  if (days < 0)  return `${base} ⚠ Expired`;
+  if (days < 30) return `${base} (${days}d left)`;
+  return base;
+}
+
+const SVC_BADGE = {
+  'Oil Change':    'svc-oil',
+  'Tire Rotation': 'svc-tire',
+  'Brake Service': 'svc-brake',
+  'Detailing':     'svc-detail',
+  'Inspection':    'svc-inspection',
+  'Repair':        'svc-repair',
+  'Other':         'svc-other',
+};
+
+function renderCarCards() {
+  const grid = document.getElementById('cars-grid');
+  if (!grid) return;
+
+  // Merge static car data with DB rows
+  const cards = [1, 2, 3, 4].map(id => {
+    const db = allCars.find(c => c.id === id) || {};
+    return { id, name: CAR_NAMES[id], color: CAR_COLORS[id], ...db };
+  });
+
+  grid.innerHTML = cards.map(car => {
+    const lastSvc = allServices.find(s => s.car_id === car.id);
+    const totalSvcCost = allServices
+      .filter(s => s.car_id === car.id)
+      .reduce((sum, s) => sum + (parseFloat(s.cost) || 0), 0);
+
+    const insClass = expiryClass(car.insurance_expiry);
+    const regClass = expiryClass(car.registration_expiry);
+
+    return `
+      <div class="car-card">
+        <div class="car-card-header">
+          <div class="car-card-name">
+            <span style="width:14px;height:14px;border-radius:50%;background:${car.color};flex-shrink:0;display:inline-block"></span>
+            <div>
+              ${esc(car.name)}
+              <small>${car.year ? car.year + ' · ' : ''}${car.car_color ? esc(car.car_color) : 'No color set'}</small>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-icon" onclick="openEditCar(${car.id})" title="Edit">✏️</button>
+            <button class="btn-icon" onclick="openAddService(${car.id})" title="Add Service">🔧</button>
+          </div>
+        </div>
+
+        <div class="car-info-grid">
+          <div class="car-info-item">
+            <span>License Plate</span>
+            <strong>${esc(car.plate || '—')}</strong>
+          </div>
+          <div class="car-info-item">
+            <span>VIN</span>
+            <strong style="font-size:0.75rem;">${esc(car.vin || '—')}</strong>
+          </div>
+          <div class="car-info-item">
+            <span>Mileage</span>
+            <strong>${car.mileage ? Number(car.mileage).toLocaleString() + ' mi' : '—'}</strong>
+          </div>
+          <div class="car-info-item">
+            <span>Daily Rate</span>
+            <strong>$${car.daily_rate || DAILY_RATES[car.id] || '—'}/day</strong>
+          </div>
+          <div class="car-info-item">
+            <span>Insurance Expiry</span>
+            <strong class="${insClass}">${expiryLabel(car.insurance_expiry)}</strong>
+          </div>
+          <div class="car-info-item">
+            <span>Registration Expiry</span>
+            <strong class="${regClass}">${expiryLabel(car.registration_expiry)}</strong>
+          </div>
+        </div>
+
+        <div style="padding-top:0.75rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;">
+          <div style="color:var(--muted);">
+            Last service: <strong style="color:var(--text);">${lastSvc ? fmtDate(lastSvc.service_date) + ' · ' + lastSvc.service_type : 'None recorded'}</strong>
+          </div>
+          <div style="color:var(--muted);">
+            Total spent: <strong style="color:var(--red);">$${totalSvcCost.toLocaleString('en-US', { maximumFractionDigits: 0 })}</strong>
+          </div>
+        </div>
+
+        ${car.notes ? `<div style="margin-top:0.75rem;padding:0.55rem 0.75rem;background:var(--surface-2);border-radius:8px;font-size:0.75rem;color:var(--muted-2);">${esc(car.notes)}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function renderServicesTable() {
+  const tbody = document.getElementById('services-tbody');
+  if (!tbody) return;
+
+  const carF  = document.getElementById('service-car-filter')?.value  || '';
+  const typeF = document.getElementById('service-type-filter')?.value || '';
+
+  const list = allServices.filter(s => {
+    const c = carF  ? String(s.car_id) === carF : true;
+    const t = typeF ? s.service_type === typeF  : true;
+    return c && t;
+  });
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2.5rem">No service records found</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(s => `
+    <tr>
+      <td>${fmtDate(s.service_date)}</td>
+      <td><span class="car-dot-inline" style="background:${CAR_COLORS[s.car_id] || '#666'}"></span>${CAR_NAMES[s.car_id] || '—'}</td>
+      <td><span class="service-type-badge ${SVC_BADGE[s.service_type] || 'svc-other'}">${esc(s.service_type)}</span></td>
+      <td>${s.mileage ? Number(s.mileage).toLocaleString() + ' mi' : '—'}</td>
+      <td style="color:var(--muted-2);">${esc(s.provider || '—')}</td>
+      <td style="color:var(--red);font-weight:600;">${s.cost ? '$' + Number(s.cost).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '—'}</td>
+      <td>${s.next_service_date ? `<strong class="${expiryClass(s.next_service_date)}">${fmtDate(s.next_service_date)}</strong>` : '—'}</td>
+      <td style="color:var(--muted-2);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(s.notes || '—')}</td>
+      <td class="actions">
+        <button class="btn-icon" onclick="openEditService('${s.id}')" title="Edit">✏️</button>
+        <button class="btn-icon danger" onclick="deleteService('${s.id}')" title="Delete">🗑️</button>
+      </td>
+    </tr>`).join('');
+}
+
+function openEditCar(id) {
+  const car = allCars.find(c => c.id === id) || { id };
+  const form = document.getElementById('car-form');
+  form.dataset.carId = id;
+  document.getElementById('car-modal-title').textContent = `Edit — ${CAR_NAMES[id]}`;
+  document.getElementById('car-year').value         = car.year              || '';
+  document.getElementById('car-color').value        = car.car_color         || '';
+  document.getElementById('car-plate').value        = car.plate             || '';
+  document.getElementById('car-vin').value          = car.vin               || '';
+  document.getElementById('car-mileage').value      = car.mileage           || '';
+  document.getElementById('car-rate').value         = car.daily_rate        || DAILY_RATES[id] || '';
+  document.getElementById('car-insurance').value    = car.insurance_expiry  || '';
+  document.getElementById('car-registration').value = car.registration_expiry || '';
+  document.getElementById('car-notes').value        = car.notes             || '';
+  openModal('car-modal');
+}
+
+async function saveCar(e) {
+  e.preventDefault();
+  const carId = parseInt(document.getElementById('car-form').dataset.carId);
+  const payload = {
+    year:                  parseInt(document.getElementById('car-year').value)     || null,
+    car_color:             document.getElementById('car-color').value.trim(),
+    plate:                 document.getElementById('car-plate').value.trim(),
+    vin:                   document.getElementById('car-vin').value.trim(),
+    mileage:               parseInt(document.getElementById('car-mileage').value)  || null,
+    daily_rate:            parseFloat(document.getElementById('car-rate').value)   || null,
+    insurance_expiry:      document.getElementById('car-insurance').value          || null,
+    registration_expiry:   document.getElementById('car-registration').value       || null,
+    notes:                 document.getElementById('car-notes').value.trim(),
+  };
+  const btn = e.submitter;
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  // Upsert: update if row exists, insert if not
+  const existing = allCars.find(c => c.id === carId);
+  const { error } = existing
+    ? await sb.from('cars').update(payload).eq('id', carId)
+    : await sb.from('cars').insert({ id: carId, ...payload });
+
+  if (error) { alert('Error: ' + error.message); }
+  else { closeModal('car-modal'); await loadCars(); renderCarCards(); }
+  btn.disabled = false; btn.textContent = 'Save Details';
+}
+
+function openAddService(carId) {
+  document.getElementById('service-form').reset();
+  delete document.getElementById('service-form').dataset.editId;
+  document.getElementById('service-modal-title').textContent = 'Add Service Record';
+  document.getElementById('svc-date').value = todayStr();
+  if (carId) document.getElementById('svc-car').value = carId;
+  openModal('service-modal');
+}
+
+function openEditService(id) {
+  const s = allServices.find(x => x.id === id);
+  if (!s) return;
+  const form = document.getElementById('service-form');
+  form.dataset.editId = id;
+  document.getElementById('service-modal-title').textContent = 'Edit Service Record';
+  document.getElementById('svc-car').value      = s.car_id;
+  document.getElementById('svc-date').value     = s.service_date;
+  document.getElementById('svc-type').value     = s.service_type;
+  document.getElementById('svc-mileage').value  = s.mileage  || '';
+  document.getElementById('svc-cost').value     = s.cost     || '';
+  document.getElementById('svc-provider').value = s.provider || '';
+  document.getElementById('svc-next').value     = s.next_service_date || '';
+  document.getElementById('svc-notes').value    = s.notes   || '';
+  openModal('service-modal');
+}
+
+async function saveService(e) {
+  e.preventDefault();
+  const form   = document.getElementById('service-form');
+  const editId = form.dataset.editId;
+  const payload = {
+    car_id:            parseInt(document.getElementById('svc-car').value),
+    service_date:      document.getElementById('svc-date').value,
+    service_type:      document.getElementById('svc-type').value,
+    mileage:           parseInt(document.getElementById('svc-mileage').value)  || null,
+    cost:              parseFloat(document.getElementById('svc-cost').value)   || null,
+    provider:          document.getElementById('svc-provider').value.trim(),
+    next_service_date: document.getElementById('svc-next').value               || null,
+    notes:             document.getElementById('svc-notes').value.trim(),
+  };
+  const btn = e.submitter;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const { error } = editId
+    ? await sb.from('car_services').update(payload).eq('id', editId)
+    : await sb.from('car_services').insert(payload);
+  if (error) { alert('Error: ' + error.message); }
+  else { closeModal('service-modal'); await loadServices(); renderServicesTable(); renderCarCards(); }
+  btn.disabled = false; btn.textContent = 'Save Record';
+}
+
+async function deleteService(id) {
+  if (!confirm('Delete this service record?')) return;
+  await sb.from('car_services').delete().eq('id', id);
+  await loadServices();
+  renderServicesTable();
+  renderCarCards();
+}
+
+// ====================================================
 //  TABS
 // ====================================================
 const TAB_TITLES = {
@@ -799,6 +1059,7 @@ const TAB_TITLES = {
   reservations: 'All Reservations',
   turo:         'Calendar Sync',
   consignments: 'Consignment Contracts',
+  cars:         'Fleet Vehicles &amp; Maintenance',
 };
 
 function switchTab(tab) {
@@ -810,6 +1071,7 @@ function switchTab(tab) {
   if (tab === 'calendar' && calendar) calendar.updateSize();
   if (tab === 'turo') renderTuroGrid();
   if (tab === 'consignments') { renderConsignments(); renderExpensesTable(); }
+  if (tab === 'cars') { renderCarCards(); renderServicesTable(); }
 }
 
 // ====================================================
@@ -868,7 +1130,7 @@ async function refresh() {
 window.addEventListener('DOMContentLoaded', async () => {
   if (!(await checkAuth())) return;
 
-  await Promise.all([loadReservations(), loadBlockedDates(), loadTuroFeeds(), loadConsignments(), loadExpenses()]);
+  await Promise.all([loadReservations(), loadBlockedDates(), loadTuroFeeds(), loadConsignments(), loadExpenses(), loadCars(), loadServices()]);
 
   updateStats();
   initCalendar();
@@ -927,6 +1189,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('con-epure-pct').textContent =
       (100 - pct).toFixed(1).replace(/\.0$/, '') + '%';
   });
+
+  // Cars & maintenance
+  document.getElementById('add-service-btn-top')?.addEventListener('click', () => openAddService());
+  document.getElementById('car-form')?.addEventListener('submit', saveCar);
+  document.getElementById('service-form')?.addEventListener('submit', saveService);
+  document.getElementById('service-car-filter')?.addEventListener('change', renderServicesTable);
+  document.getElementById('service-type-filter')?.addEventListener('change', renderServicesTable);
 
   // Close modals on backdrop click
   document.querySelectorAll('.modal').forEach(modal =>
