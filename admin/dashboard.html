@@ -959,8 +959,28 @@
             <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Vehicle details, documents and expiry status</p>
           </div>
         </div>
-        <div class="cars-grid" id="cars-grid">
-          <div class="empty-state"><p>Loading…</p></div>
+        <div class="table-section">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Vehicle</th>
+                  <th>Year</th>
+                  <th>Color</th>
+                  <th>Plate</th>
+                  <th>VIN</th>
+                  <th>Mileage</th>
+                  <th>Insurance</th>
+                  <th>Registration</th>
+                  <th>Rate</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="cars-tbody">
+                <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -977,7 +997,28 @@
           </button>
         </div>
 
-        <!-- Upcoming services alert -->
+        <!-- Fleet status overview -->
+        <div class="table-section" style="margin-bottom:1.5rem;">
+          <div class="table-header"><h3>Fleet Overview</h3></div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Vehicle</th>
+                  <th>Last Service</th>
+                  <th>Current Mileage</th>
+                  <th>Next Service Due</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="fleet-status-tbody">
+                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Upcoming alerts -->
         <div id="maintenance-alerts" style="margin-bottom:1.25rem;"></div>
 
         <div class="table-section">
@@ -1052,7 +1093,7 @@
                   <th>Name</th>
                   <th>Email</th>
                   <th>Phone</th>
-                  <th>License / ID</th>
+                  <th>Address</th>
                   <th>Total Bookings</th>
                   <th>Total Spent</th>
                   <th>Notes</th>
@@ -1069,9 +1110,33 @@
 
       <!-- REPORTS TAB -->
       <div class="tab-content" id="tab-reports">
-        <div style="margin-bottom:1.5rem;">
+        <div style="margin-bottom:1.25rem;">
           <h3 style="font-size:1rem;font-weight:600;">Reports & Analytics</h3>
           <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Revenue trends and fleet performance</p>
+        </div>
+        <!-- Filter row -->
+        <div style="display:flex;gap:0.75rem;align-items:flex-end;margin-bottom:1.5rem;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem;">
+          <div class="form-group" style="margin:0;">
+            <label>From</label>
+            <input type="date" id="report-from" />
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>To</label>
+            <input type="date" id="report-to" />
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>Vehicle</label>
+            <select class="filter-select" id="report-car">
+              <option value="">All Vehicles</option>
+              <option value="1">Audi Q3</option>
+              <option value="2">Audi A3</option>
+              <option value="3">Porsche Cayenne</option>
+              <option value="4">VW Atlas</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="apply-report-btn">Apply</button>
+          <button class="btn btn-outline" id="clear-report-btn">Clear</button>
+          <div id="report-summary" style="margin-left:auto;font-size:0.85rem;color:var(--muted);align-self:flex-end;"></div>
         </div>
         <div class="dash-grid" style="margin-bottom:1.5rem;">
           <div class="dash-card">
@@ -1263,10 +1328,6 @@
           <div class="form-group">
             <label>Phone</label>
             <input type="tel" id="cust-phone" placeholder="(305) 555-0000" />
-          </div>
-          <div class="form-group">
-            <label>Driver's License / ID</label>
-            <input type="text" id="cust-license" placeholder="D12345678" />
           </div>
           <div class="form-group">
             <label>Address</label>
