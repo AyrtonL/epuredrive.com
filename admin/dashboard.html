@@ -536,6 +536,51 @@
     .empty-state svg { opacity: 0.3; margin-bottom: 1rem; }
     .empty-state p { font-size: 0.88rem; }
 
+    /* ---- CONSIGNMENTS ---- */
+    .consignment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .consignment-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+    .consignment-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .consignment-car {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .split-pill {
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .split-owner { background: rgba(16,185,129,0.15); color: #34D399; }
+    .split-epure { background: rgba(0,210,255,0.12); color: var(--accent); }
+    .consignment-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .c-stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 0.2rem; }
+    .c-stat-value { font-size: 1.05rem; font-weight: 700; }
+
     /* ---- SCROLLBAR ---- */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -566,6 +611,10 @@
       <button class="nav-item" data-tab="turo">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
         Calendar Sync
+      </button>
+      <button class="nav-item" data-tab="consignments">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Consignments
       </button>
     </nav>
     <div class="sidebar-footer">
@@ -828,6 +877,71 @@
 
       </div>
 
+      <!-- CONSIGNMENTS TAB -->
+      <div class="tab-content" id="tab-consignments">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+          <div>
+            <h3 style="font-size:1rem;font-weight:600;">Consignment Contracts</h3>
+            <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Manage vehicle owners, revenue splits and expenses</p>
+          </div>
+          <button class="btn btn-primary" id="add-consignment-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Consignment
+          </button>
+        </div>
+
+        <div class="consignment-grid" id="consignment-grid">
+          <div class="empty-state"><p>Loading…</p></div>
+        </div>
+
+        <!-- Expenses Table -->
+        <div class="table-section">
+          <div class="table-header">
+            <h3>Expenses</h3>
+            <div class="table-filters">
+              <select class="filter-select" id="expense-car-filter">
+                <option value="">All Vehicles</option>
+                <option value="1">Audi Q3</option>
+                <option value="2">Audi A3</option>
+                <option value="3">Porsche Cayenne</option>
+                <option value="4">Volkswagen Atlas</option>
+              </select>
+              <select class="filter-select" id="expense-cat-filter">
+                <option value="">All Categories</option>
+                <option>Maintenance</option>
+                <option>Cleaning</option>
+                <option>Fuel</option>
+                <option>Insurance</option>
+                <option>Toll Reimbursement</option>
+                <option>Repair</option>
+                <option>Other</option>
+              </select>
+              <button class="btn btn-outline" id="add-expense-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Expense
+              </button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Vehicle</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="expenses-tbody">
+                <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </main>
 
@@ -967,6 +1081,119 @@
       </div>
       <div id="detail-content"></div>
       <div class="modal-footer" id="detail-actions"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: Consignment -->
+  <div class="modal" id="consignment-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="consignment-modal-title">New Consignment</h3>
+        <button class="modal-close" onclick="closeModal('consignment-modal')">✕</button>
+      </div>
+      <form id="consignment-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Vehicle</label>
+            <select id="con-car" required>
+              <option value="">Select vehicle…</option>
+              <option value="1">Audi Q3</option>
+              <option value="2">Audi A3</option>
+              <option value="3">Porsche Cayenne</option>
+              <option value="4">Volkswagen Atlas</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Owner Name</label>
+            <input type="text" id="con-owner" placeholder="John Smith" required />
+          </div>
+          <div class="form-group">
+            <label>Owner Email</label>
+            <input type="email" id="con-email" placeholder="john@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Owner Phone</label>
+            <input type="tel" id="con-phone" placeholder="(305) 555-0000" />
+          </div>
+          <div class="form-group">
+            <label>Owner Revenue % (owner keeps)</label>
+            <input type="number" id="con-pct" value="70" min="0" max="100" step="0.5" required />
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;">
+            <div style="width:100%;padding:0.65rem 0.9rem;background:var(--surface-3);border-radius:8px;font-size:0.85rem;color:var(--muted);">
+              éPure keeps: <strong id="con-epure-pct" style="color:var(--accent);">30%</strong>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Contract Start</label>
+            <input type="date" id="con-start" />
+          </div>
+          <div class="form-group">
+            <label>Contract End</label>
+            <input type="date" id="con-end" />
+          </div>
+          <div class="form-group full">
+            <label>Notes</label>
+            <textarea id="con-notes" placeholder="Contract terms, special conditions…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('consignment-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Consignment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Expense -->
+  <div class="modal" id="expense-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="expense-modal-title">Add Expense</h3>
+        <button class="modal-close" onclick="closeModal('expense-modal')">✕</button>
+      </div>
+      <form id="expense-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Vehicle</label>
+            <select id="exp-car" required>
+              <option value="">Select vehicle…</option>
+              <option value="1">Audi Q3</option>
+              <option value="2">Audi A3</option>
+              <option value="3">Porsche Cayenne</option>
+              <option value="4">Volkswagen Atlas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="exp-date" required />
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="exp-cat">
+              <option>Maintenance</option>
+              <option>Cleaning</option>
+              <option>Fuel</option>
+              <option>Insurance</option>
+              <option>Toll Reimbursement</option>
+              <option>Repair</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Amount ($)</label>
+            <input type="number" id="exp-amount" placeholder="0.00" step="0.01" min="0" required />
+          </div>
+          <div class="form-group full">
+            <label>Description</label>
+            <textarea id="exp-desc" placeholder="Oil change, tire rotation…" style="min-height:60px;"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('expense-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Expense</button>
+        </div>
+      </form>
     </div>
   </div>
 
