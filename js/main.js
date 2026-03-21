@@ -115,11 +115,11 @@ function initHeroVideoSlider() {
   if (!hero) return;
 
   const VIDEOS = [
-    'assets/images/Videos/15863841-uhd_3840_2160_60fps.mp4',
-    'assets/images/Videos/20412312-uhd_3840_2160_25fps.mp4',
-    'assets/images/Videos/15280626_3840_2160_24fps.mp4',
-    'assets/images/Videos/16000240-uhd_2160_3840_60fps.mp4',
-    'assets/images/Videos/13843782_2160_3840_30fps.mp4',
+    'assets/images/Videos/15863841-uhd_3840_2160_60fps.webm',
+    'assets/images/Videos/20412312-uhd_3840_2160_25fps.webm',
+    'assets/images/Videos/15280626_3840_2160_24fps.webm',
+    'assets/images/Videos/16000240-uhd_2160_3840_60fps.webm',
+    'assets/images/Videos/13843782_2160_3840_30fps.webm',
   ];
 
   const container = document.createElement('div');
