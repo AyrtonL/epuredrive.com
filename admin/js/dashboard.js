@@ -42,26 +42,40 @@ async function checkAuth() {
 }
 
 async function loadTenantProfile(userId) {
-  try {
-    const { data: profile } = await sb
-      .from('profiles')
-      .select('tenant_id, tenants(name)')
-      .eq('id', userId)
-      .single();
+  // 1 — Try profile lookup (maybeSingle avoids throwing when row is missing)
+  const { data: profile } = await sb
+    .from('profiles')
+    .select('tenant_id, tenants(name)')
+    .eq('id', userId)
+    .maybeSingle();
 
-    if (profile?.tenant_id) {
-      currentTenantId   = profile.tenant_id;
-      currentTenantName = profile.tenants?.name || null;
-      const el = document.getElementById('tenant-name');
-      if (el && currentTenantName) el.textContent = currentTenantName;
-    } else {
-      // Logged in but no tenant yet — show onboarding
-      await showOnboarding(userId);
-    }
-  } catch (_) {
-    // Profile row doesn't exist — show onboarding
-    try { await showOnboarding(userId); } catch (_2) { currentTenantId = null; }
+  if (profile?.tenant_id) {
+    currentTenantId   = profile.tenant_id;
+    currentTenantName = profile.tenants?.name || null;
+    const el = document.getElementById('tenant-name');
+    if (el && currentTenantName) el.textContent = currentTenantName;
+    return;
   }
+
+  // 2 — Profile missing or no tenant_id — fetch the existing tenant directly
+  const { data: tenant } = await sb
+    .from('tenants')
+    .select('id, name')
+    .limit(1)
+    .maybeSingle();
+
+  if (tenant?.id) {
+    currentTenantId   = tenant.id;
+    currentTenantName = tenant.name || null;
+    // Re-link this user to the tenant so next login is instant
+    await sb.from('profiles').upsert({ id: userId, tenant_id: tenant.id, role: 'admin' });
+    const el = document.getElementById('tenant-name');
+    if (el && currentTenantName) el.textContent = currentTenantName;
+    return;
+  }
+
+  // 3 — Truly no tenant yet — show first-time onboarding
+  try { await showOnboarding(userId); } catch (_) { currentTenantId = null; }
 }
 
 // ====================================================
