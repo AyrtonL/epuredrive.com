@@ -47,6 +47,24 @@
     body.light-mode .nav-item.active { background: rgba(0, 168, 204, 0.08) !important; border-color: var(--accent) !important; }
     body.light-mode .car-btn.active { background: rgba(0, 168, 204, 0.08) !important; }
     body.light-mode .fc .fc-day-today { background: rgba(0,168,204,0.06) !important; }
+    body.light-mode .stat-card,
+    body.light-mode .dash-card,
+    body.light-mode .table-section,
+    body.light-mode .recent-bookings-card,
+    body.light-mode .consignment-card,
+    body.light-mode .turo-card,
+    body.light-mode .modal-box { box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    body.light-mode table th { background: #f1f5f9; color: #374151; }
+    body.light-mode .badge-yellow { background: rgba(245,158,11,0.12); color: #b45309; }
+    body.light-mode .badge-blue   { background: rgba(59,130,246,0.12); color: #1d4ed8; }
+    body.light-mode .badge-green  { background: rgba(16,185,129,0.12); color: #065f46; }
+    body.light-mode .badge-gray   { background: rgba(107,114,128,0.1); color: #4b5563; }
+    body.light-mode .badge-red    { background: rgba(239,68,68,0.1);   color: #dc2626; }
+    body.light-mode .expiry-warn   { color: #b45309; }
+    body.light-mode .expiry-danger { color: #dc2626; }
+    body.light-mode .split-owner  { background: rgba(16,185,129,0.12); color: #065f46; }
+    body.light-mode .split-epure  { background: rgba(0,168,204,0.10);  color: #0369a1; }
+    body.light-mode .service-type-badge { opacity: 0.9; }
 
     body {
       font-family: 'Outfit', sans-serif;
@@ -383,9 +401,12 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
-    .source-manual { background: rgba(107,114,128,0.15); color: #9CA3AF; }
-    .source-turo   { background: rgba(249,115,22,0.15);  color: #FB923C; }
-    .source-web    { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+    .source-manual  { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+    .source-admin   { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+    .source-turo    { background: rgba(249,115,22,0.15);  color: #FB923C; }
+    .source-web     { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+    .source-website { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+    .source-gcal    { background: rgba(66,133,244,0.15);  color: #4285F4; }
 
     .actions { display: flex; gap: 0.4rem; }
     .btn-icon {
@@ -655,9 +676,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         Dashboard
       </button>
-      <button class="nav-item" data-tab="bookings">
+      <button class="nav-item" data-tab="bookings" style="position:relative;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Bookings
+        <span id="new-booking-badge" style="display:none;position:absolute;top:6px;right:8px;background:var(--accent);color:#000;border-radius:10px;font-size:0.6rem;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;"></span>
       </button>
       <button class="nav-item" data-tab="cars">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -888,7 +910,7 @@
 
       <!-- CONSIGNMENTS TAB -->
       <div class="tab-content" id="tab-consignments">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
           <div>
             <h3 style="font-size:1rem;font-weight:600;">Consignment Contracts</h3>
             <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Manage vehicle owners, revenue splits and expenses</p>
@@ -897,6 +919,14 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Consignment
           </button>
+        </div>
+        <!-- Revenue date filter -->
+        <div style="display:flex;gap:0.75rem;align-items:flex-end;margin-bottom:1.5rem;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.85rem 1rem;">
+          <div class="form-group" style="margin:0;"><label>Revenue From</label><input type="date" id="con-from" /></div>
+          <div class="form-group" style="margin:0;"><label>Revenue To</label><input type="date" id="con-to" /></div>
+          <button class="btn btn-primary" id="apply-con-btn">Apply</button>
+          <button class="btn btn-outline" id="clear-con-btn">Clear</button>
+          <div id="con-period-label" style="margin-left:auto;font-size:0.82rem;color:var(--muted);align-self:flex-end;"></div>
         </div>
 
         <div class="consignment-grid" id="consignment-grid">
@@ -1152,7 +1182,13 @@
         </div>
         <!-- Revenue by car table -->
         <div class="table-section">
-          <div class="table-header"><h3>Revenue by Vehicle</h3></div>
+          <div class="table-header">
+            <h3>Revenue by Vehicle</h3>
+            <button class="btn btn-outline" id="export-csv-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+          </div>
           <div style="overflow-x:auto;">
             <table>
               <thead>

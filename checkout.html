@@ -288,10 +288,14 @@
             <div class="step-panel active" id="step-1">
                 <h2 class="step-title">Dates & Location</h2>
                 <div class="error-message" id="date-error"></div>
+                <div id="availability-loading" style="display:none;font-size:0.85rem;color:#888;margin-bottom:12px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;vertical-align:middle;margin-right:6px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                    Checking availability…
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Pick-up Date</label>
-                        <input type="date" id="co-pickup" required>
+                        <input type="text" id="co-pickup" placeholder="Select pick-up date" readonly required>
                     </div>
                     <div class="form-group">
                         <label>Pick-up Time</label>
@@ -306,7 +310,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Return Date</label>
-                        <input type="date" id="co-return" required>
+                        <input type="text" id="co-return" placeholder="Select return date" readonly required>
                     </div>
                     <div class="form-group">
                         <label>Return Time</label>
@@ -327,7 +331,7 @@
                     </select>
                 </div>
                 <div class="checkout-actions" style="justify-content: flex-end;">
-                    <button class="btn btn-primary" onclick="nextStep(2)">Continue to Vehicle</button>
+                    <button class="btn btn-primary" id="btn-check-dates" onclick="checkDatesAndNext()">Check Availability</button>
                 </div>
             </div>
 
@@ -494,11 +498,18 @@
     <footer class="footer" style="margin-top: 80px;">
         <!-- Keeps the uniform style but simplified -->
         <div style="text-align: center; color: var(--text-muted); padding: 40px; border-top: 1px solid rgba(255,255,255,0.05);">
-            © 2024 éPure Drive. All rights reserved. Aventura, FL.
+            © 2026 éPure Drive. All rights reserved. Aventura, FL.
         </div>
     </footer>
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+      .flatpickr-day.booked { background: rgba(239,68,68,0.18) !important; color: #f87171 !important; text-decoration: line-through; cursor: not-allowed; }
+      .flatpickr-day.booked:hover { background: rgba(239,68,68,0.25) !important; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="js/main.js"></script>
     <script src="js/fleet.js"></script>
     <script>
@@ -556,24 +567,17 @@
                 </div>
             `;
 
-            // Setup Date listeners
-            const pickupUrl = params.get('start');
-            const returnUrl = params.get('end');
-            
-            const dp = document.getElementById('co-pickup');
-            const dr = document.getElementById('co-return');
-            const loc = document.getElementById('co-location');
+            // Load unavailable dates then init flatpickr
+            loadUnavailableDates(selectedCar.id).then(() => {
+                initDatePickers();
+                const pickupUrl = params.get('start');
+                const returnUrl = params.get('end');
+                if (pickupUrl && _fpPickup) _fpPickup.setDate(pickupUrl);
+                if (returnUrl && _fpReturn) _fpReturn.setDate(returnUrl);
+                updateQuote();
+            });
 
-            const today = new Date().toISOString().split('T')[0];
-            dp.min = today;
-            dr.min = today;
-
-            if (pickupUrl) dp.value = pickupUrl;
-            if (returnUrl) dr.value = returnUrl;
-
-            dp.addEventListener('change', () => { dr.min = dp.value; updateQuote(); });
-            dr.addEventListener('change', updateQuote);
-            loc.addEventListener('change', updateQuote);
+            document.getElementById('co-location').addEventListener('change', updateQuote);
 
             updateQuote();
         });
@@ -654,70 +658,111 @@
             document.getElementById('sum-total').textContent = `$${finalTotal.toLocaleString()}`;
         }
 
-        // ---- Database Mock Logic (LocalStorage) ----
-        function isCarAvailable(carId, startDate, endDate) {
-            const bookings = JSON.parse(localStorage.getItem('luxe_bookings') || '[]');
-            const start = new Date(startDate);
-            const end = new Date(endDate);
+        // ---- Supabase Availability ----
+        let _unavailableRanges = [];
+        let _fpPickup = null, _fpReturn = null;
 
-            // Check for overlap
-            for (const b of bookings) {
-                if (b.carId === carId) {
-                    const bStart = new Date(b.startDate);
-                    const bEnd = new Date(b.endDate);
-                    // Standard overlap logic: A starts before B ends AND A ends after B starts
-                    if (start <= bEnd && end >= bStart) {
-                        return false;
-                    }
-                }
+        async function loadUnavailableDates(carId) {
+            try {
+                const { data } = await _sb.rpc('get_car_unavailable_ranges', { p_car_id: carId });
+                _unavailableRanges = data || [];
+            } catch (_) {
+                _unavailableRanges = [];
             }
-            return true;
         }
 
-        function createBooking(data) {
-            const bookings = JSON.parse(localStorage.getItem('luxe_bookings') || '[]');
-            bookings.push({
-                ...data,
-                bookingId: 'LX-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
-                createdAt: new Date().toISOString()
+        function buildDisabledDates(ranges) {
+            // flatpickr accepts { from, to } objects or individual dates
+            return ranges.map(r => ({ from: r.start_date, to: r.end_date }));
+        }
+
+        function initDatePickers() {
+            const disabled = buildDisabledDates(_unavailableRanges);
+            const today = new Date().toISOString().split('T')[0];
+
+            _fpPickup = flatpickr('#co-pickup', {
+                minDate: today,
+                dateFormat: 'Y-m-d',
+                disable: disabled,
+                onDayCreate(dObj, dStr, fp, dayElem) {
+                    const d = dayElem.dateObj?.toISOString().split('T')[0];
+                    if (d && _unavailableRanges.some(r => d >= r.start_date && d <= r.end_date)) {
+                        dayElem.classList.add('booked');
+                    }
+                },
+                onChange([date]) {
+                    if (_fpReturn) _fpReturn.set('minDate', date);
+                    updateQuote();
+                },
             });
-            localStorage.setItem('luxe_bookings', JSON.stringify(bookings));
+
+            _fpReturn = flatpickr('#co-return', {
+                minDate: today,
+                dateFormat: 'Y-m-d',
+                disable: disabled,
+                onDayCreate(dObj, dStr, fp, dayElem) {
+                    const d = dayElem.dateObj?.toISOString().split('T')[0];
+                    if (d && _unavailableRanges.some(r => d >= r.start_date && d <= r.end_date)) {
+                        dayElem.classList.add('booked');
+                    }
+                },
+                onChange() { updateQuote(); },
+            });
+        }
+
+        async function checkAvailability(carId, startDate, endDate) {
+            try {
+                const { data, error } = await _sb.rpc('check_car_availability', {
+                    p_car_id: carId,
+                    p_start_date: startDate,
+                    p_end_date: endDate,
+                });
+                if (error) return true; // fail open — let submit catch it
+                return data === true;
+            } catch (_) {
+                return true; // network error — let submit catch it
+            }
+        }
+
+        async function checkDatesAndNext() {
+            const errorEl = document.getElementById('date-error');
+            errorEl.style.display = 'none';
+            const pDate = document.getElementById('co-pickup').value;
+            const rDate = document.getElementById('co-return').value;
+
+            if (!pDate || !rDate) {
+                errorEl.textContent = 'Please select both pick-up and return dates.';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (pDate >= rDate) {
+                errorEl.textContent = 'Return date must be after pick-up date.';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            const btn = document.getElementById('btn-check-dates');
+            const loadEl = document.getElementById('availability-loading');
+            btn.disabled = true;
+            loadEl.style.display = 'block';
+
+            const available = await checkAvailability(selectedCar.id, pDate, rDate);
+            btn.disabled = false;
+            loadEl.style.display = 'none';
+
+            if (!available) {
+                errorEl.textContent = 'Sorry, this vehicle is not available for the selected dates. Booked dates are highlighted in red on the calendar.';
+                errorEl.style.display = 'block';
+                return;
+            }
+            nextStep(2);
         }
 
         // Navigation
         function nextStep(step) {
-            // Validation before proceeding
-            const errorEl = document.getElementById('date-error');
-            errorEl.style.display = 'none';
-
-            if (currentStep === 1) {
-                const pDate = document.getElementById('co-pickup').value;
-                const rDate = document.getElementById('co-return').value;
-                
-                if (!pDate || !rDate) {
-                    errorEl.textContent = 'Please select both pick-up and return dates.';
-                    errorEl.style.display = 'block';
-                    return;
-                }
-                if (new Date(pDate) > new Date(rDate)) {
-                    errorEl.textContent = 'Return date cannot be before pick-up date.';
-                    errorEl.style.display = 'block';
-                    return;
-                }
-
-                // CHECK AVAILABILITY IN DATABASE (LOCAL STORAGE)
-                const available = isCarAvailable(selectedCar.id, pDate, rDate);
-                if (!available) {
-                    errorEl.textContent = 'Sorry, this vehicle is already booked for the selected dates. Please choose different dates.';
-                    errorEl.style.display = 'block';
-                    return;
-                }
-            }
-
             if (currentStep === 4) {
-                // Check basic input fields
                 const inputs = document.getElementById('step-4').querySelectorAll('[required]');
-                for(let i=0; i<inputs.length; i++) {
+                for (let i = 0; i < inputs.length; i++) {
                     if (!inputs[i].value.trim()) {
                         inputs[i].style.borderColor = '#ef4444';
                         return;
@@ -730,9 +775,7 @@
             document.getElementById(`step-${currentStep}`).classList.remove('active');
             document.getElementById(`indicator-${currentStep}`).classList.add('completed');
             document.getElementById(`indicator-${currentStep}`).classList.remove('active');
-            
             currentStep = step;
-            
             document.getElementById(`step-${currentStep}`).classList.add('active');
             document.getElementById(`indicator-${currentStep}`).classList.add('active');
             window.scrollTo({ top: 0, behavior: 'smooth' });

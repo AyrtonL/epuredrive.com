@@ -24,8 +24,12 @@ let allCars         = [];   // rows from cars table (with extra detail columns)
 let allServices     = [];   // rows from car_services
 let allCustomers    = [];   // rows from customers table
 
+// ---- Multi-tenancy ----
+let currentTenantId   = null;   // uuid — set after profile loads
+let currentTenantName = null;   // display name
+
 // ====================================================
-//  AUTH
+//  AUTH + TENANT PROFILE
 // ====================================================
 async function checkAuth() {
   const { data } = await sb.auth.getSession();
@@ -33,33 +37,65 @@ async function checkAuth() {
     window.location.href = 'index.html';
     return false;
   }
+  await loadTenantProfile(data.session.user.id);
   return true;
+}
+
+async function loadTenantProfile(userId) {
+  try {
+    const { data: profile } = await sb
+      .from('profiles')
+      .select('tenant_id, tenants(name)')
+      .eq('id', userId)
+      .single();
+
+    if (profile?.tenant_id) {
+      currentTenantId   = profile.tenant_id;
+      currentTenantName = profile.tenants?.name || null;
+      // Show tenant name in topbar if element exists
+      const el = document.getElementById('tenant-name');
+      if (el && currentTenantName) el.textContent = currentTenantName;
+    }
+  } catch (_) {
+    // Profiles table doesn't exist yet — single-tenant mode
+    currentTenantId = null;
+  }
+}
+
+// ====================================================
+//  TENANT HELPERS
+// ====================================================
+// Apply tenant filter to a Supabase query builder (only when multi-tenant)
+function withTenant(query) {
+  return currentTenantId ? query.eq('tenant_id', currentTenantId) : query;
+}
+// Build tenant payload for insert/update
+function tenantPayload() {
+  return currentTenantId ? { tenant_id: currentTenantId } : {};
 }
 
 // ====================================================
 //  DATA
 // ====================================================
 async function loadReservations() {
-  const { data, error } = await sb
-    .from('reservations')
-    .select('*')
-    .order('pickup_date', { ascending: true });
+  const { data, error } = await withTenant(
+    sb.from('reservations').select('*').order('pickup_date', { ascending: true })
+  );
   if (!error) allReservations = data || [];
   return allReservations;
 }
 
 async function loadBlockedDates() {
-  const { data, error } = await sb
-    .from('blocked_dates')
-    .select('*')
-    .order('start_date', { ascending: true });
+  const { data, error } = await withTenant(
+    sb.from('blocked_dates').select('*').order('start_date', { ascending: true })
+  );
   if (!error) allBlocked = data || [];
   return allBlocked;
 }
 
 async function loadTuroFeeds() {
   try {
-    const { data } = await sb.from('turo_feeds').select('*');
+    const { data } = await withTenant(sb.from('turo_feeds').select('*'));
     if (data) {
       data.forEach(row => {
         turoFeeds[row.car_id] = { url: row.ical_url, lastSynced: row.last_synced, id: row.id };
@@ -159,17 +195,21 @@ function refreshCalendar() {
 }
 
 // ====================================================
-//  RESERVATIONS TABLE
+//  RESERVATIONS TABLE  (with pagination)
 // ====================================================
-function renderTable() {
-  const tbody       = document.getElementById('res-tbody');
-  const search      = (document.getElementById('search-input')?.value || '').toLowerCase();
-  const statusF     = document.getElementById('status-filter')?.value || '';
-  const carF        = document.getElementById('car-filter')?.value || '';
+const PAGE_SIZE = 25;
+let currentPage = 1;
 
-  let list = allReservations.filter(r => {
+function renderTable(resetPage = false) {
+  if (resetPage) currentPage = 1;
+  const tbody   = document.getElementById('res-tbody');
+  const search  = (document.getElementById('search-input')?.value || '').toLowerCase();
+  const statusF = document.getElementById('status-filter')?.value || '';
+  const carF    = document.getElementById('car-filter')?.value || '';
+
+  const list = allReservations.filter(r => {
     const s = search ? (
-      r.customer_name.toLowerCase().includes(search) ||
+      (r.customer_name || '').toLowerCase().includes(search) ||
       (r.customer_email || '').toLowerCase().includes(search) ||
       (r.customer_phone || '').includes(search)
     ) : true;
@@ -178,20 +218,19 @@ function renderTable() {
     return s && st && c;
   }).sort((a, b) => a.pickup_date < b.pickup_date ? 1 : -1);
 
-  if (!list.length) {
+  const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  currentPage = Math.min(currentPage, totalPages);
+  const page = list.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  if (!page.length) {
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2.5rem 1rem">No reservations found</td></tr>`;
+    renderPagination(0, 1, 1);
     return;
   }
 
-  tbody.innerHTML = list.map(r => {
+  const statusMap = { pending:'badge-yellow', confirmed:'badge-blue', active:'badge-green', completed:'badge-gray', cancelled:'badge-red' };
+  tbody.innerHTML = page.map(r => {
     const days = dateDiff(r.pickup_date, r.return_date);
-    const statusMap = {
-      pending:   'badge-yellow',
-      confirmed: 'badge-blue',
-      active:    'badge-green',
-      completed: 'badge-gray',
-      cancelled: 'badge-red',
-    };
     return `
       <tr>
         <td>
@@ -206,13 +245,42 @@ function renderTable() {
         <td>${days}d</td>
         <td>${r.total_amount ? '$' + Number(r.total_amount).toLocaleString() : '—'}</td>
         <td><span class="badge ${statusMap[r.status] || 'badge-gray'}">${r.status}</span></td>
-        <td><span class="source-badge source-${r.source}">${r.source}</span></td>
+        <td><span class="source-badge source-${r.source || 'admin'}">${r.source || 'admin'}</span></td>
         <td class="actions">
           <button class="btn-icon" onclick="openEdit('${r.id}')" title="Edit">✏️</button>
           <button class="btn-icon danger" onclick="deleteReservation('${r.id}')" title="Delete">🗑️</button>
         </td>
       </tr>`;
   }).join('');
+
+  renderPagination(list.length, currentPage, totalPages);
+}
+
+function renderPagination(total, current, totalPages) {
+  let el = document.getElementById('bookings-pagination');
+  if (!el) {
+    const section = document.querySelector('#tab-bookings .table-section');
+    if (!section) return;
+    el = document.createElement('div');
+    el.id = 'bookings-pagination';
+    el.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-top:1px solid var(--border);font-size:0.82rem;color:var(--muted);';
+    section.appendChild(el);
+  }
+  if (totalPages <= 1) { el.innerHTML = `<span>${total} reservation${total !== 1 ? 's' : ''}</span>`; return; }
+  const start = (current - 1) * PAGE_SIZE + 1;
+  const end   = Math.min(current * PAGE_SIZE, total);
+  el.innerHTML = `
+    <span>${start}–${end} of ${total}</span>
+    <div style="display:flex;gap:0.4rem;">
+      <button class="btn btn-outline" style="padding:0.3rem 0.65rem;" onclick="changePage(${current - 1})" ${current <= 1 ? 'disabled' : ''}>‹ Prev</button>
+      <span style="padding:0.3rem 0.65rem;background:var(--surface-2);border-radius:6px;color:var(--text);">${current} / ${totalPages}</span>
+      <button class="btn btn-outline" style="padding:0.3rem 0.65rem;" onclick="changePage(${current + 1})" ${current >= totalPages ? 'disabled' : ''}>Next ›</button>
+    </div>`;
+}
+
+function changePage(page) {
+  currentPage = page;
+  renderTable();
 }
 
 // ====================================================
@@ -263,7 +331,8 @@ async function saveReservation(e) {
     total_amount:    parseFloat(document.getElementById('f-amount').value) || null,
     status:          document.getElementById('f-status').value,
     notes:           document.getElementById('f-notes').value.trim(),
-    source:          'manual',
+    source:          'admin',
+    ...tenantPayload(),
   };
 
   const btn = e.submitter;
@@ -570,18 +639,30 @@ function parseIcal(icsText, carId) {
 //  CONSIGNMENTS
 // ====================================================
 async function loadConsignments() {
-  const { data, error } = await sb.from('consignments').select('*').order('car_id');
+  const { data, error } = await withTenant(sb.from('consignments').select('*').order('car_id'));
   if (!error) allConsignments = data || [];
 }
 
 async function loadExpenses() {
-  const { data, error } = await sb.from('consignment_expenses').select('*').order('expense_date', { ascending: false });
+  const { data, error } = await withTenant(sb.from('consignment_expenses').select('*').order('expense_date', { ascending: false }));
   if (!error) allExpenses = data || [];
 }
 
 function renderConsignments() {
   const grid = document.getElementById('consignment-grid');
   if (!grid) return;
+
+  const fromVal = document.getElementById('con-from')?.value || '';
+  const toVal   = document.getElementById('con-to')?.value   || '';
+
+  const label = document.getElementById('con-period-label');
+  if (label) {
+    if (fromVal || toVal) {
+      label.textContent = 'Revenue period: ' + (fromVal || '…') + ' → ' + (toVal || '…');
+    } else {
+      label.textContent = 'Showing all-time revenue';
+    }
+  }
 
   if (!allConsignments.length) {
     grid.innerHTML = `<div class="empty-state">
@@ -597,7 +678,12 @@ function renderConsignments() {
     const carName    = CAR_NAMES[con.car_id]  || 'Vehicle';
 
     const carRevenue = allReservations
-      .filter(r => r.car_id === con.car_id && r.status !== 'cancelled')
+      .filter(r => {
+        if (r.car_id !== con.car_id || r.status === 'cancelled') return false;
+        if (fromVal && r.pickup_date < fromVal) return false;
+        if (toVal   && r.pickup_date > toVal)   return false;
+        return true;
+      })
       .reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
 
     const ownerRevenue  = carRevenue * ownerPct / 100;
@@ -734,6 +820,7 @@ async function saveConsignment(e) {
     contract_start:   document.getElementById('con-start').value || null,
     contract_end:     document.getElementById('con-end').value   || null,
     notes:            document.getElementById('con-notes').value.trim(),
+    ...tenantPayload(),
   };
   const btn = e.submitter;
   btn.disabled = true; btn.textContent = 'Saving…';
@@ -774,6 +861,7 @@ async function saveExpense(e) {
     category:       document.getElementById('exp-cat').value,
     amount:         parseFloat(document.getElementById('exp-amount').value),
     description:    document.getElementById('exp-desc').value.trim(),
+    ...tenantPayload(),
   };
   const btn = e.submitter;
   btn.disabled = true; btn.textContent = 'Saving…';
@@ -797,7 +885,7 @@ async function deleteExpense(id) {
 //  CUSTOMERS
 // ====================================================
 async function loadCustomers() {
-  const { data, error } = await sb.from('customers').select('*').order('name');
+  const { data, error } = await withTenant(sb.from('customers').select('*').order('name'));
   if (!error) allCustomers = data || [];
 }
 
@@ -871,6 +959,7 @@ async function saveCustomer(e) {
     phone:      document.getElementById('cust-phone').value.trim(),
     address:    document.getElementById('cust-address').value.trim(),
     notes:      document.getElementById('cust-notes').value.trim(),
+    ...tenantPayload(),
   };
   const btn = e.submitter;
   btn.disabled = true; btn.textContent = 'Saving…';
@@ -949,6 +1038,79 @@ function renderReports() {
   if (typeof Chart !== 'undefined') {
     refreshCharts(filtered);
   }
+}
+
+// ====================================================
+//  CSV EXPORT
+// ====================================================
+function exportReservationsCSV() {
+  const fromVal = document.getElementById('report-from')?.value || '';
+  const toVal   = document.getElementById('report-to')?.value   || '';
+  const carVal  = document.getElementById('report-car')?.value  || '';
+
+  const rows = allReservations.filter(r => {
+    if (r.status === 'cancelled') return false;
+    if (fromVal && r.pickup_date < fromVal) return false;
+    if (toVal   && r.pickup_date > toVal)   return false;
+    if (carVal  && String(r.car_id) !== carVal) return false;
+    return true;
+  });
+
+  const headers = ['ID', 'Customer', 'Email', 'Phone', 'Vehicle', 'Pickup Date', 'Return Date', 'Days', 'Location', 'Total', 'Status', 'Source'];
+  const lines = [headers.join(',')];
+  rows.forEach(r => {
+    const days = dateDiff(r.pickup_date, r.return_date);
+    lines.push([
+      r.id,
+      '"' + (r.customer_name  || '').replace(/"/g,'""') + '"',
+      '"' + (r.customer_email || '').replace(/"/g,'""') + '"',
+      '"' + (r.customer_phone || '').replace(/"/g,'""') + '"',
+      '"' + (CAR_NAMES[r.car_id] || '').replace(/"/g,'""') + '"',
+      r.pickup_date,
+      r.return_date,
+      days,
+      '"' + (r.pickup_location || '').replace(/"/g,'""') + '"',
+      r.total_amount || 0,
+      r.status,
+      r.source || '',
+    ].join(','));
+  });
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'reservations_' + (fromVal || 'all') + '_to_' + (toVal || 'all') + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ====================================================
+//  NOTIFICATIONS — new bookings since last visit
+// ====================================================
+function checkNewBookings() {
+  const lastSeen = localStorage.getItem('admin_last_seen') || '1970-01-01T00:00:00Z';
+  const newCount = allReservations.filter(r =>
+    r.created_at && r.created_at > lastSeen && r.source !== 'admin'
+  ).length;
+
+  const badge = document.getElementById('new-booking-badge');
+  if (badge) {
+    if (newCount > 0) {
+      badge.textContent = newCount > 9 ? '9+' : String(newCount);
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
+function markBookingsSeen() {
+  localStorage.setItem('admin_last_seen', new Date().toISOString());
+  const badge = document.getElementById('new-booking-badge');
+  if (badge) badge.style.display = 'none';
 }
 
 function refreshCharts(data) {
@@ -1041,12 +1203,12 @@ function renderMaintenanceAlerts() {
 //  CARS & MAINTENANCE
 // ====================================================
 async function loadCars() {
-  const { data, error } = await sb.from('cars').select('*').order('id');
+  const { data, error } = await withTenant(sb.from('cars').select('*').order('id'));
   if (!error) allCars = data || [];
 }
 
 async function loadServices() {
-  const { data, error } = await sb.from('car_services').select('*').order('service_date', { ascending: false });
+  const { data, error } = await withTenant(sb.from('car_services').select('*').order('service_date', { ascending: false }));
   if (!error) allServices = data || [];
 }
 
@@ -1219,7 +1381,7 @@ async function saveCar(e) {
   const existing = allCars.find(c => c.id === carId);
   const { error } = existing
     ? await sb.from('cars').update(payload).eq('id', carId)
-    : await sb.from('cars').insert({ id: carId, ...payload });
+    : await sb.from('cars').insert({ id: carId, ...payload, ...tenantPayload() });
 
   if (error) { alert('Error: ' + error.message); }
   else { closeModal('car-modal'); await loadCars(); renderCarCards(); }
@@ -1265,6 +1427,7 @@ async function saveService(e) {
     provider:          document.getElementById('svc-provider').value.trim(),
     next_service_date: document.getElementById('svc-next').value               || null,
     notes:             document.getElementById('svc-notes').value.trim(),
+    ...tenantPayload(),
   };
   const btn = e.submitter;
   btn.disabled = true; btn.textContent = 'Saving…';
@@ -1305,7 +1468,7 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).classList.add('active');
   document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
   document.getElementById('topbar-title').innerHTML = TAB_TITLES[tab];
-  if (tab === 'bookings' && calendar) calendar.updateSize();
+  if (tab === 'bookings') { if (calendar) calendar.updateSize(); markBookingsSeen(); }
   if (tab === 'turo') renderTuroGrid();
   if (tab === 'consignments') { renderConsignments(); renderExpensesTable(); }
   if (tab === 'cars') renderCarCards();
@@ -1375,8 +1538,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   updateStats();
   initCalendar();
-  renderTable();
+  renderTable(true);
   renderRecentBookings();
+  checkNewBookings();
 
   // Sidebar tabs
   document.querySelectorAll('.nav-item[data-tab]').forEach(btn =>
@@ -1410,10 +1574,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById(id)?.addEventListener('change', autoCalc)
   );
 
-  // Table filters
-  document.getElementById('search-input')?.addEventListener('input', renderTable);
-  document.getElementById('status-filter')?.addEventListener('change', renderTable);
-  document.getElementById('car-filter')?.addEventListener('change', renderTable);
+  // Table filters — reset page on filter change
+  document.getElementById('search-input')?.addEventListener('input',  () => renderTable(true));
+  document.getElementById('status-filter')?.addEventListener('change', () => renderTable(true));
+  document.getElementById('car-filter')?.addEventListener('change',    () => renderTable(true));
 
   // Calendar sync buttons
   document.getElementById('sync-turo-btn').addEventListener('click', syncTuro);
@@ -1453,8 +1617,31 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('customer-form')?.addEventListener('submit', saveCustomer);
   document.getElementById('customer-search')?.addEventListener('input', renderCustomers);
 
+  // Consignments date filter
+  document.getElementById('apply-con-btn')?.addEventListener('click', renderConsignments);
+  document.getElementById('clear-con-btn')?.addEventListener('click', () => {
+    document.getElementById('con-from').value = '';
+    document.getElementById('con-to').value   = '';
+    renderConsignments();
+  });
+
+  // CSV export
+  document.getElementById('export-csv-btn')?.addEventListener('click', exportReservationsCSV);
+
   // Close modals on backdrop click
   document.querySelectorAll('.modal').forEach(modal =>
     modal.addEventListener('click', e => { if (e.target === modal) closeModal(modal.id); })
   );
+
+  // Real-time new booking subscription
+  sb.channel('reservations-live')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reservations' }, () => {
+      loadReservations().then(() => {
+        updateStats();
+        renderTable();
+        renderRecentBookings();
+        checkNewBookings();
+      });
+    })
+    .subscribe();
 });
