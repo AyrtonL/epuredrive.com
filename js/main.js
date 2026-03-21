@@ -160,21 +160,23 @@ function initHeroVideoSlider() {
     crossfadeTo(standbyVid, VIDEOS[idx]);
   }
 
-  // Start first video
+  // Start first video only
   vid1.src = VIDEOS[0];
   vid1.preload = 'auto';
   vid1.load();
   vid1.play().catch(() => {});
   vid1.style.opacity = '1';
   vid1.addEventListener('ended', onEnded, { once: true });
-
-  // Preload second video silently
-  vid2.src = VIDEOS[1];
-  vid2.load();
 }
 
 if (document.body.dataset.page === 'home') {
-  initHeroVideoSlider();
+  // Skip video on mobile viewports or slow connections to save data
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  const isSlowConnection = navigator.connection &&
+    (navigator.connection.saveData || ['slow-2g', '2g', '3g'].includes(navigator.connection.effectiveType));
+  if (!isMobile && !isSlowConnection) {
+    initHeroVideoSlider();
+  }
 }
 
 // ---- Animate number counters on hero ----

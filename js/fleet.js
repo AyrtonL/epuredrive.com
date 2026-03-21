@@ -191,7 +191,7 @@ function loadCarDetail() {
   const thumbContainer = document.getElementById('detail-thumbnails');
   if (thumbContainer && car.gallery) {
     thumbContainer.innerHTML = car.gallery.map((src, i) => `
-      <img src="${src}" class="thumb-img ${i === 0 ? 'active' : ''}" onclick="document.getElementById('detail-img').src='${src}'; document.querySelectorAll('.thumb-img').forEach(el=>el.classList.remove('active')); this.classList.add('active');">
+      <img src="${src}" class="thumb-img ${i === 0 ? 'active' : ''}" loading="lazy" onclick="document.getElementById('detail-img').src='${src}'; document.querySelectorAll('.thumb-img').forEach(el=>el.classList.remove('active')); this.classList.add('active');">
     `).join('');
   }
 
