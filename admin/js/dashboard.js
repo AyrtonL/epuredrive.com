@@ -158,10 +158,18 @@ async function loadBlockedDates() {
 
 async function loadTuroFeeds() {
   try {
-    const { data } = await withTenant(sb.from('turo_feeds').select('*'));
+    const { data } = await withTenant(sb.from('turo_feeds').select('*').order('created_at', { ascending: true }));
+    turoFeeds = {};
     if (data) {
+      // Keep backward-compat object keyed by id for sync logic
       data.forEach(row => {
-        turoFeeds[row.car_id] = { url: row.ical_url, lastSynced: row.last_synced, id: row.id };
+        turoFeeds[row.id] = {
+          id:         row.id,
+          carId:      row.car_id,
+          url:        row.ical_url,
+          sourceName: row.source_name || 'Calendar',
+          lastSynced: row.last_synced,
+        };
       });
     }
   } catch (_) {}
@@ -477,150 +485,143 @@ function showDetail(r) {
 }
 
 // ====================================================
-//  TURO SYNC
+//  CALENDAR SYNC (unified — any iCal source)
 // ====================================================
-function renderTuroGrid() {
-  const grid = document.getElementById('turo-grid');
-  grid.innerHTML = [1, 2, 3, 4].map(carId => {
-    const feed = turoFeeds[carId] || {};
-    const lastSync = feed.lastSynced
-      ? 'Last synced: ' + new Date(feed.lastSynced).toLocaleString()
-      : 'Never synced';
-    return `
-      <div class="turo-card">
-        <div class="car-name">
-          <span class="car-dot-inline" style="background:${CAR_COLORS[carId]};width:10px;height:10px;border-radius:50%;display:inline-block"></span>
-          ${CAR_NAMES[carId]}
-        </div>
-        <div class="form-group">
-          <input type="url" id="turo-url-${carId}" placeholder="https://turo.com/…/calendar.ics" value="${esc(feed.url || '')}" />
-        </div>
-        <div class="last-sync">${lastSync}</div>
-      </div>`;
-  }).join('');
+function renderCalendarFeeds() {
+  const list = document.getElementById('feeds-list');
+  if (!list) return;
+  const feeds = Object.values(turoFeeds);
+  if (!feeds.length) {
+    list.innerHTML = `<p style="color:var(--muted);font-size:0.85rem;padding:0.5rem 0;">No calendar feeds added yet. Add one above.</p>`;
+    return;
+  }
+  list.innerHTML = `
+    <table class="res-table" style="width:100%;">
+      <thead><tr>
+        <th>Platform</th><th>Vehicle</th><th>Last Synced</th><th>URL</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${feeds.map(f => `
+          <tr>
+            <td><span class="source-badge source-turo">${esc(f.sourceName)}</span></td>
+            <td>
+              <span class="car-dot-inline" style="background:${CAR_COLORS[f.carId]};width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;"></span>
+              ${CAR_NAMES[f.carId] || 'Unknown'}
+            </td>
+            <td style="color:var(--muted);font-size:0.8rem;">${f.lastSynced ? new Date(f.lastSynced).toLocaleString() : 'Never'}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.78rem;color:var(--muted);" title="${esc(f.url)}">${esc(f.url)}</td>
+            <td><button class="btn btn-outline" style="padding:0.3rem 0.6rem;font-size:0.75rem;color:#f87171;border-color:#f87171;" onclick="deleteFeed('${f.id}')">Remove</button></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function addCalendarFeed() {
+  const sourceEl = document.getElementById('feed-source');
+  const carEl    = document.getElementById('feed-car');
+  const urlEl    = document.getElementById('feed-url');
+  const source   = sourceEl.value.trim();
+  const carId    = parseInt(carEl.value);
+  const url      = urlEl.value.trim();
+
+  if (!url) { alert('Please enter an iCal URL.'); return; }
+  if (!source) { alert('Please enter a platform name (e.g. Turo, Airbnb).'); return; }
+
+  const btn = document.getElementById('add-feed-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  const { error } = await withTenant(sb.from('turo_feeds').insert({
+    car_id:      carId,
+    ical_url:    url,
+    source_name: source,
+    ...tenantPayload(),
+  }));
+
+  if (error) { alert('Could not save feed: ' + error.message); }
+  else {
+    sourceEl.value = '';
+    urlEl.value    = '';
+    await loadTuroFeeds();
+    renderCalendarFeeds();
+  }
+  btn.disabled = false;
+  btn.textContent = 'Add Feed';
+}
+
+async function deleteFeed(feedId) {
+  if (!confirm('Remove this calendar feed?')) return;
+  await sb.from('turo_feeds').delete().eq('id', feedId);
+  await loadTuroFeeds();
+  renderCalendarFeeds();
 }
 
 async function syncTuro() {
-  const btn = document.getElementById('sync-turo-btn');
+  const btn    = document.getElementById('sync-turo-btn');
   const status = document.getElementById('sync-status');
   btn.disabled = true;
-  btn.textContent = 'Syncing…';
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Syncing…';
   status.textContent = '';
 
-  // Save URLs to Supabase
-  for (const carId of [1, 2, 3, 4]) {
-    const url = document.getElementById(`turo-url-${carId}`)?.value.trim();
-    if (!url) continue;
+  const feeds = Object.values(turoFeeds);
+  if (!feeds.length) {
+    status.textContent = 'No feeds to sync. Add a calendar feed first.';
+    btn.disabled = false;
+    btn.textContent = 'Sync All';
+    return;
+  }
 
-    const existing = turoFeeds[carId];
-    if (existing?.id) {
-      await sb.from('turo_feeds').update({ ical_url: url }).eq('id', existing.id);
-    } else {
-      await sb.from('turo_feeds').insert({ car_id: carId, ical_url: url });
-    }
+  let totalImported = 0;
+  let errors = 0;
 
-    // Fetch iCal via CORS proxy and parse
+  for (const feed of feeds) {
     try {
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-      const res = await fetch(proxyUrl);
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(feed.url)}`;
+      const res  = await fetch(proxyUrl);
       const json = await res.json();
-      if (!json.contents) continue;
+      if (!json.contents) throw new Error('Empty response');
 
-      const events = parseIcal(json.contents, carId);
-      if (events.length) {
-        // Remove old Turo entries for this car, insert fresh
-        await sb.from('reservations').delete()
-          .eq('car_id', carId)
-          .eq('source', 'turo');
-        if (events.length) await sb.from('reservations').insert(events);
-      }
+      const events = parseIcal(json.contents, feed.carId, feed.sourceName);
+      // Remove old entries from this same feed source + car, then re-insert
+      await sb.from('reservations').delete()
+        .eq('car_id', feed.carId)
+        .eq('source', 'ical')
+        .ilike('notes', `%[${feed.sourceName}]%`);
 
-      await sb.from('turo_feeds')
-        .update({ last_synced: new Date().toISOString() })
-        .eq('car_id', carId);
+      if (events.length) await sb.from('reservations').insert(events);
 
-      status.textContent += `✓ ${CAR_NAMES[carId]} — ${events.length} event(s) imported. `;
+      await sb.from('turo_feeds').update({ last_synced: new Date().toISOString() }).eq('id', feed.id);
+      totalImported += events.length;
     } catch (err) {
-      status.textContent += `✗ ${CAR_NAMES[carId]} — could not fetch. `;
+      console.error('Sync error for feed', feed.id, err);
+      errors++;
     }
   }
 
+  status.textContent = `✓ ${totalImported} event(s) imported` + (errors ? ` — ${errors} feed(s) failed` : '');
   await loadTuroFeeds();
-  renderTuroGrid();
+  renderCalendarFeeds();
   await refresh();
   btn.disabled = false;
-  btn.textContent = 'Sync All Turo Calendars';
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Sync All';
 }
 
-// ====================================================
-//  GOOGLE CALENDAR SYNC
-// ====================================================
-async function syncGoogleCalendar() {
-  const btn    = document.getElementById('sync-gcal-btn');
-  const status = document.getElementById('gcal-status');
-  const url    = document.getElementById('gcal-url')?.value.trim();
-  const carId  = document.getElementById('gcal-car')?.value;
+// Stub kept for backward compat (no longer wired to a button)
+function syncGoogleCalendar() {}
 
-  if (!url) { status.textContent = '⚠ Paste a Google Calendar iCal URL first.'; return; }
-
-  btn.disabled = true;
-  btn.textContent = 'Syncing…';
-  status.textContent = '';
-
-  try {
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-    const res  = await fetch(proxyUrl);
-    const json = await res.json();
-    if (!json.contents) throw new Error('Empty response from calendar URL');
-
-    // Parse iCal — if carId is 'all', try to match car names in event titles
-    const events = parseGcalIcal(json.contents, carId);
-
-    if (!events.length) {
-      status.textContent = 'No upcoming events found in this calendar.';
-    } else {
-      // Remove existing gcal-sourced reservations for affected cars and re-insert
-      const affectedCars = [...new Set(events.map(e => e.car_id))];
-      for (const cid of affectedCars) {
-        await sb.from('reservations').delete().eq('car_id', cid).eq('source', 'turo');
-      }
-      await sb.from('reservations').insert(events);
-      status.textContent = `✓ ${events.length} event(s) imported from Google Calendar.`;
-    }
-
-    await refresh();
-  } catch (err) {
-    status.textContent = '✗ Could not fetch calendar — check the URL and try again.';
-    console.error(err);
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Sync Google Calendar';
-}
-
-function parseGcalIcal(icsText, selectedCarId) {
+function parseIcal(icsText, carId, sourceName = 'Calendar') {
   const events  = [];
   const today   = todayStr();
   const vevents = icsText.split('BEGIN:VEVENT').slice(1);
 
-  // Keywords to auto-detect which car an event belongs to
-  const CAR_KEYWORDS = {
-    1: ['q3', 'audi q3'],
-    2: ['a3', 'audi a3'],
-    3: ['cayenne', 'porsche'],
-    4: ['atlas', 'volkswagen', 'vw'],
-  };
-
   vevents.forEach(block => {
     const get = (key) => {
-      const m = block.match(new RegExp(key + '[^:]*:([^\\r\\n]+)'));
-      return m ? m[1].trim() : null;
+      const match = block.match(new RegExp(`${key}[^:]*:([^\r\n]+)`));
+      return match ? match[1].trim() : null;
     };
-
-    const dtstart  = get('DTSTART');
-    const dtend    = get('DTEND');
-    const summary  = get('SUMMARY') || 'Turo Reservation';
-    const desc     = (get('DESCRIPTION') || '').toLowerCase();
+    const dtstart = get('DTSTART');
+    const dtend   = get('DTEND');
+    const summary = get('SUMMARY') || `${sourceName} Reservation`;
 
     if (!dtstart || !dtend) return;
 
@@ -631,67 +632,18 @@ function parseGcalIcal(icsText, selectedCarId) {
 
     const start = toDate(dtstart);
     const end   = toDate(dtend);
-    if (end < today) return;  // skip past events
-
-    // Determine car_id
-    let resolvedCar = selectedCarId !== 'all' ? parseInt(selectedCarId) : null;
-    if (!resolvedCar) {
-      const searchText = (summary + ' ' + desc).toLowerCase();
-      for (const [cid, keywords] of Object.entries(CAR_KEYWORDS)) {
-        if (keywords.some(kw => searchText.includes(kw))) {
-          resolvedCar = parseInt(cid);
-          break;
-        }
-      }
-    }
-    if (!resolvedCar) resolvedCar = 1; // fallback
-
-    events.push({
-      car_id:         resolvedCar,
-      customer_name:  summary,
-      customer_email: '',
-      customer_phone: '',
-      pickup_date:    start,
-      return_date:    end,
-      status:         'confirmed',
-      source:         'turo',
-      notes:          'Imported from Google Calendar',
-    });
-  });
-
-  return events;
-}
-
-function parseIcal(icsText, carId) {
-  const events = [];
-  const vevents = icsText.split('BEGIN:VEVENT').slice(1);
-
-  vevents.forEach(block => {
-    const get = (key) => {
-      const match = block.match(new RegExp(`${key}[^:]*:([^\r\n]+)`));
-      return match ? match[1].trim() : null;
-    };
-    const dtstart = get('DTSTART');
-    const dtend   = get('DTEND');
-    const summary = get('SUMMARY') || 'Turo Reservation';
-
-    if (!dtstart || !dtend) return;
-
-    const toDate = (s) => {
-      if (s.length === 8) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
-      return s.slice(0, 10).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
-    };
+    if (end < today) return; // skip past events
 
     events.push({
       car_id:         carId,
       customer_name:  summary,
       customer_email: '',
       customer_phone: '',
-      pickup_date:    toDate(dtstart),
-      return_date:    toDate(dtend),
+      pickup_date:    start,
+      return_date:    end,
       status:         'confirmed',
-      source:         'turo',
-      notes:          'Imported from Turo calendar',
+      source:         'ical',
+      notes:          `Imported from [${sourceName}]`,
     });
   });
 
@@ -1532,7 +1484,7 @@ function switchTab(tab) {
   document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
   document.getElementById('topbar-title').innerHTML = TAB_TITLES[tab];
   if (tab === 'bookings') { if (calendar) calendar.updateSize(); markBookingsSeen(); }
-  if (tab === 'turo') renderTuroGrid();
+  if (tab === 'turo') renderCalendarFeeds();
   if (tab === 'consignments') { renderConsignments(); renderExpensesTable(); }
   if (tab === 'cars') renderCarCards();
   if (tab === 'maintenance') { renderFleetStatus(); renderServicesTable(); renderMaintenanceAlerts(); }
@@ -1644,7 +1596,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Calendar sync buttons
   document.getElementById('sync-turo-btn').addEventListener('click', syncTuro);
-  document.getElementById('sync-gcal-btn').addEventListener('click', syncGoogleCalendar);
+  document.getElementById('add-feed-btn')?.addEventListener('click', addCalendarFeed);
 
   // Consignments
   document.getElementById('add-consignment-btn')?.addEventListener('click', openAddConsignment);
