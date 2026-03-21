@@ -498,9 +498,16 @@
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="js/main.js"></script>
     <script src="js/fleet.js"></script>
     <script>
+        // Supabase client (anon key — safe for public inserts with RLS policy)
+        const _sb = supabase.createClient(
+            'https://brwzjwbpguiignrxvjdc.supabase.co',
+            'sb_publishable_krEuIpNhJVcADIUyBXYy9g_fiXrXzV9'
+        );
+
         // Setup initial checkout state
         let currentStep = 1;
         let bookingDays = 0;
@@ -742,53 +749,73 @@
             document.getElementById(`step-${currentStep}`).classList.add('active');
         }
 
-        function submitBooking() {
+        function _escHtml(str) {
+            return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        async function submitBooking() {
             const btn = document.getElementById('btn-submit-booking');
             btn.innerHTML = 'Processing...';
             btn.disabled = true;
 
-            // Save to LocalStorage DB Mock
-            createBooking({
-                carId: selectedCar.id,
-                carModel: selectedCar.model,
-                startDate: document.getElementById('co-pickup').value,
-                endDate: document.getElementById('co-return').value,
-                customerName: document.getElementById('cust-fname').value + ' ' + document.getElementById('cust-lname').value,
-                customerEmail: document.getElementById('cust-email').value,
-                totalAmount: document.getElementById('sum-total').textContent
+            const customerName  = (document.getElementById('cust-fname').value.trim() + ' ' + document.getElementById('cust-lname').value.trim()).trim();
+            const customerEmail = document.getElementById('cust-email').value.trim();
+            const customerPhone = document.getElementById('cust-phone').value.trim();
+            const pickupDate    = document.getElementById('co-pickup').value;
+            const returnDate    = document.getElementById('co-return').value;
+            const locationText  = document.getElementById('co-location').options[document.getElementById('co-location').selectedIndex].text;
+            const totalRaw      = document.getElementById('sum-total').textContent.replace(/[$,]/g, '');
+            const totalAmount   = parseFloat(totalRaw) || 0;
+
+            // 1 — Save to Supabase reservations table
+            const { error: dbError } = await _sb.from('reservations').insert({
+                car_id:          selectedCar.id,
+                customer_name:   customerName,
+                customer_email:  customerEmail,
+                customer_phone:  customerPhone,
+                pickup_date:     pickupDate,
+                return_date:     returnDate,
+                pickup_location: locationText,
+                total_amount:    totalAmount,
+                status:          'pending',
+                source:          'website',
             });
 
-            // Send Email via Formspree API
-            const formData = {
-                "Car": selectedCar.model,
-                "Pick-up": document.getElementById('co-pickup').value,
-                "Return": document.getElementById('co-return').value,
-                "Location": document.getElementById('co-location').options[document.getElementById('co-location').selectedIndex].text,
-                "Customer Name": document.getElementById('cust-fname').value + ' ' + document.getElementById('cust-lname').value,
-                "Email": document.getElementById('cust-email').value,
-                "Phone": document.getElementById('cust-phone').value,
-                "Total Amount": document.getElementById('sum-total').textContent
-            };
+            if (dbError) {
+                console.error('Booking save error:', dbError.message);
+                btn.innerHTML = 'Confirm Reservation';
+                btn.disabled = false;
+                alert('There was an error saving your reservation. Please try again or contact us directly.');
+                return;
+            }
 
-            fetch("https://formspree.io/f/xlgpzldj", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData)
-            }).then(() => console.log('Email sent'))
-              .catch(err => console.error('Email error:', err));
+            // 2 — Send notification email via Formspree
+            fetch('https://formspree.io/f/xlgpzldj', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    'Car':          selectedCar.make + ' ' + selectedCar.model,
+                    'Pick-up':      pickupDate,
+                    'Return':       returnDate,
+                    'Location':     locationText,
+                    'Customer':     customerName,
+                    'Email':        customerEmail,
+                    'Phone':        customerPhone,
+                    'Total Amount': '$' + totalAmount.toLocaleString(),
+                })
+            }).catch(err => console.error('Email notification error:', err));
 
-            setTimeout(() => {
-                document.getElementById('step-5').innerHTML = `
-                    <div style="text-align: center; padding: 40px 0;">
-                        <div style="width: 80px; height: 80px; background: #22c55e; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        </div>
-                        <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 15px;">Reservation Confirmed</h2>
-                        <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 30px;">Thank you, ${document.getElementById('cust-fname').value}. We've saved your request. Check your email for next steps.</p>
-                        <a href="index.html" class="btn btn-primary" style="text-decoration: none; padding: 15px 30px;">Return Home</a>
+            // 3 — Show confirmation (escaped to prevent XSS)
+            document.getElementById('step-5').innerHTML = `
+                <div style="text-align: center; padding: 40px 0;">
+                    <div style="width: 80px; height: 80px; background: #22c55e; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
-                `;
-            }, 1500);
+                    <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 15px;">Reservation Confirmed</h2>
+                    <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 30px;">Thank you, ${_escHtml(customerName)}. We've received your request and will contact you shortly to confirm payment and documents.</p>
+                    <a href="index.html" class="btn btn-primary" style="text-decoration: none; padding: 15px 30px;">Return Home</a>
+                </div>
+            `;
         }
     </script>
 </body>
