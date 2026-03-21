@@ -9,17 +9,17 @@
   --bg-secondary: #F7F7F8;
   --bg-card: #FFFFFF;
   --bg-card-hover: #F9FAFB;
-  --accent-primary: #00C7FF;
-  --accent-primary-light: #4DE2FF;
-  --accent-primary-dim: rgba(0, 199, 255, 0.10);
+  --accent-primary: #000000;
+  --accent-primary-light: #222222;
+  --accent-primary-dim: rgba(0, 0, 0, 0.05);
   --accent-secondary: #111111;
   --text-primary: #111111;
   --text-secondary: #6B7280;
   --text-muted: #9CA3AF;
   --border: #E5E7EB;
-  --border-accent: rgba(0, 199, 255, 0.3);
+  --border-accent: rgba(0, 0, 0, 0.15);
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  --shadow-accent: 0 4px 14px 0 rgba(0, 199, 255, 0.3);
+  --shadow-accent: 0 4px 14px 0 rgba(0, 0, 0, 0.15);
   --radius-card: 16px;
   --radius-btn: 12px;
   --nav-height: 88px;
@@ -93,7 +93,7 @@ input, select, textarea { font-family: inherit; }
 }
 .btn-primary {
   background: var(--accent-primary);
-  color: #000;
+  color: #FFF;
 }
 .btn-primary:hover {
   background: var(--accent-primary-light);
@@ -564,7 +564,7 @@ select.form-control option { background: #FFFFFF; color: var(--text-primary); }
 .filter-btn.active {
   background: var(--accent-primary);
   border-color: var(--accent-primary);
-  color: #000;
+  color: #FFF;
   font-weight: 600;
 }
 .filter-divider {
@@ -692,7 +692,7 @@ select.form-control option { background: #FFFFFF; color: var(--text-primary); }
 }
 .car-reserve-btn:hover {
   background: var(--accent-primary);
-  color: #000;
+  color: #FFF;
 }
 
 /* Hidden cards (filter) */
@@ -1123,7 +1123,7 @@ footer {
 .flatpickr-current-month input.cur-year { color: #111 !important; }
 .flatpickr-day { color: #555 !important; border-radius: 6px !important; }
 .flatpickr-day:hover:not(.flatpickr-disabled) {
-  background: rgba(0,199,255,0.1) !important;
+  background: rgba(0,0,0,0.1) !important;
   color: #111 !important;
   border-color: transparent !important;
 }
@@ -1131,11 +1131,11 @@ footer {
 .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange {
   background: var(--accent-primary) !important;
   border-color: var(--accent-primary) !important;
-  color: #000 !important;
+  color: #FFF !important;
   font-weight: 700 !important;
 }
 .flatpickr-day.inRange {
-  background: rgba(0,199,255,0.05) !important;
+  background: rgba(0,0,0,0.05) !important;
   border-color: transparent !important;
   color: #111 !important;
   box-shadow: none !important;
