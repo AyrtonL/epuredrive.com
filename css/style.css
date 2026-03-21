@@ -199,6 +199,7 @@ input, select, textarea { font-family: inherit; }
   height: 78px;
   width: auto;
   display: block;
+  filter: brightness(0);
 }
 @media (max-width: 768px) {
   .navbar-img-logo { height: 58px; }
@@ -376,7 +377,7 @@ input, select, textarea { font-family: inherit; }
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--accent-gold-dim);
+  background: var(--accent-primary-dim);
   border: 1px solid var(--border-accent);
   color: var(--accent-primary);
   padding: 0.4rem 1rem;
@@ -684,7 +685,7 @@ select.form-control option { background: #FFFFFF; color: var(--text-primary); }
   border-radius: var(--radius-btn);
   font-size: 0.82rem;
   font-weight: 600;
-  background: var(--accent-gold-dim);
+  background: var(--accent-primary-dim);
   border: 1px solid var(--border-accent);
   color: var(--accent-primary);
   transition: var(--transition);
@@ -722,7 +723,7 @@ select.form-control option { background: #FFFFFF; color: var(--text-primary); }
 .feature-icon {
   width: 52px; height: 52px;
   border-radius: 12px;
-  background: var(--accent-gold-dim);
+  background: var(--accent-primary-dim);
   border: 1px solid var(--border-accent);
   display: flex;
   align-items: center;
@@ -868,7 +869,7 @@ footer {
 }
 .social-link:hover {
   border-color: var(--accent-primary);
-  background: var(--accent-gold-dim);
+  background: var(--accent-primary-dim);
 }
 .social-link svg { width: 16px; height: 16px; color: var(--text-secondary); }
 .social-link:hover svg { color: var(--accent-primary); }
@@ -952,7 +953,7 @@ footer {
   color: #4ade80;
 }
 .detail-badge.category {
-  background: var(--accent-gold-dim);
+  background: var(--accent-primary-dim);
   border: 1px solid var(--border-accent);
   color: var(--accent-primary);
 }
