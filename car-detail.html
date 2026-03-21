@@ -303,6 +303,15 @@
         onChange: () => calcBookingTotal(),
       });
 
+      // Pre-fill dates + location from URL params
+      const startParam = params.get('start');
+      const endParam   = params.get('end');
+      const locParam   = params.get('loc');
+      if (startParam) fpPickup.setDate(startParam);
+      if (endParam)   { fpReturn.set('minDate', startParam || 'today'); fpReturn.setDate(endParam); }
+      if (locParam)   { const s = document.querySelector('select[name="loc"]'); if (s) s.value = locParam; }
+      if (startParam && endParam) calcBookingTotal();
+
       // Add-on checkboxes
       ['protection', 'toll', 'fuel'].forEach(id => {
         document.getElementById('opt-' + id).addEventListener('change', () => {

@@ -102,6 +102,13 @@ function renderCars(cars, containerId = 'cars-grid') {
     return;
   }
 
+  // Carry date/location params through to car-detail links
+  const _up = new URLSearchParams(window.location.search);
+  const _dateStr = ['start','end','loc'].reduce((s, k) => {
+    const v = _up.get(k);
+    return v ? s + `&${k}=${encodeURIComponent(v)}` : s;
+  }, '');
+
   grid.innerHTML = cars.map((car, i) => `
     <article class="car-card fade-in" data-id="${car.id}" data-make="${car.make.toLowerCase()}" data-category="${car.category}" style="transition-delay:${i * 0.06}s">
       <div class="car-card-img">
@@ -130,7 +137,7 @@ function renderCars(cars, containerId = 'cars-grid') {
             <span class="car-price-num">$${car.price}</span>
             <span class="car-price-period">/ day</span>
           </div>
-          <a href="car-detail.html?id=${car.id}" class="car-reserve-btn">Reserve</a>
+          <a href="car-detail.html?id=${car.id}${_dateStr}" class="car-reserve-btn">Reserve</a>
         </div>
       </div>
     </article>

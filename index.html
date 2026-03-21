@@ -142,40 +142,29 @@
             Quick Reserve
           </h3>
 
-          <div class="form-group">
-            <label>Vehicle Type</label>
-            <select class="form-control">
-              <option value="">All Categories</option>
-              <option value="sports">Sports Car</option>
-              <option value="suv">Luxury SUV</option>
-              <option value="sedan">Executive Sedan</option>
-              <option value="convertible">Convertible</option>
-            </select>
-          </div>
-
           <div class="form-row">
             <div class="form-group">
               <label>Pickup Date</label>
-              <input type="date" class="form-control" />
+              <input type="date" class="form-control" id="hero-start" />
             </div>
             <div class="form-group">
               <label>Return Date</label>
-              <input type="date" class="form-control" />
+              <input type="date" class="form-control" id="hero-end" />
             </div>
           </div>
 
           <div class="form-group">
             <label>Pickup Location</label>
-            <select class="form-control">
-              <option value="">Aventura</option>
-              <option value="mia">Delivery to MIA</option>
-              <option value="fll">Delivery to FLL</option>
+            <select class="form-control" id="hero-loc">
+              <option value="aventura">Pick-up in Aventura (Free)</option>
+              <option value="mia">Delivery to MIA (+$120)</option>
+              <option value="fll">Delivery to FLL (+$120)</option>
             </select>
           </div>
 
-          <a href="fleet.html" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;">
+          <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;" onclick="heroSearch()">
             Find My Car
-          </a>
+          </button>
           <p style="font-size: 0.75rem; color: var(--text-muted); text-align:center; margin-top:0.75rem;">
             Free cancellation · No hidden fees
           </p>
@@ -325,5 +314,27 @@
   <script src="js/fleet.js"></script>
   <script src="js/main.js?v=2"></script>
 <script src="js/lang.js"></script>
+<script>
+  // Set min date on hero date inputs
+  const _today = new Date().toISOString().split('T')[0];
+  document.getElementById('hero-start').min = _today;
+  document.getElementById('hero-end').min   = _today;
+  document.getElementById('hero-start').addEventListener('change', function() {
+    document.getElementById('hero-end').min = this.value || _today;
+  });
+
+  function heroSearch() {
+    const start = document.getElementById('hero-start').value;
+    const end   = document.getElementById('hero-end').value;
+    const loc   = document.getElementById('hero-loc').value;
+    let url = 'fleet.html';
+    const p = new URLSearchParams();
+    if (start) p.set('start', start);
+    if (end)   p.set('end',   end);
+    if (loc)   p.set('loc',   loc);
+    if ([...p].length) url += '?' + p.toString();
+    window.location.href = url;
+  }
+</script>
 </body>
 </html>
