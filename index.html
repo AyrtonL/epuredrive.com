@@ -87,88 +87,47 @@
     <a href="fleet.html" style="color: var(--accent-gold); font-weight:700;">Book Now →</a>
   </div>
 
-  <!-- ===================== HERO ===================== -->
-  <section class="hero" id="home">
-    <div class="hero-static-bg"></div>
-    <div class="hero-overlay"></div>
-    <div class="hero-overlay-bottom"></div>
+  <!-- ===================== HERO (Minimalist Turo/Sixt Style) ===================== -->
+  <section class="hero" id="home" style="background: #FFFFFF; min-height: 80vh; display: flex; align-items: center; padding-top: 140px; padding-bottom: 60px; position: relative;">
+    <div class="container" style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%;">
+      <h1 class="hero-title" style="color: #111111; font-size: clamp(3rem, 6vw, 4.5rem); letter-spacing: -0.02em; margin-bottom: 15px; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif;">
+        Find your drive.
+      </h1>
+      <p class="hero-desc" style="color: #6B7280; font-size: 1.25rem; max-width: 600px; margin: 0 auto 50px auto; font-family: 'Inter', sans-serif;">
+        Rent premium vehicles in South Florida. Meticulous service, transparent pricing, and flexible delivery.
+      </p>
 
-    <div class="hero-content">
-      <div class="container">
-        <div class="hero-text">
-          <div class="hero-badge">
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="5"/></svg>
-            Available Now · Same-Day Delivery
-          </div>
-
-          <h1 class="hero-title">
-            Your Journey<br/>
-            <span class="gold">Starts With</span><br/>
-            éPure Drive
-          </h1>
-
-          <p class="hero-desc">
-            Modern, reliable vehicles strictly curated for any occasion. A straightforward, seamless rental experience with transparent pricing and personal service.
-          </p>
-
-          <div class="hero-actions">
-            <a href="fleet.html" class="btn btn-primary btn-lg">
-              Browse the Fleet
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </a>
-            <a href="#why-us" class="btn btn-outline btn-lg">How It Works</a>
-          </div>
-
-          <div class="hero-stats">
-            <div class="hero-stat">
-              <div class="hero-stat-num" data-count="120" data-suffix="+">0+</div>
-              <div class="hero-stat-label">Luxury Cars</div>
-            </div>
-            <div class="hero-stat">
-              <div class="hero-stat-num" data-count="4800" data-suffix="+">0+</div>
-              <div class="hero-stat-label">Happy Clients</div>
-            </div>
-            <div class="hero-stat">
-              <div class="hero-stat-num" data-count="98" data-suffix="%">0%</div>
-              <div class="hero-stat-label">Satisfaction</div>
-            </div>
-          </div>
+      <!-- Advanced Minimal Horizontal Booking Widget -->
+      <div class="booking-widget" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 999px; display: flex; align-items: center; padding: 8px 8px 8px 32px; box-shadow: 0 12px 30px rgba(0,0,0,0.06); gap: 15px; flex-wrap: wrap; justify-content: space-between; width: 100%; max-width: 850px; z-index: 10;">
+        
+        <div class="widget-field" style="display: flex; flex-direction: column; text-align: left; padding-right: 20px; border-right: 1px solid #E5E7EB; flex: 1.5; min-width: 140px;">
+          <label style="font-size: 0.75rem; font-weight: 700; color: #111111; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;" data-i18n="Where">Where</label>
+          <select style="border: none; background: transparent; font-size: 1rem; color: #111111; font-weight: 600; outline: none; cursor: pointer; padding: 0; margin: 0; appearance: none;">
+            <option>Aventura (Free)</option>
+            <option>MIA Airport</option>
+            <option>FLL Airport</option>
+          </select>
+        </div>
+        
+        <div class="widget-field" style="display: flex; flex-direction: column; text-align: left; padding-right: 20px; border-right: 1px solid #E5E7EB; flex: 1; min-width: 120px;">
+          <label style="font-size: 0.75rem; font-weight: 700; color: #111111; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;" data-i18n="From">From</label>
+          <input type="date" style="border: none; background: transparent; font-size: 1rem; color: #6B7280; font-weight: 500; outline: none; width: 100%; padding: 0;" />
         </div>
 
-        <!-- Quick Booking Card -->
-        <div class="hero-card">
-          <h3>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            Quick Reserve
-          </h3>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Pickup Date</label>
-              <input type="date" class="form-control" id="hero-start" />
-            </div>
-            <div class="form-group">
-              <label>Return Date</label>
-              <input type="date" class="form-control" id="hero-end" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Pickup Location</label>
-            <select class="form-control" id="hero-loc">
-              <option value="aventura">Pick-up in Aventura (Free)</option>
-              <option value="mia">Delivery to MIA (+$120)</option>
-              <option value="fll">Delivery to FLL (+$120)</option>
-            </select>
-          </div>
-
-          <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;" onclick="heroSearch()">
-            Find My Car
-          </button>
-          <p style="font-size: 0.75rem; color: var(--text-muted); text-align:center; margin-top:0.75rem;">
-            Free cancellation · No hidden fees
-          </p>
+        <div class="widget-field" style="display: flex; flex-direction: column; text-align: left; flex: 1; min-width: 120px;">
+          <label style="font-size: 0.75rem; font-weight: 700; color: #111111; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;" data-i18n="Until">Until</label>
+          <input type="date" style="border: none; background: transparent; font-size: 1rem; color: #6B7280; font-weight: 500; outline: none; width: 100%; padding: 0;" />
         </div>
+
+        <button class="btn btn-primary" onclick="window.location.href='fleet.html'" style="border-radius: 999px; padding: 14px 40px; font-size: 1.05rem; background: var(--accent-primary); color: #000; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border: none; flex-shrink: 0;" data-i18n="Search">
+          Search
+        </button>
+      </div>
+
+      <!-- High quality static car image mimicking Turo search results page -->
+      <div style="margin-top: 60px; width: 100%; max-width: 1000px; position: relative;">
+        <!-- Placeholder for a clean transparent PNG of a car, currently using a high quality photo -->
+        <img src="assets/images/Porsche Cayenne/car_9.jpg" alt="Porsche Cayenne" style="width: 100%; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); object-fit: cover; aspect-ratio: 21/9; display: block;" />
       </div>
     </div>
   </section>
@@ -195,7 +154,7 @@
         </a>
       </div>
     </div>
-   <section class="section" id="why-us" style="background: linear-gradient(180deg, transparent 0%, rgba(201,168,76,0.02) 50%, transparent 100%);">
+  <section class="section" id="why-us" style="background: var(--bg-secondary);">
     <div class="container">
       <div class="section-header center fade-in">
         <span class="section-label">Trust & Simplicity</span>
