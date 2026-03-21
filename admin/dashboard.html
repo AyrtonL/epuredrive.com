@@ -87,18 +87,39 @@
       z-index: 100;
     }
     .sidebar-logo {
-      padding: 1.5rem 1.25rem 1rem;
+      padding: 1.25rem 1.25rem 1rem;
       border-bottom: 1px solid var(--border);
     }
-    .sidebar-logo img { height: 28px; }
+    .sidebar-logo img { height: 26px; }
     .sidebar-logo span {
       display: block;
       font-size: 0.65rem;
       color: var(--muted);
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      margin-top: 0.35rem;
+      margin-top: 0.3rem;
     }
+    .sidebar-user {
+      padding: 0.85rem 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .user-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #000;
+      font-weight: 700;
+      font-size: 0.72rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-info-name { font-size: 0.8rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-info-role { font-size: 0.68rem; color: var(--muted); text-transform: capitalize; }
     .sidebar-nav { flex: 1; padding: 1rem 0; }
     .nav-item {
       display: flex;
@@ -670,7 +691,7 @@
   <aside class="sidebar">
     <div class="sidebar-logo">
       <img src="../assets/logo.png" alt="éPure Drive">
-      <span>Admin Panel</span>
+      <span id="tenant-name">éPure Drive</span>
     </div>
     <nav class="sidebar-nav">
       <button class="nav-item active" data-tab="main">
@@ -707,6 +728,13 @@
         Sync
       </button>
     </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">—</div>
+      <div class="user-info">
+        <div class="user-info-name" id="user-display-name">Loading…</div>
+        <div class="user-info-role" id="user-display-role">admin</div>
+      </div>
+    </div>
     <div class="sidebar-footer">
       <button id="logout-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>

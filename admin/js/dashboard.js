@@ -37,23 +37,23 @@ async function checkAuth() {
     window.location.href = 'index.html';
     return false;
   }
-  await loadTenantProfile(data.session.user.id);
+  await loadTenantProfile(data.session.user.id, data.session.user.email);
   return true;
 }
 
-async function loadTenantProfile(userId) {
+async function loadTenantProfile(userId, userEmail = '') {
   // 1 — Try profile lookup
   const { data: profile } = await sb
     .from('profiles')
-    .select('tenant_id, tenants(name)')
+    .select('tenant_id, full_name, role, tenants(name)')
     .eq('id', userId)
     .maybeSingle();
 
   if (profile?.tenant_id) {
     currentTenantId   = profile.tenant_id;
     currentTenantName = profile.tenants?.name || null;
-    const el = document.getElementById('tenant-name');
-    if (el && currentTenantName) el.textContent = currentTenantName;
+    _setUserUI(profile.full_name, userEmail, profile.role || 'admin');
+    _setTenantUI(currentTenantName);
     return;
   }
 
@@ -68,17 +68,32 @@ async function loadTenantProfile(userId) {
     currentTenantId   = tenant.id;
     currentTenantName = tenant.name || null;
     await sb.from('profiles').upsert({ id: userId, tenant_id: tenant.id, role: 'admin' });
-    const el = document.getElementById('tenant-name');
-    if (el && currentTenantName) el.textContent = currentTenantName;
+    _setUserUI(null, userEmail, 'admin');
+    _setTenantUI(currentTenantName);
     return;
   }
 
-  // 3 — RLS blocks both reads or no data yet — grant access anyway (single-admin app).
-  // withTenant() handles null by returning all data unfiltered, which is correct here.
+  // 3 — Grant access anyway (single-admin, RLS blocks reads)
   currentTenantId   = null;
   currentTenantName = 'éPure Drive';
+  _setUserUI(null, userEmail, 'admin');
+  _setTenantUI(currentTenantName);
+}
+
+function _setTenantUI(name) {
   const el = document.getElementById('tenant-name');
-  if (el) el.textContent = currentTenantName;
+  if (el && name) el.textContent = name;
+}
+
+function _setUserUI(fullName, email, role) {
+  const displayName = fullName || email || 'Admin';
+  const initials    = displayName.split(/[\s@]+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  const avatarEl   = document.getElementById('user-avatar');
+  const nameEl     = document.getElementById('user-display-name');
+  const roleEl     = document.getElementById('user-display-role');
+  if (avatarEl) avatarEl.textContent = initials;
+  if (nameEl)   nameEl.textContent   = displayName;
+  if (roleEl)   roleEl.textContent   = role;
 }
 
 // ====================================================
