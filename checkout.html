@@ -341,12 +341,72 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Driver's License — State / Country</label>
-                        <input type="text" id="cust-license-state" required placeholder="e.g. Florida, FL">
+                        <label>License Issuing State</label>
+                        <select id="cust-license-state" required>
+                            <option value="AL">AL — Alabama</option>
+                            <option value="AK">AK — Alaska</option>
+                            <option value="AZ">AZ — Arizona</option>
+                            <option value="AR">AR — Arkansas</option>
+                            <option value="CA">CA — California</option>
+                            <option value="CO">CO — Colorado</option>
+                            <option value="CT">CT — Connecticut</option>
+                            <option value="DE">DE — Delaware</option>
+                            <option value="FL" selected>FL — Florida</option>
+                            <option value="GA">GA — Georgia</option>
+                            <option value="HI">HI — Hawaii</option>
+                            <option value="ID">ID — Idaho</option>
+                            <option value="IL">IL — Illinois</option>
+                            <option value="IN">IN — Indiana</option>
+                            <option value="IA">IA — Iowa</option>
+                            <option value="KS">KS — Kansas</option>
+                            <option value="KY">KY — Kentucky</option>
+                            <option value="LA">LA — Louisiana</option>
+                            <option value="ME">ME — Maine</option>
+                            <option value="MD">MD — Maryland</option>
+                            <option value="MA">MA — Massachusetts</option>
+                            <option value="MI">MI — Michigan</option>
+                            <option value="MN">MN — Minnesota</option>
+                            <option value="MS">MS — Mississippi</option>
+                            <option value="MO">MO — Missouri</option>
+                            <option value="MT">MT — Montana</option>
+                            <option value="NE">NE — Nebraska</option>
+                            <option value="NV">NV — Nevada</option>
+                            <option value="NH">NH — New Hampshire</option>
+                            <option value="NJ">NJ — New Jersey</option>
+                            <option value="NM">NM — New Mexico</option>
+                            <option value="NY">NY — New York</option>
+                            <option value="NC">NC — North Carolina</option>
+                            <option value="ND">ND — North Dakota</option>
+                            <option value="OH">OH — Ohio</option>
+                            <option value="OK">OK — Oklahoma</option>
+                            <option value="OR">OR — Oregon</option>
+                            <option value="PA">PA — Pennsylvania</option>
+                            <option value="RI">RI — Rhode Island</option>
+                            <option value="SC">SC — South Carolina</option>
+                            <option value="SD">SD — South Dakota</option>
+                            <option value="TN">TN — Tennessee</option>
+                            <option value="TX">TX — Texas</option>
+                            <option value="UT">UT — Utah</option>
+                            <option value="VT">VT — Vermont</option>
+                            <option value="VA">VA — Virginia</option>
+                            <option value="WA">WA — Washington</option>
+                            <option value="WV">WV — West Virginia</option>
+                            <option value="WI">WI — Wisconsin</option>
+                            <option value="WY">WY — Wyoming</option>
+                            <option value="DC">DC — Washington D.C.</option>
+                            <option value="OTHER">Other / International</option>
+                        </select>
                     </div>
+                    <div class="form-group">
+                        <label>License Number</label>
+                        <input type="text" id="cust-license-number" required placeholder="e.g. W123-456-78-900-0" autocomplete="off" style="text-transform:uppercase;">
+                    </div>
+                </div>
+                <div class="form-row">
                     <div class="form-group">
                         <label>Date of Birth</label>
                         <input type="date" id="cust-dob" required>
+                        <div class="notice-young" id="notice-young">⚠ Under-25 fee applies: +$25 / day added automatically.</div>
                     </div>
                 </div>
 
@@ -415,7 +475,7 @@
                 <!-- Terms -->
                 <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:16px 20px;margin-bottom:28px;font-size:0.83rem;color:#ccc;line-height:1.7;">
                     <strong style="color:var(--gold);display:block;margin-bottom:6px;">Terms & Conditions</strong>
-                    Driver must be 25+. Full coverage insurance required. Security deposit authorized at pick-up. Cancellations within 48h subject to 50% fee.
+                    Drivers under 25 are subject to a $25/day surcharge. Full coverage insurance required. Security deposit authorized at pick-up. Cancellations within 48h subject to 50% fee.
                 </div>
 
                 <!-- Stripe Payment Form -->
@@ -501,8 +561,9 @@
     let locationFee  = 0;
     let insurancePlan = 'standard'; // 'standard' | 'premium'
     let addons = {
-        fuel:   { active: false, price: 95,  type: 'flat',  label: 'Prepaid Fuel' },
-        driver: { active: false, price: 50,  type: 'daily', label: 'Additional Driver' },
+        fuel:        { active: false, price: 95,  type: 'flat',  label: 'Prepaid Fuel' },
+        driver:      { active: false, price: 50,  type: 'daily', label: 'Additional Driver' },
+        youngDriver: { active: false, price: 25,  type: 'daily', label: 'Under-25 Fee' },
     };
 
     let _unavailableRanges = [];
@@ -530,13 +591,51 @@
             initDatePickers();
             const startUrl = params.get('start');
             const endUrl   = params.get('end');
-            if (startUrl && _fpPickup) _fpPickup.setDate(startUrl);
-            if (endUrl   && _fpReturn) _fpReturn.setDate(endUrl);
-            updateQuote();
+            if (startUrl && endUrl) {
+                // Pre-filled dates from car-detail page
+                if (_fpPickup) _fpPickup.setDate(startUrl);
+                if (_fpReturn) _fpReturn.setDate(endUrl);
+                updateQuote();
+                showConfirmedDates(startUrl, endUrl);
+            } else {
+                updateQuote();
+            }
         });
 
         document.getElementById('co-location').addEventListener('change', updateQuote);
+
+        // Under-25 DOB listener
+        document.getElementById('cust-dob').addEventListener('change', checkYoungDriver);
     });
+
+    // ---- Pre-filled dates from URL ----
+    function showConfirmedDates(start, end) {
+        const opts  = { month: 'long', day: 'numeric', year: 'numeric' };
+        const sDate = new Date(start + 'T12:00:00');
+        const eDate = new Date(end   + 'T12:00:00');
+        const days  = Math.max(1, Math.ceil((eDate - sDate) / 86400000));
+        document.getElementById('dates-confirmed-text').textContent =
+            sDate.toLocaleDateString('en-US', opts) + ' → ' + eDate.toLocaleDateString('en-US', opts);
+        document.getElementById('dates-confirmed-days').textContent = days + ' day' + (days !== 1 ? 's' : '');
+        document.getElementById('dates-confirmed-card').style.display = 'flex';
+        document.getElementById('date-pickers-section').style.display = 'none';
+    }
+
+    function showDatePickers() {
+        document.getElementById('dates-confirmed-card').style.display = 'none';
+        document.getElementById('date-pickers-section').style.display = 'block';
+    }
+
+    // ---- Under-25 fee ----
+    function checkYoungDriver() {
+        const dob = document.getElementById('cust-dob').value;
+        if (!dob) return;
+        const age = (new Date() - new Date(dob)) / (365.25 * 24 * 3600 * 1000);
+        const isYoung = age < 25;
+        addons.youngDriver.active = isYoung;
+        document.getElementById('notice-young').style.display = isYoung ? 'block' : 'none';
+        updateQuote();
+    }
 
     // ---- Availability ----
     async function loadUnavailableDates(carId) {
@@ -723,7 +822,9 @@
         const email    = document.getElementById('cust-email').value.trim();
         const phone    = document.getElementById('cust-phone').value.trim();
         const dob      = document.getElementById('cust-dob').value;
-        const licState = document.getElementById('cust-license-state').value.trim();
+        const licStateSel = document.getElementById('cust-license-state');
+        const licState = licStateSel.options[licStateSel.selectedIndex].text;
+        const licNum   = document.getElementById('cust-license-number').value.trim().toUpperCase();
         const insurance = insurancePlan === 'premium' ? 'Premium Coverage (+$' + (149 * bookingDays).toLocaleString() + ')' : 'Standard Protection (Included)';
         const extras   = Object.values(addons).filter(a => a.active).map(a => a.label).join(', ') || 'None';
 
@@ -740,6 +841,7 @@
                     <div class="review-row"><span class="review-label">Phone</span><span class="review-value">${_escHtml(phone)}</span></div>
                     <div class="review-row"><span class="review-label">Date of Birth</span><span class="review-value">${_escHtml(dob)}</span></div>
                     <div class="review-row"><span class="review-label">License State</span><span class="review-value">${_escHtml(licState)}</span></div>
+                    <div class="review-row"><span class="review-label">License Number</span><span class="review-value">${_escHtml(licNum)}</span></div>
                     <div class="review-row"><span class="review-label">Coverage</span><span class="review-value">${_escHtml(insurance)}</span></div>
                     <div class="review-row"><span class="review-label">Extras</span><span class="review-value">${_escHtml(extras)}</span></div>
                 </div>
@@ -835,7 +937,8 @@
             pickup_location: locationText,
             total_amount:    totalAmount,
             customer_dob:    document.getElementById('cust-dob').value || null,
-            license_state:   document.getElementById('cust-license-state').value.trim() || null,
+            license_state:   document.getElementById('cust-license-state').value || null,
+            license_number:  document.getElementById('cust-license-number').value.trim().toUpperCase() || null,
             addons:          activeAddons.length ? activeAddons : null,
             status:          'confirmed',
             source:          'website',
