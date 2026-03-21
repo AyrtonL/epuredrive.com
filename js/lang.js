@@ -71,7 +71,15 @@ for (const [en, es] of Object.entries(translations)) {
   reverseTranslations[es] = en;
 }
 
-let currentLang = localStorage.getItem('epure_lang') || 'en';
+let currentLang = localStorage.getItem('epure_lang');
+if (!currentLang) {
+  const browserLang = navigator.language || navigator.userLanguage;
+  if (browserLang && browserLang.toLowerCase().startsWith('es')) {
+    currentLang = 'es';
+  } else {
+    currentLang = 'en';
+  }
+}
 
 function translateTextNode(node, dict) {
   // Only process non-empty text nodes
