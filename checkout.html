@@ -577,9 +577,9 @@
         </div>
     </footer>
 
-    <script src="https://js.stripe.com/v3/" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="js/main.js" defer></script>
     <script src="js/fleet.js" defer></script>
     <script>
@@ -747,10 +747,12 @@
         document.getElementById('sum-delivery').textContent = locationFee > 0 ? `+$${locationFee}` : 'Included';
 
         if (pDate && rDate && pDate < rDate) {
-            bookingDays = Math.max(1, Math.ceil((new Date(rDate) - new Date(pDate)) / 86400000));
+            const pLocal = new Date(pDate + 'T12:00:00');
+            const rLocal = new Date(rDate + 'T12:00:00');
+            bookingDays = Math.max(1, Math.ceil((rLocal - pLocal) / 86400000));
             const opts  = { month: 'short', day: 'numeric' };
             document.getElementById('sum-dates').innerHTML =
-                `${new Date(pDate).toLocaleDateString('en-US', opts)} &rarr; ${new Date(rDate).toLocaleDateString('en-US', opts)}`;
+                `${pLocal.toLocaleDateString('en-US', opts)} &rarr; ${rLocal.toLocaleDateString('en-US', opts)}`;
         } else {
             bookingDays = 0;
             document.getElementById('sum-dates').textContent = 'Select dates';
