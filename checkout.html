@@ -196,10 +196,9 @@
         .driver-type-btn.active { background:var(--gold,#c9a84c); color:#000; font-weight:600; }
 
         /* Section divider */
-        .form-section { margin:24px 0 16px; display:flex; align-items:center; gap:10px; }
+        .form-section { margin:24px 0 16px; display:flex; align-items:center; gap:12px; }
         .form-section span { font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted,#777); white-space:nowrap; }
         .form-section::before, .form-section::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.07); }
-        .form-section::before { display:none; }
 
         /* International notice */
         .notice-info { background:rgba(99,179,237,0.07); border:1px solid rgba(99,179,237,0.2); border-radius:8px; padding:12px 16px; font-size:0.83rem; color:#90cdf4; margin-top:4px; line-height:1.6; }
@@ -215,7 +214,6 @@
             </a>
             <ul class="nav-links">
                 <li><a href="fleet.html">Our Fleet</a></li>
-                <li><a href="fleet.html">Browse All</a></li>
                 <li><a href="index.html#why-us">Why Us</a></li>
                 <li><a href="index.html#contact">Contact</a></li>
             </ul>
@@ -294,11 +292,6 @@
                     </div>
                 </div>
 
-                <div id="availability-loading" style="display:none;font-size:0.85rem;color:#888;margin-bottom:12px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;vertical-align:middle;margin-right:6px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-                    Checking availability…
-                </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label>Pick-up Time</label>
@@ -341,6 +334,11 @@
                     </select>
                 </div>
 
+                <div id="availability-loading" style="display:none;font-size:0.85rem;color:#888;margin-top:16px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;vertical-align:middle;margin-right:6px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                    Checking availability…
+                </div>
+
                 <div class="checkout-actions end">
                     <button class="btn btn-primary" id="btn-check-dates" onclick="checkDatesAndNext()">Continue →</button>
                 </div>
@@ -370,7 +368,7 @@
                     </div>
                     <div class="form-group">
                         <label>Phone Number</label>
-                        <input type="tel" id="cust-phone" required placeholder="+1 (000) 000-0000" autocomplete="tel">
+                        <input type="tel" id="cust-phone" required placeholder="+1 305 000 0000" autocomplete="tel">
                     </div>
                 </div>
                 <div class="form-row">
@@ -542,7 +540,7 @@
                 <!-- Terms -->
                 <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:16px 20px;margin-bottom:28px;font-size:0.83rem;color:#ccc;line-height:1.7;">
                     <strong style="color:var(--gold);display:block;margin-bottom:6px;">Terms & Conditions</strong>
-                    Drivers under 25 are subject to a $25/day surcharge. Full coverage insurance required. Security deposit authorized at pick-up. Cancellations within 48h subject to 50% fee.
+                    Drivers under 25 are subject to a $25/day surcharge. Basic Liability requires valid US insurance or qualifying credit card — international drivers are recommended to select Premium Coverage. Security deposit authorized at pick-up. Cancellations within 48h of pick-up are subject to a 50% fee.
                 </div>
 
                 <!-- Stripe Payment Form -->
@@ -652,6 +650,21 @@
             <div style="color:var(--gold);font-size:0.9rem;">$${selectedCar.price} / day</div>
         `;
 
+        // Pre-select location from URL
+        const locParam = params.get('loc');
+        if (locParam) document.getElementById('co-location').value = locParam;
+
+        // Pre-select add-ons from URL
+        if (params.get('protection') === '1') {
+            insurancePlan = 'premium';
+            document.getElementById('addon-standard').classList.remove('selected');
+            document.getElementById('addon-premium').classList.add('selected');
+        }
+        if (params.get('fuel') === '1') {
+            addons.fuel.active = true;
+            document.getElementById('addon-fuel').classList.add('selected');
+        }
+
         // Load Stripe key + unavailable dates in parallel
         loadStripeKey();
         loadUnavailableDates(selectedCar.id).then(() => {
@@ -659,7 +672,6 @@
             const startUrl = params.get('start');
             const endUrl   = params.get('end');
             if (startUrl && endUrl) {
-                // Pre-filled dates from car-detail page
                 if (_fpPickup) _fpPickup.setDate(startUrl);
                 if (_fpReturn) _fpReturn.setDate(endUrl);
                 updateQuote();
@@ -769,7 +781,7 @@
         document.getElementById('addon-premium-total').textContent =
             bookingDays > 0 ? `$${(149 * bookingDays).toLocaleString()} total` : '';
         document.getElementById('addon-driver-total').textContent =
-            bookingDays > 0 && addons.driver.active ? `$${(50 * bookingDays).toLocaleString()} total` : '';
+            bookingDays > 0 ? `$${(50 * bookingDays).toLocaleString()} total` : '';
 
         let addonsTotal = 0;
         let addonsHtml  = '';
@@ -901,6 +913,17 @@
     }
 
     // ---- Review summary ----
+    function fmtDate(dateStr) {
+        if (!dateStr) return '';
+        return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    function fmtTime(val) {
+        if (!val) return '';
+        const [h, m] = val.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${ampm}`;
+    }
+
     function buildReviewSummary() {
         const pDate    = document.getElementById('co-pickup').value;
         const rDate    = document.getElementById('co-return').value;
@@ -934,8 +957,8 @@
                 <div style="background:rgba(255,255,255,0.03);padding:12px 18px;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);">Booking Summary</div>
                 <div style="padding:4px 18px 12px;">
                     <div class="review-row"><span class="review-label">Vehicle</span><span class="review-value">${_escHtml(selectedCar.make)} ${_escHtml(selectedCar.model)}</span></div>
-                    <div class="review-row"><span class="review-label">Pick-up</span><span class="review-value">${_escHtml(pDate)} at ${document.getElementById('co-time-pickup').value}</span></div>
-                    <div class="review-row"><span class="review-label">Return</span><span class="review-value">${_escHtml(rDate)} at ${document.getElementById('co-time-return').value}</span></div>
+                    <div class="review-row"><span class="review-label">Pick-up</span><span class="review-value">${fmtDate(pDate)} at ${fmtTime(document.getElementById('co-time-pickup').value)}</span></div>
+                    <div class="review-row"><span class="review-label">Return</span><span class="review-value">${fmtDate(rDate)} at ${fmtTime(document.getElementById('co-time-return').value)}</span></div>
                     <div class="review-row"><span class="review-label">Location</span><span class="review-value">${_escHtml(locText)}</span></div>
                     <div class="review-row"><span class="review-label">Driver</span><span class="review-value">${_escHtml(fname + ' ' + lname)}</span></div>
                     <div class="review-row"><span class="review-label">Email</span><span class="review-value">${_escHtml(email)}</span></div>
@@ -950,6 +973,13 @@
 
     // ---- Stripe ----
     async function loadStripeForm() {
+        // Always reset so amount is fresh if user went Back and changed add-ons
+        _stripeElements = null;
+        document.getElementById('payment-element').innerHTML = '';
+        document.getElementById('payment-element').style.display = 'none';
+        document.getElementById('payment-loading').style.display = 'block';
+        document.getElementById('btn-pay').disabled = true;
+
         const totalRaw = document.getElementById('sum-total').textContent.replace(/[$,]/g, '');
         const amount   = Math.round((parseFloat(totalRaw) || 0) * 100);
         if (amount < 50) return;

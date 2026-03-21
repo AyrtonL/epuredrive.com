@@ -113,7 +113,7 @@ const translations = {
   "Review & Pay": "Revisar y Pagar",
   "Confirm your booking details and complete payment.": "Confirma los detalles de tu reserva y completa el pago.",
   "Terms & Conditions": "Términos y Condiciones",
-  "Drivers under 25 are subject to a $25/day surcharge. Full coverage insurance required. Security deposit authorized at pick-up. Cancellations within 48h subject to 50% fee.": "Los conductores menores de 25 años están sujetos a un cargo de $25/día. Se requiere seguro de cobertura total. Depósito de seguridad autorizado al recoger. Las cancelaciones dentro de las 48 h están sujetas a un cargo del 50%.",
+  "Drivers under 25 are subject to a $25/day surcharge. Basic Liability requires valid US insurance or qualifying credit card — international drivers are recommended to select Premium Coverage. Security deposit authorized at pick-up. Cancellations within 48h of pick-up are subject to a 50% fee.": "Los conductores menores de 25 años tienen un cargo de $25/día. La Responsabilidad Básica requiere seguro estadounidense válido o tarjeta habilitada — los conductores internacionales deben considerar la Cobertura Premium. Depósito de seguridad autorizado al recoger. Cancelaciones dentro de las 48 h previas tienen un cargo del 50%.",
   "Loading payment form…": "Cargando formulario de pago…",
   "Confirm & Pay": "Confirmar y Pagar",
   "Booking Summary": "Resumen de Reserva",
