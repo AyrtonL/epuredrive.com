@@ -35,7 +35,7 @@
     }
     .logo-wrap {
       text-align: center;
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
     }
     .logo-wrap img { height: 36px; }
     .logo-wrap p {
@@ -45,7 +45,35 @@
       text-transform: uppercase;
       margin-top: 0.6rem;
     }
-    .form-group { margin-bottom: 1.2rem; }
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: rgba(255,255,255,0.04);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 1.75rem;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 0.55rem;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #000;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .form-group { margin-bottom: 1.1rem; }
     label {
       display: block;
       font-size: 0.75rem;
@@ -84,16 +112,16 @@
     }
     .btn:hover { opacity: 0.85; }
     .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .error {
-      color: #f87171;
+    .msg {
       font-size: 0.82rem;
       margin-top: 1rem;
       text-align: center;
       padding: 0.6rem;
-      background: rgba(248,113,113,0.08);
       border-radius: 8px;
       display: none;
     }
+    .msg.error { color: #f87171; background: rgba(248,113,113,0.08); }
+    .msg.success { color: #4ade80; background: rgba(74,222,128,0.08); }
     .back {
       display: block;
       text-align: center;
@@ -134,10 +162,14 @@
       justify-content: center;
       gap: 0.6rem;
       transition: background 0.2s, border-color 0.2s;
-      margin-bottom: 0;
     }
     .btn-google:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.18); }
     .btn-google:disabled { opacity: 0.45; cursor: not-allowed; }
+    .hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.35rem;
+    }
   </style>
 </head>
 <body>
@@ -147,26 +179,60 @@
       <p>Admin Panel</p>
     </div>
 
-    <!-- Google login -->
-    <button class="btn-google" id="google-btn">
-      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-      Continue with Google
-    </button>
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="login">Sign In</button>
+      <button class="tab-btn" data-tab="register">Create Account</button>
+    </div>
 
-    <div class="divider">or sign in with email</div>
+    <!-- Sign In Panel -->
+    <div class="tab-panel active" id="panel-login">
+      <button class="btn-google" id="google-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
 
-    <form id="login-form">
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="email" placeholder="admin@epuredrive.com" required autocomplete="email" />
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password" />
-      </div>
-      <button type="submit" class="btn" id="login-btn">Sign In</button>
-      <div class="error" id="error-msg"></div>
-    </form>
+      <div class="divider">or sign in with email</div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="admin@epuredrive.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn" id="login-btn">Sign In</button>
+        <div class="msg error" id="login-error"></div>
+      </form>
+    </div>
+
+    <!-- Create Account Panel -->
+    <div class="tab-panel" id="panel-register">
+      <form id="register-form">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="reg-name" placeholder="Your name" required autocomplete="name" />
+        </div>
+        <div class="form-group">
+          <label>Fleet / Company Name</label>
+          <input type="text" id="reg-company" placeholder="e.g. Sunset Rentals" required />
+          <div class="hint">This will be your account name.</div>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="reg-email" placeholder="you@company.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="reg-password" placeholder="Min. 8 characters" required minlength="8" autocomplete="new-password" />
+        </div>
+        <button type="submit" class="btn" id="reg-btn">Create Account</button>
+        <div class="msg error" id="reg-error"></div>
+        <div class="msg success" id="reg-success"></div>
+      </form>
+    </div>
 
     <a href="../index.html" class="back">← Back to website</a>
   </div>
@@ -179,39 +245,47 @@
       'sb_publishable_krEuIpNhJVcADIUyBXYy9g_fiXrXzV9'
     );
 
-    // Handle OAuth redirect (Google login callback)
+    // ---- Tab switching ----
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // ---- Redirect if already logged in ----
     sb.auth.onAuthStateChange((event, session) => {
       if (session) window.location.href = 'dashboard.html';
     });
-
     sb.auth.getSession().then(({ data }) => {
       if (data.session) window.location.href = 'dashboard.html';
     });
 
-    // Google OAuth
+    // ---- Google OAuth ----
     document.getElementById('google-btn').addEventListener('click', async () => {
       const btn = document.getElementById('google-btn');
       btn.disabled = true;
       btn.lastChild.textContent = ' Redirecting to Google…';
       await sb.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: window.location.origin + '/admin/dashboard.html',
-        },
+        options: { redirectTo: window.location.origin + '/admin/dashboard.html' },
       });
     });
 
+    // ---- Email Sign In ----
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('login-btn');
-      const err = document.getElementById('error-msg');
+      const err = document.getElementById('login-error');
       btn.disabled = true;
       btn.textContent = 'Signing in…';
       err.style.display = 'none';
 
       const { error } = await sb.auth.signInWithPassword({
-        email: document.getElementById('email').value,
-        password: document.getElementById('password').value,
+        email: document.getElementById('login-email').value.trim(),
+        password: document.getElementById('login-password').value,
       });
 
       if (error) {
@@ -222,6 +296,72 @@
       } else {
         window.location.href = 'dashboard.html';
       }
+    });
+
+    // ---- Create Account ----
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn      = document.getElementById('reg-btn');
+      const errEl    = document.getElementById('reg-error');
+      const successEl = document.getElementById('reg-success');
+      const name     = document.getElementById('reg-name').value.trim();
+      const company  = document.getElementById('reg-company').value.trim();
+      const email    = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+
+      btn.disabled = true;
+      btn.textContent = 'Creating account…';
+      errEl.style.display = 'none';
+      successEl.style.display = 'none';
+
+      // 1 — Sign up
+      const { data: authData, error: authErr } = await sb.auth.signUp({ email, password });
+      if (authErr) {
+        errEl.textContent = authErr.message;
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+        return;
+      }
+
+      const userId = authData.user?.id;
+
+      // 2 — Create tenant
+      const slug = company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const { data: tenantData, error: tenantErr } = await sb
+        .from('tenants')
+        .insert({ name: company, slug: slug + '-' + Date.now() })
+        .select('id')
+        .single();
+
+      if (tenantErr) {
+        errEl.textContent = 'Account created but could not set up your fleet. Please contact support.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+        return;
+      }
+
+      // 3 — Create profile
+      if (userId) {
+        await sb.from('profiles').upsert({
+          id: userId,
+          tenant_id: tenantData.id,
+          full_name: name,
+          role: 'admin',
+        });
+      }
+
+      // 4 — Show success
+      successEl.textContent = 'Account created! Check your email to confirm, then sign in.';
+      successEl.style.display = 'block';
+      btn.textContent = 'Account Created';
+
+      // Auto-switch to login tab after 2s
+      setTimeout(() => {
+        document.querySelector('[data-tab="login"]').click();
+        document.getElementById('login-email').value = email;
+      }, 2000);
     });
   </script>
 </body>

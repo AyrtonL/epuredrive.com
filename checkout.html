@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css?v=123">
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
         .checkout-container {
             max-width: 1200px;
@@ -432,11 +433,10 @@
                 </div>
             </div>
 
-            <!-- STEP 5: CONFIRM -->
+            <!-- STEP 5: CONFIRM + PAYMENT -->
             <div class="step-panel" id="step-5">
                 <h2 class="step-title">Review & Payment</h2>
-                <p style="color: var(--text-muted); margin-bottom: 30px;">Please review your total and submit your reservation request. A specialist will contact you momentarily to collect payment and verify documents.</p>
-                
+
                 <div style="background: rgba(201,168,76,0.1); border: 1px solid var(--gold); border-radius: 8px; padding: 25px; margin-bottom: 30px;">
                     <h3 style="color: var(--gold); margin-bottom: 15px;">Terms & Conditions</h3>
                     <ul style="color: #ccc; font-size: 0.9rem; margin-left: 20px; line-height: 1.6;">
@@ -446,9 +446,20 @@
                     </ul>
                 </div>
 
-                <div class="checkout-actions">
+                <!-- Stripe payment form (hidden until "Pay Now" clicked) -->
+                <div id="payment-section" style="display:none;margin-bottom:30px;">
+                    <h3 style="font-size:1rem;font-weight:600;margin-bottom:16px;text-transform:uppercase;letter-spacing:1px;">Card Details</h3>
+                    <div id="payment-element" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:16px;"></div>
+                    <div id="payment-error" style="color:#f87171;font-size:0.85rem;margin-top:10px;display:none;"></div>
+                </div>
+
+                <div class="checkout-actions" id="payment-actions">
                     <button class="btn-secondary" onclick="prevStep(4)">Back</button>
-                    <button class="btn btn-primary" id="btn-submit-booking" onclick="submitBooking()" style="font-size: 1.1rem; padding: 15px 40px;">Confirm Reservation</button>
+                    <button class="btn btn-primary" id="btn-pay" onclick="initiatePayment()" style="font-size:1.1rem;padding:15px 40px;">Pay Now</button>
+                </div>
+                <div class="checkout-actions" id="confirm-actions" style="display:none;">
+                    <button class="btn-secondary" id="btn-cancel-pay" onclick="cancelPayment()">Back</button>
+                    <button class="btn btn-primary" id="btn-submit-booking" onclick="confirmPayment()" style="font-size:1.1rem;padding:15px 40px;">Confirm & Pay</button>
                 </div>
             </div>
 
@@ -796,10 +807,79 @@
             return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
-        async function submitBooking() {
-            const btn = document.getElementById('btn-submit-booking');
-            btn.innerHTML = 'Processing...';
+        // ---- Stripe ----
+        // Replace with your Stripe publishable key (pk_live_... or pk_test_...)
+        const STRIPE_PK = 'pk_test_YOUR_STRIPE_PUBLISHABLE_KEY';
+        let _stripe = null;
+        let _stripeElements = null;
+
+        async function initiatePayment() {
+            const totalRaw    = document.getElementById('sum-total').textContent.replace(/[$,]/g, '');
+            const totalAmount = parseFloat(totalRaw) || 0;
+            if (totalAmount < 1) { alert('Invalid total amount.'); return; }
+
+            const btn = document.getElementById('btn-pay');
+            btn.textContent = 'Loading…';
             btn.disabled = true;
+
+            const customerName  = (document.getElementById('cust-fname').value.trim() + ' ' + document.getElementById('cust-lname').value.trim()).trim();
+            const customerEmail = document.getElementById('cust-email').value.trim();
+            const pickupDate    = document.getElementById('co-pickup').value;
+            const returnDate    = document.getElementById('co-return').value;
+
+            try {
+                // Call Netlify function to create PaymentIntent
+                const res = await fetch('/.netlify/functions/create-payment-intent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        amount:        Math.round(totalAmount * 100), // cents
+                        currency:      'usd',
+                        carName:       selectedCar.make + ' ' + selectedCar.model,
+                        pickupDate,
+                        returnDate,
+                        customerEmail,
+                    }),
+                });
+                const data = await res.json();
+                if (!data.clientSecret) throw new Error(data.error || 'Payment setup failed');
+
+                // Mount Stripe Elements
+                if (!_stripe) _stripe = Stripe(STRIPE_PK);
+                _stripeElements = _stripe.elements({ clientSecret: data.clientSecret, appearance: {
+                    theme: 'night',
+                    variables: { colorPrimary: '#c9a84c', borderRadius: '10px', fontFamily: 'Outfit, sans-serif' },
+                }});
+                const paymentEl = _stripeElements.create('payment');
+                paymentEl.mount('#payment-element');
+
+                document.getElementById('payment-section').style.display = 'block';
+                document.getElementById('payment-actions').style.display  = 'none';
+                document.getElementById('confirm-actions').style.display  = 'flex';
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('payment-error').textContent = err.message;
+                document.getElementById('payment-error').style.display = 'block';
+                document.getElementById('payment-section').style.display = 'block';
+                btn.textContent = 'Pay Now';
+                btn.disabled = false;
+            }
+        }
+
+        function cancelPayment() {
+            document.getElementById('payment-section').style.display = 'none';
+            document.getElementById('payment-actions').style.display  = 'flex';
+            document.getElementById('confirm-actions').style.display  = 'none';
+            document.getElementById('payment-element').innerHTML = '';
+            _stripeElements = null;
+        }
+
+        async function confirmPayment() {
+            const btn = document.getElementById('btn-submit-booking');
+            btn.textContent = 'Processing…';
+            btn.disabled = true;
+            document.getElementById('payment-error').style.display = 'none';
 
             const customerName  = (document.getElementById('cust-fname').value.trim() + ' ' + document.getElementById('cust-lname').value.trim()).trim();
             const customerEmail = document.getElementById('cust-email').value.trim();
@@ -810,7 +890,22 @@
             const totalRaw      = document.getElementById('sum-total').textContent.replace(/[$,]/g, '');
             const totalAmount   = parseFloat(totalRaw) || 0;
 
-            // 1 — Save to Supabase reservations table
+            // Confirm payment with Stripe
+            const { error: stripeError } = await _stripe.confirmPayment({
+                elements: _stripeElements,
+                confirmParams: { return_url: window.location.origin + '/checkout.html' },
+                redirect: 'if_required',
+            });
+
+            if (stripeError) {
+                document.getElementById('payment-error').textContent = stripeError.message;
+                document.getElementById('payment-error').style.display = 'block';
+                btn.textContent = 'Confirm & Pay';
+                btn.disabled = false;
+                return;
+            }
+
+            // Payment succeeded — save confirmed reservation to Supabase
             const { error: dbError } = await _sb.from('reservations').insert({
                 car_id:          selectedCar.id,
                 customer_name:   customerName,
@@ -820,19 +915,19 @@
                 return_date:     returnDate,
                 pickup_location: locationText,
                 total_amount:    totalAmount,
-                status:          'pending',
+                status:          'confirmed',
                 source:          'website',
             });
 
             if (dbError) {
                 console.error('Booking save error:', dbError.message);
-                btn.innerHTML = 'Confirm Reservation';
+                btn.textContent = 'Confirm & Pay';
                 btn.disabled = false;
-                alert('There was an error saving your reservation. Please try again or contact us directly.');
+                alert('Payment was collected but reservation save failed. Please contact us with your payment confirmation.');
                 return;
             }
 
-            // 2 — Send notification email via Formspree
+            // Notify via Formspree
             fetch('https://formspree.io/f/xlgpzldj', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -845,17 +940,19 @@
                     'Email':        customerEmail,
                     'Phone':        customerPhone,
                     'Total Amount': '$' + totalAmount.toLocaleString(),
+                    'Status':       'PAID',
                 })
             }).catch(err => console.error('Email notification error:', err));
 
-            // 3 — Show confirmation (escaped to prevent XSS)
+            // Show confirmation
             document.getElementById('step-5').innerHTML = `
                 <div style="text-align: center; padding: 40px 0;">
                     <div style="width: 80px; height: 80px; background: #22c55e; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
-                    <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 15px;">Reservation Confirmed</h2>
-                    <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 30px;">Thank you, ${_escHtml(customerName)}. We've received your request and will contact you shortly to confirm payment and documents.</p>
+                    <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 15px;">Booking Confirmed</h2>
+                    <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 10px;">Thank you, ${_escHtml(customerName)}. Your payment was successful.</p>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 30px;">A confirmation email will be sent to ${_escHtml(customerEmail)}.</p>
                     <a href="index.html" class="btn btn-primary" style="text-decoration: none; padding: 15px 30px;">Return Home</a>
                 </div>
             `;

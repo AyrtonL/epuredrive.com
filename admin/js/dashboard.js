@@ -52,14 +52,77 @@ async function loadTenantProfile(userId) {
     if (profile?.tenant_id) {
       currentTenantId   = profile.tenant_id;
       currentTenantName = profile.tenants?.name || null;
-      // Show tenant name in topbar if element exists
       const el = document.getElementById('tenant-name');
       if (el && currentTenantName) el.textContent = currentTenantName;
+    } else {
+      // Logged in but no tenant yet — show onboarding
+      await showOnboarding(userId);
     }
   } catch (_) {
-    // Profiles table doesn't exist yet — single-tenant mode
-    currentTenantId = null;
+    // Profile row doesn't exist — show onboarding
+    try { await showOnboarding(userId); } catch (_2) { currentTenantId = null; }
   }
+}
+
+// ====================================================
+//  ONBOARDING (first login — no tenant yet)
+// ====================================================
+function showOnboarding(userId) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('onboarding-overlay');
+    if (!overlay) { resolve(); return; }
+    overlay.style.display = 'flex';
+
+    document.getElementById('onboard-btn').onclick = async () => {
+      const company = document.getElementById('onboard-company').value.trim();
+      const name    = document.getElementById('onboard-name').value.trim();
+      const errEl   = document.getElementById('onboard-error');
+      const btn     = document.getElementById('onboard-btn');
+
+      if (!company) {
+        errEl.textContent = 'Please enter your fleet name.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Setting up…';
+      errEl.style.display = 'none';
+
+      try {
+        // Create tenant
+        const slug = company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const { data: tenant, error: tErr } = await sb
+          .from('tenants')
+          .insert({ name: company, slug: slug + '-' + Date.now() })
+          .select('id')
+          .single();
+        if (tErr) throw tErr;
+
+        // Create profile
+        const { error: pErr } = await sb.from('profiles').upsert({
+          id: userId,
+          tenant_id: tenant.id,
+          full_name: name || null,
+          role: 'admin',
+        });
+        if (pErr) throw pErr;
+
+        currentTenantId   = tenant.id;
+        currentTenantName = company;
+        const el = document.getElementById('tenant-name');
+        if (el) el.textContent = company;
+
+        overlay.style.display = 'none';
+        resolve();
+      } catch (err) {
+        errEl.textContent = 'Setup failed: ' + (err.message || 'Unknown error');
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Get Started';
+      }
+    };
+  });
 }
 
 // ====================================================
