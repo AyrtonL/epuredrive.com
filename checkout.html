@@ -189,6 +189,21 @@
 
         /* Under-25 notice */
         .notice-young { background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.25); border-radius:8px; padding:12px 16px; font-size:0.85rem; color:#fbbf24; margin-top:8px; display:none; }
+
+        /* Driver type toggle */
+        .driver-type-toggle { display:flex; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:4px; margin-bottom:20px; }
+        .driver-type-btn { flex:1; padding:0.55rem 0.75rem; border:none; background:transparent; color:var(--text-muted,#888); font-family:inherit; font-size:0.88rem; font-weight:500; border-radius:7px; cursor:pointer; transition:background 0.2s, color 0.2s; }
+        .driver-type-btn.active { background:var(--gold,#c9a84c); color:#000; font-weight:600; }
+
+        /* Section divider */
+        .form-section { margin:24px 0 16px; display:flex; align-items:center; gap:10px; }
+        .form-section span { font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted,#777); white-space:nowrap; }
+        .form-section::before, .form-section::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.07); }
+        .form-section::before { display:none; }
+
+        /* International notice */
+        .notice-info { background:rgba(99,179,237,0.07); border:1px solid rgba(99,179,237,0.2); border-radius:8px; padding:12px 16px; font-size:0.83rem; color:#90cdf4; margin-top:4px; line-height:1.6; }
+        .notice-intl-rec { background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); border-radius:8px; padding:10px 16px; font-size:0.82rem; color:#fbbf24; margin-bottom:16px; display:none; }
     </style>
 </head>
 <body data-page="checkout">
@@ -337,6 +352,7 @@
                 <p class="step-subtitle">Fill in the primary driver's information and choose any extras.</p>
                 <div class="error-msg" id="details-error"></div>
 
+                <!-- Contact -->
                 <div class="form-row">
                     <div class="form-group">
                         <label>First Name</label>
@@ -354,70 +370,7 @@
                     </div>
                     <div class="form-group">
                         <label>Phone Number</label>
-                        <input type="tel" id="cust-phone" required autocomplete="tel">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>License Issuing State</label>
-                        <select id="cust-license-state" required>
-                            <option value="AL">AL — Alabama</option>
-                            <option value="AK">AK — Alaska</option>
-                            <option value="AZ">AZ — Arizona</option>
-                            <option value="AR">AR — Arkansas</option>
-                            <option value="CA">CA — California</option>
-                            <option value="CO">CO — Colorado</option>
-                            <option value="CT">CT — Connecticut</option>
-                            <option value="DE">DE — Delaware</option>
-                            <option value="FL" selected>FL — Florida</option>
-                            <option value="GA">GA — Georgia</option>
-                            <option value="HI">HI — Hawaii</option>
-                            <option value="ID">ID — Idaho</option>
-                            <option value="IL">IL — Illinois</option>
-                            <option value="IN">IN — Indiana</option>
-                            <option value="IA">IA — Iowa</option>
-                            <option value="KS">KS — Kansas</option>
-                            <option value="KY">KY — Kentucky</option>
-                            <option value="LA">LA — Louisiana</option>
-                            <option value="ME">ME — Maine</option>
-                            <option value="MD">MD — Maryland</option>
-                            <option value="MA">MA — Massachusetts</option>
-                            <option value="MI">MI — Michigan</option>
-                            <option value="MN">MN — Minnesota</option>
-                            <option value="MS">MS — Mississippi</option>
-                            <option value="MO">MO — Missouri</option>
-                            <option value="MT">MT — Montana</option>
-                            <option value="NE">NE — Nebraska</option>
-                            <option value="NV">NV — Nevada</option>
-                            <option value="NH">NH — New Hampshire</option>
-                            <option value="NJ">NJ — New Jersey</option>
-                            <option value="NM">NM — New Mexico</option>
-                            <option value="NY">NY — New York</option>
-                            <option value="NC">NC — North Carolina</option>
-                            <option value="ND">ND — North Dakota</option>
-                            <option value="OH">OH — Ohio</option>
-                            <option value="OK">OK — Oklahoma</option>
-                            <option value="OR">OR — Oregon</option>
-                            <option value="PA">PA — Pennsylvania</option>
-                            <option value="RI">RI — Rhode Island</option>
-                            <option value="SC">SC — South Carolina</option>
-                            <option value="SD">SD — South Dakota</option>
-                            <option value="TN">TN — Tennessee</option>
-                            <option value="TX">TX — Texas</option>
-                            <option value="UT">UT — Utah</option>
-                            <option value="VT">VT — Vermont</option>
-                            <option value="VA">VA — Virginia</option>
-                            <option value="WA">WA — Washington</option>
-                            <option value="WV">WV — West Virginia</option>
-                            <option value="WI">WI — Wisconsin</option>
-                            <option value="WY">WY — Wyoming</option>
-                            <option value="DC">DC — Washington D.C.</option>
-                            <option value="OTHER">Other / International</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>License Number</label>
-                        <input type="text" id="cust-license-number" required placeholder="e.g. W123-456-78-900-0" autocomplete="off" style="text-transform:uppercase;">
+                        <input type="tel" id="cust-phone" required placeholder="+1 (000) 000-0000" autocomplete="tel">
                     </div>
                 </div>
                 <div class="form-row">
@@ -428,13 +381,109 @@
                     </div>
                 </div>
 
+                <!-- Driver's License -->
+                <div class="form-section"><span>Driver's License</span></div>
+
+                <div class="driver-type-toggle">
+                    <button class="driver-type-btn active" id="btn-type-us" type="button" onclick="setDriverType('us')">🇺🇸 US License</button>
+                    <button class="driver-type-btn" id="btn-type-intl" type="button" onclick="setDriverType('international')">🌍 International</button>
+                </div>
+
+                <!-- US fields -->
+                <div id="fields-us">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Issuing State</label>
+                            <select id="cust-license-state">
+                                <option value="AL">AL — Alabama</option>
+                                <option value="AK">AK — Alaska</option>
+                                <option value="AZ">AZ — Arizona</option>
+                                <option value="AR">AR — Arkansas</option>
+                                <option value="CA">CA — California</option>
+                                <option value="CO">CO — Colorado</option>
+                                <option value="CT">CT — Connecticut</option>
+                                <option value="DE">DE — Delaware</option>
+                                <option value="FL" selected>FL — Florida</option>
+                                <option value="GA">GA — Georgia</option>
+                                <option value="HI">HI — Hawaii</option>
+                                <option value="ID">ID — Idaho</option>
+                                <option value="IL">IL — Illinois</option>
+                                <option value="IN">IN — Indiana</option>
+                                <option value="IA">IA — Iowa</option>
+                                <option value="KS">KS — Kansas</option>
+                                <option value="KY">KY — Kentucky</option>
+                                <option value="LA">LA — Louisiana</option>
+                                <option value="ME">ME — Maine</option>
+                                <option value="MD">MD — Maryland</option>
+                                <option value="MA">MA — Massachusetts</option>
+                                <option value="MI">MI — Michigan</option>
+                                <option value="MN">MN — Minnesota</option>
+                                <option value="MS">MS — Mississippi</option>
+                                <option value="MO">MO — Missouri</option>
+                                <option value="MT">MT — Montana</option>
+                                <option value="NE">NE — Nebraska</option>
+                                <option value="NV">NV — Nevada</option>
+                                <option value="NH">NH — New Hampshire</option>
+                                <option value="NJ">NJ — New Jersey</option>
+                                <option value="NM">NM — New Mexico</option>
+                                <option value="NY">NY — New York</option>
+                                <option value="NC">NC — North Carolina</option>
+                                <option value="ND">ND — North Dakota</option>
+                                <option value="OH">OH — Ohio</option>
+                                <option value="OK">OK — Oklahoma</option>
+                                <option value="OR">OR — Oregon</option>
+                                <option value="PA">PA — Pennsylvania</option>
+                                <option value="RI">RI — Rhode Island</option>
+                                <option value="SC">SC — South Carolina</option>
+                                <option value="SD">SD — South Dakota</option>
+                                <option value="TN">TN — Tennessee</option>
+                                <option value="TX">TX — Texas</option>
+                                <option value="UT">UT — Utah</option>
+                                <option value="VT">VT — Vermont</option>
+                                <option value="VA">VA — Virginia</option>
+                                <option value="WA">WA — Washington</option>
+                                <option value="WV">WV — West Virginia</option>
+                                <option value="WI">WI — Wisconsin</option>
+                                <option value="WY">WY — Wyoming</option>
+                                <option value="DC">DC — Washington D.C.</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>License Number</label>
+                            <input type="text" id="cust-license-number" placeholder="e.g. W123-456-78-900-0" autocomplete="off" style="text-transform:uppercase;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- International fields -->
+                <div id="fields-intl" style="display:none;">
+                    <div class="notice-intl-rec" id="notice-intl-rec">⚠ International drivers: Premium Coverage is strongly recommended — your home country's policy may not cover US rentals.</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>License Issuing Country</label>
+                            <input type="text" id="cust-license-country" placeholder="e.g. Colombia, Canada, Brazil" autocomplete="country-name">
+                        </div>
+                        <div class="form-group">
+                            <label>License Number</label>
+                            <input type="text" id="cust-license-number-intl" placeholder="As shown on your license" autocomplete="off" style="text-transform:uppercase;">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Passport Number</label>
+                            <input type="text" id="cust-passport" placeholder="Required at pick-up" autocomplete="off" style="text-transform:uppercase;">
+                        </div>
+                    </div>
+                    <div class="notice-info">International drivers must present their foreign license + passport at pick-up. An IDP (International Driving Permit) is recommended but not required.</div>
+                </div>
+
                 <!-- Add-ons -->
-                <div class="addon-section-label">Protection & Coverage</div>
+                <div class="form-section" style="margin-top:28px;"><span>Protection & Coverage</span></div>
                 <div class="addon-grid">
                     <div class="addon-card selected" id="addon-standard" onclick="selectInsurance('standard')">
                         <div class="addon-left">
-                            <h4>Standard Protection</h4>
-                            <p>State minimum liability. Security deposit required at pick-up.</p>
+                            <h4>Basic Liability</h4>
+                            <p>Florida state minimum. Requires valid US insurance or qualifying credit card. Higher security deposit at pick-up.</p>
                         </div>
                         <div class="addon-right">
                             <div class="addon-price">Included</div>
@@ -443,7 +492,7 @@
                     <div class="addon-card" id="addon-premium" onclick="selectInsurance('premium')">
                         <div class="addon-left">
                             <h4>Premium Coverage</h4>
-                            <p>Physical damage waiver up to $100K. Lower security deposit.</p>
+                            <p>Physical damage waiver up to $100K. Recommended for international drivers. Lower security deposit.</p>
                         </div>
                         <div class="addon-right">
                             <div class="addon-price">+$149 / day</div>
@@ -452,7 +501,7 @@
                     </div>
                 </div>
 
-                <div class="addon-section-label">Equipment & Services</div>
+                <div class="form-section" style="margin-top:20px;"><span>Equipment & Services</span></div>
                 <div class="addon-grid">
                     <div class="addon-card" id="addon-fuel" onclick="toggleAddon('fuel')">
                         <div class="addon-left">
@@ -745,6 +794,18 @@
         document.getElementById('sum-total').textContent = `$${total.toLocaleString()}`;
     }
 
+    // ---- Driver type (US / International) ----
+    let driverType = 'us';
+
+    function setDriverType(type) {
+        driverType = type;
+        document.getElementById('btn-type-us').classList.toggle('active', type === 'us');
+        document.getElementById('btn-type-intl').classList.toggle('active', type === 'international');
+        document.getElementById('fields-us').style.display        = type === 'us' ? 'block' : 'none';
+        document.getElementById('fields-intl').style.display      = type === 'international' ? 'block' : 'none';
+        document.getElementById('notice-intl-rec').style.display  = type === 'international' ? 'block' : 'none';
+    }
+
     // ---- Add-on toggles ----
     function selectInsurance(plan) {
         insurancePlan = plan;
@@ -796,17 +857,27 @@
     }
 
     function goToReview() {
-        const errEl  = document.getElementById('details-error');
+        const errEl = document.getElementById('details-error');
         errEl.style.display = 'none';
-        const fields = document.querySelectorAll('#step-2 [required]');
+
+        // Build list of fields to validate based on driver type
+        const always = ['cust-fname','cust-lname','cust-email','cust-phone','cust-dob'];
+        const typeFields = driverType === 'us'
+            ? ['cust-license-number']
+            : ['cust-license-country','cust-license-number-intl','cust-passport'];
+        const allFields = [...always, ...typeFields];
+
         let firstInvalid = null;
-        fields.forEach(f => {
+        allFields.forEach(id => {
+            const f = document.getElementById(id);
+            if (!f) return;
             f.style.borderColor = '';
             if (!f.value.trim()) {
                 f.style.borderColor = '#ef4444';
                 if (!firstInvalid) firstInvalid = f;
             }
         });
+
         if (firstInvalid) {
             errEl.textContent = 'Please fill in all required fields.';
             errEl.style.display = 'block';
@@ -840,10 +911,22 @@
         const email    = document.getElementById('cust-email').value.trim();
         const phone    = document.getElementById('cust-phone').value.trim();
         const dob      = document.getElementById('cust-dob').value;
-        const licStateSel = document.getElementById('cust-license-state');
-        const licState = licStateSel.options[licStateSel.selectedIndex].text;
-        const licNum   = document.getElementById('cust-license-number').value.trim().toUpperCase();
-        const insurance = insurancePlan === 'premium' ? 'Premium Coverage (+$' + (149 * bookingDays).toLocaleString() + ')' : 'Standard Protection (Included)';
+        let   licLine  = '';
+        if (driverType === 'us') {
+            const licStateSel = document.getElementById('cust-license-state');
+            const licState = licStateSel.options[licStateSel.selectedIndex].text;
+            const licNum   = document.getElementById('cust-license-number').value.trim().toUpperCase();
+            licLine = `<div class="review-row"><span class="review-label">License State</span><span class="review-value">${_escHtml(licState)}</span></div>
+                       <div class="review-row"><span class="review-label">License Number</span><span class="review-value">${_escHtml(licNum)}</span></div>`;
+        } else {
+            const country  = document.getElementById('cust-license-country').value.trim();
+            const licNum   = document.getElementById('cust-license-number-intl').value.trim().toUpperCase();
+            const passport = document.getElementById('cust-passport').value.trim().toUpperCase();
+            licLine = `<div class="review-row"><span class="review-label">License Country</span><span class="review-value">${_escHtml(country)}</span></div>
+                       <div class="review-row"><span class="review-label">License Number</span><span class="review-value">${_escHtml(licNum)}</span></div>
+                       <div class="review-row"><span class="review-label">Passport</span><span class="review-value">${_escHtml(passport)}</span></div>`;
+        }
+        const insurance = insurancePlan === 'premium' ? 'Premium Coverage (+$' + (149 * bookingDays).toLocaleString() + ')' : 'Basic Liability (Included)';
         const extras   = Object.values(addons).filter(a => a.active).map(a => a.label).join(', ') || 'None';
 
         document.getElementById('review-summary').innerHTML = `
@@ -858,8 +941,7 @@
                     <div class="review-row"><span class="review-label">Email</span><span class="review-value">${_escHtml(email)}</span></div>
                     <div class="review-row"><span class="review-label">Phone</span><span class="review-value">${_escHtml(phone)}</span></div>
                     <div class="review-row"><span class="review-label">Date of Birth</span><span class="review-value">${_escHtml(dob)}</span></div>
-                    <div class="review-row"><span class="review-label">License State</span><span class="review-value">${_escHtml(licState)}</span></div>
-                    <div class="review-row"><span class="review-label">License Number</span><span class="review-value">${_escHtml(licNum)}</span></div>
+                    ${licLine}
                     <div class="review-row"><span class="review-label">Coverage</span><span class="review-value">${_escHtml(insurance)}</span></div>
                     <div class="review-row"><span class="review-label">Extras</span><span class="review-value">${_escHtml(extras)}</span></div>
                 </div>
@@ -955,8 +1037,12 @@
             pickup_location: locationText,
             total_amount:    totalAmount,
             customer_dob:    document.getElementById('cust-dob').value || null,
-            license_state:   document.getElementById('cust-license-state').value || null,
-            license_number:  document.getElementById('cust-license-number').value.trim().toUpperCase() || null,
+            license_state:   driverType === 'us' ? document.getElementById('cust-license-state').value : null,
+            license_country: driverType === 'international' ? document.getElementById('cust-license-country').value.trim() : null,
+            license_number:  driverType === 'us'
+                ? document.getElementById('cust-license-number').value.trim().toUpperCase()
+                : document.getElementById('cust-license-number-intl').value.trim().toUpperCase(),
+            passport_number: driverType === 'international' ? document.getElementById('cust-passport').value.trim().toUpperCase() : null,
             addons:          activeAddons.length ? activeAddons : null,
             status:          'confirmed',
             source:          'website',
