@@ -1192,8 +1192,8 @@ span.flatpickr-weekday { color: #888 !important; background: transparent !import
    ============================================= */
 .car-card { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important; }
 .car-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 24px 48px rgba(0,0,0,0.12) !important; z-index: 10; }
-.feature-card { transition: transform 0.4s ease, box-shadow 0.4s ease; }
-.feature-card:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(0,0,0,0.06); }
+.feature-card { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important; }
+.feature-card:hover { transform: translateY(-8px) scale(1.02) !important; box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important; z-index: 10; }
 
 footer { background: #0A0A0A !important; color: #FFFFFF !important; border-top: none !important; }
 footer a { color: rgba(255,255,255,0.6) !important; transition: color 0.2s; }
