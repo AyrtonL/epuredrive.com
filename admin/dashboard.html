@@ -4,198 +4,868 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — éPure Drive Admin</title>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "surface-container-high": "#e6e8ea",
-                        "error": "#ba1a1a",
-                        "surface": "#f7f9fb",
-                        "surface-container-low": "#f2f4f6",
-                        "outline-variant": "#c6c6cd",
-                        "inverse-surface": "#2d3133",
-                        "secondary": "#006c49",
-                        "on-error": "#ffffff",
-                        "surface-bright": "#f7f9fb",
-                        "primary-container": "#111c2d",
-                        "primary-fixed": "#d8e3fb",
-                        "surface-variant": "#e0e3e5",
-                        "background": "#f7f9fb",
-                        "tertiary-fixed": "#ffddb8",
-                        "on-background": "#191c1e",
-                        "secondary-container": "#6cf8bb",
-                        "inverse-on-surface": "#eff1f3",
-                        "primary": "#000000",
-                        "surface-container-highest": "#e0e3e5",
-                        "on-primary-fixed": "#111c2d",
-                        "surface-container": "#eceef0",
-                        "on-surface": "#191c1e",
-                        "outline": "#76777d",
-                        "error-container": "#ffdad6",
-                        "surface-container-lowest": "#ffffff"
-                    },
-                    fontFamily: { "headline": ["Manrope"], "body": ["Inter"], "label": ["Inter"] },
-                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"}
-                }
-            }
-        }
-  </script>
-<style>
-      .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-      body { font-family: 'Inter', sans-serif; background: #f7f9fb; color: #191c1e; }
-      h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
-      .tab-content { display: none; }
-      .tab-content.active { display: block; }
-      .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
-      
-      /* Dashboard Grids */
-      .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-      .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
-      .cars-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; }
-      .consignment-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1.25rem; }
-      .users-grid { display: grid; gap: 1rem; }
-      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-      .form-group.full { grid-column: 1 / -1; }
-      
-      /* Essential FC CSS */
-      .fc .fc-toolbar-title { font-size: 1rem; font-weight: 600; color: #191c1e; }
-      .fc .fc-button { background: #ffffff !important; border: 1px solid #e0e3e5 !important; color: #191c1e !important; box-shadow: none !important; text-transform: capitalize; border-radius: 8px !important; }
-      .fc .fc-button-primary:not(:disabled).fc-button-active { background: #111c2d !important; color: #fff !important; }
-      .fc-theme-standard td, .fc-theme-standard th { border-color: #e6e8ea !important; }
-      
-      .dash-toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#1E293B; color:#fff; padding:0.65rem 1.1rem; border-radius:10px; font-size:0.85rem; box-shadow:0 4px 20px rgba(0,0,0,.3); z-index:9999; opacity:0; transform:translateY(8px); transition:opacity .25s,transform .25s; pointer-events:none; }
-      .dash-toast.dash-toast-show { opacity:1; transform:translateY(0); }
-      .dash-toast.dash-toast-error { background:#ba1a1a; }
-      
-      .badge-blue    { background: rgba(59,130,246,0.15);  color: #3B82F6; }
-      .badge-green   { background: rgba(16,185,129,0.15);  color: #10B981; }
-      .badge-yellow  { background: rgba(245,158,11,0.15);  color: #F59E0B; }
-      .badge-gray    { background: rgba(107,114,128,0.15); color: #6B7280; }
-      .badge-red     { background: rgba(239,68,68,0.15);   color: #EF4444; }
-      
-      /* Old JS Hooks support */
-      .role-finance .write-action { display:none !important; }
-      .plan-trial .nav-item[data-tab="turo"]::after { content:'PRO'; font-size:0.55rem; font-weight:700; background:rgba(245,158,11,0.2); color:#F59E0B; padding:1px 5px; border-radius:4px; margin-left:auto; }
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-      /* Modals */
-      .modal-box { background: #ffffff; border-radius: 16px; padding: 2rem; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
-      .modal-box.wide { max-width: 640px; }
-      .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-      .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
-</style>
+    :root {
+      --bg:        #f3f4f6;
+      --surface:   #ffffff;
+      --surface-2: #f9fafb;
+      --surface-3: #e5e7eb;
+      --border:    rgba(0,0,0,0.08);
+      --accent:    #111111;
+      --text:      #111827;
+      --muted:     #6b7280;
+      --muted-2:   #4b5563;
+      --btn-text:  #ffffff;
+      --sidebar:   200px;
+      --blue:      #3B82F6;
+      --purple:    #8B5CF6;
+      --gold:      #F59E0B;
+      --teal:      #10B981;
+      --red:       #EF4444;
+      --orange:    #F97316;
+    }
+
+    body.dark-mode {
+      --bg:        #0a0a0a;
+      --surface:   #111111;
+      --surface-2: #181818;
+      --surface-3: #202020;
+      --border:    rgba(255,255,255,0.07);
+      --accent:    #00d2ff;
+      --text:      #f0f0f0;
+      --muted:     #666;
+      --muted-2:   #999;
+      --btn-text:  #000000;
+    }
+    
+    body.dark-mode .fc .fc-button-primary:not(:disabled).fc-button-active,
+    body.dark-mode .fc .fc-button-primary:not(:disabled):active {
+      background: rgba(0, 210, 255, 0.1) !important;
+    }
+    body.dark-mode .car-btn.active { background: rgba(0, 210, 255, 0.08) !important; color: var(--accent) !important; }
+    body.dark-mode .fc .fc-day-today { background: rgba(0,210,255,0.06) !important; }
+    
+    body.dark-mode .stat-card,
+    body.dark-mode .dash-card,
+    body.dark-mode .table-section,
+    body.dark-mode .recent-bookings-card,
+    body.dark-mode .consignment-card,
+    body.dark-mode .turo-card,
+    body.dark-mode .modal-box { box-shadow: none; }
+    body.dark-mode table th { background: var(--surface-2); color: var(--muted); }
+
+    .stat-card,
+    .dash-card,
+    .table-section,
+    .recent-bookings-card,
+    .consignment-card,
+    .turo-card,
+    .modal-box { box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    table th { background: #f1f5f9; color: #374151; }
+    .badge-yellow { background: rgba(245,158,11,0.12); color: #b45309; }
+    .badge-blue   { background: rgba(59,130,246,0.12); color: #1d4ed8; }
+    .badge-green  { background: rgba(16,185,129,0.12); color: #065f46; }
+    .badge-gray   { background: rgba(107,114,128,0.1); color: #4b5563; }
+    .badge-red    { background: rgba(239,68,68,0.1);   color: #dc2626; }
+    .expiry-warn   { color: #b45309; }
+    .expiry-danger { color: #dc2626; }
+    .split-owner  { background: rgba(16,185,129,0.12); color: #065f46; }
+    .split-epure  { background: rgba(0,168,204,0.10);  color: #0369a1; }
+    .service-type-badge { opacity: 0.9; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ---- SIDEBAR ---- */
+    .sidebar {
+      width: var(--sidebar);
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 1.25rem 1.25rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo img { height: 26px; }
+    .sidebar-logo span {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 0.3rem;
+    }
+    .sidebar-user {
+      padding: 0.85rem 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .user-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--btn-text);
+      font-weight: 700;
+      font-size: 0.72rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-info-name { font-size: 0.8rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-info-role { font-size: 0.68rem; color: var(--muted); text-transform: capitalize; }
+
+    /* ---- ROLE BADGE ---- */
+    .role-badge { display:inline-block; font-size:0.6rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; padding:2px 7px; border-radius:99px; }
+    .role-badge.admin   { background:rgba(17,17,17,0.1); color:var(--text); }
+    .role-badge.finance { background:rgba(59,130,246,0.15); color:#2563EB; }
+    .role-badge.staff   { background:rgba(107,114,128,0.15); color:var(--muted-2); }
+    body.dark-mode .role-badge.admin   { background:rgba(0,210,255,0.15); color:var(--accent); }
+    body.dark-mode .role-badge.finance { background:rgba(59,130,246,0.18); color:#60a5fa; }
+    body.dark-mode .role-badge.staff   { background:rgba(255,255,255,0.08); color:var(--muted); }
+
+    /* ---- ROLE-BASED VISIBILITY ---- */
+    /* Finance: can VIEW everything except Maintenance, Sync, Users. Cannot write. */
+    body.role-finance .write-action           { display:none !important; }
+    body.role-finance .nav-item[data-tab="maintenance"] { display:none !important; }
+    body.role-finance .nav-item[data-tab="turo"]        { display:none !important; }
+    body.role-finance .nav-item[data-tab="users"]       { display:none !important; }
+    /* Staff: can operate but not see Reports, Consignments, Users */
+    body.role-staff .nav-item[data-tab="reports"]       { display:none !important; }
+    body.role-staff .nav-item[data-tab="consignments"]  { display:none !important; }
+    body.role-staff .nav-item[data-tab="users"]         { display:none !important; }
+
+    /* ---- USERS TAB ---- */
+    .users-grid { display:grid; gap:1rem; margin-top:1rem; }
+    .user-card { background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; }
+    .user-card-avatar { width:38px; height:38px; border-radius:50%; background:var(--accent); color:var(--btn-text); font-weight:700; font-size:0.8rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; text-transform:uppercase; }
+    .user-card-info { flex:1; min-width:0; }
+    .user-card-name { font-size:0.9rem; font-weight:600; }
+    .user-card-email { font-size:0.75rem; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .user-card-actions { display:flex; align-items:center; gap:0.5rem; }
+    .role-select { background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:0.78rem; padding:4px 8px; border-radius:8px; cursor:pointer; }
+    .role-select:focus { outline:none; border-color:var(--accent); }
+    .btn-icon-danger { background:none; border:none; color:var(--muted); cursor:pointer; padding:4px; border-radius:6px; transition:color 0.15s; }
+    .btn-icon-danger:hover { color:var(--red); }
+    .invite-empty { text-align:center; padding:3rem 0; color:var(--muted); font-size:0.9rem; }
+    .user-role-select { background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:0.78rem; padding:4px 8px; border-radius:8px; cursor:pointer; }
+    .user-role-select:focus { outline:none; border-color:var(--accent); }
+    .mileage-bar { width:100%; height:4px; background:var(--border); border-radius:4px; margin-top:5px; }
+    .mileage-bar-fill { height:100%; border-radius:4px; transition:width 0.4s; }
+
+    /* Plan feature gating — lock badge on Pro-only nav items */
+    body.plan-trial .nav-item[data-tab="turo"]::after,
+    body.plan-trial .nav-item[data-tab="reports"]::after,
+    body.plan-trial .nav-item[data-tab="consignments"]::after,
+    body.plan-trial .nav-item[data-tab="users"]::after,
+    body.plan-starter .nav-item[data-tab="turo"]::after,
+    body.plan-starter .nav-item[data-tab="reports"]::after,
+    body.plan-starter .nav-item[data-tab="consignments"]::after,
+    body.plan-starter .nav-item[data-tab="users"]::after { content:'PRO'; font-size:0.55rem; font-weight:700; letter-spacing:.04em; background:rgba(245,158,11,0.2); color:#F59E0B; padding:1px 5px; border-radius:4px; margin-left:auto; }
+    /* Upgrade plan card */
+    .upgrade-card { background:var(--surface-2); border:1px solid var(--border); border-radius:14px; padding:1.5rem; text-align:center; cursor:pointer; transition:border-color .2s,transform .15s; }
+    .upgrade-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+    .upgrade-card.featured { border-color:#818CF8; }
+    .upgrade-card .plan-price { font-size:2rem; font-weight:800; margin:0.5rem 0; }
+    .upgrade-card .plan-features { font-size:0.78rem; color:var(--muted); text-align:left; margin-top:0.75rem; line-height:1.8; }
+
+    /* Toast notifications */
+    .dash-toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#1E293B; color:#fff; padding:0.65rem 1.1rem; border-radius:10px; font-size:0.85rem; box-shadow:0 4px 20px rgba(0,0,0,.3); z-index:9999; opacity:0; transform:translateY(8px); transition:opacity .25s,transform .25s; pointer-events:none; }
+    .dash-toast.dash-toast-show { opacity:1; transform:translateY(0); }
+    .dash-toast.dash-toast-error { background:#EF4444; }
+
+    .sidebar-nav { flex: 1; padding: 1rem 0; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.65rem 1.25rem;
+      color: var(--muted-2);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 0;
+      transition: all 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      text-decoration: none;
+    }
+    .nav-item:hover { color: var(--text); background: var(--surface-2); }
+    .nav-item.active { color: var(--text); background: rgba(0,0,0,0.04); border-left: 2px solid var(--accent); }
+    body.dark-mode .nav-item:hover { background: rgba(255,255,255,0.04); }
+    body.dark-mode .nav-item.active { color: var(--accent); background: rgba(0, 210, 255, 0.08); border-color: var(--accent); }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); }
+    #logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 0;
+      transition: color 0.2s;
+    }
+    #logout-btn:hover { color: var(--red); }
+
+    /* ---- MAIN ---- */
+    .main {
+      margin-left: var(--sidebar);
+      flex: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .topbar {
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+    }
+    .topbar-title { font-size: 1.1rem; font-weight: 600; }
+    .topbar-actions { display: flex; gap: 0.75rem; }
+    .content { padding: 2rem; flex: 1; }
+
+    /* ---- STATS ---- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+    }
+    .stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+    .stat-value { font-size: 2.2rem; font-weight: 700; line-height: 1; margin: 0.8rem 0; color: var(--text); }
+    .stat-value span { font-size: 1rem; color: var(--muted); font-weight: 400; margin-left: 0.3rem; }
+    .stat-sub { font-size: 0.8rem; color: var(--teal); font-weight: 500; display:flex; align-items:center; gap: 0.3rem;}
+    .stat-sub.negative { color: var(--red); }
+    .stat-sub span { color: var(--muted); font-weight:400; font-size:0.75rem;}
+
+    /* ---- DASHBOARD TAB ---- */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .dash-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+    .dash-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .dash-card p { font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+    .chart-container { position: relative; height: 300px; width: 100%; }
+    
+    .recent-bookings-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .booking-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .booking-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .b-customer { font-weight: 600; font-size: 0.95rem; }
+    .b-car { font-size: 0.85rem; color: var(--muted); margin-top:0.2rem; }
+    .b-price { font-weight: 600; font-size: 0.95rem; }
+
+    /* ---- CAR FILTER ---- */
+    .car-filters {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .car-filters span { font-size: 0.75rem; color: var(--muted); margin-right: 0.25rem; }
+    .car-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--muted-2);
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .car-btn .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .car-btn:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
+    .car-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(201,168,76,0.08); }
+
+    /* ---- LEGEND ---- */
+    .legend {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--muted-2); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ---- CALENDAR ---- */
+    .calendar-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .cal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* FullCalendar dark overrides */
+    .fc { color: var(--text); }
+    .fc .fc-toolbar-title { font-size: 1rem; font-weight: 600; color: var(--text); }
+    .fc .fc-button {
+      background: var(--surface-3) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--muted-2) !important;
+      font-family: inherit !important;
+      font-size: 0.78rem !important;
+      padding: 0.35rem 0.75rem !important;
+      box-shadow: none !important;
+      text-transform: capitalize;
+    }
+    .fc .fc-button:hover { color: var(--text) !important; background: var(--surface-2) !important; }
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:not(:disabled):active {
+      background: rgba(201,168,76,0.15) !important;
+      border-color: var(--accent) !important;
+      color: var(--accent) !important;
+    }
+    .fc-theme-standard td, .fc-theme-standard th,
+    .fc-theme-standard .fc-scrollgrid { border-color: var(--border) !important; }
+    .fc .fc-daygrid-day { background: transparent; }
+    .fc .fc-daygrid-day:hover { background: rgba(255,255,255,0.02); }
+    .fc .fc-day-today { background: rgba(201,168,76,0.06) !important; }
+    .fc .fc-day-today .fc-daygrid-day-number { color: var(--accent) !important; font-weight: 600; }
+    .fc .fc-daygrid-day-number, .fc .fc-col-header-cell-cushion {
+      color: var(--muted-2);
+      font-size: 0.8rem;
+      text-decoration: none;
+    }
+    .fc .fc-col-header-cell { background: var(--surface-2); }
+    .fc .fc-daygrid-event {
+      border-radius: 4px;
+      font-size: 0.72rem;
+      padding: 1px 4px;
+      font-family: inherit;
+    }
+    .fc .fc-list-event:hover td { background: rgba(255,255,255,0.03); }
+    .fc .fc-list-day-cushion { background: var(--surface-2); }
+    .fc .fc-list-empty { background: var(--surface); color: var(--muted); }
+    .fc .fc-list-table td { border-color: var(--border); color: var(--text); }
+    .fc .fc-list-event-time { color: var(--muted); }
+
+    /* ---- TABLE ---- */
+    .table-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .table-header h3 { font-size: 0.95rem; font-weight: 600; }
+    .table-filters { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+    .search-input {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.85rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+      outline: none;
+      width: 200px;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .filter-select {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.75rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+      outline: none;
+      cursor: pointer;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 0.6rem 1rem;
+      text-align: left;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+    }
+    tbody td {
+      padding: 0.85rem 1rem;
+      font-size: 0.84rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,0.02); }
+    tbody td small { color: var(--muted); font-size: 0.75rem; }
+
+    .car-dot-inline {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 0.4rem;
+      vertical-align: middle;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .badge-blue    { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+    .badge-green   { background: rgba(16,185,129,0.15);  color: #34D399; }
+    .badge-yellow  { background: rgba(245,158,11,0.15);  color: #FCD34D; }
+    .badge-gray    { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+    .badge-red     { background: rgba(239,68,68,0.15);   color: #F87171; }
+    .source-badge {
+      font-size: 0.68rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .source-manual  { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+    .source-admin   { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+    .source-turo    { background: rgba(249,115,22,0.15);  color: #FB923C; }
+    .source-ical    { background: rgba(99,102,241,0.15);  color: #818CF8; }
+    .source-web     { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+    .source-website { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+    .source-gcal    { background: rgba(66,133,244,0.15);  color: #4285F4; }
+
+    .actions { display: flex; gap: 0.4rem; }
+    .btn-icon {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.3rem 0.5rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: background 0.15s;
+    }
+    .btn-icon:hover { background: var(--surface-2); }
+    .btn-icon.danger:hover { background: rgba(239,68,68,0.12); border-color: var(--red); }
+
+    /* ---- BUTTONS ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1.1rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+      text-decoration: none;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--accent); color: var(--btn-text); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted-2); }
+    .btn-outline:hover { color: var(--text); border-color: rgba(255,255,255,0.2); opacity: 1; }
+    .btn-danger  { background: rgba(239,68,68,0.15); color: var(--red); }
+
+    /* ---- MODALS ---- */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-box.wide { max-width: 640px; }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .modal-header h3 { font-size: 1rem; font-weight: 600; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 0; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.4rem;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--accent); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
+
+    /* ---- DETAIL MODAL ---- */
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row span:first-child { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em; }
+    .detail-row a { color: var(--accent); text-decoration: none; }
+
+    /* ---- TURO SYNC ---- */
+    .turo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .turo-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    .turo-card .car-name { font-size: 0.82rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+    .turo-card input { font-size: 0.8rem; padding: 0.45rem 0.7rem; }
+    .turo-card .last-sync { font-size: 0.7rem; color: var(--muted); margin-top: 0.35rem; }
+
+    /* ---- TAB CONTENT ---- */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ---- EMPTY STATE ---- */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+    }
+    .empty-state svg { opacity: 0.3; margin-bottom: 1rem; }
+    .empty-state p { font-size: 0.88rem; }
+
+    /* ---- CONSIGNMENTS ---- */
+    .consignment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .consignment-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+    .consignment-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .consignment-car {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .split-pill {
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .split-owner { background: rgba(16,185,129,0.15); color: #34D399; }
+    .split-epure { background: rgba(0,210,255,0.12); color: var(--accent); }
+    .consignment-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .c-stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 0.2rem; }
+    .c-stat-value { font-size: 1.05rem; font-weight: 700; }
+
+    /* ---- CARS ---- */
+    .cars-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .car-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+    .car-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .car-card-name {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .car-card-name small { font-weight: 400; font-size: 0.78rem; color: var(--muted); display: block; margin-top: 0.1rem; }
+    .car-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .car-info-item { font-size: 0.8rem; }
+    .car-info-item span { display: block; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 0.15rem; }
+    .expiry-ok     { color: #34D399; }
+    .expiry-warn   { color: #FCD34D; }
+    .expiry-danger { color: #F87171; }
+    .service-type-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      font-weight: 600;
+    }
+    .svc-oil        { background: rgba(245,158,11,0.15);  color: #FCD34D; }
+    .svc-tire       { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+    .svc-brake      { background: rgba(239,68,68,0.15);   color: #F87171; }
+    .svc-detail     { background: rgba(16,185,129,0.15);  color: #34D399; }
+    .svc-inspection { background: rgba(139,92,246,0.15);  color: #A78BFA; }
+    .svc-repair     { background: rgba(249,115,22,0.15);  color: #FB923C; }
+    .svc-other      { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+
+    /* ---- SCROLLBAR ---- */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
 </head>
 <body>
 
   <!-- SIDEBAR -->
-  <aside class="h-screen w-64 fixed left-0 top-0 bg-[#111c2d] shadow-xl shadow-blue-900/10 flex flex-col p-4 overflow-y-auto z-50">
-    <div class="mb-10 px-2 mt-2">
-      <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2"><img src="../assets/logo.png" class="h-5 invert" /> éPure Drive</h1>
-      <p class="text-[10px] font-bold text-slate-400 font-body uppercase tracking-widest mt-1" id="tenant-name">Management Suite</p>
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../assets/logo.png" alt="éPure Drive">
+      <span id="tenant-name">éPure Drive</span>
     </div>
-    <nav class="flex-1 space-y-1">
-      <button class="nav-item active flex w-full items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-all" data-tab="main">
-        <span class="material-symbols-outlined text-white" data-icon="dashboard">dashboard</span> <span class="text-sm font-medium">Dashboard</span>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="main">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
       </button>
-      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg" data-tab="bookings" style="position:relative;">
-        <span class="material-symbols-outlined">calendar_today</span> <span class="text-sm font-medium">Bookings</span>
-        <span id="new-booking-badge" class="absolute right-4 text-[10px] font-bold bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full" style="display:none;"></span>
+      <button class="nav-item" data-tab="bookings" style="position:relative;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Bookings
+        <span id="new-booking-badge" style="display:none;position:absolute;top:6px;right:8px;background:var(--accent);color:#000;border-radius:10px;font-size:0.6rem;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;"></span>
       </button>
-      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg" data-tab="cars">
-        <span class="material-symbols-outlined">directions_car</span> <span class="text-sm font-medium">Fleet</span>
+      <button class="nav-item" data-tab="cars">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        Cars
       </button>
-      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg" data-tab="maintenance">
-        <span class="material-symbols-outlined">build</span> <span class="text-sm font-medium">Maintenance</span>
+      <button class="nav-item" data-tab="maintenance">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        Maintenance
       </button>
-      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg" data-tab="customers">
-        <span class="material-symbols-outlined">group</span> <span class="text-sm font-medium">Customers</span>
+      <button class="nav-item" data-tab="customers">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Customers
       </button>
-      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg" data-tab="consignments">
-        <span class="material-symbols-outlined">handshake</span> <span class="text-sm font-medium">Consignments</span>
+      <button class="nav-item" data-tab="consignments">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+        Consignments
       </button>
-      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg" data-tab="reports">
-        <span class="material-symbols-outlined">payments</span> <span class="text-sm font-medium">Financials</span>
+      <button class="nav-item" data-tab="reports">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Reports
       </button>
-      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg" data-tab="turo">
-        <span class="material-symbols-outlined">sync</span> <span class="text-sm font-medium">Sync Channels</span>
+      <button class="nav-item" data-tab="turo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Sync
       </button>
-      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg" data-tab="users">
-        <span class="material-symbols-outlined">admin_panel_settings</span> <span class="text-sm font-medium">Staff & Users</span>
+      <button class="nav-item" data-tab="users">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Users
       </button>
     </nav>
-    <div class="mt-auto pt-6 border-t border-white/5 space-y-3">
-      <div class="flex items-center gap-3 pl-2">
-        <div class="w-8 h-8 rounded-full bg-primary-fixed-dim text-primary flex items-center justify-center font-bold text-xs uppercase" id="user-avatar">—</div>
-        <div class="text-left">
-          <p class="text-sm font-bold text-white leading-tight" id="user-display-name">Loading...</p>
-          <p class="text-[10px] uppercase tracking-wider text-slate-400 font-medium" id="user-display-role">admin</p>
-        </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">—</div>
+      <div class="user-info">
+        <div class="user-info-name" id="user-display-name">Loading…</div>
+        <div class="user-info-role" id="user-display-role">admin</div>
       </div>
-      <button id="logout-btn" class="w-full flex items-center gap-3 px-2 py-2 text-slate-400 hover:text-red-400 transition-colors">
-        <span class="material-symbols-outlined text-sm">logout</span> <span class="text-sm font-medium">Logout</span>
+    </div>
+    <div class="sidebar-footer">
+      <button id="logout-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
       </button>
     </div>
   </aside>
 
   <!-- MAIN -->
-  <main class="ml-64 min-h-screen flex flex-col">
-    <!-- TopNavBar -->
-    <header class="sticky top-0 w-full z-40 bg-white/80 backdrop-blur-md flex justify-between items-center h-16 px-8 shadow-sm shadow-slate-200/50">
-      <div class="flex items-center gap-4 flex-1">
-        <h2 class="text-xl font-bold text-on-surface" id="topbar-title">Portfolio Overview</h2>
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <span class="topbar-title" id="topbar-title">Dashboard Overview</span>
+      <div class="topbar-actions">
+        <button class="btn btn-outline" id="theme-btn" title="Toggle Light/Dark Theme">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+        <button class="btn btn-outline write-action" id="block-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          Block Dates
+        </button>
+        <button class="btn btn-primary write-action" id="add-res-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Reservation
+        </button>
       </div>
-      <div class="flex items-center gap-4">
-        <button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors relative" id="theme-btn" title="Toggle Light/Dark Theme">
-          <span class="material-symbols-outlined">dark_mode</span>
-        </button>
-        <button class="bg-surface-container-high text-on-surface px-4 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all flex items-center gap-2 write-action" id="block-btn">
-          <span class="material-symbols-outlined text-sm">block</span> Block Dates
-        </button>
-        <button class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all flex items-center gap-2 write-action" id="add-res-btn">
-          <span class="material-symbols-outlined text-sm">add</span> New Booking
-        </button>
-      </div>
-    </header>
-    <div id="trial-banner" class="hidden items-center justify-between gap-4 px-8 py-3 bg-tertiary-fixed text-on-tertiary-container flex-wrap text-sm font-medium"></div>
-    <div class="p-8 space-y-8 flex-1">
+    </div>
+
+    <!-- Trial Banner -->
+    <div id="trial-banner" style="display:none;align-items:center;justify-content:space-between;gap:1rem;padding:0.55rem 1.5rem;background:rgba(245,158,11,0.07);border-bottom:1px solid rgba(245,158,11,0.25);flex-wrap:wrap;"></div>
+
+    <div class="content">
 
       <!-- STATS -->
       <span id="stat-total" style="display:none"></span>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm relative group border border-outline-variant/30">
-          <div class="flex justify-between items-start mb-4"><p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Total Fleet</p><span class="material-symbols-outlined text-secondary">directions_car</span></div>
-          <div class="flex items-baseline justify-between"><h3 class="text-3xl font-extrabold text-on-surface">4</h3></div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Cars</div>
+          <div class="stat-value">4</div>
+          <div class="stat-sub stat-growth">+0% <span>from last month</span></div>
         </div>
-        <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm relative group border border-outline-variant/30">
-          <div class="flex justify-between items-start mb-4"><p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Active Bookings</p><span class="material-symbols-outlined text-primary-container">calendar_today</span></div>
-          <div class="flex items-baseline justify-between"><h3 class="text-3xl font-extrabold text-on-surface" id="stat-active">—</h3></div>
-        </div>
-        <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm relative group border border-outline-variant/30">
-          <div class="flex justify-between items-start mb-4"><p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Upcoming</p><span class="material-symbols-outlined text-on-tertiary-container">event</span></div>
-          <div class="flex items-baseline justify-between"><h3 class="text-3xl font-extrabold text-on-surface" id="stat-upcoming">—</h3></div>
-        </div>
-        <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm relative group border border-outline-variant/30">
-          <div class="flex justify-between items-start mb-4"><p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Monthly Revenue</p><span class="material-symbols-outlined text-primary-fixed-dim">payments</span></div>
-          <div class="flex items-baseline justify-between"><h3 class="text-3xl font-extrabold text-on-surface" id="stat-revenue">—</h3></div>
-        </div>
-      </div>
-        <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/30">
+        <div class="stat-card">
           <div class="stat-label">Active Bookings</div>
           <div class="stat-value" id="stat-active">—</div>
           <div class="stat-sub stat-growth">+12% <span>from last week</span></div>
         </div>
-        <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/30">
+        <div class="stat-card">
           <div class="stat-label">Upcoming Bookings</div>
           <div class="stat-value" id="stat-upcoming">—</div>
           <div class="stat-sub stat-growth">+5% <span>from last week</span></div>
         </div>
-        <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/30">
+        <div class="stat-card">
           <div class="stat-label">Monthly Revenue</div>
           <div class="stat-value" id="stat-revenue">—</div>
           <div class="stat-sub stat-growth">+8.2% <span>from last month</span></div>
@@ -204,7 +874,7 @@
 
       <!-- DASHBOARD TAB -->
       <div class="tab-content active" id="tab-main">
-        <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/30">
+        <div class="recent-bookings-card">
           <h3 style="font-size:1.05rem;font-weight:600;margin-bottom:0.3rem;">Recent Bookings</h3>
           <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1.5rem;">Latest activity across all vehicles</p>
           <div id="recent-bookings-list">
@@ -242,12 +912,12 @@
         </div>
 
         <!-- Bookings list -->
-        <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden" style="margin-top:2rem;">
-          <div class="flex items-center justify-between p-6 border-b border-outline-variant/30">
+        <div class="table-section" style="margin-top:2rem;">
+          <div class="table-header">
             <h3>All Bookings</h3>
-            <div class="flex gap-3 items-center flex-wrap">
-              <input type="text" class="bg-surface-container-low border-none rounded-xl py-2 px-4 text-sm focus:ring-2 focus:ring-primary-container/20" id="search-input" placeholder="Search customer…" />
-              <select class="bg-surface-container-low border-none rounded-xl py-2 px-4 text-sm focus:ring-2 focus:ring-primary-container/20" id="status-filter">
+            <div class="table-filters">
+              <input type="text" class="search-input" id="search-input" placeholder="Search customer…" />
+              <select class="filter-select" id="status-filter">
                 <option value="">All Status</option>
                 <option value="pending">Pending</option>
                 <option value="confirmed">Confirmed</option>
@@ -255,7 +925,7 @@
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
-              <select class="bg-surface-container-low border-none rounded-xl py-2 px-4 text-sm focus:ring-2 focus:ring-primary-container/20" id="car-filter">
+              <select class="filter-select" id="car-filter">
                 <option value="">All Cars</option>
                 <option value="1">Audi Q3</option>
                 <option value="2">Audi A3</option>
@@ -265,17 +935,17 @@
             </div>
           </div>
           <div style="overflow-x:auto;">
-            <table class="w-full text-left border-collapse">
-              <thead class="bg-surface-container-low text-on-surface-variant text-[11px] uppercase tracking-widest font-bold">
+            <table>
+              <thead>
                 <tr>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Customer</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Vehicle</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Dates</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Days</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Total</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Status</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Source</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30"></th>
+                  <th>Customer</th>
+                  <th>Vehicle</th>
+                  <th>Dates</th>
+                  <th>Days</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Source</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="res-tbody">
@@ -290,7 +960,7 @@
       <div class="tab-content" id="tab-turo">
 
         <!-- Add new calendar feed -->
-        <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden" style="padding:1.5rem;margin-bottom:1rem;">
+        <div class="table-section" style="padding:1.5rem;margin-bottom:1rem;">
           <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             <h3 style="font-size:0.95rem;font-weight:600;">Add Calendar Feed</h3>
@@ -305,7 +975,7 @@
             </div>
             <div class="form-group" style="width:160px;margin:0;">
               <label>Vehicle</label>
-              <select id="feed-car" class="bg-surface-container-low border-none rounded-xl py-2 px-4 text-sm focus:ring-2 focus:ring-primary-container/20" style="height:40px;">
+              <select id="feed-car" class="filter-select" style="height:40px;">
                 <option value="1">Audi Q3</option>
                 <option value="2">Audi A3</option>
                 <option value="3">Porsche Cayenne</option>
@@ -316,17 +986,17 @@
               <label>iCal URL (.ics)</label>
               <input type="url" id="feed-url" placeholder="https://…/calendar.ics" />
             </div>
-            <button class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all write-action" id="add-feed-btn" style="height:40px;white-space:nowrap;">Add Feed</button>
+            <button class="btn btn-primary write-action" id="add-feed-btn" style="height:40px;white-space:nowrap;">Add Feed</button>
           </div>
         </div>
 
         <!-- Saved feeds list -->
-        <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden" style="padding:1.5rem;">
+        <div class="table-section" style="padding:1.5rem;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
             <h3 style="font-size:0.95rem;font-weight:600;">Saved Calendars</h3>
             <div style="display:flex;gap:0.75rem;align-items:center;">
               <div id="sync-status" style="font-size:0.8rem;color:var(--muted);"></div>
-              <button class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all write-action" id="sync-turo-btn">
+              <button class="btn btn-primary write-action" id="sync-turo-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
                 Sync All
               </button>
@@ -346,7 +1016,7 @@
             <h3 style="font-size:1rem;font-weight:600;">Consignment Contracts</h3>
             <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Manage vehicle owners, revenue splits and expenses</p>
           </div>
-          <button class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all write-action" id="add-consignment-btn">
+          <button class="btn btn-primary write-action" id="add-consignment-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Consignment
           </button>
@@ -355,8 +1025,8 @@
         <div style="display:flex;gap:0.75rem;align-items:flex-end;margin-bottom:1.5rem;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.85rem 1rem;">
           <div class="form-group" style="margin:0;"><label>Revenue From</label><input type="date" id="con-from" /></div>
           <div class="form-group" style="margin:0;"><label>Revenue To</label><input type="date" id="con-to" /></div>
-          <button class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all" id="apply-con-btn">Apply</button>
-          <button class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all" id="clear-con-btn">Clear</button>
+          <button class="btn btn-primary" id="apply-con-btn">Apply</button>
+          <button class="btn btn-outline" id="clear-con-btn">Clear</button>
           <div id="con-period-label" style="margin-left:auto;font-size:0.82rem;color:var(--muted);align-self:flex-end;"></div>
         </div>
 
@@ -365,18 +1035,18 @@
         </div>
 
         <!-- Expenses Table -->
-        <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden">
-          <div class="flex items-center justify-between p-6 border-b border-outline-variant/30">
+        <div class="table-section">
+          <div class="table-header">
             <h3>Expenses</h3>
-            <div class="flex gap-3 items-center flex-wrap">
-              <select class="bg-surface-container-low border-none rounded-xl py-2 px-4 text-sm focus:ring-2 focus:ring-primary-container/20" id="expense-car-filter">
+            <div class="table-filters">
+              <select class="filter-select" id="expense-car-filter">
                 <option value="">All Vehicles</option>
                 <option value="1">Audi Q3</option>
                 <option value="2">Audi A3</option>
                 <option value="3">Porsche Cayenne</option>
                 <option value="4">Volkswagen Atlas</option>
               </select>
-              <select class="bg-surface-container-low border-none rounded-xl py-2 px-4 text-sm focus:ring-2 focus:ring-primary-container/20" id="expense-cat-filter">
+              <select class="filter-select" id="expense-cat-filter">
                 <option value="">All Categories</option>
                 <option>Maintenance</option>
                 <option>Cleaning</option>
@@ -386,22 +1056,22 @@
                 <option>Repair</option>
                 <option>Other</option>
               </select>
-              <button class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all write-action" id="add-expense-btn">
+              <button class="btn btn-outline write-action" id="add-expense-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Add Expense
               </button>
             </div>
           </div>
           <div style="overflow-x:auto;">
-            <table class="w-full text-left border-collapse">
-              <thead class="bg-surface-container-low text-on-surface-variant text-[11px] uppercase tracking-widest font-bold">
+            <table>
+              <thead>
                 <tr>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Date</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Vehicle</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Category</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Description</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Amount</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30"></th>
+                  <th>Date</th>
+                  <th>Vehicle</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="expenses-tbody">
@@ -420,21 +1090,21 @@
             <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Vehicle details, documents and expiry status</p>
           </div>
         </div>
-        <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden">
+        <div class="table-section">
           <div style="overflow-x:auto;">
-            <table class="w-full text-left border-collapse">
-              <thead class="bg-surface-container-low text-on-surface-variant text-[11px] uppercase tracking-widest font-bold">
+            <table>
+              <thead>
                 <tr>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Vehicle</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Year</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Color</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Plate</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">VIN</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Mileage</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Insurance</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Registration</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Rate</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30"></th>
+                  <th>Vehicle</th>
+                  <th>Year</th>
+                  <th>Color</th>
+                  <th>Plate</th>
+                  <th>VIN</th>
+                  <th>Mileage</th>
+                  <th>Insurance</th>
+                  <th>Registration</th>
+                  <th>Rate</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="cars-tbody">
@@ -452,25 +1122,25 @@
             <h3 style="font-size:1rem;font-weight:600;">Maintenance & Service</h3>
             <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Service records and upcoming maintenance for all vehicles</p>
           </div>
-          <button class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all write-action" id="add-service-btn-top">
+          <button class="btn btn-primary write-action" id="add-service-btn-top">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Service Record
           </button>
         </div>
 
         <!-- Fleet status overview -->
-        <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden" style="margin-bottom:1.5rem;">
-          <div class="flex items-center justify-between p-6 border-b border-outline-variant/30"><h3>Fleet Overview</h3></div>
+        <div class="table-section" style="margin-bottom:1.5rem;">
+          <div class="table-header"><h3>Fleet Overview</h3></div>
           <div style="overflow-x:auto;">
-            <table class="w-full text-left border-collapse">
-              <thead class="bg-surface-container-low text-on-surface-variant text-[11px] uppercase tracking-widest font-bold">
+            <table>
+              <thead>
                 <tr>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Vehicle</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Last Service</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Mileage Now</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Next Oil Change</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Next Service Due</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30"></th>
+                  <th>Vehicle</th>
+                  <th>Last Service</th>
+                  <th>Mileage Now</th>
+                  <th>Next Oil Change</th>
+                  <th>Next Service Due</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="fleet-status-tbody">
@@ -483,18 +1153,18 @@
         <!-- Upcoming alerts -->
         <div id="maintenance-alerts" style="margin-bottom:1.25rem;"></div>
 
-        <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden">
-          <div class="flex items-center justify-between p-6 border-b border-outline-variant/30">
+        <div class="table-section">
+          <div class="table-header">
             <h3>Service History</h3>
-            <div class="flex gap-3 items-center flex-wrap">
-              <select class="bg-surface-container-low border-none rounded-xl py-2 px-4 text-sm focus:ring-2 focus:ring-primary-container/20" id="service-car-filter">
+            <div class="table-filters">
+              <select class="filter-select" id="service-car-filter">
                 <option value="">All Vehicles</option>
                 <option value="1">Audi Q3</option>
                 <option value="2">Audi A3</option>
                 <option value="3">Porsche Cayenne</option>
                 <option value="4">Volkswagen Atlas</option>
               </select>
-              <select class="bg-surface-container-low border-none rounded-xl py-2 px-4 text-sm focus:ring-2 focus:ring-primary-container/20" id="service-type-filter">
+              <select class="filter-select" id="service-type-filter">
                 <option value="">All Types</option>
                 <option>Oil Change</option>
                 <option>Tire Rotation</option>
@@ -507,19 +1177,19 @@
             </div>
           </div>
           <div style="overflow-x:auto;">
-            <table class="w-full text-left border-collapse">
-              <thead class="bg-surface-container-low text-on-surface-variant text-[11px] uppercase tracking-widest font-bold">
+            <table>
+              <thead>
                 <tr>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Date</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Vehicle</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Type</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Mileage</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Provider</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Cost</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Next Due</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Next Mi</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Notes</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30"></th>
+                  <th>Date</th>
+                  <th>Vehicle</th>
+                  <th>Type</th>
+                  <th>Mileage</th>
+                  <th>Provider</th>
+                  <th>Cost</th>
+                  <th>Next Due</th>
+                  <th>Next Mi</th>
+                  <th>Notes</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="services-tbody">
@@ -537,30 +1207,30 @@
             <h3 style="font-size:1rem;font-weight:600;">Customers</h3>
             <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Customer database and rental history</p>
           </div>
-          <button class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all write-action" id="add-customer-btn">
+          <button class="btn btn-primary write-action" id="add-customer-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Customer
           </button>
         </div>
-        <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden">
-          <div class="flex items-center justify-between p-6 border-b border-outline-variant/30">
+        <div class="table-section">
+          <div class="table-header">
             <h3>All Customers</h3>
-            <div class="flex gap-3 items-center flex-wrap">
-              <input type="text" class="bg-surface-container-low border-none rounded-xl py-2 px-4 text-sm focus:ring-2 focus:ring-primary-container/20" id="customer-search" placeholder="Search name, email…" />
+            <div class="table-filters">
+              <input type="text" class="search-input" id="customer-search" placeholder="Search name, email…" />
             </div>
           </div>
           <div style="overflow-x:auto;">
-            <table class="w-full text-left border-collapse">
-              <thead class="bg-surface-container-low text-on-surface-variant text-[11px] uppercase tracking-widest font-bold">
+            <table>
+              <thead>
                 <tr>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Name</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Email</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Phone</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Address</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Total Bookings</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Total Spent</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30">Notes</th>
-                  <th class="px-6 py-4 border-b border-outline-variant/30"></th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Address</th>
+                  <th>Total Bookings</th>
+                  <th>Total Spent</th>
+                  <th>Notes</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="customers-tbody">
@@ -589,7 +1259,7 @@
           </div>
           <div class="form-group" style="margin:0;">
             <label>Vehicle</label>
-            <select class="bg-surface-container-low border-none rounded-xl py-2 px-4 text-sm focus:ring-2 focus:ring-primary-container/20" id="report-car">
+            <select class="filter-select" id="report-car">
               <option value="">All Vehicles</option>
               <option value="1">Audi Q3</option>
               <option value="2">Audi A3</option>
@@ -597,35 +1267,35 @@
               <option value="4">VW Atlas</option>
             </select>
           </div>
-          <button class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all" id="apply-report-btn">Apply</button>
-          <button class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all" id="clear-report-btn">Clear</button>
+          <button class="btn btn-primary" id="apply-report-btn">Apply</button>
+          <button class="btn btn-outline" id="clear-report-btn">Clear</button>
           <div id="report-summary" style="margin-left:auto;font-size:0.85rem;color:var(--muted);align-self:flex-end;"></div>
         </div>
         <div class="dash-grid" style="margin-bottom:1.5rem;">
-          <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/30">
+          <div class="dash-card">
             <h3>Revenue Trend</h3>
             <p>Monthly revenue over the last 6 months</p>
             <div class="chart-container"><canvas id="trendChart"></canvas></div>
           </div>
-          <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/30">
+          <div class="dash-card">
             <h3>Fleet Distribution</h3>
             <p>Bookings by vehicle</p>
             <div class="chart-container"><canvas id="distChart"></canvas></div>
           </div>
         </div>
         <!-- Revenue by car table -->
-        <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden">
-          <div class="flex items-center justify-between p-6 border-b border-outline-variant/30">
+        <div class="table-section">
+          <div class="table-header">
             <h3>Revenue by Vehicle</h3>
-            <button class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all" id="export-csv-btn">
+            <button class="btn btn-outline" id="export-csv-btn">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Export CSV
             </button>
           </div>
           <div style="overflow-x:auto;">
-            <table class="w-full text-left border-collapse">
-              <thead class="bg-surface-container-low text-on-surface-variant text-[11px] uppercase tracking-widest font-bold">
-                <tr><th class="px-6 py-4 border-b border-outline-variant/30">Vehicle</th><th class="px-6 py-4 border-b border-outline-variant/30">Bookings</th><th class="px-6 py-4 border-b border-outline-variant/30">Total Revenue</th><th class="px-6 py-4 border-b border-outline-variant/30">Avg per Booking</th><th class="px-6 py-4 border-b border-outline-variant/30">% of Total</th></tr>
+            <table>
+              <thead>
+                <tr><th>Vehicle</th><th>Bookings</th><th>Total Revenue</th><th>Avg per Booking</th><th>% of Total</th></tr>
               </thead>
               <tbody id="revenue-tbody">
                 <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
@@ -637,20 +1307,22 @@
 
       <!-- TAB: Users -->
       <div class="tab-content" id="tab-users">
-        <div class="flex items-center justify-between p-6 border-b border-outline-variant/30">
+        <div class="table-header">
           <div>
             <h3>Team Members</h3>
             <p style="font-size:0.78rem;color:var(--muted);margin-top:2px;">Manage who has access to this dashboard.</p>
           </div>
-          <button class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all write-action" id="invite-user-btn" onclick="openInviteModal()">
+          <button class="btn btn-primary write-action" id="invite-user-btn" onclick="openInviteModal()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Invite User
           </button>
         </div>
         <div id="users-list" class="users-grid"></div>
       </div>
-    </div>
+
+    </div><!-- /content -->
   </main>
+
   <!-- MODAL: Upgrade Plan -->
   <div class="modal" id="upgrade-modal">
     <div class="modal-box" style="max-width:600px;">
@@ -664,7 +1336,7 @@
         <div class="upgrade-card" onclick="startCheckout('price_1TDaQ3HAH4zJnnwfasGBYtYO')">
           <div style="font-size:0.72rem;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;">Starter</div>
           <div class="plan-price">$49<span style="font-size:1rem;font-weight:400;color:var(--muted)">/mo</span></div>
-          <button class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all" style="width:100%;margin-top:0.5rem;">Choose Starter</button>
+          <button class="btn btn-outline" style="width:100%;margin-top:0.5rem;">Choose Starter</button>
           <div class="plan-features">
             ✓ Up to 10 cars<br>
             ✓ Unlimited reservations<br>
@@ -680,7 +1352,7 @@
         <div class="upgrade-card featured" onclick="startCheckout('price_1TDaQVHAH4zJnnwfPf1Gh6eg')">
           <div style="font-size:0.72rem;font-weight:700;letter-spacing:.06em;color:#818CF8;text-transform:uppercase;">Pro ⭐</div>
           <div class="plan-price" style="color:#818CF8;">$99<span style="font-size:1rem;font-weight:400;color:var(--muted)">/mo</span></div>
-          <button class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all" style="width:100%;margin-top:0.5rem;background:#818CF8;border-color:#818CF8;">Choose Pro</button>
+          <button class="btn btn-primary" style="width:100%;margin-top:0.5rem;background:#818CF8;border-color:#818CF8;">Choose Pro</button>
           <div class="plan-features">
             ✓ Up to 30 cars<br>
             ✓ Unlimited reservations<br>
@@ -728,8 +1400,8 @@
         </p>
         <div class="msg error" id="invite-error" style="display:none;margin-top:0.75rem;"></div>
         <div class="modal-footer">
-          <button type="button" class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all" onclick="closeModal('invite-modal')">Cancel</button>
-          <button type="submit" class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all" id="invite-submit-btn">Send Invitation</button>
+          <button type="button" class="btn btn-outline" onclick="closeModal('invite-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="invite-submit-btn">Send Invitation</button>
         </div>
       </form>
     </div>
@@ -810,8 +1482,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all" onclick="closeModal('reservation-modal')">Cancel</button>
-          <button type="submit" class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all">Save Reservation</button>
+          <button type="button" class="btn btn-outline" onclick="closeModal('reservation-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Reservation</button>
         </div>
       </form>
     </div>
@@ -855,8 +1527,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all" onclick="closeModal('block-modal')">Cancel</button>
-          <button type="submit" class="bg-error-container text-on-error-container px-5 py-2 rounded-lg text-sm font-semibold hover:bg-error transition-all hover:text-white">Block These Dates</button>
+          <button type="button" class="btn btn-outline" onclick="closeModal('block-modal')">Cancel</button>
+          <button type="submit" class="btn btn-danger">Block These Dates</button>
         </div>
       </form>
     </div>
@@ -905,8 +1577,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all" onclick="closeModal('customer-modal')">Cancel</button>
-          <button type="submit" class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all">Save Customer</button>
+          <button type="button" class="btn btn-outline" onclick="closeModal('customer-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Customer</button>
         </div>
       </form>
     </div>
@@ -959,8 +1631,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all" onclick="closeModal('car-modal')">Cancel</button>
-          <button type="submit" class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all">Save Details</button>
+          <button type="button" class="btn btn-outline" onclick="closeModal('car-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Details</button>
         </div>
       </form>
     </div>
@@ -1031,8 +1703,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all" onclick="closeModal('service-modal')">Cancel</button>
-          <button type="submit" class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all">Save Record</button>
+          <button type="button" class="btn btn-outline" onclick="closeModal('service-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Record</button>
         </div>
       </form>
     </div>
@@ -1092,8 +1764,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all" onclick="closeModal('consignment-modal')">Cancel</button>
-          <button type="submit" class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all">Save Consignment</button>
+          <button type="button" class="btn btn-outline" onclick="closeModal('consignment-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Consignment</button>
         </div>
       </form>
     </div>
@@ -1144,8 +1816,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="bg-surface-container text-on-surface px-5 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all" onclick="closeModal('expense-modal')">Cancel</button>
-          <button type="submit" class="bg-primary-container text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all">Save Expense</button>
+          <button type="button" class="btn btn-outline" onclick="closeModal('expense-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Expense</button>
         </div>
       </form>
     </div>
