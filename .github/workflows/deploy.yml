@@ -1,0 +1,48 @@
+name: Deploy to GitHub Pages with Cache Busting
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Inject Cache Busters (Git SHA)
+        run: |
+          # Extrae los primeros 7 caracteres del commit único
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "Injecting version: $SHORT_SHA"
+          
+          # Busca todos los HTML y reemplaza los parámetros ?v= de CSS y JS
+          find . -type f -name "*.html" -exec sed -i "s/\(href=\".*style\.css\)?v=[A-Za-z0-9_]*\"/\1?v=${SHORT_SHA}\"/g" {} +
+          find . -type f -name "*.html" -exec sed -i "s/\(src=\".*main\.js\)?v=[A-Za-z0-9_]*\"/\1?v=${SHORT_SHA}\"/g" {} +
+          
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
