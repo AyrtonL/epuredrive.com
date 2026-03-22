@@ -1339,13 +1339,41 @@ function refreshCharts(data) {
     months.push(label);
     revenues.push(rev);
   }
-
   if (window._trendChart) {
     window._trendChart.data.labels = months;
     window._trendChart.data.datasets[0].data = revenues;
     window._trendChart.update();
+  } else {
+    const ctx = document.getElementById('revenueChart');
+    if (ctx) {
+      window._trendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: months,
+          datasets: [{
+            label: 'Revenue ($)',
+            data: revenues,
+            borderColor: '#111c2d',
+            backgroundColor: 'rgba(17, 28, 45, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#111c2d',
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
   }
-
   // Distribution by car bookings
   const carBookings = [1, 2, 3, 4].map(id => source.filter(r => r.car_id === id).length);
   if (window._distChart) {
@@ -1779,10 +1807,20 @@ function switchTab(tab) {
   }
   currentActiveTab = tab;
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
-  document.getElementById('topbar-title').innerHTML = TAB_TITLES[tab];
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.remove('active', 'bg-white/10', 'text-white');
+    el.classList.add('bg-transparent', 'text-slate-400');
+  });
+  const t = document.getElementById('tab-' + tab);
+  if (t) t.classList.add('active');
+  const navItem = document.querySelector(`.nav-item[data-tab="${tab}"]`);
+  if (navItem) {
+    navItem.classList.remove('bg-transparent', 'text-slate-400');
+    navItem.classList.add('active', 'bg-white/10', 'text-white');
+  }
+  const titleEl = document.getElementById('topbar-title');
+  if (titleEl && TAB_TITLES[tab]) { titleEl.innerHTML = TAB_TITLES[tab]; }
+  
   if (tab === 'bookings') { if (calendar) calendar.updateSize(); markBookingsSeen(); }
   if (tab === 'turo') renderCalendarFeeds();
   if (tab === 'consignments') { renderConsignments(); renderExpensesTable(); }

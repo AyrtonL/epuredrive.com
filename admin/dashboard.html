@@ -250,10 +250,6 @@
       text-align: left;
       text-decoration: none;
     }
-    .nav-item:hover { color: var(--text); background: var(--surface-2); }
-    .nav-item.active { color: var(--text); background: rgba(0,0,0,0.04); border-left: 2px solid var(--accent); }
-    body.dark-mode .nav-item:hover { background: rgba(255,255,255,0.04); }
-    body.dark-mode .nav-item.active { color: var(--accent); background: rgba(0, 210, 255, 0.08); border-color: var(--accent); }
     .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
     .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); }
     #logout-btn {
@@ -896,12 +892,36 @@
 
       <!-- DASHBOARD TAB -->
       <div class="tab-content active" id="tab-main">
-        <div class="recent-bookings-card">
-          <h3 style="font-size:1.05rem;font-weight:600;margin-bottom:0.3rem;">Recent Bookings</h3>
-          <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1.5rem;">Latest activity across all vehicles</p>
-          <div id="recent-bookings-list">
-            <div style="text-align:center;color:var(--muted);padding:2rem;font-size:0.85rem;">Loading…</div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
+          
+          <!-- REVENUE CHART -->
+          <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/30" style="background:#fff;border:1px solid #c6c6cd;display:flex;flex-direction:column;">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h3 class="text-[1.05rem] font-bold text-on-surface m-0" style="font-family:'Manrope',sans-serif;color:#191c1e;">Revenue & Analytics</h3>
+                <p class="text-xs text-on-surface-variant mt-1 mb-0" style="font-family:'Inter',sans-serif;color:#4b5563;">Last 6 months performance</p>
+              </div>
+              <span class="material-symbols-outlined text-outline" style="color:#c6c6cd;">monitoring</span>
+            </div>
+            <div class="relative flex-1 w-full" style="min-height: 250px;">
+              <canvas id="revenueChart"></canvas>
+            </div>
           </div>
+
+          <!-- RECENT BOOKINGS -->
+          <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/30" style="background:#fff;border:1px solid #c6c6cd;">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h3 class="text-[1.05rem] font-bold text-on-surface m-0" style="font-family:'Manrope',sans-serif;color:#191c1e;">Recent Operations</h3>
+                <p class="text-xs text-on-surface-variant mt-1 mb-0" style="font-family:'Inter',sans-serif;color:#4b5563;">Latest activity across your fleet</p>
+              </div>
+              <button class="bg-transparent border-0 cursor-pointer text-primary text-xs font-bold uppercase tracking-wider hover:underline" onclick="switchTab('bookings')">View All</button>
+            </div>
+            <div id="recent-bookings-list" class="space-y-4">
+              <div style="text-align:center;color:var(--muted);padding:2rem;font-size:0.85rem;">Loading…</div>
+            </div>
+          </div>
+          
         </div>
       </div>
 
