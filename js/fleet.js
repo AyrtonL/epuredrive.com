@@ -3,6 +3,9 @@
    Car data + filter logic
    ============================================= */
 
+const SUPABASE_URL = "https://brwzjwbpguiignrxvjdc.supabase.co";
+const SUPABASE_ANON = "sb_publishable_krEuIpNhJVcADIUyBXYy9g_fiXrXzV9";
+
 const CARS = [
   {
     id: 1,
@@ -186,8 +189,8 @@ function initFilters() {
 // ---- Car Detail Page ----
 function loadCarDetail() {
   const params = new URLSearchParams(window.location.search);
-  const id = parseInt(params.get('id'));
-  const car = CARS.find(c => c.id === id) || CARS[0];
+  const idParam = params.get('id');
+  const car = CARS.find(c => c.id == idParam) || CARS[0];
 
   document.title = `${car.make} ${car.model} — éPure Drive - Rental`;
 
@@ -274,39 +277,62 @@ function initBookingForm() {
       }
     });
     
-    // Check if dates overlap in db before submitting to next step
+    // Stop traditional HTTP submission
     if (valid) {
+      e.preventDefault();
+      
       const pDate = document.getElementById('pickup-date').value;
       const rDate = document.getElementById('return-date').value;
-      const carId = parseInt(document.getElementById('car-id-input').value);
+      const carId = document.getElementById('car-id-input').value;
+      const car = CARS.find(c => c.id == carId) || CARS[0];
       
-      const bookings = JSON.parse(localStorage.getItem('luxe_bookings') || '[]');
-      const start = new Date(pDate);
-      const end = new Date(rDate);
-
-      let available = true;
-      for (const b of bookings) {
-          if (b.carId === carId) {
-              const bStart = new Date(b.startDate);
-              const bEnd = new Date(b.endDate);
-              if (start <= bEnd && end >= bStart) {
-                  available = false; break;
-              }
-          }
-      }
+      // WhatsApp Routing Pipeline
+      const phone = "17862096770";
+      const totalCost = Math.max(1, Math.round((new Date(rDate) - new Date(pDate)) / 86400000)) * car.price;
+      const textMessage = `Hello! I would like to safely reserve the *${car.make} ${car.model}*.\n\nDates: ${pDate} to ${rDate}\nTotal Anticipated: $${totalCost}`;
       
-      if (!available) {
-          e.preventDefault();
-          alert("Sorry, this vehicle is not available for the selected dates.");
+      // Attempt Stripe Checkout if URL provided, otherwise WhatsApp
+      if (car.link && car.link.includes('stripe.com')) {
+        window.location.href = car.link;
+      } else {
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(textMessage)}`;
+        window.open(url, "_blank");
       }
     }
   });
 }
 
-// ---- Init ----
-document.addEventListener('DOMContentLoaded', () => {
-  const page = document.body.dataset.page;
+// ---- Supabase Initializer ----
+async function syncDatabase() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/vehicles?select=*`, {
+      headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.length > 0) {
+        // Hydrate frontend arrays with remote backend payload
+        CARS.length = 0;
+        data.forEach(v => {
+          CARS.push({
+            id: v.id, make: v.make, model: v.model, category: (v.type || 'suv').toLowerCase(),
+            year: v.year, price: v.daily_rate, seats: v.passengers || 5, transmission: v.transmission || 'Auto',
+            image: v.image_url, gallery: [v.image_url], featured: true, badge: v.status === 'available' ? null : v.status,
+            link: v.stripe_link, specs: { hp: '-- HP', topSpeed: '-- mph', seats: v.passengers || 5, trans: v.transmission || 'Auto' },
+            features: ['Absolute Transparency', 'Impeccable Condition', 'Flexible Delivery'],
+            description: `Experience the thrill of the ${v.year} ${v.make} ${v.model}. Premium engineering meets pure luxury.`
+          });
+        });
+      }
+    }
+  } catch (err) { console.error("Database connection fallback to static payload."); }
+}
 
+// ---- Init ----
+document.addEventListener('DOMContentLoaded', async () => {
+  await syncDatabase();
+  
+  const page = document.body.dataset.page;
   if (page === 'home') {
     renderCars(CARS.slice(0, 8));
     initFilters();
