@@ -88,7 +88,7 @@
   </div>
 
   <!-- ===================== HERO (Image Background) ===================== -->
-  <section class="hero" id="home" style="background: url('assets/images/Imagenes/obi-XT95JA80yzM-unsplash.jpg') center/cover no-repeat; min-height: 80vh; display: flex; align-items: center; padding-top: 140px; padding-bottom: 60px; position: relative;">
+  <section class="hero" id="home" style="background-image: url('assets/images/Imagenes/obi-XT95JA80yzM-unsplash.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 80vh; display: flex; align-items: center; padding-top: 140px; padding-bottom: 60px; position: relative;">
     <div class="container" style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; position: relative; z-index: 2;">
       <h1 class="hero-title" style="color: #FFFFFF; font-size: clamp(3rem, 6vw, 4.5rem); letter-spacing: -0.02em; margin-bottom: 30px; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; text-shadow: 0 4px 24px rgba(0,0,0,0.5);">
         Drive Luxury.
@@ -129,12 +129,13 @@
   </section>
 
   <!-- ===================== FLEET SECTION ===================== -->
-  <section class="section" id="fleet">
-    <div class="container">
+  <section class="section" id="fleet" style="background-color: #111; background-image: url('assets/images/Imagenes/laurent-yasiel-xsvqW-O4OnM-unsplash.jpg'); background-size: cover; background-position: center; background-attachment: fixed; position: relative;">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(2px);"></div>
+    <div class="container" style="position: relative; z-index: 2;">
       <div class="section-header fade-in">
-        <span class="section-label">Our Fleet</span>
-        <h2 class="section-title">Handpicked Premium <br/>Luxury Vehicles</h2>
-        <p class="section-subtitle">Each vehicle is meticulously maintained, fully insured, and available for delivery directly to your doorstep.</p>
+        <span class="section-label" style="color: #FFF;">Our Fleet</span>
+        <h2 class="section-title" style="color: #FFF;">Handpicked Premium <br/>Luxury Vehicles</h2>
+        <p class="section-subtitle" style="color: #DDD;">Each vehicle is meticulously maintained, fully insured, and available for delivery directly to your doorstep.</p>
       </div>
 
       <!-- Filters -->
@@ -144,58 +145,59 @@
       <div class="cars-grid stagger-fade" id="cars-grid"></div>
 
     </div>
-  <section class="section" id="why-us" style="background: var(--bg-secondary);">
-    <div class="container">
+  <section class="section" id="why-us" style="background-color: #111; background-image: url('assets/images/Imagenes/koons-automotive-NFz9uZ8CtKM-unsplash.jpg'); background-size: cover; background-position: center; background-attachment: fixed; position: relative;">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(4px);"></div>
+    <div class="container" style="position: relative; z-index: 2;">
       <div class="section-header center fade-in">
-        <span class="section-label">Trust & Simplicity</span>
-        <h2 class="section-title">The Premium Rental<br/>Experience</h2>
-        <p class="section-subtitle">We've reimagined every step of renting a luxury vehicle — from your first search to returning the keys.</p>
+        <span class="section-label" style="color: #FFF;">Trust & Simplicity</span>
+        <h2 class="section-title" style="color: #FFF;">The Premium Rental<br/>Experience</h2>
+        <p class="section-subtitle" style="color: #DDD;">We've reimagined every step of renting a luxury vehicle — from your first search to returning the keys.</p>
       </div>
 
       <div style="display: flex; gap: 4rem; align-items: center; flex-wrap: wrap;">
         <!-- Features Column -->
         <div class="features-grid stagger-fade" style="flex: 1.2; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
-          <div class="feature-card fade-in">
-            <div class="feature-title" style="display:flex;align-items:center;gap:0.75rem;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" width="24" height="24">
+          <div class="feature-card fade-in" style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 1.5rem; color: #FFF;">
+            <div class="feature-title" style="display:flex;align-items:center;gap:0.75rem; color: #FFF;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" width="24" height="24">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
               </svg>
               Absolute Transparency
             </div>
-            <div class="feature-desc" style="margin-top:0.5rem;">The price you see is exactly what you pay. No hidden delivery charges or surprise fees at the counter.</div>
+            <div class="feature-desc" style="margin-top:0.5rem; color: #BBB;">The price you see is exactly what you pay. No hidden delivery charges or surprise fees at the counter.</div>
           </div>
 
-          <div class="feature-card fade-in">
-            <div class="feature-title" style="display:flex;align-items:center;gap:0.75rem;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" width="24" height="24">
+          <div class="feature-card fade-in" style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 1.5rem; color: #FFF;">
+            <div class="feature-title" style="display:flex;align-items:center;gap:0.75rem; color: #FFF;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" width="24" height="24">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
               Impeccable Condition
             </div>
-            <div class="feature-desc" style="margin-top:0.5rem;">Every vehicle in our fleet is rigorously maintained to specifications and professionally detailed before every handoff.</div>
+            <div class="feature-desc" style="margin-top:0.5rem; color: #BBB;">Every vehicle in our fleet is rigorously maintained to specifications and professionally detailed before every handoff.</div>
           </div>
 
-          <div class="feature-card fade-in">
-            <div class="feature-title" style="display:flex;align-items:center;gap:0.75rem;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" width="24" height="24">
+          <div class="feature-card fade-in" style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 1.5rem; color: #FFF;">
+            <div class="feature-title" style="display:flex;align-items:center;gap:0.75rem; color: #FFF;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" width="24" height="24">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
               Flexible Delivery
             </div>
-            <div class="feature-desc" style="margin-top:0.5rem;">Pick up your car seamlessly from our Aventura location, or let us bring the keys directly to you at MIA or FLL airports.</div>
+            <div class="feature-desc" style="margin-top:0.5rem; color: #BBB;">Pick up your car seamlessly from our Aventura location, or let us bring the keys directly to you at MIA or FLL airports.</div>
           </div>
         </div>
 
         <!-- Image Column -->
         <div style="flex: 1; min-width: 320px;" class="fade-in">
-          <img src="assets/images/Imagenes/kenny-sabugo-wErZFb01-5o-unsplash.jpg" alt="Luxury Rental Experience" style="width: 100%; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); object-fit: cover; aspect-ratio: 4/5;" />
+          <img src="assets/images/Imagenes/kenny-sabugo-wErZFb01-5o-unsplash.jpg" alt="Luxury Rental Experience" style="width: 100%; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); object-fit: cover; aspect-ratio: 4/5;" />
         </div>
       </div>
     </div>
   </section>
 
   <!-- ===================== NEWSLETTER ===================== -->
-  <div class="newsletter-section" id="contact" style="background: url('assets/images/Imagenes/grant-porter-O7qK1vQY3p0-unsplash.jpg') center/calc(100% + 100px) no-repeat; background-size: cover; position: relative; border: none; padding: 7rem 0;">
+  <div class="newsletter-section" id="contact" style="background-color: #111; background-image: url('assets/images/Imagenes/grant-porter-O7qK1vQY3p0-unsplash.jpg'); background-size: cover; background-position: center; position: relative; border: none; padding: 7rem 0;">
     <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(2px);"></div>
     <div class="container" style="position: relative; z-index: 2;">
       <div class="newsletter-inner fade-in" style="flex-direction: column; align-items: center; text-align: center;">
