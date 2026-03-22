@@ -171,6 +171,22 @@
     .mileage-bar { width:100%; height:4px; background:var(--border); border-radius:4px; margin-top:5px; }
     .mileage-bar-fill { height:100%; border-radius:4px; transition:width 0.4s; }
 
+    /* Plan feature gating — lock badge on Pro-only nav items */
+    body.plan-trial .nav-item[data-tab="turo"]::after,
+    body.plan-trial .nav-item[data-tab="reports"]::after,
+    body.plan-trial .nav-item[data-tab="consignments"]::after,
+    body.plan-trial .nav-item[data-tab="users"]::after,
+    body.plan-starter .nav-item[data-tab="turo"]::after,
+    body.plan-starter .nav-item[data-tab="reports"]::after,
+    body.plan-starter .nav-item[data-tab="consignments"]::after,
+    body.plan-starter .nav-item[data-tab="users"]::after { content:'PRO'; font-size:0.55rem; font-weight:700; letter-spacing:.04em; background:rgba(245,158,11,0.2); color:#F59E0B; padding:1px 5px; border-radius:4px; margin-left:auto; }
+    /* Upgrade plan card */
+    .upgrade-card { background:var(--surface-2); border:1px solid var(--border); border-radius:14px; padding:1.5rem; text-align:center; cursor:pointer; transition:border-color .2s,transform .15s; }
+    .upgrade-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+    .upgrade-card.featured { border-color:#818CF8; }
+    .upgrade-card .plan-price { font-size:2rem; font-weight:800; margin:0.5rem 0; }
+    .upgrade-card .plan-features { font-size:0.78rem; color:var(--muted); text-align:left; margin-top:0.75rem; line-height:1.8; }
+
     /* Toast notifications */
     .dash-toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#1E293B; color:#fff; padding:0.65rem 1.1rem; border-radius:10px; font-size:0.85rem; box-shadow:0 4px 20px rgba(0,0,0,.3); z-index:9999; opacity:0; transform:translateY(8px); transition:opacity .25s,transform .25s; pointer-events:none; }
     .dash-toast.dash-toast-show { opacity:1; transform:translateY(0); }
@@ -1306,6 +1322,52 @@
 
     </div><!-- /content -->
   </main>
+
+  <!-- MODAL: Upgrade Plan -->
+  <div class="modal" id="upgrade-modal">
+    <div class="modal-box" style="max-width:600px;">
+      <div class="modal-header">
+        <h3>Upgrade Your Plan</h3>
+        <button class="modal-close" onclick="closeModal('upgrade-modal')">✕</button>
+      </div>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.5rem;">Choose the plan that fits your fleet. Cancel anytime.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <!-- Starter -->
+        <div class="upgrade-card" onclick="startCheckout('price_1TDaQ3HAH4zJnnwfasGBYtYO')">
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;">Starter</div>
+          <div class="plan-price">$49<span style="font-size:1rem;font-weight:400;color:var(--muted)">/mo</span></div>
+          <button class="btn btn-outline" style="width:100%;margin-top:0.5rem;">Choose Starter</button>
+          <div class="plan-features">
+            ✓ Up to 10 cars<br>
+            ✓ Unlimited reservations<br>
+            ✓ Customer management<br>
+            ✓ Maintenance tracking<br>
+            ✗ Calendar Sync (Turo)<br>
+            ✗ Reports &amp; Analytics<br>
+            ✗ Consignments<br>
+            ✗ Team roles
+          </div>
+        </div>
+        <!-- Pro -->
+        <div class="upgrade-card featured" onclick="startCheckout('price_1TDaQVHAH4zJnnwfPf1Gh6eg')">
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:.06em;color:#818CF8;text-transform:uppercase;">Pro ⭐</div>
+          <div class="plan-price" style="color:#818CF8;">$99<span style="font-size:1rem;font-weight:400;color:var(--muted)">/mo</span></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:0.5rem;background:#818CF8;border-color:#818CF8;">Choose Pro</button>
+          <div class="plan-features">
+            ✓ Up to 30 cars<br>
+            ✓ Unlimited reservations<br>
+            ✓ Customer management<br>
+            ✓ Maintenance tracking<br>
+            ✓ Calendar Sync (Turo)<br>
+            ✓ Reports &amp; Analytics<br>
+            ✓ Consignments<br>
+            ✓ Team roles &amp; users
+          </div>
+        </div>
+      </div>
+      <p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:1rem;">Secure payment via Stripe · Cancel anytime · No hidden fees</p>
+    </div>
+  </div>
 
   <!-- MODAL: Invite User -->
   <div class="modal" id="invite-modal">

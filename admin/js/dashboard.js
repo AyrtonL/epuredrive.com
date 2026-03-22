@@ -34,11 +34,16 @@ let currentUserId = null;       // auth user uuid
 let currentActiveTab = 'main';  // track current tab for role restrictions
 
 // ---- Plan / Trial ----
-let currentPlan    = 'trial';   // 'trial' | 'pro' | 'suspended'
+let currentPlan    = 'trial';   // 'trial' | 'starter' | 'pro' | 'suspended'
 let trialStartedAt = null;      // ISO timestamp
 const TRIAL_DAYS             = 14;
 const TRIAL_MAX_RESERVATIONS = 2;
 const TRIAL_MAX_CARS         = 1;
+const STARTER_MAX_CARS       = 10;
+const PRO_MAX_CARS           = 30;
+const STARTER_PRICE_ID       = 'price_1TDaQ3HAH4zJnnwfasGBYtYO';
+const PRO_PRICE_ID           = 'price_1TDaQVHAH4zJnnwfPf1Gh6eg';
+const PRO_ONLY_TABS          = ['turo', 'reports', 'consignments', 'users'];
 
 // ====================================================
 //  AUTH + TENANT PROFILE
@@ -105,64 +110,122 @@ function _setTenantUI(name) {
 function _setPlanUI() {
   const banner = document.getElementById('trial-banner');
   if (!banner) return;
-  if (currentPlan !== 'trial') { banner.style.display = 'none'; return; }
 
+  // Apply plan class to body for CSS feature gating
+  document.body.classList.remove('plan-trial', 'plan-starter', 'plan-pro', 'plan-suspended');
+  document.body.classList.add(`plan-${currentPlan}`);
+
+  if (currentPlan === 'pro') { banner.style.display = 'none'; return; }
+
+  if (currentPlan === 'suspended') {
+    banner.style.display = 'flex';
+    banner.style.background = 'rgba(239,68,68,0.1)';
+    banner.style.borderBottomColor = 'rgba(239,68,68,0.4)';
+    banner.innerHTML = `
+      <span style="font-size:0.82rem;color:#EF4444;font-weight:600;">⛔ Account suspended — contact support to reactivate your plan.</span>
+      <a href="mailto:info@epuredrive.com?subject=Reactivate%20Account" style="font-size:0.78rem;font-weight:700;color:#EF4444;text-decoration:none;padding:0.25rem 0.85rem;border:1px solid #EF4444;border-radius:6px;">Contact Us →</a>`;
+    return;
+  }
+
+  if (currentPlan === 'starter') {
+    banner.style.display = 'flex';
+    banner.style.background = 'rgba(99,102,241,0.07)';
+    banner.style.borderBottomColor = 'rgba(99,102,241,0.25)';
+    banner.innerHTML = `
+      <span style="font-size:0.8rem;color:var(--text);">
+        <strong style="color:#818CF8;">⚡ Starter Plan</strong>
+        &nbsp;·&nbsp; Cars: <strong>${allCars.length}/${STARTER_MAX_CARS}</strong>
+        &nbsp;·&nbsp; Unlock Reports, Calendar Sync, Consignments &amp; Roles with Pro
+      </span>
+      <button onclick="startCheckout('${PRO_PRICE_ID}')" style="font-size:0.78rem;font-weight:700;color:#818CF8;background:none;border:1px solid #818CF8;border-radius:6px;padding:0.25rem 0.85rem;cursor:pointer;white-space:nowrap;">Upgrade to Pro $99/mo →</button>`;
+    return;
+  }
+
+  // Trial
   let daysLeft = TRIAL_DAYS;
   if (trialStartedAt) {
     const used = Math.floor((Date.now() - new Date(trialStartedAt)) / 86400000);
     daysLeft   = Math.max(0, TRIAL_DAYS - used);
   }
-
   const resUsed  = allReservations.filter(r => r.status !== 'cancelled').length;
   const carsUsed = allCars.length;
   const expired  = daysLeft === 0;
   const atLimit  = resUsed >= TRIAL_MAX_RESERVATIONS || carsUsed >= TRIAL_MAX_CARS;
-  const warn     = expired || atLimit;
-  const accent   = warn ? '#EF4444' : '#F59E0B';
+  const accent   = (expired || atLimit) ? '#EF4444' : '#F59E0B';
 
   banner.style.display = 'flex';
+  banner.style.background = 'rgba(245,158,11,0.07)';
+  banner.style.borderBottomColor = 'rgba(245,158,11,0.25)';
   banner.innerHTML = `
     <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
       <span style="font-size:0.8rem;font-weight:700;letter-spacing:.04em;color:${accent};">⚡ TRIAL</span>
       <span style="font-size:0.8rem;color:var(--text);">
-        ${expired
-          ? '<span style="color:#EF4444;font-weight:700;">Expired</span>'
-          : `<strong>${daysLeft}</strong> day${daysLeft !== 1 ? 's' : ''} left`}
-        &nbsp;·&nbsp;
-        Reservations: <strong style="color:${resUsed >= TRIAL_MAX_RESERVATIONS ? '#EF4444' : 'var(--text)'}">${resUsed}/${TRIAL_MAX_RESERVATIONS}</strong>
-        &nbsp;·&nbsp;
-        Cars: <strong style="color:${carsUsed >= TRIAL_MAX_CARS ? '#EF4444' : 'var(--text)'}">${carsUsed}/${TRIAL_MAX_CARS}</strong>
+        ${expired ? '<span style="color:#EF4444;font-weight:700;">Expired</span>' : `<strong>${daysLeft}</strong> day${daysLeft !== 1 ? 's' : ''} left`}
+        &nbsp;·&nbsp; Reservations: <strong style="color:${resUsed >= TRIAL_MAX_RESERVATIONS ? '#EF4444' : 'inherit'}">${resUsed}/${TRIAL_MAX_RESERVATIONS}</strong>
+        &nbsp;·&nbsp; Cars: <strong style="color:${carsUsed >= TRIAL_MAX_CARS ? '#EF4444' : 'inherit'}">${carsUsed}/${TRIAL_MAX_CARS}</strong>
       </span>
     </div>
-    <a href="mailto:info@epuredrive.com?subject=Upgrade%20My%20Plan" style="font-size:0.78rem;font-weight:700;color:${accent};text-decoration:none;padding:0.25rem 0.85rem;border:1px solid ${accent};border-radius:6px;white-space:nowrap;">Upgrade →</a>
-  `;
+    <button onclick="openModal('upgrade-modal')" style="font-size:0.78rem;font-weight:700;color:${accent};background:none;border:1px solid ${accent};border-radius:6px;padding:0.25rem 0.85rem;cursor:pointer;white-space:nowrap;">Upgrade →</button>`;
 }
 
-function checkTrialLimit(type) {
-  if (currentPlan !== 'trial') return true;
-
-  const daysLeft = trialStartedAt
-    ? Math.max(0, TRIAL_DAYS - Math.floor((Date.now() - new Date(trialStartedAt)) / 86400000))
-    : TRIAL_DAYS;
-
-  if (daysLeft === 0) {
-    showToast('Tu trial ha expirado. Contacta a soporte para activar tu plan.', 'error');
+function checkPlanLimit(type) {
+  if (currentPlan === 'suspended') {
+    showToast('Account suspended. Contact support to reactivate.', 'error');
     return false;
   }
-  if (type === 'reservation') {
-    const used = allReservations.filter(r => r.status !== 'cancelled').length;
-    if (used >= TRIAL_MAX_RESERVATIONS) {
-      showToast(`Trial: máximo ${TRIAL_MAX_RESERVATIONS} reservaciones. Actualiza tu plan para continuar.`, 'error');
+  if (currentPlan === 'pro') return true;
+
+  if (currentPlan === 'trial') {
+    const daysLeft = trialStartedAt
+      ? Math.max(0, TRIAL_DAYS - Math.floor((Date.now() - new Date(trialStartedAt)) / 86400000))
+      : TRIAL_DAYS;
+    if (daysLeft === 0) {
+      showToast('Your trial has expired. Upgrade to continue.', 'error');
+      openModal('upgrade-modal');
+      return false;
+    }
+    if (type === 'reservation') {
+      const used = allReservations.filter(r => r.status !== 'cancelled').length;
+      if (used >= TRIAL_MAX_RESERVATIONS) {
+        showToast(`Trial limit: max ${TRIAL_MAX_RESERVATIONS} reservations. Upgrade to continue.`, 'error');
+        openModal('upgrade-modal');
+        return false;
+      }
+    }
+    if (type === 'car' && allCars.length >= TRIAL_MAX_CARS) {
+      showToast(`Trial limit: max ${TRIAL_MAX_CARS} car. Upgrade to continue.`, 'error');
+      openModal('upgrade-modal');
       return false;
     }
   }
-  if (type === 'car') {
-    if (allCars.length >= TRIAL_MAX_CARS) {
-      showToast(`Trial: máximo ${TRIAL_MAX_CARS} auto. Actualiza tu plan para agregar más.`, 'error');
-      return false;
-    }
+
+  if (currentPlan === 'starter' && type === 'car' && allCars.length >= STARTER_MAX_CARS) {
+    showToast(`Starter limit: max ${STARTER_MAX_CARS} cars. Upgrade to Pro for more.`, 'error');
+    return false;
   }
+
   return true;
+}
+
+async function startCheckout(priceId) {
+  const { data } = await sb.auth.getSession();
+  const email    = data?.session?.user?.email || '';
+  const btn      = event?.currentTarget;
+  if (btn) { btn.disabled = true; btn.textContent = 'Redirecting…'; }
+
+  try {
+    const res  = await fetch('/.netlify/functions/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ priceId, tenantId: currentTenantId, email }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Checkout failed');
+    window.location.href = json.url;
+  } catch (err) {
+    showToast(err.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Upgrade →'; }
+  }
 }
 
 function _setUserUI(fullName, email, role) {
@@ -519,7 +582,7 @@ async function saveReservation(e) {
   e.preventDefault();
   const form    = document.getElementById('reservation-form');
   const editId  = form.dataset.editId;
-  if (!editId && !checkTrialLimit('reservation')) return;
+  if (!editId && !checkPlanLimit('reservation')) return;
   const payload = {
     car_id:          parseInt(document.getElementById('f-car').value),
     customer_name:   document.getElementById('f-name').value.trim(),
@@ -1570,7 +1633,7 @@ async function saveCar(e) {
   e.preventDefault();
   const carId   = parseInt(document.getElementById('car-form').dataset.carId);
   const existing = allCars.find(c => c.id === carId);
-  if (!existing && !checkTrialLimit('car')) return;
+  if (!existing && !checkPlanLimit('car')) return;
   const payload = {
     year:                  parseInt(document.getElementById('car-year').value)     || null,
     car_color:             document.getElementById('car-color').value.trim(),
@@ -1689,6 +1752,11 @@ const TAB_TITLES = {
 };
 
 function switchTab(tab) {
+  // Block Pro-only tabs for non-pro users
+  if (currentPlan !== 'pro' && PRO_ONLY_TABS.includes(tab)) {
+    openModal('upgrade-modal');
+    return;
+  }
   currentActiveTab = tab;
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -1919,6 +1987,17 @@ window.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([loadReservations(), loadBlockedDates(), loadTuroFeeds(), loadConsignments(), loadExpenses(), loadCars(), loadServices(), loadCustomers()]);
 
   _setPlanUI();
+
+  // Handle post-checkout redirect
+  const _urlP = new URLSearchParams(window.location.search);
+  if (_urlP.get('upgraded') === '1') {
+    showToast('🎉 Plan activated! Welcome aboard.');
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+  if (_urlP.get('upgrade_cancelled') === '1') {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
   updateStats();
   initCalendar();
   renderTable(true);
