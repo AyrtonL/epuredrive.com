@@ -151,6 +151,13 @@
     .btn-icon-danger { background:none; border:none; color:var(--muted); cursor:pointer; padding:4px; border-radius:6px; transition:color 0.15s; }
     .btn-icon-danger:hover { color:var(--red); }
     .invite-empty { text-align:center; padding:3rem 0; color:var(--muted); font-size:0.9rem; }
+    .user-role-select { background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:0.78rem; padding:4px 8px; border-radius:8px; cursor:pointer; }
+    .user-role-select:focus { outline:none; border-color:var(--accent); }
+
+    /* Toast notifications */
+    .dash-toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#1E293B; color:#fff; padding:0.65rem 1.1rem; border-radius:10px; font-size:0.85rem; box-shadow:0 4px 20px rgba(0,0,0,.3); z-index:9999; opacity:0; transform:translateY(8px); transition:opacity .25s,transform .25s; pointer-events:none; }
+    .dash-toast.dash-toast-show { opacity:1; transform:translateY(0); }
+    .dash-toast.dash-toast-error { background:#EF4444; }
 
     .sidebar-nav { flex: 1; padding: 1rem 0; }
     .nav-item {
@@ -789,11 +796,11 @@
         <button class="btn btn-outline" id="theme-btn" title="Toggle Light/Dark Theme">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         </button>
-        <button class="btn btn-outline" id="block-btn">
+        <button class="btn btn-outline write-action" id="block-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
           Block Dates
         </button>
-        <button class="btn btn-primary" id="add-res-btn">
+        <button class="btn btn-primary write-action" id="add-res-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           New Reservation
         </button>
@@ -941,7 +948,7 @@
               <label>iCal URL (.ics)</label>
               <input type="url" id="feed-url" placeholder="https://…/calendar.ics" />
             </div>
-            <button class="btn btn-primary" id="add-feed-btn" style="height:40px;white-space:nowrap;">Add Feed</button>
+            <button class="btn btn-primary write-action" id="add-feed-btn" style="height:40px;white-space:nowrap;">Add Feed</button>
           </div>
         </div>
 
@@ -951,7 +958,7 @@
             <h3 style="font-size:0.95rem;font-weight:600;">Saved Calendars</h3>
             <div style="display:flex;gap:0.75rem;align-items:center;">
               <div id="sync-status" style="font-size:0.8rem;color:var(--muted);"></div>
-              <button class="btn btn-primary" id="sync-turo-btn">
+              <button class="btn btn-primary write-action" id="sync-turo-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
                 Sync All
               </button>
@@ -971,7 +978,7 @@
             <h3 style="font-size:1rem;font-weight:600;">Consignment Contracts</h3>
             <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Manage vehicle owners, revenue splits and expenses</p>
           </div>
-          <button class="btn btn-primary" id="add-consignment-btn">
+          <button class="btn btn-primary write-action" id="add-consignment-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Consignment
           </button>
@@ -1011,7 +1018,7 @@
                 <option>Repair</option>
                 <option>Other</option>
               </select>
-              <button class="btn btn-outline" id="add-expense-btn">
+              <button class="btn btn-outline write-action" id="add-expense-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Add Expense
               </button>
@@ -1077,7 +1084,7 @@
             <h3 style="font-size:1rem;font-weight:600;">Maintenance & Service</h3>
             <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Service records and upcoming maintenance for all vehicles</p>
           </div>
-          <button class="btn btn-primary" id="add-service-btn-top">
+          <button class="btn btn-primary write-action" id="add-service-btn-top">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Service Record
           </button>
@@ -1160,7 +1167,7 @@
             <h3 style="font-size:1rem;font-weight:600;">Customers</h3>
             <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Customer database and rental history</p>
           </div>
-          <button class="btn btn-primary" id="add-customer-btn">
+          <button class="btn btn-primary write-action" id="add-customer-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Customer
           </button>

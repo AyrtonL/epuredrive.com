@@ -28,6 +28,10 @@ let allCustomers    = [];   // rows from customers table
 let currentTenantId   = null;   // uuid — set after profile loads
 let currentTenantName = null;   // display name
 
+// ---- Role ----
+let currentRole = 'admin';      // 'admin' | 'finance' | 'staff' — set after profile loads
+let currentUserId = null;       // auth user uuid
+
 // ====================================================
 //  AUTH + TENANT PROFILE
 // ====================================================
@@ -37,7 +41,8 @@ async function checkAuth() {
     window.location.href = 'index.html';
     return false;
   }
-  await loadTenantProfile(data.session.user.id, data.session.user.email);
+  currentUserId = data.session.user.id;
+  await loadTenantProfile(currentUserId, data.session.user.email);
   return true;
 }
 
@@ -86,6 +91,7 @@ function _setTenantUI(name) {
 }
 
 function _setUserUI(fullName, email, role) {
+  currentRole = role || 'admin';
   const displayName = fullName || email || 'Admin';
   const initials    = displayName.split(/[\s@]+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
   const avatarEl   = document.getElementById('user-avatar');
@@ -93,7 +99,24 @@ function _setUserUI(fullName, email, role) {
   const roleEl     = document.getElementById('user-display-role');
   if (avatarEl) avatarEl.textContent = initials;
   if (nameEl)   nameEl.textContent   = displayName;
-  if (roleEl)   roleEl.textContent   = role;
+  if (roleEl) {
+    roleEl.innerHTML = `<span class="role-badge ${currentRole}">${currentRole}</span>`;
+  }
+  // Apply role class to body for CSS-based visibility rules
+  document.body.classList.remove('role-admin', 'role-finance', 'role-staff');
+  document.body.classList.add(`role-${currentRole}`);
+}
+
+// Redirect to safe tab if current active tab is restricted for this role
+function applyRoleRestrictions() {
+  const restricted = {
+    finance: ['maintenance', 'turo', 'users'],
+    staff:   ['reports', 'consignments', 'users'],
+  };
+  const blocked = restricted[currentRole] || [];
+  if (blocked.includes(currentActiveTab)) {
+    switchTab('main');
+  }
 }
 
 // ====================================================
@@ -350,8 +373,8 @@ function renderTable(resetPage = false) {
         <td><span class="badge ${statusMap[r.status] || 'badge-gray'}">${r.status}</span></td>
         <td><span class="source-badge source-${r.source || 'admin'}">${r.source || 'admin'}</span></td>
         <td class="actions">
-          <button class="btn-icon" onclick="openEdit('${r.id}')" title="Edit">✏️</button>
-          <button class="btn-icon danger" onclick="deleteReservation('${r.id}')" title="Delete">🗑️</button>
+          <button class="btn-icon write-action" onclick="openEdit('${r.id}')" title="Edit">✏️</button>
+          <button class="btn-icon danger write-action" onclick="deleteReservation('${r.id}')" title="Delete">🗑️</button>
         </td>
       </tr>`;
   }).join('');
@@ -511,7 +534,7 @@ function showDetail(r) {
   `;
   document.getElementById('detail-actions').innerHTML = `
     <button class="btn btn-outline" onclick="closeModal('detail-modal')">Close</button>
-    <button class="btn btn-primary" onclick="closeModal('detail-modal');openEdit('${r.id}')">Edit</button>
+    <button class="btn btn-primary write-action" onclick="closeModal('detail-modal');openEdit('${r.id}')">Edit</button>
   `;
   openModal('detail-modal');
 }
@@ -752,8 +775,8 @@ function renderConsignments() {
             ${esc(carName)}
           </div>
           <div class="actions">
-            <button class="btn-icon" onclick="openEditConsignment('${con.id}')" title="Edit">✏️</button>
-            <button class="btn-icon danger" onclick="deleteConsignment('${con.id}')" title="Delete">🗑️</button>
+            <button class="btn-icon write-action" onclick="openEditConsignment('${con.id}')" title="Edit">✏️</button>
+            <button class="btn-icon danger write-action" onclick="deleteConsignment('${con.id}')" title="Delete">🗑️</button>
           </div>
         </div>
 
@@ -822,7 +845,7 @@ function renderExpensesTable() {
       <td style="color:var(--muted-2);">${esc(e.description || '—')}</td>
       <td style="color:var(--red);font-weight:600;">$${Number(e.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       <td class="actions">
-        <button class="btn-icon danger" onclick="deleteExpense('${e.id}')" title="Delete">🗑️</button>
+        <button class="btn-icon danger write-action" onclick="deleteExpense('${e.id}')" title="Delete">🗑️</button>
       </td>
     </tr>`).join('');
 }
@@ -968,8 +991,8 @@ function renderCustomers() {
         <td style="font-weight:600;">${spent > 0 ? '$' + spent.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—'}</td>
         <td style="color:var(--muted-2);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.notes || '—')}</td>
         <td class="actions">
-          <button class="btn-icon" onclick="openEditCustomer('${c.id}')" title="Edit">✏️</button>
-          <button class="btn-icon danger" onclick="deleteCustomer('${c.id}')" title="Delete">🗑️</button>
+          <button class="btn-icon write-action" onclick="openEditCustomer('${c.id}')" title="Edit">✏️</button>
+          <button class="btn-icon danger write-action" onclick="deleteCustomer('${c.id}')" title="Delete">🗑️</button>
         </td>
       </tr>`;
   }).join('');
@@ -1316,8 +1339,8 @@ function renderCarCards() {
         <td><span class="${regClass}">${expiryLabel(car.registration_expiry)}</span></td>
         <td>$${car.daily_rate || DAILY_RATES[id] || '—'}/day</td>
         <td class="actions">
-          <button class="btn-icon" onclick="openEditCar(${car.id})" title="Edit">✏️</button>
-          <button class="btn-icon" onclick="openAddService(${car.id})" title="Add Service">🔧</button>
+          <button class="btn-icon write-action" onclick="openEditCar(${car.id})" title="Edit">✏️</button>
+          <button class="btn-icon write-action" onclick="openAddService(${car.id})" title="Add Service">🔧</button>
         </td>
       </tr>`;
   });
@@ -1384,8 +1407,8 @@ function renderServicesTable() {
       <td>${s.next_service_date ? `<strong class="${expiryClass(s.next_service_date)}">${fmtDate(s.next_service_date)}</strong>` : '—'}</td>
       <td style="color:var(--muted-2);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(s.notes || '—')}</td>
       <td class="actions">
-        <button class="btn-icon" onclick="openEditService('${s.id}')" title="Edit">✏️</button>
-        <button class="btn-icon danger" onclick="deleteService('${s.id}')" title="Delete">🗑️</button>
+        <button class="btn-icon write-action" onclick="openEditService('${s.id}')" title="Edit">✏️</button>
+        <button class="btn-icon danger write-action" onclick="deleteService('${s.id}')" title="Delete">🗑️</button>
       </td>
     </tr>`).join('');
 }
@@ -1507,6 +1530,7 @@ const TAB_TITLES = {
   consignments: 'Consignments',
   reports:      'Reports &amp; Analytics',
   turo:         'Calendar Sync',
+  users:        'Team &amp; Access',
 };
 
 function switchTab(tab) {
@@ -1522,6 +1546,7 @@ function switchTab(tab) {
   if (tab === 'maintenance') { renderFleetStatus(); renderServicesTable(); renderMaintenanceAlerts(); }
   if (tab === 'customers') renderCustomers();
   if (tab === 'reports') renderReports();
+  if (tab === 'users') loadUsers();
 }
 
 // ====================================================
@@ -1550,6 +1575,15 @@ function esc(str) {
 function openModal(id)  { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
+function showToast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.className = 'dash-toast' + (type === 'error' ? ' dash-toast-error' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add('dash-toast-show'), 10);
+  setTimeout(() => { t.classList.remove('dash-toast-show'); setTimeout(() => t.remove(), 300); }, 3000);
+}
+
 // ====================================================
 //  AUTO-CALCULATE AMOUNT
 // ====================================================
@@ -1560,6 +1594,132 @@ function autoCalc() {
   if (pickup && ret && carId) {
     const days = dateDiff(pickup, ret);
     if (days > 0) document.getElementById('f-amount').value = days * (DAILY_RATES[carId] || 0);
+  }
+}
+
+// ====================================================
+//  USER MANAGEMENT (Admin only)
+// ====================================================
+let allUsers = [];
+
+async function loadUsers() {
+  const usersGrid = document.getElementById('users-list');
+  if (!usersGrid) return;
+  usersGrid.innerHTML = '<p style="color:var(--muted);padding:1rem">Loading…</p>';
+
+  const { data, error } = await withTenant(
+    sb.from('profiles').select('id, full_name, role, created_at, auth_users:id(email)')
+  );
+
+  if (error) {
+    // Fallback: profiles without joining auth.users (RLS may block the join)
+    const { data: fallback } = await withTenant(
+      sb.from('profiles').select('id, full_name, role, created_at')
+    );
+    allUsers = fallback || [];
+  } else {
+    allUsers = data || [];
+  }
+
+  renderUsers(allUsers);
+}
+
+function renderUsers(users) {
+  const grid = document.getElementById('users-list');
+  if (!grid) return;
+
+  if (!users.length) {
+    grid.innerHTML = '<p style="color:var(--muted);padding:1rem">No team members yet. Invite someone below.</p>';
+    return;
+  }
+
+  const roleColors = { admin: '#6366F1', finance: '#10B981', staff: '#F59E0B' };
+
+  grid.innerHTML = users.map(u => {
+    const email      = u.auth_users?.email || '';
+    const display    = u.full_name || email || 'Unknown';
+    const initials   = display.split(/[\s@]+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    const role       = u.role || 'staff';
+    const color      = roleColors[role] || '#6B7280';
+    const isSelf     = u.id === currentUserId;
+
+    return `
+      <div class="user-card">
+        <div class="user-card-avatar" style="background:${color}">${esc(initials)}</div>
+        <div class="user-card-info">
+          <div class="user-card-name">${esc(display)}</div>
+          <div class="user-card-email">${esc(email)}</div>
+        </div>
+        <div class="user-card-actions">
+          <select class="user-role-select write-action" data-uid="${u.id}" onchange="updateUserRole('${u.id}', this.value)" ${isSelf ? 'disabled title="Cannot change your own role"' : ''}>
+            <option value="admin"   ${role === 'admin'   ? 'selected' : ''}>Admin</option>
+            <option value="finance" ${role === 'finance' ? 'selected' : ''}>Finance</option>
+            <option value="staff"   ${role === 'staff'   ? 'selected' : ''}>Staff</option>
+          </select>
+          ${!isSelf ? `<button class="btn-icon danger write-action" onclick="removeUser('${u.id}')" title="Remove">🗑️</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openInviteModal() {
+  document.getElementById('invite-form')?.reset();
+  const errEl = document.getElementById('invite-error');
+  if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+  openModal('invite-modal');
+}
+
+async function inviteUser(e) {
+  e.preventDefault();
+  const name  = document.getElementById('inv-name').value.trim();
+  const email = document.getElementById('inv-email').value.trim();
+  const role  = document.getElementById('inv-role').value;
+  const btn   = document.getElementById('invite-submit-btn');
+  const errEl = document.getElementById('invite-error');
+
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    const res = await fetch('/.netlify/functions/invite-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, role, tenantId: currentTenantId }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Invite failed');
+
+    closeModal('invite-modal');
+    showToast(`Invite sent to ${email}`);
+    await loadUsers();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Invite';
+  }
+}
+
+async function updateUserRole(userId, newRole) {
+  const { error } = await sb.from('profiles').update({ role: newRole }).eq('id', userId);
+  if (error) {
+    showToast('Failed to update role: ' + error.message, 'error');
+    await loadUsers(); // revert UI
+  } else {
+    showToast('Role updated');
+  }
+}
+
+async function removeUser(userId) {
+  if (!confirm('Remove this team member? They will lose dashboard access.')) return;
+  const { error } = await sb.from('profiles').delete().eq('id', userId);
+  if (error) {
+    showToast('Failed to remove user: ' + error.message, 'error');
+  } else {
+    showToast('User removed');
+    await loadUsers();
   }
 }
 
@@ -1580,6 +1740,7 @@ async function refresh() {
 // ====================================================
 window.addEventListener('DOMContentLoaded', async () => {
   if (!(await checkAuth())) return;
+  applyRoleRestrictions();
 
   await Promise.all([loadReservations(), loadBlockedDates(), loadTuroFeeds(), loadConsignments(), loadExpenses(), loadCars(), loadServices(), loadCustomers()]);
 
@@ -1663,6 +1824,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('add-customer-btn')?.addEventListener('click', openAddCustomer);
   document.getElementById('customer-form')?.addEventListener('submit', saveCustomer);
   document.getElementById('customer-search')?.addEventListener('input', renderCustomers);
+
+  // Users & invite
+  document.getElementById('invite-user-btn')?.addEventListener('click', openInviteModal);
+  document.getElementById('invite-form')?.addEventListener('submit', inviteUser);
+  document.getElementById('invite-cancel-btn')?.addEventListener('click', () => closeModal('invite-modal'));
 
   // Consignments date filter
   document.getElementById('apply-con-btn')?.addEventListener('click', renderConsignments);
