@@ -9,9 +9,9 @@ const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ---- Constants ----
-const CAR_COLORS = { 1: '#3B82F6', 2: '#8B5CF6', 3: '#F59E0B', 4: '#10B981' };
-const CAR_NAMES  = { 1: 'Audi Q3', 2: 'Audi A3', 3: 'Porsche Cayenne', 4: 'Volkswagen Atlas' };
-const DAILY_RATES = { 1: 120, 2: 100, 3: 250, 4: 130 };
+let CAR_COLORS = { 1: '#3B82F6', 2: '#8B5CF6', 3: '#F59E0B', 4: '#10B981' };
+let CAR_NAMES  = { 1: 'Audi Q3', 2: 'Audi A3', 3: 'Porsche Cayenne', 4: 'Volkswagen Atlas' };
+let DAILY_RATES = { 1: 120, 2: 100, 3: 250, 4: 130 };
 
 let calendar        = null;
 let allReservations = [];
@@ -1436,8 +1436,32 @@ function renderMaintenanceAlerts() {
 //  CARS & MAINTENANCE
 // ====================================================
 async function loadCars() {
-  const { data, error } = await withTenant(sb.from('cars').select('*').order('id'));
-  if (!error) allCars = data || [];
+  const { data, error } = await withTenant(sb.from('vehicles').select('*').order('created_at'));
+  if (!error && data && data.length > 0) {
+    CAR_COLORS = {}; CAR_NAMES = {}; DAILY_RATES = {};
+    allCars = data.map((v, i) => {
+      const intId = i + 1; // Map UUID to int backward compat layer
+      CAR_NAMES[intId] = `${v.make} ${v.model}`;
+      DAILY_RATES[intId] = v.daily_rate;
+      CAR_COLORS[intId] = ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#ef4444'][i % 5];
+      
+      return { 
+         id: intId, real_uuid: v.id, make: v.make, model: v.model,
+         name: CAR_NAMES[intId], color: CAR_COLORS[intId],
+         year: v.year, car_color: 'Black', plate: 'TBD', vin: 'TBD',
+         mileage: 0, insurance_expiry: '2027-01-01', registration_expiry: '2027-01-01', daily_rate: v.daily_rate
+      };
+    });
+    
+    // Hydrate all HTML dropdowns dynamically
+    const optionsHTML = '<option value="">Select vehicle…</option>' + allCars.map(c => `<option value="${c.id}">${c.name} — $${c.daily_rate}/day</option>`).join('');
+    ['f-car', 'b-car', 'car-filter'].forEach(selId => {
+       const el = document.getElementById(selId);
+       if (el) el.innerHTML = (selId === 'car-filter') ? '<option value="">All Vehicles</option>' + allCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('') : optionsHTML;
+    });
+  } else {
+    allCars = [];
+  }
 }
 
 async function loadServices() {
@@ -1480,9 +1504,7 @@ function renderCarCards() {
   const tbody = document.getElementById('cars-tbody');
   if (!tbody) return;
 
-  const rows = [1, 2, 3, 4].map(id => {
-    const db  = allCars.find(c => c.id === id) || {};
-    const car = { id, name: CAR_NAMES[id], color: CAR_COLORS[id], ...db };
+  const rows = allCars.map(car => {
     const insClass = expiryClass(car.insurance_expiry);
     const regClass = expiryClass(car.registration_expiry);
     return `
@@ -1515,9 +1537,8 @@ function renderFleetStatus() {
   const tbody = document.getElementById('fleet-status-tbody');
   if (!tbody) return;
 
-  tbody.innerHTML = [1, 2, 3, 4].map(id => {
-    const db      = allCars.find(c => c.id === id) || {};
-    const car     = { id, name: CAR_NAMES[id], color: CAR_COLORS[id], ...db };
+  tbody.innerHTML = allCars.map(car => {
+    const id = car.id;
     const lastSvc = allServices.find(s => s.car_id === id);
     const nextSvc = allServices
       .filter(s => s.car_id === id && s.next_service_date)
@@ -1632,8 +1653,8 @@ function openEditCar(id) {
 async function saveCar(e) {
   e.preventDefault();
   const carId   = parseInt(document.getElementById('car-form').dataset.carId);
-  const existing = allCars.find(c => c.id === carId);
-  if (!existing && !checkPlanLimit('car')) return;
+  const existingCar = allCars.find(c => c.id === carId);
+  if (!existingCar && !checkPlanLimit('car')) return;
   const payload = {
     year:                  parseInt(document.getElementById('car-year').value)     || null,
     car_color:             document.getElementById('car-color').value.trim(),
@@ -1648,11 +1669,10 @@ async function saveCar(e) {
   const btn = e.submitter;
   btn.disabled = true; btn.textContent = 'Saving…';
 
-  // Upsert: update if row exists, insert if not
-  const existing = allCars.find(c => c.id === carId);
-  const { error } = existing
-    ? await sb.from('cars').update(payload).eq('id', carId)
-    : await sb.from('cars').insert({ id: carId, ...payload, ...tenantPayload() });
+  // Update real UUID row natively, intercepting legacy INT IDs
+  const { error } = (existingCar && existingCar.real_uuid)
+    ? await sb.from('vehicles').update(payload).eq('id', existingCar.real_uuid)
+    : { error: { message: "Cannot insert new vehicles from Admin panel yet. Use Supabase SQL Editor." } };
 
   if (error) { alert('Error: ' + error.message); }
   else { closeModal('car-modal'); await loadCars(); renderCarCards(); }
