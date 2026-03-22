@@ -331,7 +331,7 @@
       const slug = company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       const { data: tenantData, error: tenantErr } = await sb
         .from('tenants')
-        .insert({ name: company, slug: slug + '-' + Date.now() })
+        .insert({ name: company, slug: slug + '-' + Date.now(), plan: 'trial', trial_started_at: new Date().toISOString() })
         .select('id')
         .single();
 

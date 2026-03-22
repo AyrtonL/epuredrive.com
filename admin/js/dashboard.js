@@ -33,6 +33,13 @@ let currentRole = 'admin';      // 'admin' | 'finance' | 'staff' — set after p
 let currentUserId = null;       // auth user uuid
 let currentActiveTab = 'main';  // track current tab for role restrictions
 
+// ---- Plan / Trial ----
+let currentPlan    = 'trial';   // 'trial' | 'pro' | 'suspended'
+let trialStartedAt = null;      // ISO timestamp
+const TRIAL_DAYS             = 14;
+const TRIAL_MAX_RESERVATIONS = 2;
+const TRIAL_MAX_CARS         = 1;
+
 // ====================================================
 //  AUTH + TENANT PROFILE
 // ====================================================
@@ -51,13 +58,15 @@ async function loadTenantProfile(userId, userEmail = '') {
   // 1 — Try profile lookup
   const { data: profile } = await sb
     .from('profiles')
-    .select('tenant_id, full_name, role, tenants(name)')
+    .select('tenant_id, full_name, role, tenants(name, plan, trial_started_at)')
     .eq('id', userId)
     .maybeSingle();
 
   if (profile?.tenant_id) {
     currentTenantId   = profile.tenant_id;
     currentTenantName = profile.tenants?.name || null;
+    currentPlan       = profile.tenants?.plan  || 'trial';
+    trialStartedAt    = profile.tenants?.trial_started_at || null;
     _setUserUI(profile.full_name, userEmail, profile.role || 'admin');
     _setTenantUI(currentTenantName);
     return;
@@ -66,13 +75,15 @@ async function loadTenantProfile(userId, userEmail = '') {
   // 2 — Profile missing or RLS blocked — try reading existing tenant directly
   const { data: tenant } = await sb
     .from('tenants')
-    .select('id, name')
+    .select('id, name, plan, trial_started_at')
     .limit(1)
     .maybeSingle();
 
   if (tenant?.id) {
     currentTenantId   = tenant.id;
     currentTenantName = tenant.name || null;
+    currentPlan       = tenant.plan || 'trial';
+    trialStartedAt    = tenant.trial_started_at || null;
     await sb.from('profiles').upsert({ id: userId, tenant_id: tenant.id, role: 'admin' });
     _setUserUI(null, userEmail, 'admin');
     _setTenantUI(currentTenantName);
@@ -89,6 +100,69 @@ async function loadTenantProfile(userId, userEmail = '') {
 function _setTenantUI(name) {
   const el = document.getElementById('tenant-name');
   if (el && name) el.textContent = name;
+}
+
+function _setPlanUI() {
+  const banner = document.getElementById('trial-banner');
+  if (!banner) return;
+  if (currentPlan !== 'trial') { banner.style.display = 'none'; return; }
+
+  let daysLeft = TRIAL_DAYS;
+  if (trialStartedAt) {
+    const used = Math.floor((Date.now() - new Date(trialStartedAt)) / 86400000);
+    daysLeft   = Math.max(0, TRIAL_DAYS - used);
+  }
+
+  const resUsed  = allReservations.filter(r => r.status !== 'cancelled').length;
+  const carsUsed = allCars.length;
+  const expired  = daysLeft === 0;
+  const atLimit  = resUsed >= TRIAL_MAX_RESERVATIONS || carsUsed >= TRIAL_MAX_CARS;
+  const warn     = expired || atLimit;
+  const accent   = warn ? '#EF4444' : '#F59E0B';
+
+  banner.style.display = 'flex';
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <span style="font-size:0.8rem;font-weight:700;letter-spacing:.04em;color:${accent};">⚡ TRIAL</span>
+      <span style="font-size:0.8rem;color:var(--text);">
+        ${expired
+          ? '<span style="color:#EF4444;font-weight:700;">Expired</span>'
+          : `<strong>${daysLeft}</strong> day${daysLeft !== 1 ? 's' : ''} left`}
+        &nbsp;·&nbsp;
+        Reservations: <strong style="color:${resUsed >= TRIAL_MAX_RESERVATIONS ? '#EF4444' : 'var(--text)'}">${resUsed}/${TRIAL_MAX_RESERVATIONS}</strong>
+        &nbsp;·&nbsp;
+        Cars: <strong style="color:${carsUsed >= TRIAL_MAX_CARS ? '#EF4444' : 'var(--text)'}">${carsUsed}/${TRIAL_MAX_CARS}</strong>
+      </span>
+    </div>
+    <a href="mailto:info@epuredrive.com?subject=Upgrade%20My%20Plan" style="font-size:0.78rem;font-weight:700;color:${accent};text-decoration:none;padding:0.25rem 0.85rem;border:1px solid ${accent};border-radius:6px;white-space:nowrap;">Upgrade →</a>
+  `;
+}
+
+function checkTrialLimit(type) {
+  if (currentPlan !== 'trial') return true;
+
+  const daysLeft = trialStartedAt
+    ? Math.max(0, TRIAL_DAYS - Math.floor((Date.now() - new Date(trialStartedAt)) / 86400000))
+    : TRIAL_DAYS;
+
+  if (daysLeft === 0) {
+    showToast('Tu trial ha expirado. Contacta a soporte para activar tu plan.', 'error');
+    return false;
+  }
+  if (type === 'reservation') {
+    const used = allReservations.filter(r => r.status !== 'cancelled').length;
+    if (used >= TRIAL_MAX_RESERVATIONS) {
+      showToast(`Trial: máximo ${TRIAL_MAX_RESERVATIONS} reservaciones. Actualiza tu plan para continuar.`, 'error');
+      return false;
+    }
+  }
+  if (type === 'car') {
+    if (allCars.length >= TRIAL_MAX_CARS) {
+      showToast(`Trial: máximo ${TRIAL_MAX_CARS} auto. Actualiza tu plan para agregar más.`, 'error');
+      return false;
+    }
+  }
+  return true;
 }
 
 function _setUserUI(fullName, email, role) {
@@ -445,6 +519,7 @@ async function saveReservation(e) {
   e.preventDefault();
   const form    = document.getElementById('reservation-form');
   const editId  = form.dataset.editId;
+  if (!editId && !checkTrialLimit('reservation')) return;
   const payload = {
     car_id:          parseInt(document.getElementById('f-car').value),
     customer_name:   document.getElementById('f-name').value.trim(),
@@ -1493,7 +1568,9 @@ function openEditCar(id) {
 
 async function saveCar(e) {
   e.preventDefault();
-  const carId = parseInt(document.getElementById('car-form').dataset.carId);
+  const carId   = parseInt(document.getElementById('car-form').dataset.carId);
+  const existing = allCars.find(c => c.id === carId);
+  if (!existing && !checkTrialLimit('car')) return;
   const payload = {
     year:                  parseInt(document.getElementById('car-year').value)     || null,
     car_color:             document.getElementById('car-color').value.trim(),
@@ -1841,6 +1918,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await Promise.all([loadReservations(), loadBlockedDates(), loadTuroFeeds(), loadConsignments(), loadExpenses(), loadCars(), loadServices(), loadCustomers()]);
 
+  _setPlanUI();
   updateStats();
   initCalendar();
   renderTable(true);
