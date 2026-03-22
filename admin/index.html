@@ -1,241 +1,153 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Login — éPure Drive</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-primary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#3c475a",
+                        "surface-container-high": "#e6e8ea",
+                        "inverse-primary": "#bcc7de",
+                        "error": "#ba1a1a",
+                        "on-secondary-container": "#00714d",
+                        "on-secondary-fixed": "#002113",
+                        "tertiary": "#000000",
+                        "tertiary-container": "#2a1700",
+                        "surface": "#f7f9fb",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary-fixed": "#6ffbbe",
+                        "outline-variant": "#c6c6cd",
+                        "surface-tint": "#545f73",
+                        "inverse-surface": "#2d3133",
+                        "surface-dim": "#d8dadc",
+                        "on-primary-container": "#79849a",
+                        "secondary": "#006c49",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "primary-container": "#111c2d",
+                        "primary-fixed": "#d8e3fb",
+                        "primary-fixed-dim": "#bcc7de",
+                        "surface-variant": "#e0e3e5",
+                        "on-tertiary-container": "#b87500",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-secondary-fixed-variant": "#005236",
+                        "background": "#f7f9fb",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-background": "#191c1e",
+                        "secondary-container": "#6cf8bb",
+                        "inverse-on-surface": "#eff1f3",
+                        "primary": "#000000",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-primary-fixed": "#111c2d",
+                        "surface-container": "#eceef0",
+                        "on-surface": "#191c1e",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-surface-variant": "#45464d",
+                        "outline": "#76777d",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+  </script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #F3F4F6;
-      --surface: #FFFFFF;
-      --border: rgba(0,0,0,0.08);
-      --accent: #111111;
-      --text: #111827;
-      --muted: #6b7280;
-    }
-    body {
-      font-family: 'Outfit', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 3rem 2.5rem;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.04);
-    }
-    .logo-wrap {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .logo-wrap img { height: 36px; }
-    .logo-wrap p {
-      color: var(--muted);
-      font-size: 0.78rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-top: 0.6rem;
-    }
-    /* Tabs */
-    .tabs {
-      display: flex;
-      background: rgba(0,0,0,0.04);
-      border-radius: 10px;
-      padding: 4px;
-      margin-bottom: 1.75rem;
-    }
-    .tab-btn {
-      flex: 1;
-      padding: 0.55rem;
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      font-family: inherit;
-      font-size: 0.85rem;
-      font-weight: 500;
-      border-radius: 7px;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-    }
-    .tab-btn.active {
-      background: var(--accent);
-      color: #FFF;
-    }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    .form-group { margin-bottom: 1.1rem; }
-    label {
-      display: block;
-      font-size: 0.75rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 0.45rem;
-    }
-    input {
-      width: 100%;
-      background: rgba(0,0,0,0.01);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.8rem 1rem;
-      color: var(--text);
-      font-family: inherit;
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    input:focus { border-color: var(--accent); }
-    .btn {
-      width: 100%;
-      padding: 0.875rem;
-      background: var(--accent);
-      color: #FFFFFF;
-      border: none;
-      border-radius: 10px;
-      font-family: inherit;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      margin-top: 0.5rem;
-      letter-spacing: 0.02em;
-    }
-    .btn:hover { opacity: 0.85; }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .msg {
-      font-size: 0.82rem;
-      margin-top: 1rem;
-      text-align: center;
-      padding: 0.6rem;
-      border-radius: 8px;
-      display: none;
-    }
-    .msg.error { color: #dc2626; background: rgba(220,38,38,0.08); }
-    .msg.success { color: #16a34a; background: rgba(22,163,74,0.08); }
-    .back {
-      display: block;
-      text-align: center;
-      margin-top: 1.75rem;
-      color: var(--muted);
-      font-size: 0.8rem;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .back:hover { color: var(--text); }
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin: 1.25rem 0;
-      color: var(--muted);
-      font-size: 0.75rem;
-    }
-    .divider::before, .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-    .btn-google {
-      width: 100%;
-      padding: 0.8rem;
-      background: #FFFFFF;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.6rem;
-      transition: background 0.2s, border-color 0.2s;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    }
-    .btn-google:hover { background: #f9fafb; border-color: rgba(0,0,0,0.12); }
-    .btn-google:disabled { opacity: 0.45; cursor: not-allowed; }
-    .hint {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-top: 0.35rem;
-    }
+      .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+      body { font-family: 'Inter', sans-serif; }
+      h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+      .tab-panel { display: none; }
+      .tab-panel.active { display: block; }
   </style>
 </head>
-<body>
-  <div class="card">
-    <div class="logo-wrap">
-      <img src="../assets/logo.png" alt="éPure Drive">
-      <p>Admin Panel</p>
+<body class="bg-surface text-on-surface min-h-screen flex items-center justify-center p-4">
+
+  <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl shadow-xl shadow-blue-900/5 p-10 w-full max-w-md">
+    
+    <div class="text-center mb-8">
+      <img src="../assets/logo.png" alt="éPure Drive" class="h-8 mx-auto grayscale opacity-80 mix-blend-multiply">
+      <p class="text-xs font-bold text-primary-container/60 uppercase tracking-widest mt-3">Gateway</p>
     </div>
 
     <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="login">Sign In</button>
-      <button class="tab-btn" data-tab="register">Create Account</button>
+    <div class="flex bg-surface-container-low rounded-xl p-1 mb-8">
+      <button class="tab-btn active flex-1 py-2 text-sm font-semibold rounded-lg text-primary bg-white shadow-sm transition-all" data-tab="login">Sign In</button>
+      <button class="tab-btn flex-1 py-2 text-sm font-semibold rounded-lg text-on-surface-variant hover:text-primary transition-all" data-tab="register">Create Account</button>
     </div>
 
     <!-- Sign In Panel -->
     <div class="tab-panel active" id="panel-login">
-      <button class="btn-google" id="google-btn">
+      <button class="w-full bg-white border border-outline-variant/40 hover:bg-surface-container-low text-on-surface rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-3 transition-all shadow-sm" id="google-btn">
         <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
         Continue with Google
       </button>
 
-      <div class="divider">or sign in with email</div>
+      <div class="flex items-center gap-3 my-6 text-xs text-outline font-medium uppercase tracking-widest">
+        <div class="flex-1 h-px bg-outline-variant/40"></div>
+        or sign in with email
+        <div class="flex-1 h-px bg-outline-variant/40"></div>
+      </div>
 
-      <form id="login-form">
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="login-email" placeholder="admin@epuredrive.com" required autocomplete="email" />
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Email</label>
+          <input type="email" id="login-email" placeholder="admin@epuredrive.com" required autocomplete="email" class="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary-container/20 transition-all placeholder:text-outline-variant" />
         </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password" />
+        <div>
+          <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password" class="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary-container/20 transition-all placeholder:text-outline-variant" />
         </div>
-        <button type="submit" class="btn" id="login-btn">Sign In</button>
-        <div class="msg error" id="login-error"></div>
+        <button type="submit" class="w-full bg-primary-container text-white py-3 rounded-xl text-sm font-bold mt-2 hover:bg-primary transition-colors" id="login-btn">Sign In</button>
+        <div class="hidden text-xs bg-error-container text-on-error-container p-3 rounded-lg text-center font-medium" id="login-error"></div>
       </form>
     </div>
 
     <!-- Create Account Panel -->
     <div class="tab-panel" id="panel-register">
-      <form id="register-form">
-        <div class="form-group">
-          <label>Full Name</label>
-          <input type="text" id="reg-name" placeholder="Your name" required autocomplete="name" />
+      <form id="register-form" class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Full Name</label>
+          <input type="text" id="reg-name" placeholder="Your name" required autocomplete="name" class="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary-container/20 transition-all" />
         </div>
-        <div class="form-group">
-          <label>Fleet / Company Name</label>
-          <input type="text" id="reg-company" placeholder="e.g. Sunset Rentals" required />
-          <div class="hint">This will be your account name.</div>
+        <div>
+          <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Fleet / Company Name</label>
+          <input type="text" id="reg-company" placeholder="e.g. Sunset Rentals" required class="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary-container/20 transition-all" />
+          <div class="text-[10px] text-outline mt-1 font-medium">This will be your account name.</div>
         </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="reg-email" placeholder="you@company.com" required autocomplete="email" />
+        <div>
+          <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Email</label>
+          <input type="email" id="reg-email" placeholder="you@company.com" required autocomplete="email" class="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary-container/20 transition-all" />
         </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="reg-password" placeholder="Min. 8 characters" required minlength="8" autocomplete="new-password" />
+        <div>
+          <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Password</label>
+          <input type="password" id="reg-password" placeholder="Min. 8 characters" required minlength="8" autocomplete="new-password" class="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary-container/20 transition-all" />
         </div>
-        <button type="submit" class="btn" id="reg-btn">Create Account</button>
-        <div class="msg error" id="reg-error"></div>
-        <div class="msg success" id="reg-success"></div>
+        <button type="submit" class="w-full bg-primary-container text-white py-3 rounded-xl text-sm font-bold mt-2 hover:bg-primary transition-colors" id="reg-btn">Create Account</button>
+        <div class="hidden text-xs bg-error-container text-on-error-container p-3 rounded-lg text-center font-medium" id="reg-error"></div>
+        <div class="hidden text-xs bg-secondary-container text-on-secondary-container p-3 rounded-lg text-center font-medium" id="reg-success"></div>
       </form>
     </div>
 
-    <a href="../index.html" class="back">← Back to website</a>
+    <a href="../index.html" class="block text-center mt-8 text-sm font-semibold text-outline-variant hover:text-primary transition-colors">← Back to website</a>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -249,9 +161,16 @@
     // ---- Tab switching ----
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        // Reset classes
+        document.querySelectorAll('.tab-btn').forEach(b => {
+           b.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+           b.classList.add('text-on-surface-variant');
+        });
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
+        
+        // Add active classes
+        btn.classList.add('bg-white', 'shadow-sm', 'text-primary');
+        btn.classList.remove('text-on-surface-variant');
         document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
       });
     });
@@ -268,7 +187,7 @@
     document.getElementById('google-btn').addEventListener('click', async () => {
       const btn = document.getElementById('google-btn');
       btn.disabled = true;
-      btn.lastChild.textContent = ' Redirecting to Google…';
+      btn.innerHTML = 'Redirecting to Google…';
       await sb.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: window.location.origin + '/admin/dashboard.html' },
@@ -302,69 +221,45 @@
     // ---- Create Account ----
     document.getElementById('register-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn      = document.getElementById('reg-btn');
-      const errEl    = document.getElementById('reg-error');
-      const successEl = document.getElementById('reg-success');
-      const name     = document.getElementById('reg-name').value.trim();
-      const company  = document.getElementById('reg-company').value.trim();
-      const email    = document.getElementById('reg-email').value.trim();
-      const password = document.getElementById('reg-password').value;
-
+      const btn = document.getElementById('reg-btn');
+      const err = document.getElementById('reg-error');
+      const suc = document.getElementById('reg-success');
       btn.disabled = true;
       btn.textContent = 'Creating account…';
-      errEl.style.display = 'none';
-      successEl.style.display = 'none';
+      err.style.display = 'none';
+      suc.style.display = 'none';
 
-      // 1 — Sign up
-      const { data: authData, error: authErr } = await sb.auth.signUp({ email, password });
-      if (authErr) {
-        errEl.textContent = authErr.message;
-        errEl.style.display = 'block';
+      const pwd = document.getElementById('reg-password').value;
+      if (pwd.length < 8) {
+        err.textContent = 'Password must be at least 8 characters.';
+        err.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Create Account';
         return;
       }
 
-      const userId = authData.user?.id;
+      // Supabase signup
+      const { data, error } = await sb.auth.signUp({
+        email: document.getElementById('reg-email').value.trim(),
+        password: pwd,
+        options: {
+          data: {
+            full_name: document.getElementById('reg-name').value.trim()
+          }
+        }
+      });
 
-      // 2 — Create tenant
-      const slug = company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      const { data: tenantData, error: tenantErr } = await sb
-        .from('tenants')
-        .insert({ name: company, slug: slug + '-' + Date.now(), plan: 'trial', trial_started_at: new Date().toISOString() })
-        .select('id')
-        .single();
-
-      if (tenantErr) {
-        errEl.textContent = 'Account created but could not set up your fleet. Please contact support.';
-        errEl.style.display = 'block';
+      if (error) {
+        err.textContent = error.message;
+        err.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Create Account';
-        return;
+      } else {
+        suc.textContent = 'Account created successfully! Redirecting...';
+        suc.style.display = 'block';
+        setTimeout(() => window.location.href = 'dashboard.html', 1500);
       }
-
-      // 3 — Create profile
-      if (userId) {
-        await sb.from('profiles').upsert({
-          id: userId,
-          tenant_id: tenantData.id,
-          full_name: name,
-          role: 'admin',
-        });
-      }
-
-      // 4 — Show success
-      successEl.textContent = 'Account created! Check your email to confirm, then sign in.';
-      successEl.style.display = 'block';
-      btn.textContent = 'Account Created';
-
-      // Auto-switch to login tab after 2s
-      setTimeout(() => {
-        document.querySelector('[data-tab="login"]').click();
-        document.getElementById('login-email').value = email;
-      }, 2000);
     });
   </script>
-<script src="js/lang.js"></script>
 </body>
 </html>
