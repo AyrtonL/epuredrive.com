@@ -31,6 +31,7 @@ let currentTenantName = null;   // display name
 // ---- Role ----
 let currentRole = 'admin';      // 'admin' | 'finance' | 'staff' — set after profile loads
 let currentUserId = null;       // auth user uuid
+let currentActiveTab = 'main';  // track current tab for role restrictions
 
 // ====================================================
 //  AUTH + TENANT PROFILE
@@ -1534,6 +1535,7 @@ const TAB_TITLES = {
 };
 
 function switchTab(tab) {
+  currentActiveTab = tab;
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
