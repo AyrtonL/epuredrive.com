@@ -160,10 +160,10 @@ input, select, textarea { font-family: inherit; }
   align-items: center;
   transition: var(--transition);
   padding: 0 1.5rem;
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-bottom: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(0,0,0,0.03);
 }
 .navbar .nav-links a,
 .navbar .nav-links a.active,
@@ -173,11 +173,9 @@ input, select, textarea { font-family: inherit; }
 }
 .navbar .navbar-phone { color: var(--text-secondary); }
 .navbar.scrolled {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(0,0,0,0.05);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 .navbar-inner {
   width: 100%;
