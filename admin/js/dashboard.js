@@ -1255,19 +1255,43 @@ function renderRecentBookings() {
 function renderMaintenanceAlerts() {
   const el = document.getElementById('maintenance-alerts');
   if (!el) return;
-  const upcoming = allServices.filter(s => {
-    if (!s.next_service_date) return false;
-    return expiryClass(s.next_service_date) !== 'expiry-ok';
-  });
-  if (!upcoming.length) { el.innerHTML = ''; return; }
-  el.innerHTML = upcoming.map(s => {
+
+  const alerts = [];
+
+  // Date-based alerts
+  allServices.forEach(s => {
+    if (!s.next_service_date) return;
     const cls = expiryClass(s.next_service_date);
+    if (cls === 'expiry-ok') return;
     const color = cls === 'expiry-danger' ? 'var(--red)' : '#FCD34D';
-    return `<div style="background:rgba(255,255,255,0.04);border:1px solid ${color};border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.5rem;font-size:0.82rem;display:flex;align-items:center;gap:0.75rem;">
+    alerts.push(`<div style="background:rgba(255,255,255,0.04);border:1px solid ${color};border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.5rem;font-size:0.82rem;display:flex;align-items:center;gap:0.75rem;">
       <span style="color:${color};font-size:1rem;">⚠</span>
       <span><strong>${CAR_NAMES[s.car_id]}</strong> — ${esc(s.service_type)} due <strong style="color:${color};">${fmtDate(s.next_service_date)}</strong>${s.provider ? ' at ' + esc(s.provider) : ''}</span>
-    </div>`;
-  }).join('');
+    </div>`);
+  });
+
+  // Mileage-based alerts — check latest record with next_service_mileage per car
+  [1, 2, 3, 4].forEach(carId => {
+    const car = allCars.find(c => c.id === carId) || {};
+    if (!car.mileage) return;
+    const lastMileSvc = allServices
+      .filter(s => s.car_id === carId && s.next_service_mileage)
+      .sort((a, b) => (b.mileage || 0) - (a.mileage || 0))[0];
+    if (!lastMileSvc) return;
+    const cls = mileageAlertClass(car.mileage, lastMileSvc.next_service_mileage);
+    if (cls === 'expiry-ok' || cls === '') return;
+    const remaining = lastMileSvc.next_service_mileage - car.mileage;
+    const color     = cls === 'expiry-danger' ? 'var(--red)' : '#FCD34D';
+    const msg       = remaining <= 0
+      ? `overdue by <strong style="color:${color};">${Math.abs(remaining).toLocaleString()} mi</strong>`
+      : `due in <strong style="color:${color};">${remaining.toLocaleString()} mi</strong> (@ ${Number(lastMileSvc.next_service_mileage).toLocaleString()} mi)`;
+    alerts.push(`<div style="background:rgba(255,255,255,0.04);border:1px solid ${color};border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.5rem;font-size:0.82rem;display:flex;align-items:center;gap:0.75rem;">
+      <span style="color:${color};font-size:1rem;">🔧</span>
+      <span><strong>${CAR_NAMES[carId]}</strong> — ${esc(lastMileSvc.service_type)} ${msg} · current: ${Number(car.mileage).toLocaleString()} mi</span>
+    </div>`);
+  });
+
+  el.innerHTML = alerts.join('');
 }
 
 // ====================================================
@@ -1354,13 +1378,36 @@ function renderFleetStatus() {
   if (!tbody) return;
 
   tbody.innerHTML = [1, 2, 3, 4].map(id => {
-    const db       = allCars.find(c => c.id === id) || {};
-    const car      = { id, name: CAR_NAMES[id], color: CAR_COLORS[id], ...db };
-    const lastSvc  = allServices.find(s => s.car_id === id);
-    const nextSvc  = allServices
+    const db      = allCars.find(c => c.id === id) || {};
+    const car     = { id, name: CAR_NAMES[id], color: CAR_COLORS[id], ...db };
+    const lastSvc = allServices.find(s => s.car_id === id);
+    const nextSvc = allServices
       .filter(s => s.car_id === id && s.next_service_date)
       .sort((a, b) => a.next_service_date.localeCompare(b.next_service_date))[0];
-    const nextCls  = nextSvc ? expiryClass(nextSvc.next_service_date) : '';
+    const nextCls = nextSvc ? expiryClass(nextSvc.next_service_date) : '';
+
+    // Latest service record that has mileage-based next target
+    const lastMileSvc = allServices
+      .filter(s => s.car_id === id && s.next_service_mileage)
+      .sort((a, b) => (b.mileage || 0) - (a.mileage || 0))[0];
+
+    let oilCell = '<span style="color:var(--muted);">—</span>';
+    if (lastMileSvc?.next_service_mileage) {
+      const current   = car.mileage || 0;
+      const nextMi    = lastMileSvc.next_service_mileage;
+      const interval  = lastMileSvc.mileage_interval || (nextMi - (lastMileSvc.mileage || 0));
+      const remaining = nextMi - current;
+      const pct       = interval > 0 ? Math.min(100, Math.max(0, ((current - (lastMileSvc.mileage || 0)) / interval) * 100)) : 0;
+      const color     = remaining <= 0 ? 'var(--red)' : remaining <= 500 ? '#FCD34D' : '#10B981';
+      const label     = remaining <= 0
+        ? `⚠ Overdue by ${Math.abs(remaining).toLocaleString()} mi`
+        : `${remaining.toLocaleString()} mi left`;
+      oilCell = `
+        <div style="font-size:0.78rem;color:${color};font-weight:600;">${label}</div>
+        <div style="font-size:0.7rem;color:var(--muted-2);">@ ${Number(nextMi).toLocaleString()} mi · ${esc(lastMileSvc.service_type)}</div>
+        <div class="mileage-bar"><div class="mileage-bar-fill" style="width:${pct}%;background:${color};"></div></div>`;
+    }
+
     return `
       <tr>
         <td>
@@ -1371,9 +1418,10 @@ function renderFleetStatus() {
         </td>
         <td>${lastSvc ? fmtDate(lastSvc.service_date) + ' · <span style="color:var(--muted-2);">' + esc(lastSvc.service_type) + '</span>' : '<span style="color:var(--muted);">None</span>'}</td>
         <td>${car.mileage ? Number(car.mileage).toLocaleString() + ' mi' : '—'}</td>
+        <td>${oilCell}</td>
         <td>${nextSvc ? '<span class="' + nextCls + '">' + fmtDate(nextSvc.next_service_date) + ' · ' + esc(nextSvc.service_type) + '</span>' : '<span style="color:var(--muted);">—</span>'}</td>
         <td class="actions">
-          <button class="btn btn-outline" style="font-size:0.75rem;padding:0.4rem 0.75rem;" onclick="openAddService(${id})">+ Add Service</button>
+          <button class="btn btn-outline write-action" style="font-size:0.75rem;padding:0.4rem 0.75rem;" onclick="openAddService(${id})">+ Add</button>
         </td>
       </tr>`;
   }).join('');
@@ -1393,11 +1441,21 @@ function renderServicesTable() {
   });
 
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2.5rem">No service records found</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:2.5rem">No service records found</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = list.map(s => `
+  tbody.innerHTML = list.map(s => {
+    let nextMiCell = '—';
+    if (s.next_service_mileage) {
+      const car     = allCars.find(c => c.id === s.car_id) || {};
+      const current = car.mileage || 0;
+      const cls     = mileageAlertClass(current, s.next_service_mileage);
+      const label   = Number(s.next_service_mileage).toLocaleString() + ' mi';
+      nextMiCell    = `<strong class="${cls}">${label}</strong>`;
+      if (s.mileage_interval) nextMiCell += `<br><span style="font-size:0.7rem;color:var(--muted);">+${Number(s.mileage_interval).toLocaleString()} mi interval</span>`;
+    }
+    return `
     <tr>
       <td>${fmtDate(s.service_date)}</td>
       <td><span class="car-dot-inline" style="background:${CAR_COLORS[s.car_id] || '#666'}"></span>${CAR_NAMES[s.car_id] || '—'}</td>
@@ -1406,12 +1464,14 @@ function renderServicesTable() {
       <td style="color:var(--muted-2);">${esc(s.provider || '—')}</td>
       <td style="color:var(--red);font-weight:600;">${s.cost ? '$' + Number(s.cost).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '—'}</td>
       <td>${s.next_service_date ? `<strong class="${expiryClass(s.next_service_date)}">${fmtDate(s.next_service_date)}</strong>` : '—'}</td>
+      <td>${nextMiCell}</td>
       <td style="color:var(--muted-2);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(s.notes || '—')}</td>
       <td class="actions">
         <button class="btn-icon write-action" onclick="openEditService('${s.id}')" title="Edit">✏️</button>
         <button class="btn-icon danger write-action" onclick="deleteService('${s.id}')" title="Delete">🗑️</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function openEditCar(id) {
@@ -1477,11 +1537,13 @@ function openEditService(id) {
   document.getElementById('svc-car').value      = s.car_id;
   document.getElementById('svc-date').value     = s.service_date;
   document.getElementById('svc-type').value     = s.service_type;
-  document.getElementById('svc-mileage').value  = s.mileage  || '';
-  document.getElementById('svc-cost').value     = s.cost     || '';
-  document.getElementById('svc-provider').value = s.provider || '';
-  document.getElementById('svc-next').value     = s.next_service_date || '';
-  document.getElementById('svc-notes').value    = s.notes   || '';
+  document.getElementById('svc-mileage').value       = s.mileage              || '';
+  document.getElementById('svc-cost').value          = s.cost                || '';
+  document.getElementById('svc-interval').value      = s.mileage_interval    || '';
+  document.getElementById('svc-next-mileage').value  = s.next_service_mileage || '';
+  document.getElementById('svc-provider').value      = s.provider            || '';
+  document.getElementById('svc-next').value          = s.next_service_date   || '';
+  document.getElementById('svc-notes').value         = s.notes               || '';
   openModal('service-modal');
 }
 
@@ -1489,15 +1551,19 @@ async function saveService(e) {
   e.preventDefault();
   const form   = document.getElementById('service-form');
   const editId = form.dataset.editId;
+  const svcMileage     = parseInt(document.getElementById('svc-mileage').value)      || null;
+  const svcCarId       = parseInt(document.getElementById('svc-car').value);
   const payload = {
-    car_id:            parseInt(document.getElementById('svc-car').value),
-    service_date:      document.getElementById('svc-date').value,
-    service_type:      document.getElementById('svc-type').value,
-    mileage:           parseInt(document.getElementById('svc-mileage').value)  || null,
-    cost:              parseFloat(document.getElementById('svc-cost').value)   || null,
-    provider:          document.getElementById('svc-provider').value.trim(),
-    next_service_date: document.getElementById('svc-next').value               || null,
-    notes:             document.getElementById('svc-notes').value.trim(),
+    car_id:               svcCarId,
+    service_date:         document.getElementById('svc-date').value,
+    service_type:         document.getElementById('svc-type').value,
+    mileage:              svcMileage,
+    cost:                 parseFloat(document.getElementById('svc-cost').value)        || null,
+    mileage_interval:     parseInt(document.getElementById('svc-interval').value)      || null,
+    next_service_mileage: parseInt(document.getElementById('svc-next-mileage').value)  || null,
+    provider:             document.getElementById('svc-provider').value.trim(),
+    next_service_date:    document.getElementById('svc-next').value                    || null,
+    notes:                document.getElementById('svc-notes').value.trim(),
     ...tenantPayload(),
   };
   const btn = e.submitter;
@@ -1506,7 +1572,18 @@ async function saveService(e) {
     ? await sb.from('car_services').update(payload).eq('id', editId)
     : await sb.from('car_services').insert(payload);
   if (error) { alert('Error: ' + error.message); }
-  else { closeModal('service-modal'); await loadServices(); renderFleetStatus(); renderServicesTable(); renderCarCards(); }
+  else {
+    // Auto-update car's odometer if service mileage is higher than recorded
+    if (svcMileage) {
+      const car = allCars.find(c => c.id === svcCarId);
+      if (!car?.mileage || svcMileage > car.mileage) {
+        await sb.from('cars').update({ mileage: svcMileage }).eq('id', svcCarId);
+      }
+    }
+    closeModal('service-modal');
+    await Promise.all([loadServices(), loadCars()]);
+    renderFleetStatus(); renderServicesTable(); renderCarCards(); renderMaintenanceAlerts();
+  }
   btn.disabled = false; btn.textContent = 'Save Record';
 }
 
@@ -1576,6 +1653,24 @@ function esc(str) {
 }
 function openModal(id)  { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+// Auto-calculate next service mileage from mileage + interval
+function calcNextMileage() {
+  const mileage  = parseInt(document.getElementById('svc-mileage')?.value)  || 0;
+  const interval = parseInt(document.getElementById('svc-interval')?.value) || 0;
+  if (mileage && interval) {
+    document.getElementById('svc-next-mileage').value = mileage + interval;
+  }
+}
+
+// Mileage-based alert class
+function mileageAlertClass(current, next) {
+  if (!current || !next) return '';
+  const diff = next - current;
+  if (diff <= 0)   return 'expiry-danger';
+  if (diff <= 500) return 'expiry-warn';
+  return 'expiry-ok';
+}
 
 function showToast(msg, type = 'success') {
   const t = document.createElement('div');

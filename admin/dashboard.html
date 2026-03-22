@@ -168,6 +168,8 @@
     .invite-empty { text-align:center; padding:3rem 0; color:var(--muted); font-size:0.9rem; }
     .user-role-select { background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:0.78rem; padding:4px 8px; border-radius:8px; cursor:pointer; }
     .user-role-select:focus { outline:none; border-color:var(--accent); }
+    .mileage-bar { width:100%; height:4px; background:var(--border); border-radius:4px; margin-top:5px; }
+    .mileage-bar-fill { height:100%; border-radius:4px; transition:width 0.4s; }
 
     /* Toast notifications */
     .dash-toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#1E293B; color:#fff; padding:0.65rem 1.1rem; border-radius:10px; font-size:0.85rem; box-shadow:0 4px 20px rgba(0,0,0,.3); z-index:9999; opacity:0; transform:translateY(8px); transition:opacity .25s,transform .25s; pointer-events:none; }
@@ -1116,13 +1118,14 @@
                 <tr>
                   <th>Vehicle</th>
                   <th>Last Service</th>
-                  <th>Current Mileage</th>
+                  <th>Mileage Now</th>
+                  <th>Next Oil Change</th>
                   <th>Next Service Due</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody id="fleet-status-tbody">
-                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+                <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
               </tbody>
             </table>
           </div>
@@ -1165,12 +1168,13 @@
                   <th>Provider</th>
                   <th>Cost</th>
                   <th>Next Due</th>
+                  <th>Next Mi</th>
                   <th>Notes</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody id="services-tbody">
-                <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+                <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
               </tbody>
             </table>
           </div>
@@ -1606,18 +1610,26 @@
           </div>
           <div class="form-group">
             <label>Mileage at Service</label>
-            <input type="number" id="svc-mileage" placeholder="15000" min="0" />
+            <input type="number" id="svc-mileage" placeholder="95000" min="0" oninput="calcNextMileage()" />
           </div>
           <div class="form-group">
             <label>Cost ($)</label>
             <input type="number" id="svc-cost" placeholder="0.00" step="0.01" min="0" />
+          </div>
+          <div class="form-group" id="svc-interval-group">
+            <label>Interval (mi) <span style="font-size:0.7rem;color:var(--muted);font-weight:400;">— miles until next service</span></label>
+            <input type="number" id="svc-interval" placeholder="e.g. 5000" min="0" step="500" oninput="calcNextMileage()" />
+          </div>
+          <div class="form-group" id="svc-next-mileage-group">
+            <label>Next Service at (mi) <span style="font-size:0.7rem;color:var(--muted);font-weight:400;">— auto-calculated</span></label>
+            <input type="number" id="svc-next-mileage" placeholder="100000" min="0" />
           </div>
           <div class="form-group full">
             <label>Provider / Shop</label>
             <input type="text" id="svc-provider" placeholder="AutoNation, Jiffy Lube…" />
           </div>
           <div class="form-group">
-            <label>Next Service Due</label>
+            <label>Next Service Due <span style="font-size:0.7rem;color:var(--muted);font-weight:400;">— by date (optional)</span></label>
             <input type="date" id="svc-next" />
           </div>
           <div class="form-group full">
