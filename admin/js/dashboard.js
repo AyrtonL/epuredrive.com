@@ -632,24 +632,26 @@ async function upsertCustomerFromReservation(res) {
   await loadCustomers();
 }
 
-async function syncCustomersFromReservations(btn) {
-  if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
-  await loadCustomers(); // refresh list first
+// Runs silently in background; pass showResult=true for manual button trigger
+async function syncCustomersFromReservations(btnOrEvent, showResult = false) {
+  const btn = btnOrEvent instanceof HTMLElement ? btnOrEvent : null;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;">sync</span> Syncing…'; }
 
-  let created = 0, skipped = 0;
+  // Work from latest customer list
+  const localList = [...allCustomers];
+  let created = 0;
+
   for (const r of allReservations) {
     const name  = r.customer_name?.trim();
     const email = r.customer_email?.trim();
     const phone = r.customer_phone?.trim();
-    if (!name) { skipped++; continue; }
+    if (!name) continue;
 
-    // Check if already exists
     let exists = false;
-    if (email) exists = allCustomers.some(c => c.email?.toLowerCase() === email.toLowerCase());
-    if (!exists && phone) exists = allCustomers.some(c => c.phone === phone);
-    if (!exists) exists = allCustomers.some(c => c.name.toLowerCase() === name.toLowerCase());
-
-    if (exists) { skipped++; continue; }
+    if (email) exists = localList.some(c => c.email?.toLowerCase() === email.toLowerCase());
+    if (!exists && phone) exists = localList.some(c => c.phone === phone);
+    if (!exists) exists = localList.some(c => c.name.toLowerCase() === name.toLowerCase());
+    if (exists) continue;
 
     const { data: inserted } = await sb.from('customers').insert({
       name,
@@ -659,14 +661,17 @@ async function syncCustomersFromReservations(btn) {
     }).select().single();
 
     if (inserted) {
-      allCustomers.push(inserted); // keep local list current so duplicates aren't inserted
+      localList.push(inserted); // prevent duplicates within this loop
       created++;
     }
   }
 
-  await loadCustomers();
-  renderCustomers();
-  showToast(`Done — ${created} customer${created !== 1 ? 's' : ''} added, ${skipped} already existed.`);
+  if (created > 0 || showResult) {
+    await loadCustomers();
+    renderCustomers();
+    if (showResult) showToast(`Done — ${created} customer${created !== 1 ? 's' : ''} added.`);
+  }
+
   if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;">sync</span> Sync from Bookings'; }
 }
 
@@ -2610,6 +2615,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   populateFeedCarDropdown();
   populateCarFilterDropdowns();
   _setPlanUI();
+
+  // Silently backfill any missing customers from existing reservations
+  syncCustomersFromReservations(null, false);
 
   // Handle post-checkout redirect
   const _urlP = new URLSearchParams(window.location.search);
