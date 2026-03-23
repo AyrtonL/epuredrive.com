@@ -824,7 +824,7 @@ function populateFeedCarDropdown() {
 
 function populateCarFilterDropdowns() {
   // Filter selects — keep the first "All" option, append cars
-  const filterSelects = ['car-filter', 'expense-car-filter', 'service-car-filter', 'report-car'];
+  const filterSelects = ['car-filter', 'expense-car-filter', 'service-car-filter', 'report-car', 'exp-car'];
   filterSelects.forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
@@ -1418,6 +1418,186 @@ async function deleteCustomer(id, btn) {
   await sb.from('customers').delete().eq('id', id);
   await loadCustomers();
   renderCustomers();
+}
+
+// ====================================================
+//  ROI CALCULATOR
+// ====================================================
+function renderROIFleetCards() {
+  const container = document.getElementById('roi-fleet-cards');
+  if (!container) return;
+  if (!allCars.length) { container.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No vehicles in fleet.</p>'; return; }
+
+  const today = new Date();
+
+  container.innerHTML = allCars.map(car => {
+    const revs = allReservations.filter(r => r.car_id === car.id && ['completed','confirmed','active'].includes(r.status));
+    const totalRevenue = revs.reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
+
+    // Booked days
+    const bookedDays = revs.reduce((s, r) => {
+      if (!r.start_date || !r.end_date) return s;
+      const d = Math.round((new Date(r.end_date) - new Date(r.start_date)) / 86400000) + 1;
+      return s + Math.max(1, d);
+    }, 0);
+
+    // Date range for utilization
+    const startDates = revs.map(r => new Date(r.start_date)).filter(Boolean);
+    const firstDate  = startDates.length ? new Date(Math.min(...startDates)) : null;
+    const daySpan    = firstDate ? Math.max(1, Math.round((today - firstDate) / 86400000)) : 365;
+    const utilPct    = Math.min(100, Math.round(bookedDays / Math.min(daySpan, 365) * 100));
+
+    // Expenses attributed to this car
+    const carExpenses = allExpenses.filter(e => e.car_id === car.id).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+    const netProfit = totalRevenue - carExpenses;
+
+    // Avg daily rate (actual)
+    const avgRate = bookedDays > 0 ? (totalRevenue / bookedDays) : (car.daily_rate || 0);
+
+    // Annualised revenue
+    const annualRev = daySpan > 30 ? Math.round(totalRevenue / daySpan * 365) : Math.round(avgRate * (utilPct / 100) * 365);
+
+    const fmt = (n) => '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    const profitClass = netProfit >= 0 ? 'pos' : 'neg';
+
+    return `
+    <div class="roi-fleet-card">
+      <div class="rfc-header">
+        <span class="rfc-dot" style="background:${car.color}"></span>
+        <span class="rfc-name">${esc(car.name)}</span>
+      </div>
+      <div class="rfc-grid">
+        <div class="rfc-stat">
+          <div class="rfc-stat-label">Total Revenue</div>
+          <div class="rfc-stat-val pos">${fmt(totalRevenue)}</div>
+        </div>
+        <div class="rfc-stat">
+          <div class="rfc-stat-label">Total Expenses</div>
+          <div class="rfc-stat-val${carExpenses > 0 ? ' neg' : ''}">${fmt(carExpenses)}</div>
+        </div>
+        <div class="rfc-stat">
+          <div class="rfc-stat-label">Net Profit</div>
+          <div class="rfc-stat-val ${profitClass}">${netProfit < 0 ? '-' : ''}${fmt(netProfit)}</div>
+        </div>
+        <div class="rfc-stat">
+          <div class="rfc-stat-label">Utilization</div>
+          <div class="rfc-stat-val">${utilPct}%</div>
+        </div>
+        <div class="rfc-stat">
+          <div class="rfc-stat-label">Avg Daily Rate</div>
+          <div class="rfc-stat-val">$${Math.round(avgRate)}</div>
+        </div>
+        <div class="rfc-stat">
+          <div class="rfc-stat-label">Annual Projection</div>
+          <div class="rfc-stat-val pos">${fmt(annualRev)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _loanPayment(price, down, aprPct, months) {
+  const principal = Math.max(0, price - down);
+  if (principal === 0 || months === 0) return 0;
+  if (aprPct === 0) return principal / months;
+  const r = aprPct / 100 / 12;
+  return principal * (r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
+}
+
+let _roiChart = null;
+
+function recalcROI() {
+  const price      = parseFloat(document.getElementById('roi-price')?.value)  || 0;
+  const down       = parseFloat(document.getElementById('roi-down')?.value)   || 0;
+  const apr        = parseFloat(document.getElementById('roi-apr')?.value)    || 0;
+  const term       = parseInt(document.getElementById('roi-term')?.value)     || 60;
+  const rate       = parseFloat(document.getElementById('roi-rate')?.value)   || 0;
+  const util       = parseInt(document.getElementById('roi-util')?.value)     || 60;
+  const commission = parseInt(document.getElementById('roi-commission')?.value) || 25;
+  const maint      = parseFloat(document.getElementById('roi-maint')?.value)  || 0;
+  const insur      = parseFloat(document.getElementById('roi-insur')?.value)  || 0;
+  const other      = parseFloat(document.getElementById('roi-other')?.value)  || 0;
+
+  const loanPmt      = _loanPayment(price, down, apr, term);
+  const daysPerMonth = 30.44;
+  const grossRevenue = rate * (util / 100) * daysPerMonth;
+  const turoFee      = grossRevenue * (commission / 100);
+  const netRevenue   = grossRevenue - turoFee;
+  const totalExpenses = loanPmt + maint + insur + other;
+  const monthlyProfit = netRevenue - totalExpenses;
+  const annualROI     = price > 0 ? (monthlyProfit * 12) / price * 100 : 0;
+  const breakeven     = monthlyProfit > 0 ? Math.ceil((down + (price - down) * 0.1) / monthlyProfit) : null;
+
+  const fmt = (n, digits = 0) => '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const set = (id, val, cls) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const span = el.querySelector('.rrc-val');
+    if (span) { span.textContent = val; span.className = 'rrc-val' + (cls ? ' ' + cls : ''); }
+  };
+
+  set('rrc-loan',       loanPmt > 0 ? fmt(loanPmt) : '—');
+  set('rrc-gross',      grossRevenue > 0 ? fmt(grossRevenue) : '—');
+  set('rrc-commission', turoFee > 0 ? '-' + fmt(turoFee) : '—', 'rrc-neg');
+  set('rrc-expenses',   totalExpenses > 0 ? '-' + fmt(totalExpenses) : '—', 'rrc-neg');
+
+  const profitEl = document.getElementById('rrc-profit-val');
+  if (profitEl) {
+    profitEl.textContent = grossRevenue > 0 ? (monthlyProfit < 0 ? '-' : '') + fmt(monthlyProfit) : '—';
+    profitEl.className   = 'rrc-val' + (monthlyProfit >= 0 ? ' rrc-pos' : ' rrc-neg');
+  }
+
+  set('rrc-breakeven', breakeven ? breakeven + ' months' : monthlyProfit <= 0 ? 'Never' : '—');
+  set('rrc-roi',       grossRevenue > 0 ? annualROI.toFixed(1) + '%' : '—', annualROI >= 0 ? 'rrc-pos' : 'rrc-neg');
+
+  // Build 24-month projection chart
+  const months24 = Array.from({ length: 24 }, (_, i) => i + 1);
+  const cumRevenue = months24.map(m => Math.round(netRevenue * m));
+  const cumCosts   = months24.map(m => Math.round(down + totalExpenses * m));
+
+  const ctx = document.getElementById('roi-chart');
+  if (!ctx) return;
+
+  if (_roiChart) { _roiChart.destroy(); _roiChart = null; }
+  _roiChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: months24.map(m => 'M' + m),
+      datasets: [
+        {
+          label: 'Cumulative Revenue',
+          data: cumRevenue,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16,185,129,0.08)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+        },
+        {
+          label: 'Cumulative Costs',
+          data: cumCosts,
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,0.06)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString() } },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { ticks: { font: { size: 10 }, callback: v => '$' + (v / 1000).toFixed(0) + 'k' } },
+      },
+    },
+  });
 }
 
 // ====================================================
@@ -2038,6 +2218,7 @@ const TAB_TITLES = {
   reports:      'Reports &amp; Analytics',
   turo:         'Calendar Sync',
   users:        'Team &amp; Access',
+  roi:          'ROI Calculator',
 };
 
 function switchTab(tab) {
@@ -2070,6 +2251,7 @@ function switchTab(tab) {
   if (tab === 'customers') renderCustomers();
   if (tab === 'reports') renderReports();
   if (tab === 'users') loadUsers();
+  if (tab === 'roi')   renderROIFleetCards();
 }
 
 // ====================================================

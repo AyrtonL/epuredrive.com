@@ -622,6 +622,24 @@
     }
     .modal-close:hover { color: var(--text); }
 
+    /* ROI Calculator */
+    .roi-fleet-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem; }
+    .roi-fleet-card .rfc-header { display:flex;align-items:center;gap:0.6rem;margin-bottom:1rem; }
+    .roi-fleet-card .rfc-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+    .roi-fleet-card .rfc-name { font-size:0.9rem;font-weight:600; }
+    .roi-fleet-card .rfc-grid { display:grid;grid-template-columns:1fr 1fr;gap:0.5rem; }
+    .roi-fleet-card .rfc-stat { background:var(--surface-2);border-radius:8px;padding:0.6rem 0.75rem; }
+    .roi-fleet-card .rfc-stat-label { font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:2px; }
+    .roi-fleet-card .rfc-stat-val { font-size:0.95rem;font-weight:700; }
+    .roi-fleet-card .rfc-stat-val.pos { color:#10b981; }
+    .roi-fleet-card .rfc-stat-val.neg { color:var(--red,#ef4444); }
+    .roi-result-card { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.85rem 1rem;display:flex;flex-direction:column;gap:4px; }
+    .roi-result-card.roi-result-highlight { background:var(--surface-2);border-color:var(--accent);border-width:2px; }
+    .rrc-label { font-size:0.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted); }
+    .rrc-val { font-size:1.15rem;font-weight:700; }
+    .rrc-val.rrc-neg { color:var(--red,#ef4444); }
+    .rrc-val.rrc-pos { color:#10b981; }
+
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .form-group { margin-bottom: 0; }
     .form-group.full { grid-column: 1 / -1; }
@@ -842,6 +860,9 @@
       </button>
       <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="users" style="font-family:'Inter',sans-serif;outline:none;">
         <span class="material-symbols-outlined" style="font-size:20px;">admin_panel_settings</span> <span class="text-sm font-medium">Staff & Users</span>
+      </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="roi" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">calculate</span> <span class="text-sm font-medium">ROI Calculator</span>
       </button>
     </nav>
     <div class="mt-auto pt-6 border-t border-white/5 space-y-3">
@@ -1380,6 +1401,128 @@
         <div id="users-list" class="users-grid"></div>
       </div>
 
+      <!-- TAB: ROI Calculator -->
+      <div class="tab-content" id="tab-roi">
+        <div style="margin-bottom:1.5rem;">
+          <h3 style="font-size:1rem;font-weight:600;">ROI Calculator</h3>
+          <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Fleet performance from your real data + evaluate new vehicle purchases</p>
+        </div>
+
+        <!-- Fleet Performance -->
+        <div style="margin-bottom:2rem;">
+          <h4 style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:1rem;">Current Fleet — Actual Performance</h4>
+          <div id="roi-fleet-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1rem;">
+            <div style="color:var(--muted);font-size:0.85rem;padding:1rem;">Loading…</div>
+          </div>
+        </div>
+
+        <!-- Evaluator -->
+        <h4 style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:1rem;">New Vehicle Evaluator</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+
+          <!-- Left: Inputs -->
+          <div class="table-section" style="padding:1.5rem;">
+            <h4 style="font-size:0.9rem;font-weight:600;margin-bottom:1.25rem;">Vehicle Details</h4>
+
+            <div class="form-group">
+              <label>Vehicle Name (optional)</label>
+              <input type="text" id="roi-label" placeholder="e.g. 2023 Toyota Camry" oninput="recalcROI()" />
+            </div>
+
+            <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:1rem 0 0.5rem;">Financing</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label>Purchase Price ($)</label>
+                <input type="number" id="roi-price" placeholder="35000" min="0" oninput="recalcROI()" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Down Payment ($)</label>
+                <input type="number" id="roi-down" placeholder="3500" min="0" oninput="recalcROI()" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>APR (%)</label>
+                <input type="number" id="roi-apr" placeholder="8.5" min="0" step="0.1" oninput="recalcROI()" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Loan Term</label>
+                <select id="roi-term" onchange="recalcROI()">
+                  <option value="24">24 months</option>
+                  <option value="36">36 months</option>
+                  <option value="48">48 months</option>
+                  <option value="60" selected>60 months</option>
+                  <option value="72">72 months</option>
+                </select>
+              </div>
+            </div>
+
+            <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:1.25rem 0 0.5rem;">Revenue Assumptions</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label>Daily Rate ($)</label>
+                <input type="number" id="roi-rate" placeholder="120" min="0" oninput="recalcROI()" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Turo Commission</label>
+                <select id="roi-commission" onchange="recalcROI()">
+                  <option value="15">15% (own insurance)</option>
+                  <option value="20">20% (Turo plan)</option>
+                  <option value="25" selected>25% (Turo protection)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:0.75rem;">
+              <label>Utilization Rate — <span id="roi-util-label">60%</span></label>
+              <input type="range" id="roi-util" min="10" max="95" value="60" step="5"
+                oninput="document.getElementById('roi-util-label').textContent=this.value+'%'; recalcROI()"
+                style="width:100%;accent-color:var(--accent);" />
+              <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--muted);margin-top:2px;">
+                <span>10%</span><span>Low (30–50%) / Med (50–70%) / High (70–90%)</span><span>95%</span>
+              </div>
+            </div>
+
+            <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:1.25rem 0 0.5rem;">Monthly Expenses</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label>Maintenance ($)</label>
+                <input type="number" id="roi-maint" placeholder="150" min="0" oninput="recalcROI()" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Insurance ($)</label>
+                <input type="number" id="roi-insur" placeholder="200" min="0" oninput="recalcROI()" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Other ($)</label>
+                <input type="number" id="roi-other" placeholder="50" min="0" oninput="recalcROI()" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Results -->
+          <div class="table-section" style="padding:1.5rem;display:flex;flex-direction:column;gap:0;">
+            <h4 style="font-size:0.9rem;font-weight:600;margin-bottom:1.25rem;">Projected Returns</h4>
+
+            <div id="roi-results" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.5rem;">
+              <div class="roi-result-card" id="rrc-loan"><span class="rrc-label">Monthly Loan</span><span class="rrc-val">—</span></div>
+              <div class="roi-result-card" id="rrc-gross"><span class="rrc-label">Gross Revenue</span><span class="rrc-val">—</span></div>
+              <div class="roi-result-card" id="rrc-commission"><span class="rrc-label">Turo Commission</span><span class="rrc-val rrc-neg">—</span></div>
+              <div class="roi-result-card" id="rrc-expenses"><span class="rrc-label">Total Expenses</span><span class="rrc-val rrc-neg">—</span></div>
+              <div class="roi-result-card roi-result-highlight" id="rrc-profit" style="grid-column:span 2;">
+                <span class="rrc-label" style="font-size:0.8rem;">Monthly Net Profit</span>
+                <span class="rrc-val" id="rrc-profit-val" style="font-size:1.6rem;">—</span>
+              </div>
+              <div class="roi-result-card" id="rrc-breakeven"><span class="rrc-label">Break-even</span><span class="rrc-val">—</span></div>
+              <div class="roi-result-card" id="rrc-roi"><span class="rrc-label">Annual ROI</span><span class="rrc-val">—</span></div>
+            </div>
+
+            <!-- Projection chart -->
+            <div style="flex:1;min-height:200px;">
+              <p style="font-size:0.75rem;font-weight:600;color:var(--muted);margin-bottom:0.5rem;">24-Month Cumulative P&L</p>
+              <div style="position:relative;height:200px;"><canvas id="roi-chart"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </main>
 
@@ -1840,10 +1983,6 @@
             <label>Vehicle</label>
             <select id="exp-car" required>
               <option value="">Select vehicle…</option>
-              <option value="1">Audi Q3</option>
-              <option value="2">Audi A3</option>
-              <option value="3">Porsche Cayenne</option>
-              <option value="4">Volkswagen Atlas</option>
             </select>
           </div>
           <div class="form-group">
