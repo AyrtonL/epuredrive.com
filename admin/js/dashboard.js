@@ -591,6 +591,85 @@ function openEdit(id) {
   openModal('reservation-modal');
 }
 
+async function upsertCustomerFromReservation(res) {
+  const name  = res.customer_name?.trim();
+  const email = res.customer_email?.trim();
+  const phone = res.customer_phone?.trim();
+  if (!name) return; // nothing to save
+
+  // Find existing customer by email, or by name+phone as fallback
+  let existing = null;
+  if (email) {
+    existing = allCustomers.find(c => c.email && c.email.toLowerCase() === email.toLowerCase());
+  }
+  if (!existing && phone) {
+    existing = allCustomers.find(c => c.phone && c.phone === phone);
+  }
+  if (!existing) {
+    existing = allCustomers.find(c => c.name.toLowerCase() === name.toLowerCase());
+  }
+
+  const customerPayload = {
+    name,
+    ...(email ? { email } : {}),
+    ...(phone ? { phone } : {}),
+    ...tenantPayload(),
+  };
+
+  if (existing) {
+    // Update only fields that were blank before
+    const updates = {};
+    if (email && !existing.email) updates.email = email;
+    if (phone && !existing.phone) updates.phone = phone;
+    if (Object.keys(updates).length) {
+      await sb.from('customers').update(updates).eq('id', existing.id);
+    }
+  } else {
+    await sb.from('customers').insert(customerPayload);
+  }
+
+  // Refresh local list so Customers tab stays in sync
+  await loadCustomers();
+}
+
+async function syncCustomersFromReservations(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
+  await loadCustomers(); // refresh list first
+
+  let created = 0, skipped = 0;
+  for (const r of allReservations) {
+    const name  = r.customer_name?.trim();
+    const email = r.customer_email?.trim();
+    const phone = r.customer_phone?.trim();
+    if (!name) { skipped++; continue; }
+
+    // Check if already exists
+    let exists = false;
+    if (email) exists = allCustomers.some(c => c.email?.toLowerCase() === email.toLowerCase());
+    if (!exists && phone) exists = allCustomers.some(c => c.phone === phone);
+    if (!exists) exists = allCustomers.some(c => c.name.toLowerCase() === name.toLowerCase());
+
+    if (exists) { skipped++; continue; }
+
+    const { data: inserted } = await sb.from('customers').insert({
+      name,
+      ...(email ? { email } : {}),
+      ...(phone ? { phone } : {}),
+      ...tenantPayload(),
+    }).select().single();
+
+    if (inserted) {
+      allCustomers.push(inserted); // keep local list current so duplicates aren't inserted
+      created++;
+    }
+  }
+
+  await loadCustomers();
+  renderCustomers();
+  showToast(`Done — ${created} customer${created !== 1 ? 's' : ''} added, ${skipped} already existed.`);
+  if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;">sync</span> Sync from Bookings'; }
+}
+
 async function saveReservation(e) {
   e.preventDefault();
   const form    = document.getElementById('reservation-form');
@@ -622,7 +701,12 @@ async function saveReservation(e) {
     : await sb.from('reservations').insert(payload);
 
   if (error) { showToast('Error: ' + error.message, 'error'); }
-  else        { closeModal('reservation-modal'); await refresh(); }
+  else {
+    closeModal('reservation-modal');
+    // Auto-create or update customer from booking info
+    await upsertCustomerFromReservation(payload);
+    await refresh();
+  }
 
   btn.disabled = false;
   btn.textContent = 'Save Reservation';
