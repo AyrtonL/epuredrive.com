@@ -958,21 +958,15 @@
       <div class="tab-content" id="tab-bookings">
 
         <!-- Car filter -->
-        <div class="car-filters">
+        <div class="car-filters" id="car-filter-bar">
           <span>Filter:</span>
-          <button class="car-btn active" data-car-filter="all">All Cars</button>
-          <button class="car-btn" data-car-filter="1"><span class="dot" style="background:var(--blue)"></span>Audi Q3</button>
-          <button class="car-btn" data-car-filter="2"><span class="dot" style="background:var(--purple)"></span>Audi A3</button>
-          <button class="car-btn" data-car-filter="3"><span class="dot" style="background:var(--gold)"></span>Porsche Cayenne</button>
-          <button class="car-btn" data-car-filter="4"><span class="dot" style="background:var(--teal)"></span>VW Atlas</button>
+          <button class="car-btn active" data-car-filter="all" onclick="setCarFilter('all')">All Cars</button>
+          <!-- dynamic car filter buttons injected by JS -->
         </div>
 
         <!-- Legend -->
         <div class="legend">
-          <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Audi Q3</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Audi A3</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Porsche Cayenne</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>VW Atlas</div>
+          <span id="legend-cars"></span><!-- dynamic car legend items injected by JS -->
           <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Blocked</div>
           <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>Turo</div>
         </div>
@@ -1701,10 +1695,6 @@
             <label>Vehicle</label>
             <select id="b-car" required>
               <option value="all">All Vehicles</option>
-              <option value="1">Audi Q3</option>
-              <option value="2">Audi A3</option>
-              <option value="3">Porsche Cayenne</option>
-              <option value="4">Volkswagen Atlas</option>
             </select>
           </div>
           <div class="form-group">
@@ -1850,10 +1840,6 @@
             <label>Vehicle</label>
             <select id="svc-car" required>
               <option value="">Select vehicle…</option>
-              <option value="1">Audi Q3</option>
-              <option value="2">Audi A3</option>
-              <option value="3">Porsche Cayenne</option>
-              <option value="4">Volkswagen Atlas</option>
             </select>
           </div>
           <div class="form-group">
@@ -1922,10 +1908,6 @@
             <label>Vehicle</label>
             <select id="con-car" required>
               <option value="">Select vehicle…</option>
-              <option value="1">Audi Q3</option>
-              <option value="2">Audi A3</option>
-              <option value="3">Porsche Cayenne</option>
-              <option value="4">Volkswagen Atlas</option>
             </select>
           </div>
           <div class="form-group full">
@@ -2068,8 +2050,8 @@
       window._distChart = new Chart(document.getElementById('distChart').getContext('2d'), {
         type: 'doughnut',
         data: {
-          labels: ['Audi Q3', 'Audi A3', 'Porsche Cayenne', 'VW Atlas'],
-          datasets: [{ data: [1,1,1,1], backgroundColor: ['#3B82F6','#8B5CF6','#F59E0B','#10B981'], borderWidth: 0, cutout: '75%' }]
+          labels: [],
+          datasets: [{ data: [], backgroundColor: [], borderWidth: 0, cutout: '75%' }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });

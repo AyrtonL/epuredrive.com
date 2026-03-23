@@ -9,9 +9,9 @@ const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ---- Constants ----
-let CAR_COLORS = { 1: '#3B82F6', 2: '#8B5CF6', 3: '#F59E0B', 4: '#10B981' };
-let CAR_NAMES  = { 1: 'Audi Q3', 2: 'Audi A3', 3: 'Porsche Cayenne', 4: 'Volkswagen Atlas' };
-let DAILY_RATES = { 1: 120, 2: 100, 3: 250, 4: 130 };
+let CAR_COLORS  = {};   // populated from DB by loadCars()
+let CAR_NAMES   = {};   // populated from DB by loadCars()
+let DAILY_RATES = {};   // populated from DB by loadCars()
 
 let calendar        = null;
 let allReservations = [];
@@ -822,7 +822,37 @@ function populateFeedCarDropdown() {
   sel.innerHTML = allCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 }
 
+function setCarFilter(val) {
+  activeCarFilter = String(val);
+  document.querySelectorAll('[data-car-filter]').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-car-filter="${val}"]`)?.classList.add('active');
+  refreshCalendar();
+}
+
 function populateCarFilterDropdowns() {
+  // Dynamic car filter buttons (inside #car-filter-bar, after the static "All Cars" btn)
+  const filterBar = document.getElementById('car-filter-bar');
+  if (filterBar) {
+    // Remove previously injected dynamic buttons
+    filterBar.querySelectorAll('[data-car-filter]:not([data-car-filter="all"])').forEach(b => b.remove());
+    allCars.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'car-btn';
+      btn.dataset.carFilter = c.id;
+      btn.innerHTML = `<span class="dot" style="background:${c.color}"></span>${c.name}`;
+      btn.onclick = () => setCarFilter(c.id);
+      filterBar.appendChild(btn);
+    });
+  }
+
+  // Dynamic legend items
+  const legendCars = document.getElementById('legend-cars');
+  if (legendCars) {
+    legendCars.innerHTML = allCars.map(c =>
+      `<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div>${c.name}</div>`
+    ).join('');
+  }
+
   // Filter selects — keep the first "All" option, append cars
   const filterSelects = ['car-filter', 'expense-car-filter', 'service-car-filter', 'report-car', 'exp-car'];
   filterSelects.forEach(id => {
@@ -851,6 +881,23 @@ function populateCarFilterDropdowns() {
       opt.textContent = c.daily_rate ? `${c.name} — $${c.daily_rate}/day` : c.name;
       fCar.appendChild(opt);
     });
+  }
+
+  // Block-dates, Service, Consignment modal dropdowns
+  const bCar = document.getElementById('b-car');
+  if (bCar) {
+    bCar.innerHTML = '<option value="all">All Vehicles</option>' +
+      allCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+  const svcCar = document.getElementById('svc-car');
+  if (svcCar) {
+    svcCar.innerHTML = '<option value="">Select vehicle…</option>' +
+      allCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+  const conCar = document.getElementById('con-car');
+  if (conCar) {
+    conCar.innerHTML = '<option value="">Select vehicle…</option>' +
+      allCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
   }
 }
 
@@ -1898,12 +1945,7 @@ async function loadCars() {
       };
     });
 
-    // Hydrate all HTML dropdowns dynamically
-    const optionsHTML = '<option value="">Select vehicle…</option>' + allCars.map(c => `<option value="${c.id}">${c.name} — $${c.daily_rate}/day</option>`).join('');
-    ['f-car', 'b-car', 'car-filter'].forEach(selId => {
-      const el = document.getElementById(selId);
-      if (el) el.innerHTML = (selId === 'car-filter') ? '<option value="">All Vehicles</option>' + allCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('') : optionsHTML;
-    });
+    // Note: all dropdown hydration is handled by populateCarFilterDropdowns() which is called after loadCars()
   } else {
     allCars = [];
   }
@@ -2089,7 +2131,7 @@ function openEditCar(id) {
   document.getElementById('car-plate').value        = car.plate             || '';
   document.getElementById('car-vin').value          = car.vin               || '';
   document.getElementById('car-mileage').value      = car.mileage           || '';
-  document.getElementById('car-rate').value         = car.daily_rate        || DAILY_RATES[id] || '';
+  document.getElementById('car-rate').value         = car.daily_rate        || '';
   document.getElementById('car-insurance').value    = car.insurance_expiry  || '';
   document.getElementById('car-registration').value = car.registration_expiry || '';
   document.getElementById('car-notes').value        = car.notes             || '';
@@ -2431,17 +2473,24 @@ async function inviteUser(e) {
 }
 
 async function updateUserRole(userId, newRole) {
-  const { error } = await sb.from('profiles').update({ role: newRole }).eq('id', userId);
-  if (error) {
-    showToast('Failed to update role: ' + error.message, 'error');
-    await loadUsers(); // revert UI
-  } else {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch('/.netlify/functions/update-user-role', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ targetUserId: userId, newRole }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Failed to update role');
     showToast('Role updated');
+  } catch (err) {
+    showToast('Failed to update role: ' + err.message, 'error');
+    await loadUsers(); // revert UI to DB state
   }
 }
 
 async function removeUser(userId) {
-  if (!confirm('Remove this team member? They will lose dashboard access.')) return;
+  if (!window.confirm('Remove this team member? They will lose dashboard access.')) return;
   const { error } = await sb.from('profiles').delete().eq('id', userId);
   if (error) {
     showToast('Failed to remove user: ' + error.message, 'error');
@@ -2497,15 +2546,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab))
   );
 
-  // Car filter buttons
-  document.querySelectorAll('[data-car-filter]').forEach(btn =>
-    btn.addEventListener('click', () => {
-      activeCarFilter = btn.dataset.carFilter;
-      document.querySelectorAll('[data-car-filter]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      refreshCalendar();
-    })
-  );
+  // Car filter buttons — "All Cars" static btn; dynamic ones use setCarFilter()
+  document.querySelector('[data-car-filter="all"]')?.addEventListener('click', () => setCarFilter('all'));
 
   // Topbar buttons
   document.getElementById('add-res-btn').addEventListener('click', openAdd);
