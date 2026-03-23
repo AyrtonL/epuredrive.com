@@ -524,8 +524,8 @@ function renderTable(resetPage = false) {
         <td><span class="badge ${statusMap[r.status] || 'badge-gray'}">${r.status}</span></td>
         <td><span class="source-badge source-${r.source || 'admin'}">${r.source || 'admin'}</span></td>
         <td class="actions">
-          <button class="btn-icon write-action" onclick="openEdit('${r.id}')" title="Edit">✏️</button>
-          <button class="btn-icon danger write-action" onclick="deleteReservation('${r.id}')" title="Delete">🗑️</button>
+          <button class="btn-icon write-action" onclick="openEdit('${r.id}')" title="Edit" aria-label="Edit reservation">✏️</button>
+          <button class="btn-icon danger write-action" onclick="deleteReservation('${r.id}', this)" title="Delete" aria-label="Delete reservation">🗑️</button>
         </td>
       </tr>`;
   }).join('');
@@ -621,17 +621,19 @@ async function saveReservation(e) {
     ? await sb.from('reservations').update(payload).eq('id', editId)
     : await sb.from('reservations').insert(payload);
 
-  if (error) { alert('Error: ' + error.message); }
+  if (error) { showToast('Error: ' + error.message, 'error'); }
   else        { closeModal('reservation-modal'); await refresh(); }
 
   btn.disabled = false;
   btn.textContent = 'Save Reservation';
 }
 
-async function deleteReservation(id) {
+async function deleteReservation(id, btn) {
   if (!confirm('Delete this reservation? This cannot be undone.')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
   await sb.from('reservations').delete().eq('id', id);
   await refresh();
+  if (btn) { btn.disabled = false; btn.textContent = '🗑️'; }
 }
 
 // ====================================================
@@ -644,7 +646,7 @@ async function saveBlockedDates(e) {
   const end    = document.getElementById('b-end').value;
   const reason = document.getElementById('b-reason').value;
 
-  if (end < start) { alert('End date must be after start date.'); return; }
+  if (end < start) { showToast('End date must be after start date.', 'error'); return; }
 
   const rows = carId === 'all'
     ? allCars.map(c => ({ car_id: c.id, start_date: start, end_date: end, reason, ...tenantPayload() }))
@@ -718,7 +720,7 @@ function renderCalendarFeeds() {
             </td>
             <td style="color:var(--muted);font-size:0.8rem;">${f.lastSynced ? new Date(f.lastSynced).toLocaleString() : 'Never'}</td>
             <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.78rem;color:var(--muted);" title="${esc(f.url)}">${esc(f.url)}</td>
-            <td><button class="btn btn-outline" style="padding:0.3rem 0.6rem;font-size:0.75rem;color:#f87171;border-color:#f87171;" onclick="deleteFeed('${f.id}')">Remove</button></td>
+            <td><button class="btn btn-outline" style="padding:0.3rem 0.6rem;font-size:0.75rem;color:#f87171;border-color:#f87171;" onclick="deleteFeed('${f.id}', this)">Remove</button></td>
           </tr>`).join('')}
       </tbody>
     </table>`;
@@ -820,6 +822,38 @@ function populateFeedCarDropdown() {
   sel.innerHTML = allCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 }
 
+function populateCarFilterDropdowns() {
+  // Filter selects — keep the first "All" option, append cars
+  const filterSelects = ['car-filter', 'expense-car-filter', 'service-car-filter', 'report-car'];
+  filterSelects.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const firstOpt = sel.options[0]; // preserve "All Cars / All Vehicles"
+    sel.innerHTML = '';
+    sel.appendChild(firstOpt);
+    allCars.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.name;
+      sel.appendChild(opt);
+    });
+  });
+
+  // Reservation modal vehicle select — includes rate
+  const fCar = document.getElementById('f-car');
+  if (fCar) {
+    const firstOpt = fCar.options[0];
+    fCar.innerHTML = '';
+    fCar.appendChild(firstOpt);
+    allCars.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.daily_rate ? `${c.name} — $${c.daily_rate}/day` : c.name;
+      fCar.appendChild(opt);
+    });
+  }
+}
+
 async function addCalendarFeed() {
   const sourceEl = document.getElementById('feed-source');
   const carEl    = document.getElementById('feed-car');
@@ -827,8 +861,8 @@ async function addCalendarFeed() {
   const carId    = parseInt(carEl.value);
   const isFile   = document.getElementById('feed-input-file').style.display !== 'none';
 
-  if (!source) { alert('Please enter a platform name (e.g. Turo, Airbnb).'); return; }
-  if (!carId)  { alert('Please select a vehicle.'); return; }
+  if (!source) { showToast('Please enter a platform name (e.g. Turo, Airbnb).', 'error'); return; }
+  if (!carId)  { showToast('Please select a vehicle.', 'error'); return; }
 
   const btn = document.getElementById('add-feed-btn');
   btn.disabled = true;
@@ -838,7 +872,7 @@ async function addCalendarFeed() {
     // ── File upload mode ──────────────────────────────
     const fileInput = document.getElementById('feed-file');
     const file      = fileInput.files?.[0];
-    if (!file) { alert('Please select an .ics file.'); btn.disabled = false; btn.textContent = 'Add Feed'; return; }
+    if (!file) { showToast('Please select an .ics file.', 'error'); btn.disabled = false; btn.textContent = 'Add Feed'; return; }
 
     const text   = await file.text();
     const events = parseIcal(text, carId, source);
@@ -848,7 +882,7 @@ async function addCalendarFeed() {
       return;
     }
     const { error } = await sb.from('reservations').insert(events.map(e => ({ ...e, ...tenantPayload() })));
-    if (error) { alert('Import error: ' + error.message); }
+    if (error) { showToast('Import error: ' + error.message, 'error'); }
     else {
       showToast(`Imported ${events.length} event(s) from "${file.name}".`);
       fileInput.value = '';
@@ -859,7 +893,7 @@ async function addCalendarFeed() {
     // ── URL mode ──────────────────────────────────────
     const urlEl = document.getElementById('feed-url');
     const url   = urlEl.value.trim();
-    if (!url) { alert('Please enter an iCal URL.'); btn.disabled = false; btn.textContent = 'Add Feed'; return; }
+    if (!url) { showToast('Please enter an iCal URL.', 'error'); btn.disabled = false; btn.textContent = 'Add Feed'; return; }
 
     const { error } = await sb.from('turo_feeds').insert({
       car_id:      carId,
@@ -867,7 +901,7 @@ async function addCalendarFeed() {
       source_name: source,
       ...tenantPayload(),
     });
-    if (error) { alert('Could not save feed: ' + error.message); }
+    if (error) { showToast('Could not save feed: ' + error.message, 'error'); }
     else {
       sourceEl.value = '';
       urlEl.value    = '';
@@ -880,8 +914,9 @@ async function addCalendarFeed() {
   btn.textContent = 'Add Feed';
 }
 
-async function deleteFeed(feedId) {
+async function deleteFeed(feedId, btn) {
   if (!confirm('Remove this calendar feed?')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
   await sb.from('turo_feeds').delete().eq('id', feedId);
   await loadTuroFeeds();
   renderCalendarFeeds();
@@ -907,12 +942,12 @@ async function syncTuro() {
 
   for (const feed of feeds) {
     try {
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(feed.url)}`;
+      const proxyUrl = `/.netlify/functions/fetch-ical?url=${encodeURIComponent(feed.url)}`;
       const res  = await fetch(proxyUrl);
-      const json = await res.json();
-      if (!json.contents) throw new Error('Empty response');
+      if (!res.ok) throw new Error(`Fetch failed (${res.status})`);
+      const icsText = await res.text();
 
-      const events = parseIcal(json.contents, feed.carId, feed.sourceName);
+      const events = parseIcal(icsText, feed.carId, feed.sourceName);
       // Remove old entries from this same feed source + car, then re-insert
       await sb.from('reservations').delete()
         .eq('car_id', feed.carId)
@@ -1109,8 +1144,8 @@ function renderConsignments() {
             ${esc(carName)}
           </div>
           <div class="actions">
-            <button class="btn-icon write-action" onclick="openEditConsignment('${con.id}')" title="Edit">✏️</button>
-            <button class="btn-icon danger write-action" onclick="deleteConsignment('${con.id}')" title="Delete">🗑️</button>
+            <button class="btn-icon write-action" onclick="openEditConsignment('${con.id}')" title="Edit" aria-label="Edit consignment">✏️</button>
+            <button class="btn-icon danger write-action" onclick="deleteConsignment('${con.id}', this)" title="Delete" aria-label="Delete consignment">🗑️</button>
           </div>
         </div>
 
@@ -1179,7 +1214,7 @@ function renderExpensesTable() {
       <td style="color:var(--muted-2);">${esc(e.description || '—')}</td>
       <td style="color:var(--red);font-weight:600;">$${Number(e.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       <td class="actions">
-        <button class="btn-icon danger write-action" onclick="deleteExpense('${e.id}')" title="Delete">🗑️</button>
+        <button class="btn-icon danger write-action" onclick="deleteExpense('${e.id}', this)" title="Delete" aria-label="Delete expense">🗑️</button>
       </td>
     </tr>`).join('');
 }
@@ -1231,13 +1266,14 @@ async function saveConsignment(e) {
   const { error } = editId
     ? await sb.from('consignments').update(payload).eq('id', editId)
     : await sb.from('consignments').insert(payload);
-  if (error) { alert('Error: ' + error.message); }
+  if (error) { showToast('Error: ' + error.message, 'error'); }
   else { closeModal('consignment-modal'); await loadConsignments(); renderConsignments(); }
   btn.disabled = false; btn.textContent = 'Save Consignment';
 }
 
-async function deleteConsignment(id) {
+async function deleteConsignment(id, btn) {
   if (!confirm('Delete this consignment? This cannot be undone.')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
   await sb.from('consignments').delete().eq('id', id);
   await loadConsignments();
   renderConsignments();
@@ -1272,13 +1308,14 @@ async function saveExpense(e) {
   const { error } = editId
     ? await sb.from('consignment_expenses').update(payload).eq('id', editId)
     : await sb.from('consignment_expenses').insert(payload);
-  if (error) { alert('Error: ' + error.message); }
+  if (error) { showToast('Error: ' + error.message, 'error'); }
   else { closeModal('expense-modal'); await loadExpenses(); renderExpensesTable(); renderConsignments(); }
   btn.disabled = false; btn.textContent = 'Save Expense';
 }
 
-async function deleteExpense(id) {
+async function deleteExpense(id, btn) {
   if (!confirm('Delete this expense?')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
   await sb.from('consignment_expenses').delete().eq('id', id);
   await loadExpenses();
   renderExpensesTable();
@@ -1325,8 +1362,8 @@ function renderCustomers() {
         <td style="font-weight:600;">${spent > 0 ? '$' + spent.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—'}</td>
         <td style="color:var(--muted-2);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.notes || '—')}</td>
         <td class="actions">
-          <button class="btn-icon write-action" onclick="openEditCustomer('${c.id}')" title="Edit">✏️</button>
-          <button class="btn-icon danger write-action" onclick="deleteCustomer('${c.id}')" title="Delete">🗑️</button>
+          <button class="btn-icon write-action" onclick="openEditCustomer('${c.id}')" title="Edit" aria-label="Edit customer">✏️</button>
+          <button class="btn-icon danger write-action" onclick="deleteCustomer('${c.id}', this)" title="Delete" aria-label="Delete customer">🗑️</button>
         </td>
       </tr>`;
   }).join('');
@@ -1370,13 +1407,14 @@ async function saveCustomer(e) {
   const { error } = editId
     ? await sb.from('customers').update(payload).eq('id', editId)
     : await sb.from('customers').insert(payload);
-  if (error) { alert('Error: ' + error.message); }
+  if (error) { showToast('Error: ' + error.message, 'error'); }
   else { closeModal('customer-modal'); await loadCustomers(); renderCustomers(); }
   btn.disabled = false; btn.textContent = 'Save Customer';
 }
 
-async function deleteCustomer(id) {
+async function deleteCustomer(id, btn) {
   if (!confirm('Delete this customer?')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
   await sb.from('customers').delete().eq('id', id);
   await loadCustomers();
   renderCustomers();
@@ -1403,7 +1441,7 @@ function renderReports() {
 
   const totalRevenue = filtered.reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
 
-  const carIds = carVal ? [parseInt(carVal)] : [1, 2, 3, 4];
+  const carIds = carVal ? [parseInt(carVal)] : allCars.map(c => c.id);
   const rows = carIds.map(id => {
     const bookings = filtered.filter(r => r.car_id === id);
     const revenue  = bookings.reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
@@ -1570,11 +1608,12 @@ function refreshCharts(data) {
     }
   }
   // Distribution by car bookings
-  const carBookings = [1, 2, 3, 4].map(id => source.filter(r => r.car_id === id).length);
+  const carIds = allCars.map(c => c.id);
+  const carBookings = carIds.map(id => source.filter(r => r.car_id === id).length);
   if (window._distChart) {
     window._distChart.data.datasets[0].data = carBookings;
-    window._distChart.data.labels = [1, 2, 3, 4].map(id => CAR_NAMES[id]);
-    window._distChart.data.datasets[0].backgroundColor = [1, 2, 3, 4].map(id => CAR_COLORS[id]);
+    window._distChart.data.labels = carIds.map(id => CAR_NAMES[id]);
+    window._distChart.data.datasets[0].backgroundColor = carIds.map(id => CAR_COLORS[id]);
     window._distChart.update();
   }
 }
@@ -1632,8 +1671,8 @@ function renderMaintenanceAlerts() {
   });
 
   // Mileage-based alerts — check latest record with next_service_mileage per car
-  [1, 2, 3, 4].forEach(carId => {
-    const car = allCars.find(c => c.id === carId) || {};
+  allCars.forEach(car => {
+    const carId = car.id;
     if (!car.mileage) return;
     const lastMileSvc = allServices
       .filter(s => s.car_id === carId && s.next_service_mileage)
@@ -1748,10 +1787,10 @@ function renderCarCards() {
         <td>${car.mileage ? Number(car.mileage).toLocaleString() + ' mi' : '—'}</td>
         <td><span class="${insClass}">${expiryLabel(car.insurance_expiry)}</span></td>
         <td><span class="${regClass}">${expiryLabel(car.registration_expiry)}</span></td>
-        <td>$${car.daily_rate || DAILY_RATES[id] || '—'}/day</td>
+        <td>$${car.daily_rate || DAILY_RATES[car.id] || '—'}/day</td>
         <td class="actions">
-          <button class="btn-icon write-action" onclick="openEditCar(${car.id})" title="Edit">✏️</button>
-          <button class="btn-icon write-action" onclick="openAddService(${car.id})" title="Add Service">🔧</button>
+          <button class="btn-icon write-action" onclick="openEditCar(${car.id})" title="Edit" aria-label="Edit vehicle">✏️</button>
+          <button class="btn-icon write-action" onclick="openAddService(${car.id})" title="Add Service" aria-label="Add service record">🔧</button>
         </td>
       </tr>`;
   });
@@ -1852,18 +1891,19 @@ function renderServicesTable() {
       <td>${nextMiCell}</td>
       <td style="color:var(--muted-2);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(s.notes || '—')}</td>
       <td class="actions">
-        <button class="btn-icon write-action" onclick="openEditService('${s.id}')" title="Edit">✏️</button>
-        <button class="btn-icon danger write-action" onclick="deleteService('${s.id}')" title="Delete">🗑️</button>
+        <button class="btn-icon write-action" onclick="openEditService('${s.id}')" title="Edit" aria-label="Edit service record">✏️</button>
+        <button class="btn-icon danger write-action" onclick="deleteService('${s.id}', this)" title="Delete" aria-label="Delete service record">🗑️</button>
       </td>
     </tr>`;
   }).join('');
 }
 
 function openEditCar(id) {
-  const car = allCars.find(c => c.id === id) || { id };
+  const car = allCars.find(c => c.id === id);
+  if (!car) { showToast('Vehicle not found.', 'error'); return; }
   const form = document.getElementById('car-form');
   form.dataset.carId = id;
-  document.getElementById('car-modal-title').textContent = `Edit — ${CAR_NAMES[id]}`;
+  document.getElementById('car-modal-title').textContent = `Edit — ${CAR_NAMES[id] || 'Vehicle'}`;
   document.getElementById('car-year').value         = car.year              || '';
   document.getElementById('car-color').value        = car.car_color         || '';
   document.getElementById('car-plate').value        = car.plate             || '';
@@ -1899,8 +1939,8 @@ async function saveCar(e) {
     ? await sb.from('cars').update(payload).eq('id', carId)
     : await sb.from('cars').insert({ ...payload, ...tenantPayload() });
 
-  if (error) { alert('Error: ' + error.message); }
-  else { closeModal('car-modal'); await loadCars(); renderCarCards(); }
+  if (error) { showToast('Error: ' + error.message, 'error'); }
+  else { closeModal('car-modal'); await loadCars(); renderCarCards(); populateCarFilterDropdowns(); populateFeedCarDropdown(); }
   btn.disabled = false; btn.textContent = 'Save Details';
 }
 
@@ -1956,7 +1996,7 @@ async function saveService(e) {
   const { error } = editId
     ? await sb.from('car_services').update(payload).eq('id', editId)
     : await sb.from('car_services').insert(payload);
-  if (error) { alert('Error: ' + error.message); }
+  if (error) { showToast('Error: ' + error.message, 'error'); }
   else {
     // Auto-update car's odometer if service mileage is higher than recorded
     if (svcMileage) {
@@ -1975,8 +2015,9 @@ async function saveService(e) {
   btn.disabled = false; btn.textContent = 'Save Record';
 }
 
-async function deleteService(id) {
+async function deleteService(id, btn) {
   if (!confirm('Delete this service record?')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
   await sb.from('car_services').delete().eq('id', id);
   await loadServices();
   renderFleetStatus();
@@ -2051,6 +2092,11 @@ function fmtDate(d) {
 function fmtDateLong(d) {
   return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
 }
+function debounce(fn, ms = 250) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
 function esc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -2245,6 +2291,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([loadReservations(), loadBlockedDates(), loadTuroFeeds(), loadConsignments(), loadExpenses(), loadCars(), loadServices(), loadCustomers()]);
 
   populateFeedCarDropdown();
+  populateCarFilterDropdowns();
   _setPlanUI();
 
   // Handle post-checkout redirect
@@ -2296,7 +2343,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   );
 
   // Table filters — reset page on filter change
-  document.getElementById('search-input')?.addEventListener('input',  () => renderTable(true));
+  document.getElementById('search-input')?.addEventListener('input',  debounce(() => renderTable(true)));
   document.getElementById('status-filter')?.addEventListener('change', () => renderTable(true));
   document.getElementById('car-filter')?.addEventListener('change',    () => renderTable(true));
 
@@ -2336,7 +2383,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Customers
   document.getElementById('add-customer-btn')?.addEventListener('click', openAddCustomer);
   document.getElementById('customer-form')?.addEventListener('submit', saveCustomer);
-  document.getElementById('customer-search')?.addEventListener('input', renderCustomers);
+  document.getElementById('customer-search')?.addEventListener('input', debounce(renderCustomers));
 
   // Users & invite
   document.getElementById('invite-user-btn')?.addEventListener('click', openInviteModal);

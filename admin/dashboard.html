@@ -977,10 +977,6 @@
               </select>
               <select class="filter-select" id="car-filter">
                 <option value="">All Cars</option>
-                <option value="1">Audi Q3</option>
-                <option value="2">Audi A3</option>
-                <option value="3">Porsche Cayenne</option>
-                <option value="4">VW Atlas</option>
               </select>
             </div>
           </div>
@@ -1117,10 +1113,6 @@
             <div class="table-filters">
               <select class="filter-select" id="expense-car-filter">
                 <option value="">All Vehicles</option>
-                <option value="1">Audi Q3</option>
-                <option value="2">Audi A3</option>
-                <option value="3">Porsche Cayenne</option>
-                <option value="4">Volkswagen Atlas</option>
               </select>
               <select class="filter-select" id="expense-cat-filter">
                 <option value="">All Categories</option>
@@ -1235,10 +1227,6 @@
             <div class="table-filters">
               <select class="filter-select" id="service-car-filter">
                 <option value="">All Vehicles</option>
-                <option value="1">Audi Q3</option>
-                <option value="2">Audi A3</option>
-                <option value="3">Porsche Cayenne</option>
-                <option value="4">Volkswagen Atlas</option>
               </select>
               <select class="filter-select" id="service-type-filter">
                 <option value="">All Types</option>
@@ -1337,10 +1325,6 @@
             <label>Vehicle</label>
             <select class="filter-select" id="report-car">
               <option value="">All Vehicles</option>
-              <option value="1">Audi Q3</option>
-              <option value="2">Audi A3</option>
-              <option value="3">Porsche Cayenne</option>
-              <option value="4">VW Atlas</option>
             </select>
           </div>
           <button class="btn btn-primary" id="apply-report-btn">Apply</button>
@@ -1404,7 +1388,7 @@
     <div class="modal-box" style="max-width:600px;">
       <div class="modal-header">
         <h3>Upgrade Your Plan</h3>
-        <button class="modal-close" onclick="closeModal('upgrade-modal')">✕</button>
+        <button class="modal-close" onclick="closeModal('upgrade-modal')" aria-label="Close">✕</button>
       </div>
       <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.5rem;">Choose the plan that fits your fleet. Cancel anytime.</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
@@ -1450,7 +1434,7 @@
     <div class="modal-box" style="max-width:440px;">
       <div class="modal-header">
         <h3>Invite Team Member</h3>
-        <button class="modal-close" onclick="closeModal('invite-modal')">✕</button>
+        <button class="modal-close" onclick="closeModal('invite-modal')" aria-label="Close">✕</button>
       </div>
       <form id="invite-form">
         <div class="form-grid">
@@ -1488,7 +1472,7 @@
     <div class="modal-box">
       <div class="modal-header">
         <h3 id="modal-title">New Reservation</h3>
-        <button class="modal-close" onclick="closeModal('reservation-modal')">✕</button>
+        <button class="modal-close" onclick="closeModal('reservation-modal')" aria-label="Close">✕</button>
       </div>
       <form id="reservation-form">
         <div class="form-grid">
@@ -1496,10 +1480,6 @@
             <label>Vehicle</label>
             <select id="f-car" required>
               <option value="">Select vehicle…</option>
-              <option value="1">Audi Q3 — $120/day</option>
-              <option value="2">Audi A3 — $100/day</option>
-              <option value="3">Porsche Cayenne — $250/day</option>
-              <option value="4">Volkswagen Atlas — $130/day</option>
             </select>
           </div>
           <div class="form-group full">
@@ -1570,7 +1550,7 @@
     <div class="modal-box">
       <div class="modal-header">
         <h3>Block Dates</h3>
-        <button class="modal-close" onclick="closeModal('block-modal')">✕</button>
+        <button class="modal-close" onclick="closeModal('block-modal')" aria-label="Close">✕</button>
       </div>
       <form id="block-form">
         <div class="form-grid">
@@ -1615,7 +1595,7 @@
     <div class="modal-box">
       <div class="modal-header">
         <h3>Reservation Details</h3>
-        <button class="modal-close" onclick="closeModal('detail-modal')">✕</button>
+        <button class="modal-close" onclick="closeModal('detail-modal')" aria-label="Close">✕</button>
       </div>
       <div id="detail-content"></div>
       <div class="modal-footer" id="detail-actions"></div>
@@ -1627,7 +1607,7 @@
     <div class="modal-box">
       <div class="modal-header">
         <h3 id="customer-modal-title">New Customer</h3>
-        <button class="modal-close" onclick="closeModal('customer-modal')">✕</button>
+        <button class="modal-close" onclick="closeModal('customer-modal')" aria-label="Close">✕</button>
       </div>
       <form id="customer-form">
         <div class="form-grid">
@@ -1665,7 +1645,7 @@
     <div class="modal-box wide">
       <div class="modal-header">
         <h3 id="car-modal-title">Edit Vehicle Details</h3>
-        <button class="modal-close" onclick="closeModal('car-modal')">✕</button>
+        <button class="modal-close" onclick="closeModal('car-modal')" aria-label="Close">✕</button>
       </div>
       <form id="car-form">
         <div class="form-grid">
@@ -1719,7 +1699,7 @@
     <div class="modal-box">
       <div class="modal-header">
         <h3 id="service-modal-title">Add Service Record</h3>
-        <button class="modal-close" onclick="closeModal('service-modal')">✕</button>
+        <button class="modal-close" onclick="closeModal('service-modal')" aria-label="Close">✕</button>
       </div>
       <form id="service-form">
         <div class="form-grid">
@@ -1791,7 +1771,7 @@
     <div class="modal-box">
       <div class="modal-header">
         <h3 id="consignment-modal-title">New Consignment</h3>
-        <button class="modal-close" onclick="closeModal('consignment-modal')">✕</button>
+        <button class="modal-close" onclick="closeModal('consignment-modal')" aria-label="Close">✕</button>
       </div>
       <form id="consignment-form">
         <div class="form-grid">
@@ -1852,7 +1832,7 @@
     <div class="modal-box">
       <div class="modal-header">
         <h3 id="expense-modal-title">Add Expense</h3>
-        <button class="modal-close" onclick="closeModal('expense-modal')">✕</button>
+        <button class="modal-close" onclick="closeModal('expense-modal')" aria-label="Close">✕</button>
       </div>
       <form id="expense-form">
         <div class="form-grid">
