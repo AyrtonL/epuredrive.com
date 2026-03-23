@@ -860,40 +860,98 @@ async function syncTuro() {
 function syncGoogleCalendar() {}
 
 function parseIcal(icsText, carId, sourceName = 'Calendar') {
-  const events  = [];
-  const today   = todayStr();
-  const vevents = icsText.split('BEGIN:VEVENT').slice(1);
+  const events = [];
+  const today  = todayStr();
+
+  // RFC 5545: unfold continuation lines (CRLF/LF + whitespace)
+  const unfolded = icsText.replace(/\r?\n[ \t]/g, '');
+  const vevents  = unfolded.split(/BEGIN:VEVENT/i).slice(1);
+
+  // Map sourceName to allowed source values
+  const src = /turo/i.test(sourceName)   ? 'turo'
+            : /airbnb/i.test(sourceName) ? 'ical'
+            : 'ical';
+
+  // Convert iCal date string (with or without time) → YYYY-MM-DD
+  const toDate = (s) => {
+    const raw = s.replace(/[TZ\-]/g, '').slice(0, 8);
+    return `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}`;
+  };
+
+  // Subtract one day from a YYYY-MM-DD string
+  const prevDay = (d) => {
+    const dt = new Date(d + 'T12:00:00');
+    dt.setDate(dt.getDate() - 1);
+    return dt.toISOString().slice(0, 10);
+  };
 
   vevents.forEach(block => {
+    // Get property value, ignoring TYPE/TZID params (e.g. DTSTART;VALUE=DATE:...)
     const get = (key) => {
-      const match = block.match(new RegExp(`${key}[^:]*:([^\r\n]+)`));
-      return match ? match[1].trim() : null;
+      const m = block.match(new RegExp(`^${key}(?:;[^:]*)?:(.+)`, 'im'));
+      return m ? m[1].trim() : null;
     };
+
     const dtstart = get('DTSTART');
     const dtend   = get('DTEND');
-    const summary = get('SUMMARY') || `${sourceName} Reservation`;
+    if (!dtstart) return;
 
-    if (!dtstart || !dtend) return;
+    const start    = toDate(dtstart);
+    const isAllDay = !dtstart.includes('T');  // DATE-only = all-day
+    let   end      = dtend ? toDate(dtend) : start;
 
-    const toDate = (s) => {
-      const raw = s.replace(/[TZ]/g, '').slice(0, 8);
-      return `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}`;
+    // iCal all-day DTEND is exclusive (next day after last night)
+    // Turo: DTEND=20260323 means the car is returned on 3/22
+    if (isAllDay && end > start) end = prevDay(end);
+
+    if (end < today) return; // skip past events
+
+    // Unescape DESCRIPTION and extract guest details
+    const rawDesc = (get('DESCRIPTION') || '')
+      .replace(/\\n/g, '\n').replace(/\\N/g, '\n')
+      .replace(/\\,/g, ',').replace(/\\;/g, ';');
+
+    const fromDesc = (...keys) => {
+      for (const k of keys) {
+        const m = rawDesc.match(new RegExp(k + '\\s*:?\\s*([^\\n]+)', 'i'));
+        if (m) return m[1].trim();
+      }
+      return null;
     };
 
-    const start = toDate(dtstart);
-    const end   = toDate(dtend);
-    if (end < today) return; // skip past events
+    const phone = fromDesc('Pickup Phone', 'Dropoff Phone', 'Telephone', 'Phone', 'Tel');
+    const email = fromDesc('Email');
+    const resId = fromDesc('Reservation Number', 'Reservation #', 'Reservation ID', 'Trip ID', 'Confirmation');
+
+    // Guest name: description first, then clean SUMMARY
+    let guestName = fromDesc('Guest', 'Guests', 'Renter', 'Traveler', 'Visitor');
+    if (!guestName) {
+      const raw = (get('SUMMARY') || '').trim();
+      guestName = raw
+        // Remove "- Turo", "- Airbnb" suffixes
+        .replace(/\s*[-–]\s*(Turo|Airbnb|VRBO|Booking\.com)\b.*/i, '')
+        // Remove "Turo Reservation", "Airbnb Booking" etc.
+        .replace(/\b(Turo|Airbnb|VRBO)\b\s*(Reservation|Booking|Trip|Guest)?\s*/gi, '')
+        // Remove generic single words
+        .replace(/^(Reserved|Reservation|Booking|Blocked|Busy)$/i, '')
+        .trim();
+    }
+    if (!guestName) guestName = `${sourceName} Guest`;
+
+    const notes = resId
+      ? `${sourceName} #${resId}`
+      : `Imported from [${sourceName}]`;
 
     events.push({
       car_id:         carId,
-      customer_name:  summary,
-      customer_email: '',
-      customer_phone: '',
+      customer_name:  guestName,
+      customer_email: email  || '',
+      customer_phone: phone  || '',
       pickup_date:    start,
       return_date:    end,
       status:         'confirmed',
-      source:         'ical',
-      notes:          `Imported from [${sourceName}]`,
+      source:         src,
+      notes:          notes,
     });
   });
 
