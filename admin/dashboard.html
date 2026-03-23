@@ -408,7 +408,11 @@
       padding: 0.35rem 0.75rem !important;
       box-shadow: none !important;
       text-transform: capitalize;
+      border-radius: 8px !important;
     }
+    .fc .fc-button-group .fc-button:first-child { border-radius: 8px 0 0 8px !important; }
+    .fc .fc-button-group .fc-button:last-child  { border-radius: 0 8px 8px 0 !important; }
+    .fc .fc-button-group .fc-button:only-child  { border-radius: 8px !important; }
     .fc .fc-button:hover { color: var(--text) !important; background: var(--surface-2) !important; }
     .fc .fc-button-primary:not(:disabled).fc-button-active,
     .fc .fc-button-primary:not(:disabled):active {
