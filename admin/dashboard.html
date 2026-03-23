@@ -192,6 +192,7 @@
     body.role-staff .nav-item[data-tab="reports"]       { display:none !important; }
     body.role-staff .nav-item[data-tab="consignments"]  { display:none !important; }
     body.role-staff .nav-item[data-tab="users"]         { display:none !important; }
+    /* Staff CAN see Expenses (they log costs) — no rule needed */
 
     /* ---- USERS TAB ---- */
     .users-grid { display:grid; gap:1rem; margin-top:1rem; }
@@ -852,6 +853,9 @@
       <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="consignments" style="font-family:'Inter',sans-serif;outline:none;">
         <span class="material-symbols-outlined" style="font-size:20px;">handshake</span> <span class="text-sm font-medium">Consignments</span>
       </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="expenses" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">receipt_long</span> <span class="text-sm font-medium">Expenses</span>
+      </button>
       <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="reports" style="font-family:'Inter',sans-serif;outline:none;">
         <span class="material-symbols-outlined" style="font-size:20px;">payments</span> <span class="text-sm font-medium">Financials</span>
       </button>
@@ -1121,10 +1125,16 @@
           <div class="empty-state"><p>Loading…</p></div>
         </div>
 
-        <!-- Expenses Table -->
+      </div>
+
+      <!-- EXPENSES TAB -->
+      <div class="tab-content" id="tab-expenses">
         <div class="table-section">
           <div class="table-header">
-            <h3>Expenses</h3>
+            <div>
+              <h3 style="font-size:1rem;font-weight:600;">Expenses</h3>
+              <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Track costs per vehicle — maintenance, fuel, insurance, repairs and more</p>
+            </div>
             <div class="table-filters">
               <select class="filter-select" id="expense-car-filter">
                 <option value="">All Vehicles</option>
@@ -1139,7 +1149,7 @@
                 <option>Repair</option>
                 <option>Other</option>
               </select>
-              <button class="btn btn-outline write-action" id="add-expense-btn">
+              <button class="btn btn-primary write-action" id="add-expense-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Add Expense
               </button>

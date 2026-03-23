@@ -2257,6 +2257,7 @@ const TAB_TITLES = {
   maintenance:  'Maintenance &amp; Service',
   customers:    'Customers',
   consignments: 'Consignments',
+  expenses:     'Expenses',
   reports:      'Reports &amp; Analytics',
   turo:         'Calendar Sync',
   users:        'Team &amp; Access',
@@ -2287,7 +2288,8 @@ function switchTab(tab) {
   
   if (tab === 'bookings') { if (calendar) calendar.updateSize(); markBookingsSeen(); }
   if (tab === 'turo') renderCalendarFeeds();
-  if (tab === 'consignments') { renderConsignments(); renderExpensesTable(); }
+  if (tab === 'consignments') renderConsignments();
+  if (tab === 'expenses') renderExpensesTable();
   if (tab === 'cars') renderCarCards();
   if (tab === 'maintenance') { renderFleetStatus(); renderServicesTable(); renderMaintenanceAlerts(); }
   if (tab === 'customers') renderCustomers();
