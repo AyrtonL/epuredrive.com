@@ -1059,6 +1059,23 @@
           </div>
         </div>
 
+        <!-- Turo Earnings CSV Import -->
+        <div class="table-section" style="padding:1.5rem;margin-top:1rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.6rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <h3 style="font-size:0.95rem;font-weight:600;">Import Turo Earnings CSV</h3>
+          </div>
+          <p style="font-size:0.78rem;color:var(--muted);line-height:1.5;margin-bottom:1rem;">
+            Upload the <strong>earnings_export_*.csv</strong> from Turo → Earnings → Export. Updates guest names, totals and vehicle assignments on existing reservations.
+            <br>Descárgalo en: <em>turo.com → Earnings → Export earnings</em>
+          </p>
+          <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+            <input type="file" id="turo-csv-file" accept=".csv,text/csv" style="flex:1;min-width:220px;padding:0.4rem;font-size:0.82rem;" />
+            <button class="btn btn-primary write-action" id="turo-csv-btn" onclick="importTuroCsv()">Import CSV</button>
+          </div>
+          <div id="turo-csv-result" style="margin-top:0.85rem;font-size:0.82rem;"></div>
+        </div>
+
       </div>
 
       <!-- CONSIGNMENTS TAB -->

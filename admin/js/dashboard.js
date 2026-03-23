@@ -724,6 +724,86 @@ function renderCalendarFeeds() {
     </table>`;
 }
 
+async function importTuroCsv() {
+  const fileInput = document.getElementById('turo-csv-file');
+  const resultEl  = document.getElementById('turo-csv-result');
+  const btn       = document.getElementById('turo-csv-btn');
+  const file      = fileInput.files?.[0];
+  if (!file) { resultEl.innerHTML = '<span style="color:var(--red)">Please select a CSV file.</span>'; return; }
+
+  btn.disabled = true; btn.textContent = 'Processing…';
+  resultEl.innerHTML = '';
+
+  const text = await file.text();
+  const rows = text.split(/\r?\n/).map(line => {
+    // Simple CSV parse handling quoted fields with embedded newlines
+    const fields = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { fields.push(cur); cur = ''; }
+      else cur += c;
+    }
+    fields.push(cur);
+    return fields;
+  });
+
+  // Build Turo vehicle ID → car_id map from allCars
+  const turoVehicleMap = {};
+  allCars.forEach(c => { if (c.turo_vehicle_id) turoVehicleMap[c.turo_vehicle_id] = c.id; });
+
+  // Parse rows: group by reservation #, sum earnings
+  const reservations = {};
+  for (const r of rows) {
+    if (!r[0] || !r[0].includes('Viaje')) continue;
+    const tipo     = r[0].replace(/^"+|"+$/g, '');
+    const url      = (r[1] || '').replace(/^"+|"+$/g, '');
+    const vid      = (r[3] || '').trim();
+    const earnings = (r[5] || '').replace(/[$,"]/g, '').trim();
+    const guestM   = tipo.match(/Viaje de (.+?)(?:\n|Con )/);
+    const resM     = url.match(/\/reservation\/(\d+)/);
+    if (!guestM || !resM) continue;
+    const resId  = resM[1];
+    const amount = parseFloat(earnings) || 0;
+    if (!reservations[resId]) reservations[resId] = { guest: guestM[1].trim(), vid, total: 0, car_id: turoVehicleMap[vid] || null };
+    reservations[resId].total += amount;
+  }
+
+  const resIds = Object.keys(reservations);
+  if (!resIds.length) {
+    resultEl.innerHTML = '<span style="color:var(--red)">No trip rows found. Make sure this is a Turo earnings CSV.</span>';
+    btn.disabled = false; btn.textContent = 'Import CSV';
+    return;
+  }
+
+  // Fetch existing reservations with Turo # in notes
+  const { data: existing } = await sb.from('reservations').select('id,notes,customer_name,total_amount,car_id').like('notes', 'Turo #%');
+  let updated = 0, skipped = 0;
+
+  for (const [resId, data] of Object.entries(reservations)) {
+    const match = (existing || []).find(r => (r.notes || '').includes(`Turo #${resId}`));
+    if (match) {
+      await sb.from('reservations').update({
+        customer_name: data.guest,
+        total_amount:  Math.round(data.total * 100) / 100,
+        ...(data.car_id ? { car_id: data.car_id } : {}),
+      }).eq('id', match.id);
+      updated++;
+    } else {
+      skipped++;
+    }
+  }
+
+  await refresh();
+  resultEl.innerHTML = `
+    <span style="color:#10B981;font-weight:600;">✓ Done.</span>
+    &nbsp; <strong>${updated}</strong> reservation(s) updated
+    ${skipped ? ` · <strong>${skipped}</strong> not matched (need calendar import for pickup/return dates)` : ''}.
+  `;
+  fileInput.value = '';
+  btn.disabled = false; btn.textContent = 'Import CSV';
+}
+
 function switchFeedInputMode(mode) {
   const isUrl = mode === 'url';
   document.getElementById('feed-input-url').style.display  = isUrl ? '' : 'none';
@@ -1595,6 +1675,7 @@ async function loadCars() {
         registration_expiry: v.registration_expiry,
         daily_rate: v.daily_rate,
         notes: v.notes,
+        turo_vehicle_id: v.turo_vehicle_id || null,
       };
     });
 
