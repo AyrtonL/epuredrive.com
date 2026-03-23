@@ -686,6 +686,7 @@ function showDetail(r) {
   `;
   document.getElementById('detail-actions').innerHTML = `
     <button class="btn btn-outline" onclick="closeModal('detail-modal')">Close</button>
+    <button class="btn write-action" style="background:none;border:1px solid var(--red,#ef4444);color:var(--red,#ef4444);border-radius:8px;padding:0.5rem 1rem;font-size:0.85rem;font-weight:600;cursor:pointer;" onclick="closeModal('detail-modal');deleteReservation('${r.id}')">Delete</button>
     <button class="btn btn-primary write-action" onclick="closeModal('detail-modal');openEdit('${r.id}')">Edit</button>
   `;
   openModal('detail-modal');
