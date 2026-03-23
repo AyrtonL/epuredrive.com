@@ -1485,7 +1485,9 @@ function renderCustomers() {
 
   tbody.innerHTML = list.map(c => {
     const bookings = allReservations.filter(r =>
-      r.customer_email === c.email || r.customer_phone === c.phone || r.customer_name === c.name
+      (c.email && r.customer_email && r.customer_email.toLowerCase() === c.email.toLowerCase()) ||
+      (c.phone && r.customer_phone && r.customer_phone === c.phone) ||
+      (!c.email && !c.phone && r.customer_name === c.name)
     );
     const spent = bookings.reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
     return `
