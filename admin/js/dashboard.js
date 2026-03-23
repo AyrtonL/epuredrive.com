@@ -1332,9 +1332,11 @@ function renderExpensesTable() {
   const catF = document.getElementById('expense-cat-filter')?.value || '';
 
   const list = allExpenses.filter(e => {
-    const c   = carF ? String(e.car_id) === carF : true;
-    const cat = catF ? e.category === catF : true;
-    return c && cat;
+    let carMatch = true;
+    if (carF === 'company') carMatch = !e.car_id;
+    else if (carF) carMatch = String(e.car_id) === carF;
+    const catMatch = catF ? e.category === catF : true;
+    return carMatch && catMatch;
   });
 
   if (!list.length) {
@@ -1342,17 +1344,23 @@ function renderExpensesTable() {
     return;
   }
 
-  tbody.innerHTML = list.map(e => `
+  tbody.innerHTML = list.map(e => {
+    const isCompany = !e.car_id;
+    const vehicleCell = isCompany
+      ? `<span style="font-size:0.78rem;background:var(--surface-3);color:var(--muted-2);padding:2px 8px;border-radius:20px;">Company</span>`
+      : `<span class="car-dot-inline" style="background:${CAR_COLORS[e.car_id] || '#666'}"></span>${CAR_NAMES[e.car_id] || '—'}`;
+    return `
     <tr>
       <td>${fmtDate(e.expense_date)}</td>
-      <td><span class="car-dot-inline" style="background:${CAR_COLORS[e.car_id] || '#666'}"></span>${CAR_NAMES[e.car_id] || '—'}</td>
+      <td>${vehicleCell}</td>
       <td><span class="badge badge-gray">${esc(e.category)}</span></td>
       <td style="color:var(--muted-2);">${esc(e.description || '—')}</td>
       <td style="color:var(--red);font-weight:600;">$${Number(e.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       <td class="actions">
         <button class="btn-icon danger write-action" onclick="deleteExpense('${e.id}', this)" title="Delete" aria-label="Delete expense">🗑️</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function openAddConsignment() {
@@ -1428,8 +1436,9 @@ async function saveExpense(e) {
   e.preventDefault();
   const form    = document.getElementById('expense-form');
   const editId  = form.dataset.editId;
-  const carId   = parseInt(document.getElementById('exp-car').value);
-  const consignment = allConsignments.find(c => c.car_id === carId);
+  const carIdRaw = document.getElementById('exp-car').value;
+  const carId    = carIdRaw ? parseInt(carIdRaw) : null;
+  const consignment = carId ? allConsignments.find(c => c.car_id === carId) : null;
   const payload = {
     consignment_id: consignment?.id || null,
     car_id:         carId,
