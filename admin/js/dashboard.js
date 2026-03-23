@@ -2644,6 +2644,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   initCalendar();
   renderTable(true);
   renderRecentBookings();
+  if (typeof Chart !== 'undefined') refreshCharts();
   checkNewBookings();
 
   // Sidebar tabs
