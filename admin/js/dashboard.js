@@ -723,35 +723,78 @@ function renderCalendarFeeds() {
     </table>`;
 }
 
+function switchFeedInputMode(mode) {
+  const isUrl = mode === 'url';
+  document.getElementById('feed-input-url').style.display  = isUrl ? '' : 'none';
+  document.getElementById('feed-input-file').style.display = isUrl ? 'none' : '';
+  document.getElementById('feed-tab-url').style.background  = isUrl ? 'var(--accent)' : 'transparent';
+  document.getElementById('feed-tab-url').style.color       = isUrl ? '#fff' : 'var(--muted)';
+  document.getElementById('feed-tab-file').style.background = isUrl ? 'transparent' : 'var(--accent)';
+  document.getElementById('feed-tab-file').style.color      = isUrl ? 'var(--muted)' : '#fff';
+}
+
+function populateFeedCarDropdown() {
+  const sel = document.getElementById('feed-car');
+  if (!sel) return;
+  sel.innerHTML = allCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
 async function addCalendarFeed() {
   const sourceEl = document.getElementById('feed-source');
   const carEl    = document.getElementById('feed-car');
-  const urlEl    = document.getElementById('feed-url');
   const source   = sourceEl.value.trim();
   const carId    = parseInt(carEl.value);
-  const url      = urlEl.value.trim();
+  const isFile   = document.getElementById('feed-input-file').style.display !== 'none';
 
-  if (!url) { alert('Please enter an iCal URL.'); return; }
   if (!source) { alert('Please enter a platform name (e.g. Turo, Airbnb).'); return; }
+  if (!carId)  { alert('Please select a vehicle.'); return; }
 
   const btn = document.getElementById('add-feed-btn');
   btn.disabled = true;
-  btn.textContent = 'Saving…';
+  btn.textContent = 'Importing…';
 
-  const { error } = await withTenant(sb.from('turo_feeds').insert({
-    car_id:      carId,
-    ical_url:    url,
-    source_name: source,
-    ...tenantPayload(),
-  }));
+  if (isFile) {
+    // ── File upload mode ──────────────────────────────
+    const fileInput = document.getElementById('feed-file');
+    const file      = fileInput.files?.[0];
+    if (!file) { alert('Please select an .ics file.'); btn.disabled = false; btn.textContent = 'Add Feed'; return; }
 
-  if (error) { alert('Could not save feed: ' + error.message); }
-  else {
-    sourceEl.value = '';
-    urlEl.value    = '';
-    await loadTuroFeeds();
-    renderCalendarFeeds();
+    const text   = await file.text();
+    const events = parseIcal(text, carId, source);
+    if (!events.length) {
+      showToast('No future events found in the .ics file.', 'error');
+      btn.disabled = false; btn.textContent = 'Add Feed';
+      return;
+    }
+    const { error } = await sb.from('reservations').insert(events.map(e => ({ ...e, ...tenantPayload() })));
+    if (error) { alert('Import error: ' + error.message); }
+    else {
+      showToast(`Imported ${events.length} event(s) from "${file.name}".`);
+      fileInput.value = '';
+      sourceEl.value  = '';
+      await refresh();
+    }
+  } else {
+    // ── URL mode ──────────────────────────────────────
+    const urlEl = document.getElementById('feed-url');
+    const url   = urlEl.value.trim();
+    if (!url) { alert('Please enter an iCal URL.'); btn.disabled = false; btn.textContent = 'Add Feed'; return; }
+
+    const { error } = await sb.from('turo_feeds').insert({
+      car_id:      carId,
+      ical_url:    url,
+      source_name: source,
+      ...tenantPayload(),
+    });
+    if (error) { alert('Could not save feed: ' + error.message); }
+    else {
+      sourceEl.value = '';
+      urlEl.value    = '';
+      await loadTuroFeeds();
+      renderCalendarFeeds();
+    }
   }
+
   btn.disabled = false;
   btn.textContent = 'Add Feed';
 }
@@ -2061,6 +2104,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await Promise.all([loadReservations(), loadBlockedDates(), loadTuroFeeds(), loadConsignments(), loadExpenses(), loadCars(), loadServices(), loadCustomers()]);
 
+  populateFeedCarDropdown();
   _setPlanUI();
 
   // Handle post-checkout redirect

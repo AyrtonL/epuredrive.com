@@ -1008,9 +1008,13 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             <h3 style="font-size:0.95rem;font-weight:600;">Add Calendar Feed</h3>
           </div>
-          <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-bottom:1.25rem;">
-            Paste any iCal (.ics) URL — works with Turo, Airbnb, Google Calendar, Apple Calendar, or any platform that exports iCal.
-          </p>
+
+          <!-- Tab switcher: URL vs File -->
+          <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;width:fit-content;margin-bottom:1.25rem;overflow:hidden;">
+            <button id="feed-tab-url" onclick="switchFeedInputMode('url')" style="padding:0.4rem 1.1rem;font-size:0.8rem;font-weight:600;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all .15s;">iCal URL</button>
+            <button id="feed-tab-file" onclick="switchFeedInputMode('file')" style="padding:0.4rem 1.1rem;font-size:0.8rem;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--muted);transition:all .15s;">Upload .ics File</button>
+          </div>
+
           <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
             <div class="form-group" style="width:160px;margin:0;">
               <label>Platform / Label</label>
@@ -1018,19 +1022,24 @@
             </div>
             <div class="form-group" style="width:160px;margin:0;">
               <label>Vehicle</label>
-              <select id="feed-car" class="filter-select" style="height:40px;">
-                <option value="1">Audi Q3</option>
-                <option value="2">Audi A3</option>
-                <option value="3">Porsche Cayenne</option>
-                <option value="4">Volkswagen Atlas</option>
-              </select>
+              <select id="feed-car" class="filter-select" style="height:40px;"><!-- populated by JS --></select>
             </div>
-            <div class="form-group" style="flex:1;min-width:260px;margin:0;">
+            <!-- URL mode -->
+            <div id="feed-input-url" class="form-group" style="flex:1;min-width:260px;margin:0;">
               <label>iCal URL (.ics)</label>
               <input type="url" id="feed-url" placeholder="https://…/calendar.ics" />
             </div>
+            <!-- File mode -->
+            <div id="feed-input-file" class="form-group" style="flex:1;min-width:260px;margin:0;display:none;">
+              <label>Select .ics File</label>
+              <input type="file" id="feed-file" accept=".ics,text/calendar" style="padding:0.45rem;height:40px;" />
+            </div>
             <button class="btn btn-primary write-action" id="add-feed-btn" style="height:40px;white-space:nowrap;">Add Feed</button>
           </div>
+          <p style="font-size:0.78rem;color:var(--muted);line-height:1.5;margin-top:0.85rem;">
+            <strong>iCal URL:</strong> paste the subscription link from Turo, Airbnb, Google Calendar, or any platform. &nbsp;|&nbsp;
+            <strong>Upload file:</strong> export from Apple Calendar via <em>File → Export → Export…</em> and upload the <code>.ics</code> file.
+          </p>
         </div>
 
         <!-- Saved feeds list -->
