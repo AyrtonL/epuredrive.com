@@ -215,18 +215,16 @@ async function startCheckout(priceId) {
   if (btn) { btn.disabled = true; btn.textContent = 'Redirecting…'; }
 
   try {
-    // If no tenant yet, auto-create one from the user's email
+    // If no tenant yet, auto-create one via server function (bypasses RLS)
     if (!currentTenantId && userId) {
-      const company = email.split('@')[0] || 'My Fleet';
-      const slug    = company.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
-      const { data: tenant, error: tErr } = await sb
-        .from('tenants')
-        .insert({ name: company, slug, plan: 'trial', trial_started_at: new Date().toISOString() })
-        .select('id')
-        .single();
-      if (tErr) throw new Error('Could not create account: ' + tErr.message);
-      currentTenantId = tenant.id;
-      await sb.from('profiles').upsert({ id: userId, tenant_id: tenant.id, role: 'admin' });
+      const tRes  = await fetch('/.netlify/functions/create-tenant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, email, company: email.split('@')[0] }),
+      });
+      const tJson = await tRes.json();
+      if (!tRes.ok) throw new Error(tJson.error || 'Could not create account');
+      currentTenantId = tJson.tenantId;
     }
 
     const res  = await fetch('/.netlify/functions/create-checkout-session', {

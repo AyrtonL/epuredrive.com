@@ -227,17 +227,15 @@
         btn.disabled = false;
         btn.textContent = 'Create Account';
       } else {
-        // Create tenant + profile immediately so currentTenantId is always set
+        // Create tenant + profile via server function (bypasses RLS)
         try {
           const userId = data.user?.id;
-          const slug   = company.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
-          const { data: tenant } = await sb
-            .from('tenants')
-            .insert({ name: company || name || email.split('@')[0], slug, plan: 'trial', trial_started_at: new Date().toISOString() })
-            .select('id')
-            .single();
-          if (tenant?.id && userId) {
-            await sb.from('profiles').upsert({ id: userId, tenant_id: tenant.id, full_name: name, role: 'admin' });
+          if (userId) {
+            await fetch('/.netlify/functions/create-tenant', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId, email, company: company || name || email.split('@')[0] }),
+            });
           }
         } catch (_) { /* non-fatal — onboarding wizard will handle it */ }
 
