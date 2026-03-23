@@ -634,8 +634,8 @@ async function saveBlockedDates(e) {
   if (end < start) { alert('End date must be after start date.'); return; }
 
   const rows = carId === 'all'
-    ? [1, 2, 3, 4].map(id => ({ car_id: id, start_date: start, end_date: end, reason }))
-    : [{ car_id: parseInt(carId), start_date: start, end_date: end, reason }];
+    ? allCars.map(c => ({ car_id: c.id, start_date: start, end_date: end, reason, ...tenantPayload() }))
+    : [{ car_id: parseInt(carId), start_date: start, end_date: end, reason, ...tenantPayload() }];
 
   const btn = e.submitter;
   btn.disabled = true;
@@ -782,7 +782,7 @@ async function syncTuro() {
         .eq('source', 'ical')
         .ilike('notes', `%[${feed.sourceName}]%`);
 
-      if (events.length) await sb.from('reservations').insert(events);
+      if (events.length) await sb.from('reservations').insert(events.map(e => ({ ...e, ...tenantPayload() })));
 
       await sb.from('turo_feeds').update({ last_synced: new Date().toISOString() }).eq('id', feed.id);
       totalImported += events.length;
@@ -1464,28 +1464,30 @@ function renderMaintenanceAlerts() {
 //  CARS & MAINTENANCE
 // ====================================================
 async function loadCars() {
-  const { data, error } = await withTenant(sb.from('vehicles').select('*').order('created_at'));
+  const { data, error } = await withTenant(sb.from('cars').select('*').order('id'));
   if (!error && data && data.length > 0) {
     CAR_COLORS = {}; CAR_NAMES = {}; DAILY_RATES = {};
     allCars = data.map((v, i) => {
-      const intId = i + 1; // Map UUID to int backward compat layer
-      CAR_NAMES[intId] = `${v.make} ${v.model}`;
-      DAILY_RATES[intId] = v.daily_rate;
-      CAR_COLORS[intId] = ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#ef4444'][i % 5];
-      
-      return { 
-         id: intId, real_uuid: v.id, make: v.make, model: v.model,
-         name: CAR_NAMES[intId], color: CAR_COLORS[intId],
-         year: v.year, car_color: 'Black', plate: 'TBD', vin: 'TBD',
-         mileage: 0, insurance_expiry: '2027-01-01', registration_expiry: '2027-01-01', daily_rate: v.daily_rate
+      CAR_NAMES[v.id]  = `${v.make} ${v.model}`;
+      DAILY_RATES[v.id] = v.daily_rate;
+      CAR_COLORS[v.id]  = v.color || ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#ef4444'][i % 5];
+      return {
+        id: v.id, make: v.make, model: v.model,
+        name: CAR_NAMES[v.id], color: CAR_COLORS[v.id],
+        year: v.year, car_color: v.car_color, plate: v.plate, vin: v.vin,
+        mileage: v.mileage,
+        insurance_expiry: v.insurance_expiry,
+        registration_expiry: v.registration_expiry,
+        daily_rate: v.daily_rate,
+        notes: v.notes,
       };
     });
-    
+
     // Hydrate all HTML dropdowns dynamically
     const optionsHTML = '<option value="">Select vehicle…</option>' + allCars.map(c => `<option value="${c.id}">${c.name} — $${c.daily_rate}/day</option>`).join('');
     ['f-car', 'b-car', 'car-filter'].forEach(selId => {
-       const el = document.getElementById(selId);
-       if (el) el.innerHTML = (selId === 'car-filter') ? '<option value="">All Vehicles</option>' + allCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('') : optionsHTML;
+      const el = document.getElementById(selId);
+      if (el) el.innerHTML = (selId === 'car-filter') ? '<option value="">All Vehicles</option>' + allCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('') : optionsHTML;
     });
   } else {
     allCars = [];
@@ -1697,10 +1699,9 @@ async function saveCar(e) {
   const btn = e.submitter;
   btn.disabled = true; btn.textContent = 'Saving…';
 
-  // Update real UUID row natively, intercepting legacy INT IDs
-  const { error } = (existingCar && existingCar.real_uuid)
-    ? await sb.from('vehicles').update(payload).eq('id', existingCar.real_uuid)
-    : { error: { message: "Cannot insert new vehicles from Admin panel yet. Use Supabase SQL Editor." } };
+  const { error } = existingCar
+    ? await sb.from('cars').update(payload).eq('id', carId)
+    : await sb.from('cars').insert({ ...payload, ...tenantPayload() });
 
   if (error) { alert('Error: ' + error.message); }
   else { closeModal('car-modal'); await loadCars(); renderCarCards(); }
@@ -1766,6 +1767,9 @@ async function saveService(e) {
       const car = allCars.find(c => c.id === svcCarId);
       if (!car?.mileage || svcMileage > car.mileage) {
         await sb.from('cars').update({ mileage: svcMileage }).eq('id', svcCarId);
+        // Keep allCars in sync so fleet status re-renders correctly
+        const localCar = allCars.find(c => c.id === svcCarId);
+        if (localCar) localCar.mileage = svcMileage;
       }
     }
     closeModal('service-modal');
