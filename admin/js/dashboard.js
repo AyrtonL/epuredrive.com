@@ -210,10 +210,25 @@ function checkPlanLimit(type) {
 async function startCheckout(priceId) {
   const { data } = await sb.auth.getSession();
   const email    = data?.session?.user?.email || '';
+  const userId   = data?.session?.user?.id;
   const btn      = event?.currentTarget;
   if (btn) { btn.disabled = true; btn.textContent = 'Redirecting…'; }
 
   try {
+    // If no tenant yet, auto-create one from the user's email
+    if (!currentTenantId && userId) {
+      const company = email.split('@')[0] || 'My Fleet';
+      const slug    = company.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
+      const { data: tenant, error: tErr } = await sb
+        .from('tenants')
+        .insert({ name: company, slug, plan: 'trial', trial_started_at: new Date().toISOString() })
+        .select('id')
+        .single();
+      if (tErr) throw new Error('Could not create account: ' + tErr.message);
+      currentTenantId = tenant.id;
+      await sb.from('profiles').upsert({ id: userId, tenant_id: tenant.id, role: 'admin' });
+    }
+
     const res  = await fetch('/.netlify/functions/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

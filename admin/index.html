@@ -211,12 +211,14 @@
         return;
       }
 
+      const email   = document.getElementById('reg-email').value.trim();
+      const name    = document.getElementById('reg-name').value.trim();
+      const company = document.getElementById('reg-company').value.trim();
+
       const { data, error } = await sb.auth.signUp({
-        email: document.getElementById('reg-email').value.trim(),
+        email,
         password: pwd,
-        options: {
-          data: { full_name: document.getElementById('reg-name').value.trim() }
-        }
+        options: { data: { full_name: name } }
       });
 
       if (error) {
@@ -225,6 +227,20 @@
         btn.disabled = false;
         btn.textContent = 'Create Account';
       } else {
+        // Create tenant + profile immediately so currentTenantId is always set
+        try {
+          const userId = data.user?.id;
+          const slug   = company.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
+          const { data: tenant } = await sb
+            .from('tenants')
+            .insert({ name: company || name || email.split('@')[0], slug, plan: 'trial', trial_started_at: new Date().toISOString() })
+            .select('id')
+            .single();
+          if (tenant?.id && userId) {
+            await sb.from('profiles').upsert({ id: userId, tenant_id: tenant.id, full_name: name, role: 'admin' });
+          }
+        } catch (_) { /* non-fatal — onboarding wizard will handle it */ }
+
         suc.textContent = 'Account created successfully! Redirecting...';
         suc.style.display = 'block';
         setTimeout(() => window.location.href = 'dashboard.html', 1500);
