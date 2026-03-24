@@ -973,9 +973,9 @@
     <div id="trial-banner" class="hidden items-center justify-between gap-4 px-8 py-3 bg-tertiary-fixed text-on-tertiary-container flex-wrap text-sm font-medium"></div>
     <div class="content p-8 flex-1" style="box-sizing:border-box;padding:2rem;">
 
-      <!-- STATS -->
+      <!-- STATS (dashboard tab only) -->
       <span id="stat-total" style="display:none"></span>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" style="box-sizing:border-box;">
+      <div id="stats-bar" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" style="box-sizing:border-box;">
         <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm relative group border border-outline-variant/30" style="background:#fff;border:1px solid #c6c6cd;box-sizing:border-box;">
           <div class="flex justify-between items-start mb-4"><p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest m-0" style="color:#4b5563;">Total Cars</p><span class="material-symbols-outlined text-secondary" style="color:#006c49;">directions_car</span></div>
           <div class="flex items-baseline justify-between"><h3 class="text-3xl font-extrabold text-on-surface m-0" style="font-family:'Manrope',sans-serif;color:#191c1e;">4</h3></div>
@@ -2120,7 +2120,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-  <script src="js/dashboard.js?v=20260324e"></script>
+  <script src="js/dashboard.js?v=20260324f"></script>
   <script>
     // Theme toggle Logic
     const themeBtn = document.getElementById('theme-btn');

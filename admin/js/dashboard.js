@@ -2534,6 +2534,8 @@ function switchTab(tab) {
   });
   const t = document.getElementById('tab-' + tab);
   if (t) t.classList.add('active');
+  const statsBar = document.getElementById('stats-bar');
+  if (statsBar) statsBar.style.display = (tab === 'main') ? '' : 'none';
   const navItem = document.querySelector(`.nav-item[data-tab="${tab}"]`);
   if (navItem) {
     navItem.classList.remove('bg-transparent', 'text-slate-400');
