@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Confirmed — éPure Drive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css?v=1234567" />
+  <style>
+    body { background: #f7f7f8; min-height: 100vh; display: flex; flex-direction: column; }
+    .confirmation-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 20px 60px;
+    }
+    .confirmation-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+      max-width: 560px;
+      width: 100%;
+      padding: 48px 40px;
+    }
+    @media (max-width: 600px) {
+      .confirmation-card { padding: 32px 24px; }
+    }
+    .check-circle {
+      width: 64px; height: 64px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+    }
+    .conf-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 8px;
+      color: #111;
+    }
+    .conf-subtitle {
+      text-align: center;
+      color: #6b7280;
+      font-size: 0.95rem;
+      margin-bottom: 32px;
+    }
+    .conf-ref {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-bottom: 32px;
+      letter-spacing: 0.04em;
+    }
+    .conf-ref span {
+      font-weight: 700;
+      color: #111;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 32px;
+    }
+    .detail-table tr td {
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.93rem;
+    }
+    .detail-table tr:last-child td { border-bottom: none; }
+    .detail-table td:first-child { color: #6b7280; width: 40%; }
+    .detail-table td:last-child { font-weight: 600; color: #111; text-align: right; }
+    .total-row td { font-size: 1.05rem !important; }
+    .total-row td:last-child { color: #111; font-size: 1.2rem !important; }
+    .status-badge {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .conf-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .conf-note {
+      text-align: center;
+      font-size: 0.82rem;
+      color: #9ca3af;
+      margin-top: 24px;
+      line-height: 1.6;
+    }
+    .loading-state { text-align: center; padding: 48px 0; color: #6b7280; }
+    .error-state { text-align: center; padding: 48px 0; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar" id="navbar">
+    <div class="navbar-inner">
+      <a href="index.html" class="navbar-logo">
+        <img src="assets/logo.png" alt="éPure Drive" class="navbar-img-logo">
+      </a>
+    </div>
+  </nav>
+
+  <div class="confirmation-wrap">
+    <div class="confirmation-card" id="conf-card">
+      <div class="loading-state">Loading your booking…</div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://brwzjwbpguiignrxvjdc.supabase.co";
+    const SUPABASE_ANON = "sb_publishable_krEuIpNhJVcADIUyBXYy9g_fiXrXzV9";
+
+    function fmt(dateStr) {
+      if (!dateStr) return '—';
+      const d = new Date(dateStr + 'T12:00:00');
+      return d.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    function fmtMoney(n) {
+      return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    async function loadConfirmation() {
+      const card = document.getElementById('conf-card');
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+
+      if (!id) {
+        card.innerHTML = `<div class="error-state"><h2>Booking not found</h2><p>No reservation ID provided.</p><a href="index.html" class="btn btn-primary" style="margin-top:20px;">Return Home</a></div>`;
+        return;
+      }
+
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/reservations?id=eq.${encodeURIComponent(id)}&select=*`, {
+          headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
+        });
+        const data = await res.json();
+        const r = data && data[0];
+
+        if (!r) {
+          card.innerHTML = `<div class="error-state"><h2>Booking not found</h2><p>We couldn't find this reservation.</p><a href="index.html" class="btn btn-primary" style="margin-top:20px;">Return Home</a></div>`;
+          return;
+        }
+
+        // Fetch car name
+        let carName = '—';
+        if (r.car_id) {
+          const carRes = await fetch(`${SUPABASE_URL}/rest/v1/cars?id=eq.${r.car_id}&select=make,model`, {
+            headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
+          });
+          const carData = await carRes.json();
+          if (carData && carData[0]) carName = carData[0].make + ' ' + carData[0].model;
+        }
+
+        const shortId = id.substring(0, 8).toUpperCase();
+        const addons = (r.addons || []).map(a => {
+          const map = { fuel: 'Prepaid Fuel', 'insurance-premium': 'Premium Coverage', youngDriver: 'Young Driver', additionalDriver: 'Additional Driver' };
+          return map[a] || a;
+        });
+
+        card.innerHTML = `
+          <div class="check-circle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h1 class="conf-title">Booking Confirmed</h1>
+          <p class="conf-subtitle">Thank you, ${escHtml(r.customer_name || '')}. Your reservation is confirmed and ready.</p>
+          <p class="conf-ref">Reservation ID: <span>${shortId}</span></p>
+
+          <table class="detail-table">
+            <tr>
+              <td>Status</td>
+              <td><span class="status-badge">Confirmed</span></td>
+            </tr>
+            <tr>
+              <td>Vehicle</td>
+              <td>${escHtml(carName)}</td>
+            </tr>
+            <tr>
+              <td>Pick-up</td>
+              <td>${fmt(r.pickup_date)}</td>
+            </tr>
+            <tr>
+              <td>Return</td>
+              <td>${fmt(r.return_date)}</td>
+            </tr>
+            <tr>
+              <td>Location</td>
+              <td>${escHtml(r.pickup_location || '—')}</td>
+            </tr>
+            ${addons.length ? `<tr><td>Extras</td><td>${addons.map(a => escHtml(a)).join(', ')}</td></tr>` : ''}
+            <tr class="total-row">
+              <td>Total Paid</td>
+              <td>${fmtMoney(r.total_amount)}</td>
+            </tr>
+          </table>
+
+          <div class="conf-actions">
+            <a href="index.html" class="btn btn-primary" style="text-decoration:none;">Return Home</a>
+            <button onclick="window.print()" class="btn" style="border:1px solid #e5e7eb;color:#111;text-decoration:none;">Print / Save PDF</button>
+          </div>
+          <p class="conf-note">
+            Questions? Contact us at <a href="https://wa.me/17862096770" style="color:#111;font-weight:600;">WhatsApp</a> or save this page URL for your records.
+          </p>
+        `;
+      } catch (err) {
+        card.innerHTML = `<div class="error-state"><h2>Something went wrong</h2><p>Please contact us with your booking details.</p><a href="index.html" class="btn btn-primary" style="margin-top:20px;">Return Home</a></div>`;
+      }
+    }
+
+    function escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    document.addEventListener('DOMContentLoaded', loadConfirmation);
+  </script>
+</body>
+</html>

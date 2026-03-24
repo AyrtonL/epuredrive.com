@@ -1217,6 +1217,7 @@ footer h4 { color: #FFFFFF !important; }
 @media (max-width: 768px) {
   .nav-links, .navbar-phone { display: none; }
   .hamburger { display: flex; }
+  .navbar-actions .btn-primary { display: none; }
 
   .hero-content .container {
     grid-template-columns: 1fr;
@@ -1235,6 +1236,35 @@ footer h4 { color: #FFFFFF !important; }
   .section { padding: 4rem 0; }
   .detail-specs { grid-template-columns: repeat(2, 1fr); }
   .detail-gallery { aspect-ratio: 4/3; }
+
+  /* Hero booking widget */
+  .hero .booking-widget {
+    border-radius: 20px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 20px 20px 16px !important;
+    gap: 0 !important;
+  }
+  .hero .booking-widget .widget-field {
+    border-right: none !important;
+    padding-right: 0 !important;
+    min-width: 100% !important;
+    flex: none !important;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #E5E7EB;
+  }
+  .hero .booking-widget .widget-field:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .hero .booking-widget button.btn {
+    width: 100% !important;
+    margin-top: 12px;
+    border-radius: 12px !important;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {

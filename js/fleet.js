@@ -279,25 +279,14 @@ function initBookingForm() {
     
     // Stop traditional HTTP submission
     if (valid) {
-      e.preventDefault();
-      
       const pDate = document.getElementById('pickup-date').value;
       const rDate = document.getElementById('return-date').value;
       const carId = document.getElementById('car-id-input').value;
-      const car = CARS.find(c => c.id == carId) || CARS[0];
-      
-      // WhatsApp Routing Pipeline
-      const phone = "17862096770";
-      const totalCost = Math.max(1, Math.round((new Date(rDate) - new Date(pDate)) / 86400000)) * car.price;
-      const textMessage = `Hello! I would like to safely reserve the *${car.make} ${car.model}*.\n\nDates: ${pDate} to ${rDate}\nTotal Anticipated: $${totalCost}`;
-      
-      // Attempt Stripe Checkout if URL provided, otherwise WhatsApp
-      if (car.link && car.link.includes('stripe.com')) {
-        window.location.href = car.link;
-      } else {
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(textMessage)}`;
-        window.open(url, "_blank");
-      }
+      const loc   = form.querySelector('select[name="loc"]')?.value || '';
+
+      const p = new URLSearchParams({ id: carId, start: pDate, end: rDate });
+      if (loc) p.set('loc', loc);
+      window.location.href = 'checkout.html?' + p.toString();
     }
   });
 }
@@ -305,7 +294,7 @@ function initBookingForm() {
 // ---- Supabase Initializer ----
 async function syncDatabase() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/vehicles?select=*`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/cars?select=*`, {
       headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
     });
     if (res.ok) {
