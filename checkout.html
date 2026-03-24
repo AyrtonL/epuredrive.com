@@ -1082,6 +1082,25 @@
             }),
         }).catch(() => {});
 
+        // Send confirmation email to customer
+        fetch('/.netlify/functions/send-booking-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                reservationId: reservationData.id,
+                customerName,
+                customerEmail,
+                carName:    selectedCar.make + ' ' + selectedCar.model,
+                pickupDate,
+                returnDate,
+                bookingDays,
+                location:  locationText,
+                total:     totalAmount,
+                coverage:  insurancePlan === 'premium' ? 'Premium Coverage' : 'Basic Liability',
+                extras:    activeAddons.filter(a => a !== 'insurance-premium').map(k => addons[k]?.label || k).join(', ') || 'None',
+            }),
+        }).catch(() => {});
+
         // Redirect to confirmation page
         if (reservationData && reservationData.id) {
             window.location.href = 'booking-confirmation.html?id=' + reservationData.id;
