@@ -113,9 +113,9 @@ function renderCars(cars, containerId = 'cars-grid') {
   }, '');
 
   grid.innerHTML = cars.map((car, i) => `
-    <article class="car-card fade-in" data-id="${car.id}" data-make="${car.make.toLowerCase()}" data-category="${car.category}" style="transition-delay:${i * 0.06}s">
+    <article class="car-card ${i > 3 ? 'fade-in' : ''}" data-id="${car.id}" data-make="${car.make.toLowerCase()}" data-category="${car.category}" style="${i > 3 ? `transition-delay:${(i - 4) * 0.06}s` : ''}">
       <div class="car-card-img">
-        <img src="${car.image}" alt="${car.make} ${car.model}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&q=80'">
+        <img src="${car.gallery && car.gallery.length ? car.gallery[0] : car.image}" alt="${car.make} ${car.model}" ${i > 3 ? 'loading="lazy"' : ''}>
         ${car.badge ? `<span class="car-badge ${car.featured ? 'featured' : ''}">${car.badge}</span>` : ''}
       </div>
       <div class="car-card-body">
@@ -316,7 +316,8 @@ async function syncDatabase() {
         const findStatic = (make, model) =>
           staticSnapshot.find(c =>
             c.make.toLowerCase() === (make || '').toLowerCase() &&
-            c.model.toLowerCase() === (model || '').toLowerCase()
+            (c.model.toLowerCase().startsWith((model || '').toLowerCase()) ||
+             (model || '').toLowerCase().startsWith(c.model.toLowerCase()))
           );
 
         CARS.length = 0;
