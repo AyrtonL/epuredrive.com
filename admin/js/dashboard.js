@@ -2620,6 +2620,37 @@ function toggleSidebar() {
   overlay?.classList.toggle('active');
 }
 
+function initMobileNav() {
+  if (window.innerWidth > 768) return;
+  const aside = document.querySelector('aside');
+  const btn = document.getElementById('mobile-menu-btn');
+  if (aside) {
+    aside.classList.remove('sidebar-open');
+    aside.style.transform = 'translateX(-100%)';
+    aside.style.transition = 'transform 0.25s ease';
+    aside.style.position = 'fixed';
+    aside.style.zIndex = '50';
+  }
+  if (btn) btn.style.display = 'flex';
+  // Re-wire toggleSidebar to also handle inline style on open/close
+  window._mobileNavReady = true;
+}
+
+// Re-implement toggle to handle inline styles on mobile
+(function patchToggle() {
+  const _orig = window.toggleSidebar;
+  window.toggleSidebar = function() {
+    const aside = document.querySelector('aside');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (!aside) return;
+    const isOpen = aside.classList.toggle('sidebar-open');
+    overlay?.classList.toggle('active');
+    if (window.innerWidth <= 768) {
+      aside.style.transform = isOpen ? 'translateX(0)' : 'translateX(-100%)';
+    }
+  };
+})();
+
 // ====================================================
 //  AUTO-CALCULATE AMOUNT
 // ====================================================
@@ -2782,6 +2813,9 @@ async function refresh() {
 //  INIT
 // ====================================================
 window.addEventListener('DOMContentLoaded', async () => {
+  initMobileNav();
+  window.addEventListener('resize', initMobileNav);
+
   if (!(await checkAuth())) return;
   applyRoleRestrictions();
 

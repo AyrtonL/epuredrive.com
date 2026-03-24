@@ -247,8 +247,8 @@
 
     /* Mobile: sidebar drawer + layout reflow */
     @media (max-width: 768px) {
-      aside { transform:translateX(-100%); transition:transform 0.25s ease; z-index:50; }
-      aside.sidebar-open { transform:translateX(0); }
+      aside { transform:translateX(-100%) !important; transition:transform 0.25s ease !important; position:fixed !important; z-index:50 !important; }
+      aside.sidebar-open { transform:translateX(0) !important; }
       main { margin-left:0 !important; }
       .main { margin-left:0 !important; }
       .ml-64 { margin-left:0 !important; }
