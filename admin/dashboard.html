@@ -882,6 +882,22 @@
   </style>
 </head>
 <body>
+  <!-- Immediately hide sidebar on mobile before any paint -->
+  <script>
+    if (window.innerWidth <= 768) {
+      document.documentElement.style.setProperty('--sidebar-hidden','1');
+      document.addEventListener('DOMContentLoaded', function() {
+        var aside = document.querySelector('aside');
+        var btn = document.getElementById('mobile-menu-btn');
+        if (aside) {
+          aside.style.cssText += ';transform:translateX(-100%) !important;transition:transform 0.25s ease;position:fixed;z-index:50;';
+        }
+        if (btn) btn.style.display = 'flex';
+        var main = document.querySelector('main');
+        if (main) main.style.marginLeft = '0';
+      });
+    }
+  </script>
 
   <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
   <!-- SIDEBAR -->
@@ -2115,7 +2131,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-  <script src="js/dashboard.js"></script>
+  <script src="js/dashboard.js?v=20260324b"></script>
   <script>
     // Theme toggle Logic
     const themeBtn = document.getElementById('theme-btn');
