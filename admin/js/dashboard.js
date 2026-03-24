@@ -2185,7 +2185,7 @@ async function loadCars() {
   if (!error && data && data.length > 0) {
     CAR_COLORS = {}; CAR_NAMES = {}; DAILY_RATES = {};
     allCars = data.map((v, i) => {
-      CAR_NAMES[v.id]  = `${v.make} ${v.model}`;
+      CAR_NAMES[v.id]   = `${v.make} ${v.model_full || v.model}`;
       DAILY_RATES[v.id] = v.daily_rate;
       CAR_COLORS[v.id]  = v.color || ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#ef4444'][i % 5];
       return {
@@ -2198,10 +2198,21 @@ async function loadCars() {
         daily_rate: v.daily_rate,
         notes: v.notes,
         turo_vehicle_id: v.turo_vehicle_id || null,
+        // Public display fields
+        model_full:   v.model_full   || null,
+        image_url:    v.image_url    || null,
+        gallery:      v.gallery      || [],
+        category:     v.category     || 'suv',
+        badge:        v.badge        || null,
+        seats:        v.seats        || 5,
+        transmission: v.transmission || 'Auto',
+        hp:           v.hp           || null,
+        top_speed:    v.top_speed    || null,
+        features:     v.features     || [],
+        description:  v.description  || null,
+        status:       v.status       || 'available',
       };
     });
-
-    // Note: all dropdown hydration is handled by populateCarFilterDropdowns() which is called after loadCars()
   } else {
     allCars = [];
   }
@@ -2248,14 +2259,23 @@ function renderCarCards() {
   if (!tbody) return;
 
   const rows = allCars.map(car => {
-    const insClass = expiryClass(car.insurance_expiry);
-    const regClass = expiryClass(car.registration_expiry);
+    const insClass  = expiryClass(car.insurance_expiry);
+    const regClass  = expiryClass(car.registration_expiry);
+    const thumbHtml = car.image_url
+      ? `<img src="${esc(car.image_url)}" style="width:40px;height:30px;object-fit:cover;border-radius:4px;flex-shrink:0;" onerror="this.style.display='none'" />`
+      : `<span style="width:40px;height:30px;border-radius:4px;background:var(--bg-tertiary);display:inline-flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--muted);flex-shrink:0;">No img</span>`;
+    const statusDot = car.status === 'unavailable'
+      ? `<span style="font-size:0.65rem;background:#fef2f2;color:#ef4444;border-radius:4px;padding:1px 5px;margin-left:4px;">Hidden</span>`
+      : '';
     return `
       <tr>
         <td>
-          <div style="display:flex;align-items:center;gap:0.5rem;">
-            <span style="width:10px;height:10px;border-radius:50%;background:${car.color};flex-shrink:0;display:inline-block"></span>
-            <strong>${esc(car.name)}</strong>
+          <div style="display:flex;align-items:center;gap:0.6rem;">
+            ${thumbHtml}
+            <div>
+              <strong>${esc(car.name)}</strong>${statusDot}
+              ${car.badge ? `<div style="font-size:0.7rem;color:var(--muted);">${esc(car.badge)}</div>` : ''}
+            </div>
           </div>
         </td>
         <td>${car.year || '—'}</td>
@@ -2376,30 +2396,70 @@ function renderServicesTable() {
   }).join('');
 }
 
+function openAddCar() {
+  const form = document.getElementById('car-form');
+  form.reset();
+  delete form.dataset.carId;
+  document.getElementById('car-modal-title').textContent = 'Add New Vehicle';
+  document.getElementById('car-img-preview').innerHTML = '';
+  document.getElementById('car-gallery-preview').innerHTML = '';
+  document.getElementById('gallery-upload-status').textContent = '';
+  document.getElementById('car-status').value = 'available';
+  document.getElementById('car-category').value = 'suv';
+  openModal('car-modal');
+}
+
 function openEditCar(id) {
   const car = allCars.find(c => c.id === id);
   if (!car) { showToast('Vehicle not found.', 'error'); return; }
   const form = document.getElementById('car-form');
   form.dataset.carId = id;
   document.getElementById('car-modal-title').textContent = `Edit — ${CAR_NAMES[id] || 'Vehicle'}`;
-  document.getElementById('car-year').value         = car.year              || '';
-  document.getElementById('car-color').value        = car.car_color         || '';
-  document.getElementById('car-plate').value        = car.plate             || '';
-  document.getElementById('car-vin').value          = car.vin               || '';
-  document.getElementById('car-mileage').value      = car.mileage           || '';
-  document.getElementById('car-rate').value         = car.daily_rate        || '';
-  document.getElementById('car-insurance').value    = car.insurance_expiry  || '';
-  document.getElementById('car-registration').value = car.registration_expiry || '';
-  document.getElementById('car-notes').value        = car.notes             || '';
+  // Internal
+  document.getElementById('car-make').value          = car.make             || '';
+  document.getElementById('car-model').value         = car.model            || '';
+  document.getElementById('car-year').value          = car.year             || '';
+  document.getElementById('car-color').value         = car.car_color        || '';
+  document.getElementById('car-plate').value         = car.plate            || '';
+  document.getElementById('car-vin').value           = car.vin              || '';
+  document.getElementById('car-mileage').value       = car.mileage          || '';
+  document.getElementById('car-rate').value          = car.daily_rate       || '';
+  document.getElementById('car-insurance').value     = car.insurance_expiry || '';
+  document.getElementById('car-registration').value  = car.registration_expiry || '';
+  document.getElementById('car-notes').value         = car.notes            || '';
+  // Public display
+  document.getElementById('car-model-full').value   = car.model_full    || '';
+  document.getElementById('car-category').value     = car.category      || 'suv';
+  document.getElementById('car-badge').value        = car.badge         || '';
+  document.getElementById('car-status').value       = car.status        || 'available';
+  document.getElementById('car-seats').value        = car.seats         || '';
+  document.getElementById('car-transmission').value = car.transmission  || '';
+  document.getElementById('car-hp').value           = car.hp            || '';
+  document.getElementById('car-description').value  = car.description   || '';
+  document.getElementById('car-features').value     = Array.isArray(car.features) ? car.features.join('\n') : '';
+  document.getElementById('car-image-url').value    = car.image_url     || '';
+  const galleryUrls = Array.isArray(car.gallery) ? car.gallery : [];
+  document.getElementById('car-gallery').value      = galleryUrls.join('\n');
+  // Previews
+  previewMainImage(car.image_url || '');
+  renderGalleryPreview(galleryUrls);
+  document.getElementById('gallery-upload-status').textContent = '';
   openModal('car-modal');
 }
 
 async function saveCar(e) {
   e.preventDefault();
-  const carId   = parseInt(document.getElementById('car-form').dataset.carId);
+  const carId       = parseInt(document.getElementById('car-form').dataset.carId);
   const existingCar = allCars.find(c => c.id === carId);
   if (!existingCar && !checkPlanLimit('car')) return;
+
+  const galleryRaw  = document.getElementById('car-gallery').value.trim();
+  const featuresRaw = document.getElementById('car-features').value.trim();
+
   const payload = {
+    // Internal
+    make:                  document.getElementById('car-make').value.trim()        || null,
+    model:                 document.getElementById('car-model').value.trim()       || null,
     year:                  parseInt(document.getElementById('car-year').value)     || null,
     car_color:             document.getElementById('car-color').value.trim(),
     plate:                 document.getElementById('car-plate').value.trim(),
@@ -2409,7 +2469,20 @@ async function saveCar(e) {
     insurance_expiry:      document.getElementById('car-insurance').value          || null,
     registration_expiry:   document.getElementById('car-registration').value       || null,
     notes:                 document.getElementById('car-notes').value.trim(),
+    // Public display
+    model_full:    document.getElementById('car-model-full').value.trim()   || null,
+    category:      document.getElementById('car-category').value            || 'suv',
+    badge:         document.getElementById('car-badge').value.trim()        || null,
+    status:        document.getElementById('car-status').value              || 'available',
+    seats:         parseInt(document.getElementById('car-seats').value)     || null,
+    transmission:  document.getElementById('car-transmission').value.trim() || null,
+    hp:            document.getElementById('car-hp').value.trim()           || null,
+    description:   document.getElementById('car-description').value.trim()  || null,
+    image_url:     document.getElementById('car-image-url').value.trim()    || null,
+    features:      featuresRaw ? featuresRaw.split('\n').map(s => s.trim()).filter(Boolean) : [],
+    gallery:       galleryRaw  ? galleryRaw.split('\n').map(s => s.trim()).filter(Boolean)  : [],
   };
+
   const btn = e.submitter;
   btn.disabled = true; btn.textContent = 'Saving…';
 
@@ -2419,7 +2492,131 @@ async function saveCar(e) {
 
   if (error) { showToast('Error: ' + error.message, 'error'); }
   else { closeModal('car-modal'); await loadCars(); renderCarCards(); populateCarFilterDropdowns(); populateFeedCarDropdown(); }
-  btn.disabled = false; btn.textContent = 'Save Details';
+  btn.disabled = false; btn.textContent = 'Save Vehicle';
+}
+
+// ---- VIN Decoder ----
+async function decodeVin() {
+  const vin = document.getElementById('car-vin').value.trim();
+  if (!vin || vin.length < 11) { showToast('Enter a valid VIN (min 11 characters).', 'error'); return; }
+
+  const btn = document.getElementById('decode-vin-btn');
+  btn.disabled = true; btn.textContent = 'Decoding…';
+
+  try {
+    // Step 1: NHTSA — make, model, year, transmission, seats
+    const nhtsaRes = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${encodeURIComponent(vin)}?format=json`);
+    const nhtsaJson = await nhtsaRes.json();
+    const r = nhtsaJson.Results?.[0] || {};
+
+    const make  = (r.Make  || '').trim();
+    const model = (r.Model || '').trim();
+    const year  = (r.ModelYear || '').trim();
+
+    if (make)  document.getElementById('car-make').value  = make;
+    if (model) document.getElementById('car-model').value = model;
+    if (year)  document.getElementById('car-year').value  = year;
+
+    // Seats
+    const seats = r.Seats || r.NumberOfSeats || '';
+    if (seats && seats !== '0') document.getElementById('car-seats').value = seats;
+
+    // Transmission — simplify NHTSA verbose strings
+    const transStyle  = (r.TransmissionStyle || '').toLowerCase();
+    const transSpeeds = (r.TransmissionSpeeds || '').trim();
+    let transLabel = '';
+    if (transStyle.includes('manual'))                      transLabel = 'Manual';
+    else if (transStyle.includes('continuously variable'))  transLabel = 'CVT';
+    else if (transStyle.includes('automatic') && transSpeeds && transSpeeds !== '0')
+                                                            transLabel = `${transSpeeds}-Speed`;
+    else if (transStyle.includes('automatic'))              transLabel = 'Auto';
+    if (transLabel) document.getElementById('car-transmission').value = transLabel;
+
+    // Step 2: CarQuery — HP (JSONP)
+    if (make && model && year) {
+      try {
+        const cqMake  = make.toLowerCase().replace(/\s+/g, '%20');
+        const cqModel = model.toLowerCase().replace(/\s+/g, '%20');
+        const cqData  = await new Promise((resolve, reject) => {
+          const cb = '_cq' + Date.now();
+          window[cb] = (d) => { delete window[cb]; sc.remove(); resolve(d); };
+          const sc = document.createElement('script');
+          sc.src = `https://www.carqueryapi.com/api/0.3/?cmd=getTrims&make=${cqMake}&model=${cqModel}&year=${year}&callback=${cb}`;
+          sc.onerror = () => { delete window[cb]; reject(new Error('CarQuery error')); };
+          document.head.appendChild(sc);
+          setTimeout(() => { try { delete window[cb]; sc.remove(); } catch(e){} reject(new Error('timeout')); }, 6000);
+        });
+
+        const trims = cqData?.Trims || [];
+        if (trims.length > 0) {
+          const ps = parseFloat(trims[0].power_ps);
+          if (ps > 0) document.getElementById('car-hp').value = `${Math.round(ps * 0.9863)} HP`;
+          if (!document.getElementById('car-seats').value) {
+            const cqSeats = trims[0].seats;
+            if (cqSeats && cqSeats !== '0') document.getElementById('car-seats').value = cqSeats;
+          }
+        }
+      } catch (_) { /* CarQuery failed silently — HP needs manual entry */ }
+    }
+
+    showToast('VIN decoded! Review and adjust if needed.', 'success');
+  } catch (err) {
+    showToast('Decode failed. Check your connection.', 'error');
+  }
+
+  btn.disabled = false; btn.textContent = '🔍 Decode VIN';
+}
+
+// ---- Image upload helpers ----
+function previewMainImage(url) {
+  const el = document.getElementById('car-img-preview');
+  if (!el) return;
+  el.innerHTML = url
+    ? `<img src="${url}" style="max-height:110px;max-width:100%;border-radius:8px;object-fit:cover;border:1px solid var(--border);" onerror="this.style.display='none'" />`
+    : '';
+}
+
+function renderGalleryPreview(urls) {
+  const el = document.getElementById('car-gallery-preview');
+  if (!el) return;
+  el.innerHTML = urls.map(url =>
+    `<img src="${url}" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid var(--border);" onerror="this.style.display='none'" />`
+  ).join('');
+}
+
+async function uploadCarMainImage(input) {
+  if (!input.files?.[0]) return;
+  const file  = input.files[0];
+  const carId = document.getElementById('car-form').dataset.carId || 'new';
+  const path  = `cars/${carId}/main_${Date.now()}.${file.name.split('.').pop()}`;
+  const btn   = input.previousElementSibling || input;
+
+  const { error } = await sb.storage.from('car-images').upload(path, file, { upsert: true });
+  if (error) { showToast('Upload failed: ' + error.message, 'error'); return; }
+  const { data: { publicUrl } } = sb.storage.from('car-images').getPublicUrl(path);
+  document.getElementById('car-image-url').value = publicUrl;
+  previewMainImage(publicUrl);
+}
+
+async function uploadCarGalleryImages(input) {
+  if (!input.files?.length) return;
+  const carId    = document.getElementById('car-form').dataset.carId || 'new';
+  const statusEl = document.getElementById('gallery-upload-status');
+  const existing = document.getElementById('car-gallery').value.trim();
+  const urls     = existing ? existing.split('\n').filter(Boolean) : [];
+
+  statusEl.textContent = 'Uploading…';
+  for (const file of input.files) {
+    const path = `cars/${carId}/gallery_${Date.now()}_${Math.random().toString(36).slice(2)}.${file.name.split('.').pop()}`;
+    const { error } = await sb.storage.from('car-images').upload(path, file, { upsert: true });
+    if (!error) {
+      const { data: { publicUrl } } = sb.storage.from('car-images').getPublicUrl(path);
+      urls.push(publicUrl);
+    }
+  }
+  document.getElementById('car-gallery').value = urls.join('\n');
+  renderGalleryPreview(urls);
+  statusEl.textContent = `${input.files.length} photo(s) uploaded.`;
 }
 
 function openAddService(carId) {

@@ -1918,9 +1918,13 @@
             <label>License Plate</label>
             <input type="text" id="car-plate" placeholder="ABC 1234" />
           </div>
-          <div class="form-group">
+          <div class="form-group full">
             <label>VIN</label>
-            <input type="text" id="car-vin" placeholder="1HGBH41JXMN109186" />
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <input type="text" id="car-vin" placeholder="1HGBH41JXMN109186" style="flex:1;" />
+              <button type="button" id="decode-vin-btn" class="btn btn-outline" style="white-space:nowrap;font-size:0.8rem;padding:7px 14px;" onclick="decodeVin()">🔍 Decode VIN</button>
+            </div>
+            <p style="font-size:0.72rem;color:var(--muted);margin-top:4px;">Auto-fills Make, Model, Year, Transmission, Seats, HP</p>
           </div>
           <div class="form-group">
             <label>Current Mileage</label>
@@ -1982,10 +1986,6 @@
           <div class="form-group">
             <label>Horsepower</label>
             <input type="text" id="car-hp" placeholder="200 HP" />
-          </div>
-          <div class="form-group">
-            <label>Top Speed</label>
-            <input type="text" id="car-topspeed" placeholder="130 mph" />
           </div>
           <div class="form-group full">
             <label>Description (shown to customers)</label>

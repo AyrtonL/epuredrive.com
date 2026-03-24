@@ -23,7 +23,7 @@ const CARS = [
     ],
     featured: true,
     badge: 'Popular',
-    specs: { hp: '200 HP', topSpeed: '130 mph', seats: 5, trans: 'Auto' },
+    specs: { hp: '200 HP', seats: 5, trans: 'Auto' },
     features: ['Leather Interior', 'Panoramic Sunroof', 'Audi MMI', 'Backup Camera', 'Bluetooth Audio', 'Dual-Zone Climate'],
     description: 'The 2018 Audi Q3 blends agile handling with premium comfort. Perfect for city driving and weekend getaways alike. (VIN: WA1BCCFS6JR034820)'
   },
@@ -44,7 +44,7 @@ const CARS = [
     ],
     featured: false,
     badge: null,
-    specs: { hp: '186 HP', topSpeed: '130 mph', seats: 5, trans: 'Auto' },
+    specs: { hp: '186 HP', seats: 5, trans: 'Auto' },
     features: ['Premium Audio', 'Heated Seats', 'Bluetooth Integration', 'Compact Luxury', 'Sport Suspension', 'Xenon Headlights'],
     description: 'Experience sharp design and engaging driving dynamics with the 2017 Audi A3 sedan, a refined choice for daily luxury. (VIN: WAUAUGFF3H1028844)'
   },
@@ -65,7 +65,7 @@ const CARS = [
     ],
     featured: true,
     badge: 'Premium',
-    specs: { hp: '335 HP', topSpeed: '150 mph', seats: 5, trans: 'Tiptronic' },
+    specs: { hp: '335 HP', seats: 5, trans: 'Tiptronic' },
     features: ['Sport Chrono Package', 'Adaptive Air Suspension', 'Bose Surround Sound', 'Panoramic Roof', 'Apple CarPlay', 'Leather Seats'],
     description: 'The Porsche Cayenne Coupe combines the striking lines of a sports car with the versatility and dominant stance of an SUV. (VIN: WP1BA2AY7MDA42894)'
   },
@@ -89,7 +89,7 @@ const CARS = [
     ],
     featured: false,
     badge: null,
-    specs: { hp: '276 HP', topSpeed: '120 mph', seats: 7, trans: '8-Speed' },
+    specs: { hp: '276 HP', seats: 7, trans: '8-Speed' },
     features: ['7-Passenger Seating', 'V6 Engine', 'Touchscreen Infotainment', 'Advanced Safety Features', 'Tri-Zone Climate', 'Wireless Charging'],
     description: 'The 2023 VW Atlas SE V6 is built for families and groups, offering spacious 7-passenger seating without compromising on comfort or power. (VIN: 1V2JR2CA3PC527256)'
   }
@@ -226,7 +226,7 @@ function loadCarDetail() {
   }
 
   // Specs
-  ['hp', 'topSpeed', 'seats', 'trans'].forEach(key => {
+  ['hp', 'seats', 'trans'].forEach(key => {
     const el = document.getElementById(`spec-${key}`);
     if (el) el.textContent = car.specs[key] ?? '—';
   });
@@ -305,40 +305,48 @@ function initBookingForm() {
 // ---- Supabase Initializer ----
 async function syncDatabase() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/cars?select=id,make,model,year,daily_rate`, {
-      headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
-    });
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/cars?select=*&status=neq.unavailable&order=id`,
+      { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
+    );
     if (res.ok) {
       const data = await res.json();
       if (data && data.length > 0) {
-        // Build a lookup from the static array for images, specs, gallery, etc.
         const staticSnapshot = CARS.map(c => ({ ...c }));
-        const findStatic = (make, model) =>
-          staticSnapshot.find(c =>
-            c.make.toLowerCase() === (make || '').toLowerCase() &&
-            (c.model.toLowerCase().startsWith((model || '').toLowerCase()) ||
-             (model || '').toLowerCase().startsWith(c.model.toLowerCase()))
-          );
+        const findStatic = (make, model) => staticSnapshot.find(c =>
+          c.make.toLowerCase() === (make || '').toLowerCase() &&
+          (c.model.toLowerCase().startsWith((model || '').toLowerCase()) ||
+           (model || '').toLowerCase().startsWith(c.model.toLowerCase()))
+        );
 
         CARS.length = 0;
         data.forEach(v => {
-          const s = findStatic(v.make, v.model);
+          const s        = findStatic(v.make, v.model);
+          const gallery  = Array.isArray(v.gallery) && v.gallery.length > 0 ? v.gallery : (s?.gallery || []);
+          const image    = v.image_url || (gallery.length > 0 ? gallery[0] : null) || s?.image
+                           || 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&q=80';
+          const features = Array.isArray(v.features) && v.features.length > 0 ? v.features : (s?.features || []);
           CARS.push({
-            id: v.id,
-            make: v.make,
-            model: v.model,
-            category: s?.category || 'suv',
-            year: v.year,
-            price: v.daily_rate ?? s?.price ?? 0,
-            seats: s?.seats || 5,
-            transmission: s?.transmission || 'Auto',
-            image: s?.image || 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&q=80',
-            gallery: s?.gallery || [s?.image],
-            featured: s?.featured ?? true,
-            badge: s?.badge || null,
-            specs: s?.specs || { hp: '-- HP', topSpeed: '-- mph', seats: 5, trans: 'Auto' },
-            features: s?.features || ['Absolute Transparency', 'Impeccable Condition', 'Flexible Delivery'],
-            description: s?.description || `Experience the ${v.year} ${v.make} ${v.model}. Premium engineering meets pure luxury.`
+            id:           v.id,
+            make:         v.make,
+            model:        v.model_full  || v.model,
+            category:     v.category    || s?.category    || 'suv',
+            year:         v.year,
+            price:        parseFloat(v.daily_rate)        || s?.price || 0,
+            seats:        v.seats       || s?.seats       || 5,
+            transmission: v.transmission || s?.transmission || 'Auto',
+            image,
+            gallery:      gallery.length > 0 ? gallery : [image],
+            featured:     !!(v.badge),
+            badge:        v.badge       || null,
+            specs: {
+              hp:    v.hp           || s?.specs?.hp    || '-- HP',
+              seats: v.seats        || s?.seats        || 5,
+              trans: v.transmission || s?.specs?.trans || 'Auto',
+            },
+            features,
+            description: v.description || s?.description
+              || `Experience the ${v.year} ${v.make} ${v.model}. Premium engineering meets pure luxury.`,
           });
         });
       }
@@ -349,10 +357,13 @@ async function syncDatabase() {
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', async () => {
   await syncDatabase();
-  
-  const page = document.body.dataset.page;
+
+  const page   = document.body.dataset.page;
+  const params = new URLSearchParams(window.location.search);
+  const hasSearch = params.get('start') || params.get('end') || params.get('loc');
+
   if (page === 'home') {
-    renderCars(CARS.slice(0, 8));
+    renderCars(hasSearch ? CARS : CARS.slice(0, 5));
     initFilters();
   } else if (page === 'fleet') {
     renderCars(CARS);
