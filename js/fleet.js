@@ -305,22 +305,39 @@ function initBookingForm() {
 // ---- Supabase Initializer ----
 async function syncDatabase() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/vehicles?select=*`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/cars?select=id,make,model,year,daily_rate`, {
       headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
     });
     if (res.ok) {
       const data = await res.json();
       if (data && data.length > 0) {
-        // Hydrate frontend arrays with remote backend payload
+        // Build a lookup from the static array for images, specs, gallery, etc.
+        const staticSnapshot = CARS.map(c => ({ ...c }));
+        const findStatic = (make, model) =>
+          staticSnapshot.find(c =>
+            c.make.toLowerCase() === (make || '').toLowerCase() &&
+            c.model.toLowerCase() === (model || '').toLowerCase()
+          );
+
         CARS.length = 0;
         data.forEach(v => {
+          const s = findStatic(v.make, v.model);
           CARS.push({
-            id: v.id, make: v.make, model: v.model, category: (v.type || 'suv').toLowerCase(),
-            year: v.year, price: v.daily_rate, seats: v.passengers || 5, transmission: v.transmission || 'Auto',
-            image: v.image_url, gallery: [v.image_url], featured: true, badge: v.status === 'available' ? null : v.status,
-            link: v.stripe_link, specs: { hp: '-- HP', topSpeed: '-- mph', seats: v.passengers || 5, trans: v.transmission || 'Auto' },
-            features: ['Absolute Transparency', 'Impeccable Condition', 'Flexible Delivery'],
-            description: `Experience the thrill of the ${v.year} ${v.make} ${v.model}. Premium engineering meets pure luxury.`
+            id: v.id,
+            make: v.make,
+            model: v.model,
+            category: s?.category || 'suv',
+            year: v.year,
+            price: v.daily_rate ?? s?.price ?? 0,
+            seats: s?.seats || 5,
+            transmission: s?.transmission || 'Auto',
+            image: s?.image || 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&q=80',
+            gallery: s?.gallery || [s?.image],
+            featured: s?.featured ?? true,
+            badge: s?.badge || null,
+            specs: s?.specs || { hp: '-- HP', topSpeed: '-- mph', seats: 5, trans: 'Auto' },
+            features: s?.features || ['Absolute Transparency', 'Impeccable Condition', 'Flexible Delivery'],
+            description: s?.description || `Experience the ${v.year} ${v.make} ${v.model}. Premium engineering meets pure luxury.`
           });
         });
       }
