@@ -2823,7 +2823,15 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Sidebar tabs
   document.querySelectorAll('.nav-item[data-tab]').forEach(btn =>
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab))
+    btn.addEventListener('click', () => {
+      switchTab(btn.dataset.tab);
+      if (window.innerWidth <= 1024) {
+        const aside = document.getElementById('main-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        if (aside) aside.classList.remove('sidebar-open');
+        if (overlay) overlay.classList.remove('active');
+      }
+    })
   );
 
   // Car filter buttons — "All Cars" static btn; dynamic ones use setCarFilter()
