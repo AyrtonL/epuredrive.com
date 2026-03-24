@@ -245,8 +245,8 @@
       .dash-grid { grid-template-columns: 1fr; }
     }
 
-    /* Mobile: sidebar drawer + layout reflow */
-    @media (max-width: 768px) {
+    /* Mobile + tablet: sidebar drawer + layout reflow */
+    @media (max-width: 1024px) {
       aside { transform:translateX(-100%) !important; transition:transform 0.25s ease !important; position:fixed !important; z-index:50 !important; }
       aside.sidebar-open { transform:translateX(0) !important; }
       main { margin-left:0 !important; }
@@ -884,7 +884,7 @@
 <body>
   <!-- Immediately hide sidebar on mobile before any paint -->
   <script>
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 1024) {
       document.documentElement.style.setProperty('--sidebar-hidden','1');
       document.addEventListener('DOMContentLoaded', function() {
         var aside = document.querySelector('aside');
@@ -2131,7 +2131,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-  <script src="js/dashboard.js?v=20260324b"></script>
+  <script src="js/dashboard.js?v=20260324c"></script>
   <script>
     // Theme toggle Logic
     const themeBtn = document.getElementById('theme-btn');

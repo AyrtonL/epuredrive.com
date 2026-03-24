@@ -2621,7 +2621,7 @@ function toggleSidebar() {
 }
 
 function initMobileNav() {
-  if (window.innerWidth > 768) return;
+  if (window.innerWidth > 1024) return;
   const aside = document.querySelector('aside');
   const btn = document.getElementById('mobile-menu-btn');
   if (aside) {
@@ -2645,7 +2645,7 @@ function initMobileNav() {
     if (!aside) return;
     const isOpen = aside.classList.toggle('sidebar-open');
     overlay?.classList.toggle('active');
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 1024) {
       aside.style.transform = isOpen ? 'translateX(0)' : 'translateX(-100%)';
     }
   };
