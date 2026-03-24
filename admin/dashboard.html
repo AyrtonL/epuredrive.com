@@ -245,10 +245,16 @@
       .dash-grid { grid-template-columns: 1fr; }
     }
 
+    /* Desktop: restore sidebar (overrides inline style) */
+    @media (min-width: 1025px) {
+      #main-sidebar { transform: none !important; }
+      #mobile-menu-btn { display: none !important; }
+    }
+
     /* Mobile + tablet: sidebar drawer + layout reflow */
     @media (max-width: 1024px) {
-      aside { transform:translateX(-100%) !important; transition:transform 0.25s ease !important; position:fixed !important; z-index:50 !important; }
-      aside.sidebar-open { transform:translateX(0) !important; }
+      #main-sidebar { transform:translateX(-100%) !important; transition:transform 0.25s ease !important; }
+      #main-sidebar.sidebar-open { transform:translateX(0) !important; }
       main { margin-left:0 !important; }
       .main { margin-left:0 !important; }
       .ml-64 { margin-left:0 !important; }
@@ -882,26 +888,9 @@
   </style>
 </head>
 <body>
-  <!-- Immediately hide sidebar on mobile before any paint -->
-  <script>
-    if (window.innerWidth <= 1024) {
-      document.documentElement.style.setProperty('--sidebar-hidden','1');
-      document.addEventListener('DOMContentLoaded', function() {
-        var aside = document.querySelector('aside');
-        var btn = document.getElementById('mobile-menu-btn');
-        if (aside) {
-          aside.style.cssText += ';transform:translateX(-100%) !important;transition:transform 0.25s ease;position:fixed;z-index:50;';
-        }
-        if (btn) btn.style.display = 'flex';
-        var main = document.querySelector('main');
-        if (main) main.style.marginLeft = '0';
-      });
-    }
-  </script>
-
   <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
   <!-- SIDEBAR -->
-  <aside class="w-64 fixed left-0 top-0 h-screen bg-[#111c2d] shadow-xl shadow-blue-900/10 flex flex-col p-4 overflow-y-auto z-50">
+  <aside id="main-sidebar" class="w-64 fixed left-0 top-0 h-screen bg-[#111c2d] shadow-xl shadow-blue-900/10 flex flex-col p-4 overflow-y-auto z-50" style="transform:translateX(-100%);transition:transform 0.25s ease;">
     <div class="mb-10 px-2 mt-2">
       <div class="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80" onclick="switchTab('main')" style="margin:0;">
         <h1 class="text-2xl font-black tracking-widest text-white uppercase m-0" style="font-family:'Manrope',sans-serif;">
@@ -2131,7 +2120,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-  <script src="js/dashboard.js?v=20260324c"></script>
+  <script src="js/dashboard.js?v=20260324d"></script>
   <script>
     // Theme toggle Logic
     const themeBtn = document.getElementById('theme-btn');

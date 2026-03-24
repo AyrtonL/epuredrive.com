@@ -2613,7 +2613,7 @@ function showToast(msg, type = 'success') {
 }
 
 function toggleSidebar() {
-  const aside = document.querySelector('aside');
+  const aside = document.getElementById('main-sidebar');
   const overlay = document.getElementById('sidebar-overlay');
   if (!aside) return;
   aside.classList.toggle('sidebar-open');
@@ -2621,35 +2621,11 @@ function toggleSidebar() {
 }
 
 function initMobileNav() {
-  if (window.innerWidth > 1024) return;
-  const aside = document.querySelector('aside');
+  const aside = document.getElementById('main-sidebar');
   const btn = document.getElementById('mobile-menu-btn');
-  if (aside) {
-    aside.classList.remove('sidebar-open');
-    aside.style.transform = 'translateX(-100%)';
-    aside.style.transition = 'transform 0.25s ease';
-    aside.style.position = 'fixed';
-    aside.style.zIndex = '50';
-  }
-  if (btn) btn.style.display = 'flex';
-  // Re-wire toggleSidebar to also handle inline style on open/close
-  window._mobileNavReady = true;
+  if (aside) aside.classList.remove('sidebar-open');
+  if (btn && window.innerWidth <= 1024) btn.style.display = 'flex';
 }
-
-// Re-implement toggle to handle inline styles on mobile
-(function patchToggle() {
-  const _orig = window.toggleSidebar;
-  window.toggleSidebar = function() {
-    const aside = document.querySelector('aside');
-    const overlay = document.getElementById('sidebar-overlay');
-    if (!aside) return;
-    const isOpen = aside.classList.toggle('sidebar-open');
-    overlay?.classList.toggle('active');
-    if (window.innerWidth <= 1024) {
-      aside.style.transform = isOpen ? 'translateX(0)' : 'translateX(-100%)';
-    }
-  };
-})();
 
 // ====================================================
 //  AUTO-CALCULATE AMOUNT
