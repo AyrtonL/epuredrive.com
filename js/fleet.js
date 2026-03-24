@@ -356,12 +356,11 @@ async function syncDatabase() {
 
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', async () => {
-  await syncDatabase();
-
   const page   = document.body.dataset.page;
   const params = new URLSearchParams(window.location.search);
   const hasSearch = params.get('start') || params.get('end') || params.get('loc');
 
+  // Render immediately with static data so specs/features are visible right away
   if (page === 'home') {
     renderCars(hasSearch ? CARS : CARS.slice(0, 5));
     initFilters();
@@ -371,5 +370,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else if (page === 'detail') {
     loadCarDetail();
     initBookingForm();
+  }
+
+  // Sync DB, then re-render with fresh data
+  await syncDatabase();
+
+  if (page === 'home') {
+    renderCars(hasSearch ? CARS : CARS.slice(0, 5));
+  } else if (page === 'fleet') {
+    renderCars(CARS);
+  } else if (page === 'detail') {
+    loadCarDetail(); // updates title, specs, features, price with DB data
   }
 });
