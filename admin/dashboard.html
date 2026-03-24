@@ -237,12 +237,60 @@
 
     /* Mobile sidebar drawer */
     #sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:49; }
+
+    /* ---- RESPONSIVE BREAKPOINTS ---- */
+
+    /* Tablet: collapse two-column layouts */
+    @media (max-width: 1024px) {
+      .dash-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Mobile: sidebar drawer + layout reflow */
     @media (max-width: 768px) {
       aside { transform:translateX(-100%); transition:transform 0.25s ease; z-index:50; }
       aside.sidebar-open { transform:translateX(0); }
       main { margin-left:0 !important; }
+      .main { margin-left:0 !important; }
+      .ml-64 { margin-left:0 !important; }
+      .px-8 { padding-left:1rem !important; padding-right:1rem !important; }
       #sidebar-overlay.active { display:block; }
       #mobile-menu-btn { display:flex !important; }
+      #topbar-title { font-size: 1rem !important; }
+
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .content { padding: 1rem !important; }
+      .topbar { padding: 0.75rem 1rem; }
+
+      .form-grid { grid-template-columns: 1fr; }
+      .turo-grid { grid-template-columns: 1fr; }
+      .modal-box { padding: 1.25rem; }
+      .modal-box.wide { max-width: 100%; }
+
+      .table-filters { flex-direction: column; align-items: stretch; }
+      .search-input { width: 100%; }
+      .filter-select { width: 100%; }
+
+      /* Topbar action buttons — icon only on mobile */
+      #block-btn span.material-symbols-outlined,
+      #add-res-btn span.material-symbols-outlined { margin: 0; }
+      #block-btn { padding: 0.5rem; min-width: 36px; justify-content: center; }
+      #add-res-btn { padding: 0.5rem; min-width: 36px; justify-content: center; }
+      #block-btn .btn-label,
+      #add-res-btn .btn-label { display: none; }
+
+      .consignment-stats { grid-template-columns: repeat(2, 1fr); }
+      .stat-value { font-size: 1.6rem; }
+    }
+
+    /* Small phones */
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .stat-value { font-size: 1.4rem; }
+      .consignment-grid { grid-template-columns: 1fr; }
+      .cars-grid { grid-template-columns: 1fr; }
+      .consignment-stats { grid-template-columns: 1fr 1fr; }
+      .content { padding: 0.75rem !important; }
+      .booking-row { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
     }
 
     .sidebar-nav { flex: 1; padding: 1rem 0; }
@@ -910,10 +958,10 @@
       </div>
       <div class="flex items-center gap-4">
         <button class="bg-surface-container-high border-0 cursor-pointer text-on-surface px-4 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all flex items-center gap-2 write-action" id="block-btn" style="background:#e6e8ea;color:#191c1e;">
-          <span class="material-symbols-outlined text-sm">block</span> Block Dates
+          <span class="material-symbols-outlined text-sm">block</span> <span class="btn-label">Block Dates</span>
         </button>
         <button class="bg-primary-container border-0 cursor-pointer text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all flex items-center gap-2 write-action" id="add-res-btn" style="background:#111c2d;color:#fff;">
-          <span class="material-symbols-outlined text-sm">add</span> New Booking
+          <span class="material-symbols-outlined text-sm">add</span> <span class="btn-label">New Booking</span>
         </button>
       </div>
     </header>
