@@ -328,7 +328,7 @@ async function syncDatabase() {
           const features = Array.isArray(v.features) && v.features.length > 0 ? v.features : (s?.features || []);
           CARS.push({
             id:           v.id,
-            make:         v.make,
+            make:         s?.make || v.make.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '),
             model:        v.model_full  || v.model,
             category:     v.category    || s?.category    || 'suv',
             year:         v.year,
@@ -360,26 +360,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   const hasSearch = params.get('start') || params.get('end') || params.get('loc');
 
-  // Render immediately with static data so specs/features are visible right away
-  if (page === 'home') {
-    renderCars(hasSearch ? CARS : CARS.slice(0, 5));
-    initFilters();
-  } else if (page === 'fleet') {
-    renderCars(CARS);
-    initFilters();
-  } else if (page === 'detail') {
+  // Detail page: show static data immediately for fast first paint
+  if (page === 'detail') {
     loadCarDetail();
     initBookingForm();
   }
 
-  // Sync DB, then re-render with fresh data
+  // Sync with DB to get correct prices, descriptions, HP, features
   await syncDatabase();
 
+  // Grid pages render once with DB data (avoids wrong-price flash from static)
   if (page === 'home') {
     renderCars(hasSearch ? CARS : CARS.slice(0, 5));
+    initFilters();
   } else if (page === 'fleet') {
     renderCars(CARS);
+    initFilters();
   } else if (page === 'detail') {
-    loadCarDetail(); // updates title, specs, features, price with DB data
+    loadCarDetail(); // Re-render with DB prices, specs, features
   }
 });
