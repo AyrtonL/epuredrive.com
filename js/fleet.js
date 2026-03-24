@@ -305,7 +305,7 @@ function initBookingForm() {
 // ---- Supabase Initializer ----
 async function syncDatabase() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/vehicles?select=*`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/cars?select=*`, {
       headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
     });
     if (res.ok) {
