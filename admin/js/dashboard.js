@@ -867,14 +867,6 @@ function copyPortalLink(bookingId) {
   });
 }
 
-function toggleSidebar() {
-  const aside = document.querySelector('aside');
-  const overlay = document.getElementById('sidebar-overlay');
-  if (!aside) return;
-  aside.classList.toggle('sidebar-open');
-  overlay?.classList.toggle('active');
-}
-
 // ====================================================
 //  CALENDAR SYNC (unified — any iCal source)
 // ====================================================
