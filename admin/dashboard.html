@@ -1276,6 +1276,10 @@
             <h3 style="font-size:1rem;font-weight:600;">Fleet Vehicles</h3>
             <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Vehicle details, documents and expiry status</p>
           </div>
+          <button class="btn btn-primary write-action" onclick="openAddCar()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Vehicle
+          </button>
         </div>
         <div class="table-section">
           <div style="overflow-x:auto;">
@@ -1890,7 +1894,18 @@
         <button class="modal-close" onclick="closeModal('car-modal')" aria-label="Close">✕</button>
       </div>
       <form id="car-form">
+
+        <!-- ── INTERNAL DETAILS ── -->
+        <p style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;color:var(--muted);text-transform:uppercase;margin-bottom:0.75rem;">Internal Details</p>
         <div class="form-grid">
+          <div class="form-group">
+            <label>Make</label>
+            <input type="text" id="car-make" placeholder="Audi" />
+          </div>
+          <div class="form-group">
+            <label>Model</label>
+            <input type="text" id="car-model" placeholder="Q3" />
+          </div>
           <div class="form-group">
             <label>Year</label>
             <input type="number" id="car-year" placeholder="2023" min="2000" max="2030" />
@@ -1903,9 +1918,13 @@
             <label>License Plate</label>
             <input type="text" id="car-plate" placeholder="ABC 1234" />
           </div>
-          <div class="form-group">
+          <div class="form-group full">
             <label>VIN</label>
-            <input type="text" id="car-vin" placeholder="1HGBH41JXMN109186" />
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <input type="text" id="car-vin" placeholder="1HGBH41JXMN109186" style="flex:1;" />
+              <button type="button" id="decode-vin-btn" class="btn btn-outline" style="white-space:nowrap;font-size:0.8rem;padding:7px 14px;" onclick="decodeVin()">🔍 Decode VIN</button>
+            </div>
+            <p style="font-size:0.72rem;color:var(--muted);margin-top:4px;">Auto-fills Make, Model, Year, Transmission, Seats, HP</p>
           </div>
           <div class="form-group">
             <label>Current Mileage</label>
@@ -1928,9 +1947,87 @@
             <textarea id="car-notes" placeholder="Any notes about the vehicle…"></textarea>
           </div>
         </div>
+
+        <!-- ── PUBLIC DISPLAY ── -->
+        <p style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;color:var(--muted);text-transform:uppercase;margin:1.5rem 0 0.75rem;padding-top:1.25rem;border-top:1px solid var(--border);">Public Display (shown to customers)</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Display Model Name</label>
+            <input type="text" id="car-model-full" placeholder="Q3 2.0 FWD" />
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="car-category">
+              <option value="suv">SUV</option>
+              <option value="sedan">Sedan</option>
+              <option value="sports">Sports</option>
+              <option value="convertible">Convertible</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Badge (optional)</label>
+            <input type="text" id="car-badge" placeholder="Popular, Premium, New…" />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="car-status">
+              <option value="available">Available</option>
+              <option value="unavailable">Hidden / Unavailable</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Seats</label>
+            <input type="number" id="car-seats" placeholder="5" min="1" max="12" />
+          </div>
+          <div class="form-group">
+            <label>Transmission</label>
+            <input type="text" id="car-transmission" placeholder="Auto, 8-Speed, Tiptronic…" />
+          </div>
+          <div class="form-group">
+            <label>Horsepower</label>
+            <input type="text" id="car-hp" placeholder="200 HP" />
+          </div>
+          <div class="form-group full">
+            <label>Description (shown to customers)</label>
+            <textarea id="car-description" rows="3" placeholder="Describe the car for your customers…"></textarea>
+          </div>
+          <div class="form-group full">
+            <label>Features (one per line)</label>
+            <textarea id="car-features" rows="4" placeholder="Leather Interior&#10;Panoramic Sunroof&#10;Apple CarPlay&#10;Bluetooth Audio"></textarea>
+          </div>
+
+          <!-- Main photo -->
+          <div class="form-group full">
+            <label>Main Photo</label>
+            <div id="car-img-preview" style="margin-bottom:0.5rem;"></div>
+            <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+              <input type="file" id="car-img-file" accept="image/*" style="display:none" onchange="uploadCarMainImage(this)" />
+              <button type="button" class="btn btn-outline" style="font-size:0.8rem;padding:6px 14px;" onclick="document.getElementById('car-img-file').click()">
+                ⬆ Upload Photo
+              </button>
+              <span style="color:var(--muted);font-size:0.8rem;">or paste URL:</span>
+              <input type="text" id="car-image-url" placeholder="https://… or assets/images/…" style="flex:1;min-width:200px;" oninput="previewMainImage(this.value)" />
+            </div>
+          </div>
+
+          <!-- Gallery -->
+          <div class="form-group full">
+            <label>Gallery Photos (one URL per line)</label>
+            <textarea id="car-gallery" rows="4" placeholder="https://…&#10;assets/images/…&#10;https://…" oninput="renderGalleryPreview(this.value.split('\n').filter(Boolean))"></textarea>
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem;">
+              <input type="file" id="car-gallery-files" accept="image/*" multiple style="display:none" onchange="uploadCarGalleryImages(this)" />
+              <button type="button" class="btn btn-outline" style="font-size:0.8rem;padding:6px 14px;" onclick="document.getElementById('car-gallery-files').click()">
+                ⬆ Upload Gallery Photos
+              </button>
+              <span id="gallery-upload-status" style="font-size:0.78rem;color:var(--muted);"></span>
+            </div>
+            <div id="car-gallery-preview" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;"></div>
+          </div>
+        </div>
+
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" onclick="closeModal('car-modal')">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Details</button>
+          <button type="submit" class="btn btn-primary">Save Vehicle</button>
         </div>
       </form>
     </div>
