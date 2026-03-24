@@ -43,7 +43,7 @@ const STARTER_MAX_CARS       = 10;
 const PRO_MAX_CARS           = 30;
 const STARTER_PRICE_ID       = 'price_1TDaQ3HAH4zJnnwfasGBYtYO';
 const PRO_PRICE_ID           = 'price_1TDaQVHAH4zJnnwfPf1Gh6eg';
-const PRO_ONLY_TABS          = ['turo', 'reports', 'consignments', 'users'];
+const PRO_ONLY_TABS          = ['turo', 'reports', 'consignments', 'users', 'roi'];
 
 // ====================================================
 //  AUTH + TENANT PROFILE
@@ -500,7 +500,7 @@ function renderTable(resetPage = false) {
   const page = list.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   if (!page.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2.5rem 1rem">No reservations found</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2.5rem 1rem">No reservations found</td></tr>`;
     renderPagination(0, 1, 1);
     return;
   }
@@ -510,6 +510,7 @@ function renderTable(resetPage = false) {
     const days = dateDiff(r.pickup_date, r.return_date);
     return `
       <tr>
+        <td style="width:36px;"><input type="checkbox" class="bulk-cb" data-id="${r.id}" style="cursor:pointer;" onchange="updateBulkBar()" /></td>
         <td>
           <strong>${esc(r.customer_name)}</strong><br>
           <small>${esc(r.customer_email || r.customer_phone || '—')}</small>
@@ -531,6 +532,57 @@ function renderTable(resetPage = false) {
   }).join('');
 
   renderPagination(list.length, currentPage, totalPages);
+}
+
+function updateBulkBar() {
+  const checked = document.querySelectorAll('.bulk-cb:checked');
+  const bar = document.getElementById('bulk-action-bar');
+  const countEl = document.getElementById('bulk-count');
+  if (!bar) return;
+  if (checked.length > 0) {
+    bar.style.display = 'flex';
+    countEl.textContent = `${checked.length} selected`;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function clearBulkSelection() {
+  document.querySelectorAll('.bulk-cb').forEach(cb => cb.checked = false);
+  const all = document.getElementById('bulk-select-all');
+  if (all) all.checked = false;
+  updateBulkBar();
+}
+
+async function bulkMarkCompleted() {
+  const ids = [...document.querySelectorAll('.bulk-cb:checked')].map(cb => cb.dataset.id);
+  if (!ids.length) return;
+  if (!confirm(`Mark ${ids.length} booking${ids.length !== 1 ? 's' : ''} as Completed?`)) return;
+  for (const id of ids) {
+    await sb.from('reservations').update({ status: 'completed' }).eq('id', id);
+  }
+  await loadReservations();
+  renderTable();
+  updateStats();
+  clearBulkSelection();
+  showToast(`${ids.length} booking${ids.length !== 1 ? 's' : ''} marked as completed.`);
+}
+
+function bulkExportSelected() {
+  const ids = new Set([...document.querySelectorAll('.bulk-cb:checked')].map(cb => cb.dataset.id));
+  if (!ids.size) return;
+  const rows = allReservations.filter(r => ids.has(String(r.id)));
+  const header = ['ID','Customer','Email','Phone','Vehicle','Pickup Date','Return Date','Days','Total','Status','Source'];
+  const csv = [header, ...rows.map(r => [
+    r.id, r.customer_name, r.customer_email || '', r.customer_phone || '',
+    CAR_NAMES[r.car_id] || '', r.pickup_date, r.return_date,
+    dateDiff(r.pickup_date, r.return_date),
+    r.total_amount || '', r.status, r.source || ''
+  ])].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `bookings-selected-${todayStr()}.csv`; a.click();
+  clearBulkSelection();
 }
 
 function renderPagination(total, current, totalPages) {
@@ -761,7 +813,25 @@ async function confirmDeleteBlock(block) {
 function showDetail(r) {
   const days = dateDiff(r.pickup_date, r.return_date);
   const statusMap = { pending: 'badge-yellow', confirmed: 'badge-blue', active: 'badge-green', completed: 'badge-gray', cancelled: 'badge-red' };
+
+  // Late fee calculation
+  let lateFeeHtml = '';
+  if (r.status !== 'completed' && r.status !== 'cancelled') {
+    const today = new Date(todayStr());
+    const returnDate = new Date(r.return_date + 'T12:00:00');
+    const overdueDays = Math.floor((today - returnDate) / 86400000);
+    if (overdueDays > 0) {
+      const dailyRate = DAILY_RATES[r.car_id] || 0;
+      const lateFee = overdueDays * dailyRate;
+      lateFeeHtml = `<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:0.65rem 1rem;margin:0.75rem 0;font-size:0.83rem;display:flex;align-items:center;gap:0.6rem;">
+        <span style="color:#ef4444;font-size:1rem;">⚠</span>
+        <span><strong style="color:#ef4444;">Overdue ${overdueDays} day${overdueDays !== 1 ? 's' : ''}</strong>${dailyRate ? ` · Estimated late fee: <strong>$${lateFee.toLocaleString()}</strong>` : ''}</span>
+      </div>`;
+    }
+  }
+
   document.getElementById('detail-content').innerHTML = `
+    ${lateFeeHtml}
     <div class="detail-row"><span>Customer</span><strong>${esc(r.customer_name)}</strong></div>
     <div class="detail-row"><span>Email</span>${r.customer_email ? `<a href="mailto:${esc(r.customer_email)}">${esc(r.customer_email)}</a>` : '—'}</div>
     <div class="detail-row"><span>Phone</span>${r.customer_phone ? `<a href="tel:${esc(r.customer_phone)}">${esc(r.customer_phone)}</a>` : '—'}</div>
@@ -777,10 +847,32 @@ function showDetail(r) {
   `;
   document.getElementById('detail-actions').innerHTML = `
     <button class="btn btn-outline" onclick="closeModal('detail-modal')">Close</button>
+    <button class="btn btn-outline" style="font-size:0.8rem;" onclick="copyPortalLink('${r.id}')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      Portal Link
+    </button>
     <button class="btn write-action" style="background:none;border:1px solid var(--red,#ef4444);color:var(--red,#ef4444);border-radius:8px;padding:0.5rem 1rem;font-size:0.85rem;font-weight:600;cursor:pointer;" onclick="closeModal('detail-modal');deleteReservation('${r.id}')">Delete</button>
     <button class="btn btn-primary write-action" onclick="closeModal('detail-modal');openEdit('${r.id}')">Edit</button>
   `;
   openModal('detail-modal');
+}
+
+function copyPortalLink(bookingId) {
+  const token = btoa(bookingId + ':' + (currentTenantId || '')).replace(/=/g, '');
+  const url = window.location.origin + '/booking-status.html?id=' + bookingId + '&token=' + token;
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('Portal link copied to clipboard!');
+  }).catch(() => {
+    prompt('Copy this link:', url);
+  });
+}
+
+function toggleSidebar() {
+  const aside = document.querySelector('aside');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (!aside) return;
+  aside.classList.toggle('sidebar-open');
+  overlay?.classList.toggle('active');
 }
 
 // ====================================================
@@ -1361,6 +1453,57 @@ function renderExpensesTable() {
       </td>
     </tr>`;
   }).join('');
+}
+
+async function importExpensesCSV() {
+  const fileInput = document.getElementById('expenses-csv-file');
+  const file = fileInput.files?.[0];
+  if (!file) return;
+
+  const text = await file.text();
+  const lines = text.split(/\r?\n/);
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z_]/g, ''));
+
+  let imported = 0, skipped = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const fields = [];
+    let cur = '', inQ = false;
+    for (let j = 0; j < line.length; j++) {
+      const c = line[j];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { fields.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    fields.push(cur.trim());
+
+    const row = {};
+    headers.forEach((h, idx) => { row[h] = fields[idx] || ''; });
+
+    const amount = parseFloat(row.amount || row.cost || row.total);
+    const date   = row.date || row.expense_date || todayStr();
+    const cat    = row.category || row.type || 'Other';
+    if (!amount || isNaN(amount)) { skipped++; continue; }
+
+    const payload = {
+      expense_date: date,
+      category:     cat,
+      amount:       amount,
+      description:  row.description || row.notes || '',
+      car_id:       null,
+      consignment_id: null,
+      ...tenantPayload(),
+    };
+    const { error } = await sb.from('consignment_expenses').insert(payload);
+    if (error) skipped++;
+    else imported++;
+  }
+
+  fileInput.value = '';
+  await loadExpenses();
+  renderExpensesTable();
+  showToast(`Imported ${imported} expense${imported !== 1 ? 's' : ''}${skipped ? ` (${skipped} skipped)` : ''}.`);
 }
 
 function openAddConsignment() {
@@ -2021,6 +2164,27 @@ function renderMaintenanceAlerts() {
   el.innerHTML = alerts.join('');
 }
 
+function updateMaintenanceBadge() {
+  const badge = document.getElementById('maintenance-badge');
+  if (!badge) return;
+  let count = 0;
+  allServices.forEach(s => {
+    if (s.next_service_date && expiryClass(s.next_service_date) !== 'expiry-ok') count++;
+  });
+  allCars.forEach(car => {
+    const lastMileSvc = allServices
+      .filter(s => s.car_id === car.id && s.next_service_mileage)
+      .sort((a, b) => (b.mileage || 0) - (a.mileage || 0))[0];
+    if (lastMileSvc && car.mileage && mileageAlertClass(car.mileage, lastMileSvc.next_service_mileage) !== 'expiry-ok' && mileageAlertClass(car.mileage, lastMileSvc.next_service_mileage) !== '') count++;
+  });
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
 // ====================================================
 //  CARS & MAINTENANCE
 // ====================================================
@@ -2053,7 +2217,7 @@ async function loadCars() {
 
 async function loadServices() {
   const { data, error } = await withTenant(sb.from('car_services').select('*').order('service_date', { ascending: false }));
-  if (!error) allServices = data || [];
+  if (!error) { allServices = data || []; updateMaintenanceBadge(); }
 }
 
 function expiryClass(dateStr) {
@@ -2456,6 +2620,14 @@ function showToast(msg, type = 'success') {
   setTimeout(() => { t.classList.remove('dash-toast-show'); setTimeout(() => t.remove(), 300); }, 3000);
 }
 
+function toggleSidebar() {
+  const aside = document.querySelector('aside');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (!aside) return;
+  aside.classList.toggle('sidebar-open');
+  overlay?.classList.toggle('active');
+}
+
 // ====================================================
 //  AUTO-CALCULATE AMOUNT
 // ====================================================
@@ -2654,6 +2826,10 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Car filter buttons — "All Cars" static btn; dynamic ones use setCarFilter()
   document.querySelector('[data-car-filter="all"]')?.addEventListener('click', () => setCarFilter('all'));
+  document.getElementById('bulk-select-all')?.addEventListener('change', function() {
+    document.querySelectorAll('.bulk-cb').forEach(cb => cb.checked = this.checked);
+    updateBulkBar();
+  });
 
   // Topbar buttons
   document.getElementById('add-res-btn').addEventListener('click', openAdd);
@@ -2684,6 +2860,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Consignments
   document.getElementById('add-consignment-btn')?.addEventListener('click', openAddConsignment);
   document.getElementById('add-expense-btn')?.addEventListener('click', () => openAddExpense());
+  document.getElementById('import-expenses-btn')?.addEventListener('click', () => document.getElementById('expenses-csv-file').click());
+  document.getElementById('expenses-csv-file')?.addEventListener('change', importExpensesCSV);
   document.getElementById('consignment-form')?.addEventListener('submit', saveConsignment);
   document.getElementById('expense-form')?.addEventListener('submit', saveExpense);
   document.getElementById('expense-car-filter')?.addEventListener('change', renderExpensesTable);

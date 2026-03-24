@@ -99,7 +99,7 @@
         
         <div class="widget-field" style="display: flex; flex-direction: column; text-align: left; padding-right: 20px; border-right: 1px solid #E5E7EB; flex: 1.5; min-width: 140px;">
           <label style="font-size: 0.75rem; font-weight: 700; color: #111111; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;" data-i18n="Where">Where</label>
-          <select style="border: none; background: transparent; font-size: 1rem; color: #111111; font-weight: 600; outline: none; cursor: pointer; padding: 0; margin: 0; appearance: none;">
+          <select id="hero-loc" style="border: none; background: transparent; font-size: 1rem; color: #111111; font-weight: 600; outline: none; cursor: pointer; padding: 0; margin: 0; appearance: none;">
             <option>Aventura (Free)</option>
             <option>MIA Airport</option>
             <option>FLL Airport</option>
@@ -108,15 +108,15 @@
         
         <div class="widget-field" style="display: flex; flex-direction: column; text-align: left; padding-right: 20px; border-right: 1px solid #E5E7EB; flex: 1; min-width: 120px;">
           <label style="font-size: 0.75rem; font-weight: 700; color: #111111; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;" data-i18n="From">From</label>
-          <input type="date" style="border: none; background: transparent; font-size: 1rem; color: #6B7280; font-weight: 500; outline: none; width: 100%; padding: 0;" />
+          <input type="date" id="hero-start" style="border: none; background: transparent; font-size: 1rem; color: #6B7280; font-weight: 500; outline: none; width: 100%; padding: 0;" />
         </div>
 
         <div class="widget-field" style="display: flex; flex-direction: column; text-align: left; flex: 1; min-width: 120px;">
           <label style="font-size: 0.75rem; font-weight: 700; color: #111111; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;" data-i18n="Until">Until</label>
-          <input type="date" style="border: none; background: transparent; font-size: 1rem; color: #6B7280; font-weight: 500; outline: none; width: 100%; padding: 0;" />
+          <input type="date" id="hero-end" style="border: none; background: transparent; font-size: 1rem; color: #6B7280; font-weight: 500; outline: none; width: 100%; padding: 0;" />
         </div>
 
-        <button class="btn btn-primary" onclick="window.location.href='fleet.html'" style="border-radius: 999px; padding: 14px 40px; font-size: 1.05rem; background: var(--accent-primary); color: #FFF; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border: none; flex-shrink: 0;" data-i18n="Search">
+        <button class="btn btn-primary" onclick="heroSearch()" style="border-radius: 999px; padding: 14px 40px; font-size: 1.05rem; background: var(--accent-primary); color: #FFF; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border: none; flex-shrink: 0;" data-i18n="Search">
           Search
         </button>
       </div>

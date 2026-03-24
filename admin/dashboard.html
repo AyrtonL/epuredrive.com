@@ -217,10 +217,12 @@
     body.plan-trial .nav-item[data-tab="reports"]::after,
     body.plan-trial .nav-item[data-tab="consignments"]::after,
     body.plan-trial .nav-item[data-tab="users"]::after,
+    body.plan-trial .nav-item[data-tab="roi"]::after,
     body.plan-starter .nav-item[data-tab="turo"]::after,
     body.plan-starter .nav-item[data-tab="reports"]::after,
     body.plan-starter .nav-item[data-tab="consignments"]::after,
-    body.plan-starter .nav-item[data-tab="users"]::after { content:'PRO'; font-size:0.55rem; font-weight:700; letter-spacing:.04em; background:rgba(245,158,11,0.2); color:#F59E0B; padding:1px 5px; border-radius:4px; margin-left:auto; }
+    body.plan-starter .nav-item[data-tab="users"]::after,
+    body.plan-starter .nav-item[data-tab="roi"]::after { content:'PRO'; font-size:0.55rem; font-weight:700; letter-spacing:.04em; background:rgba(245,158,11,0.2); color:#F59E0B; padding:1px 5px; border-radius:4px; margin-left:auto; }
     /* Upgrade plan card */
     .upgrade-card { background:var(--surface-2); border:1px solid var(--border); border-radius:14px; padding:1.5rem; text-align:center; cursor:pointer; transition:border-color .2s,transform .15s; }
     .upgrade-card:hover { border-color:var(--accent); transform:translateY(-2px); }
@@ -232,6 +234,16 @@
     .dash-toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#1E293B; color:#fff; padding:0.65rem 1.1rem; border-radius:10px; font-size:0.85rem; box-shadow:0 4px 20px rgba(0,0,0,.3); z-index:9999; opacity:0; transform:translateY(8px); transition:opacity .25s,transform .25s; pointer-events:none; }
     .dash-toast.dash-toast-show { opacity:1; transform:translateY(0); }
     .dash-toast.dash-toast-error { background:#EF4444; }
+
+    /* Mobile sidebar drawer */
+    #sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:49; }
+    @media (max-width: 768px) {
+      aside { transform:translateX(-100%); transition:transform 0.25s ease; z-index:50; }
+      aside.sidebar-open { transform:translateX(0); }
+      main { margin-left:0 !important; }
+      #sidebar-overlay.active { display:block; }
+      #mobile-menu-btn { display:flex !important; }
+    }
 
     .sidebar-nav { flex: 1; padding: 1rem 0; }
     .nav-item {
@@ -823,6 +835,7 @@
 </head>
 <body>
 
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
   <!-- SIDEBAR -->
   <aside class="w-64 fixed left-0 top-0 h-screen bg-[#111c2d] shadow-xl shadow-blue-900/10 flex flex-col p-4 overflow-y-auto z-50">
     <div class="mb-10 px-2 mt-2">
@@ -844,8 +857,9 @@
       <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="cars" style="font-family:'Inter',sans-serif;outline:none;">
         <span class="material-symbols-outlined" style="font-size:20px;">directions_car</span> <span class="text-sm font-medium">Fleet</span>
       </button>
-      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="maintenance" style="font-family:'Inter',sans-serif;outline:none;">
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="maintenance" style="position:relative;font-family:'Inter',sans-serif;outline:none;">
         <span class="material-symbols-outlined" style="font-size:20px;">build</span> <span class="text-sm font-medium">Maintenance</span>
+        <span id="maintenance-badge" class="absolute right-4 text-[10px] font-bold bg-red-500 text-white px-2 py-0.5 rounded-full" style="display:none;"></span>
       </button>
       <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="customers" style="font-family:'Inter',sans-serif;outline:none;">
         <span class="material-symbols-outlined" style="font-size:20px;">group</span> <span class="text-sm font-medium">Customers</span>
@@ -888,7 +902,12 @@
 
     <!-- TOPBAR -->
     <header class="sticky top-0 w-full z-40 bg-surface-container-lowest/80 backdrop-blur-md flex justify-between items-center h-16 px-8 border-b border-outline-variant/30" style="background:rgba(255,255,255,0.8);box-sizing:border-box;">
-      <h2 class="text-xl font-bold text-on-surface m-0" id="topbar-title" style="font-family:'Manrope',sans-serif;color:#191c1e;">Dashboard Overview</h2>
+      <div class="flex items-center gap-3">
+        <button id="mobile-menu-btn" style="display:none;background:none;border:none;cursor:pointer;padding:4px;color:#191c1e;" onclick="toggleSidebar()" aria-label="Open menu">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <h2 class="text-xl font-bold text-on-surface m-0" id="topbar-title" style="font-family:'Manrope',sans-serif;color:#191c1e;">Dashboard Overview</h2>
+      </div>
       <div class="flex items-center gap-4">
         <button class="bg-surface-container-high border-0 cursor-pointer text-on-surface px-4 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all flex items-center gap-2 write-action" id="block-btn" style="background:#e6e8ea;color:#191c1e;">
           <span class="material-symbols-outlined text-sm">block</span> Block Dates
@@ -999,10 +1018,17 @@
               </select>
             </div>
           </div>
+          <div id="bulk-action-bar" style="display:none;align-items:center;gap:0.75rem;padding:0.6rem 1rem;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:0.75rem;font-size:0.83rem;">
+            <span id="bulk-count" style="color:var(--muted);font-weight:500;"></span>
+            <button class="btn btn-outline write-action" style="padding:0.3rem 0.8rem;font-size:0.8rem;" onclick="bulkMarkCompleted()">Mark Completed</button>
+            <button class="btn btn-outline" style="padding:0.3rem 0.8rem;font-size:0.8rem;" onclick="bulkExportSelected()">Export Selected</button>
+            <button style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;" onclick="clearBulkSelection()" title="Clear selection">✕</button>
+          </div>
           <div style="overflow-x:auto;">
             <table>
               <thead>
                 <tr>
+                  <th style="width:36px;"><input type="checkbox" id="bulk-select-all" title="Select all" style="cursor:pointer;" /></th>
                   <th>Customer</th>
                   <th>Vehicle</th>
                   <th>Dates</th>
@@ -1014,7 +1040,7 @@
                 </tr>
               </thead>
               <tbody id="res-tbody">
-                <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+                <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
               </tbody>
             </table>
           </div>
@@ -1159,6 +1185,11 @@
                   <option>Other</option>
                 </optgroup>
               </select>
+              <button class="btn btn-outline write-action" id="import-expenses-btn" title="Import expenses from CSV">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Import CSV
+              </button>
+              <input type="file" id="expenses-csv-file" accept=".csv" style="display:none;" />
               <button class="btn btn-primary write-action" id="add-expense-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Add Expense
