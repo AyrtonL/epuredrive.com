@@ -2504,60 +2504,36 @@ async function decodeVin() {
   btn.disabled = true; btn.textContent = 'Decoding…';
 
   try {
-    // Step 1: NHTSA — make, model, year, transmission, seats
-    const nhtsaRes = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${encodeURIComponent(vin)}?format=json`);
-    const nhtsaJson = await nhtsaRes.json();
-    const r = nhtsaJson.Results?.[0] || {};
+    const res  = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${encodeURIComponent(vin)}?format=json`);
+    const json = await res.json();
+    const r    = json.Results?.[0] || {};
 
-    const make  = (r.Make  || '').trim();
-    const model = (r.Model || '').trim();
-    const year  = (r.ModelYear || '').trim();
+    const make  = (r.Make       || '').trim();
+    const model = (r.Model      || '').trim();
+    const year  = (r.ModelYear  || '').trim();
 
     if (make)  document.getElementById('car-make').value  = make;
     if (model) document.getElementById('car-model').value = model;
     if (year)  document.getElementById('car-year').value  = year;
 
+    // HP — NHTSA EngineHP field
+    const hp = (r.EngineHP || '').trim();
+    if (hp && hp !== '0') document.getElementById('car-hp').value = `${hp} HP`;
+
     // Seats
-    const seats = r.Seats || r.NumberOfSeats || '';
+    const seats = (r.Seats || r.NumberOfSeats || '').trim();
     if (seats && seats !== '0') document.getElementById('car-seats').value = seats;
 
     // Transmission — simplify NHTSA verbose strings
-    const transStyle  = (r.TransmissionStyle || '').toLowerCase();
+    const transStyle  = (r.TransmissionStyle  || '').toLowerCase();
     const transSpeeds = (r.TransmissionSpeeds || '').trim();
     let transLabel = '';
-    if (transStyle.includes('manual'))                      transLabel = 'Manual';
-    else if (transStyle.includes('continuously variable'))  transLabel = 'CVT';
+    if (transStyle.includes('manual'))                     transLabel = 'Manual';
+    else if (transStyle.includes('continuously variable')) transLabel = 'CVT';
     else if (transStyle.includes('automatic') && transSpeeds && transSpeeds !== '0')
-                                                            transLabel = `${transSpeeds}-Speed`;
-    else if (transStyle.includes('automatic'))              transLabel = 'Auto';
+                                                           transLabel = `${transSpeeds}-Speed`;
+    else if (transStyle.includes('automatic'))             transLabel = 'Auto';
     if (transLabel) document.getElementById('car-transmission').value = transLabel;
-
-    // Step 2: CarQuery — HP (JSONP)
-    if (make && model && year) {
-      try {
-        const cqMake  = make.toLowerCase().replace(/\s+/g, '%20');
-        const cqModel = model.toLowerCase().replace(/\s+/g, '%20');
-        const cqData  = await new Promise((resolve, reject) => {
-          const cb = '_cq' + Date.now();
-          window[cb] = (d) => { delete window[cb]; sc.remove(); resolve(d); };
-          const sc = document.createElement('script');
-          sc.src = `https://www.carqueryapi.com/api/0.3/?cmd=getTrims&make=${cqMake}&model=${cqModel}&year=${year}&callback=${cb}`;
-          sc.onerror = () => { delete window[cb]; reject(new Error('CarQuery error')); };
-          document.head.appendChild(sc);
-          setTimeout(() => { try { delete window[cb]; sc.remove(); } catch(e){} reject(new Error('timeout')); }, 6000);
-        });
-
-        const trims = cqData?.Trims || [];
-        if (trims.length > 0) {
-          const ps = parseFloat(trims[0].power_ps);
-          if (ps > 0) document.getElementById('car-hp').value = `${Math.round(ps * 0.9863)} HP`;
-          if (!document.getElementById('car-seats').value) {
-            const cqSeats = trims[0].seats;
-            if (cqSeats && cqSeats !== '0') document.getElementById('car-seats').value = cqSeats;
-          }
-        }
-      } catch (_) { /* CarQuery failed silently — HP needs manual entry */ }
-    }
 
     showToast('VIN decoded! Review and adjust if needed.', 'success');
   } catch (err) {
