@@ -18,16 +18,18 @@ let allReservations = [];
 let allBlocked      = [];
 let activeCarFilter = 'all';
 let turoFeeds       = {};   // { carId: { url, lastSynced } }
-let allConsignments = [];
-let allExpenses     = [];
-let allCars         = [];   // rows from cars table (with extra detail columns)
-let allServices     = [];   // rows from car_services
-let allCustomers    = [];   // rows from customers table
+let allConsignments  = [];
+let allExpenses      = [];
+let allCars          = [];   // rows from cars table (with extra detail columns)
+let allServices      = [];   // rows from car_services
+let allCustomers     = [];   // rows from customers table
+let allTransactions  = [];   // rows from transactions table (manual income/expense)
 
 // ---- Multi-tenancy ----
 let currentTenantId   = null;   // uuid — set after profile loads
 let currentTenantName = null;   // display name
 let currentTenantSlug = null;   // slug — used for public fleet URL
+let isSuperAdmin      = false;  // true only if profiles.is_super_admin = true
 
 // ---- Role ----
 let currentRole = 'admin';      // 'admin' | 'finance' | 'staff' — set after profile loads
@@ -74,9 +76,14 @@ async function loadTenantProfile(userId, userEmail = '') {
     currentTenantSlug = profile.tenants?.slug || null;
     currentPlan       = profile.tenants?.plan  || 'trial';
     trialStartedAt    = profile.tenants?.trial_started_at || null;
+    isSuperAdmin      = profile.is_super_admin === true;
     _setUserUI(profile.full_name, userEmail, profile.role || 'admin');
     _setTenantUI(currentTenantName);
     _setPublicUrlUI(currentTenantSlug);
+    if (isSuperAdmin) {
+      const saNav = document.getElementById('super-admin-nav');
+      if (saNav) saNav.style.display = '';
+    }
     return;
   }
 
@@ -908,14 +915,8 @@ function showDetail(r) {
   openModal('detail-modal');
 }
 
-function copyPortalLink(bookingId) {
-  const token = btoa(bookingId + ':' + (currentTenantId || '')).replace(/=/g, '');
-  const url = window.location.origin + '/booking-status.html?id=' + bookingId + '&token=' + token;
-  navigator.clipboard.writeText(url).then(() => {
-    showToast('Portal link copied to clipboard!');
-  }).catch(() => {
-    prompt('Copy this link:', url);
-  });
+function copyPortalLink(_bookingId) {
+  showToast('Booking portal coming soon.', 'info');
 }
 
 // ====================================================
@@ -1674,7 +1675,7 @@ function renderCustomers() {
   );
 
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2.5rem">No customers found</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2.5rem">No customers found</td></tr>`;
     return;
   }
 
@@ -1769,13 +1770,13 @@ function renderROIFleetCards() {
 
     // Booked days
     const bookedDays = revs.reduce((s, r) => {
-      if (!r.start_date || !r.end_date) return s;
-      const d = Math.round((new Date(r.end_date) - new Date(r.start_date)) / 86400000) + 1;
+      if (!r.pickup_date || !r.return_date) return s;
+      const d = Math.round((new Date(r.return_date) - new Date(r.pickup_date)) / 86400000) + 1;
       return s + Math.max(1, d);
     }, 0);
 
     // Date range for utilization
-    const startDates = revs.map(r => new Date(r.start_date)).filter(Boolean);
+    const startDates = revs.map(r => new Date(r.pickup_date)).filter(d => !isNaN(d));
     const firstDate  = startDates.length ? new Date(Math.min(...startDates)) : null;
     const daySpan    = firstDate ? Math.max(1, Math.round((today - firstDate) / 86400000)) : 365;
     const utilPct    = Math.min(100, Math.round(bookedDays / Math.min(daySpan, 365) * 100));
@@ -1934,35 +1935,321 @@ function recalcROI() {
 }
 
 // ====================================================
-//  REPORTS
+//  TRANSACTIONS  (manual cash income / expense)
 // ====================================================
-function renderReports() {
-  const tbody = document.getElementById('revenue-tbody');
+async function loadTransactions() {
+  const { data, error } = await withTenant(
+    sb.from('transactions').select('*').order('transaction_date', { ascending: false })
+  );
+  if (!error) allTransactions = data || [];
+}
+
+function openAddTransaction(type) {
+  const form = document.getElementById('transaction-form');
+  if (!form) return;
+  form.reset();
+  delete form.dataset.editId;
+  document.getElementById('tx-modal-title').textContent = type === 'income' ? 'Add Income' : 'Add Expense';
+  document.getElementById('tx-type').value = type || 'income';
+  document.getElementById('tx-date').value = todayStr();
+  // Populate car select
+  const carSel = document.getElementById('tx-car');
+  if (carSel) {
+    carSel.innerHTML = '<option value="">Company / General</option>' +
+      allCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+  openModal('transaction-modal');
+}
+
+async function saveTransaction(e) {
+  e.preventDefault();
+  const form    = document.getElementById('transaction-form');
+  const editId  = form.dataset.editId;
+  const carIdRaw = document.getElementById('tx-car').value;
+  const payload = {
+    transaction_date: document.getElementById('tx-date').value,
+    type:             document.getElementById('tx-type').value,
+    category:         document.getElementById('tx-category').value,
+    amount:           parseFloat(document.getElementById('tx-amount').value),
+    description:      document.getElementById('tx-description').value.trim(),
+    payment_method:   document.getElementById('tx-method').value,
+    car_id:           carIdRaw ? parseInt(carIdRaw) : null,
+    ...tenantPayload(),
+  };
+  const btn = e.submitter;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const { error } = editId
+    ? await sb.from('transactions').update(payload).eq('id', editId)
+    : await sb.from('transactions').insert(payload);
+  if (error) { showToast('Error: ' + error.message, 'error'); }
+  else {
+    closeModal('transaction-modal');
+    await loadTransactions();
+    renderFinancials();
+  }
+  btn.disabled = false; btn.textContent = 'Save';
+}
+
+async function deleteTransaction(id, btn) {
+  if (!confirm('Delete this transaction?')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  await sb.from('transactions').delete().eq('id', id);
+  await loadTransactions();
+  renderFinancials();
+}
+
+function renderTransactionsTable(fromVal, toVal) {
+  const tbody = document.getElementById('transactions-tbody');
   if (!tbody) return;
 
+  const list = allTransactions.filter(t => {
+    if (fromVal && t.transaction_date < fromVal) return false;
+    if (toVal   && t.transaction_date > toVal)   return false;
+    return true;
+  });
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem">No manual transactions yet. Add cash income or expenses above.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(t => {
+    const isIncome  = t.type === 'income';
+    const typeColor = isIncome ? '#34D399' : '#F87171';
+    const typeBg    = isIncome ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+    const sign      = isIncome ? '+' : '-';
+    const car       = t.car_id ? `<span class="car-dot-inline" style="background:${CAR_COLORS[t.car_id]||'#666'}"></span>${CAR_NAMES[t.car_id]||'—'}` : '<span style="font-size:0.78rem;color:var(--muted);">Company</span>';
+    const methodMap = { cash: '💵 Cash', stripe: '💳 Card', bank_transfer: '🏦 Bank', other: '—' };
+    return `
+    <tr>
+      <td>${fmtDate(t.transaction_date)}</td>
+      <td><span class="badge" style="background:${typeBg};color:${typeColor};">${t.type}</span></td>
+      <td>${esc(t.category)}</td>
+      <td>${car}</td>
+      <td style="color:var(--muted-2);">${esc(t.description || '—')}</td>
+      <td style="font-weight:700;color:${typeColor};">${sign}$${Number(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+      <td style="font-size:0.78rem;color:var(--muted);">${methodMap[t.payment_method] || t.payment_method || '—'}</td>
+      <td class="actions">
+        <button class="btn-icon danger write-action" onclick="deleteTransaction('${t.id}', this)" title="Delete">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ====================================================
+//  FINANCIALS — P&L chart helpers
+// ====================================================
+function _buildMonthBuckets(fromVal, toVal) {
+  const defaultStart = (() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 5);
+    return d.toISOString().slice(0, 7);
+  })();
+  const start = fromVal ? fromVal.slice(0, 7) : defaultStart;
+  const end   = toVal   ? toVal.slice(0, 7)   : new Date().toISOString().slice(0, 7);
+  const buckets = [];
+  let cur = start;
+  while (cur <= end && buckets.length < 24) {
+    buckets.push(cur);
+    const d = new Date(cur + '-01T12:00:00');
+    d.setMonth(d.getMonth() + 1);
+    cur = d.toISOString().slice(0, 7);
+  }
+  return buckets;
+}
+
+let _plChart = null;
+
+function _renderPLChart(months, incomeByMonth, expensesByMonth) {
+  const ctx = document.getElementById('pl-chart');
+  if (!ctx) return;
+
+  const labels = months.map(ym => {
+    const d = new Date(ym + '-01T12:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+  });
+
+  const netByMonth = months.map((_, i) => incomeByMonth[i] - expensesByMonth[i]);
+
+  if (_plChart) { _plChart.destroy(); _plChart = null; }
+
+  _plChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Revenue',
+          data: incomeByMonth,
+          backgroundColor: 'rgba(16,185,129,0.75)',
+          borderColor:     '#10B981',
+          borderWidth: 1,
+          borderRadius: 4,
+          order: 2,
+        },
+        {
+          label: 'Expenses',
+          data: expensesByMonth,
+          backgroundColor: 'rgba(239,68,68,0.65)',
+          borderColor:     '#EF4444',
+          borderWidth: 1,
+          borderRadius: 4,
+          order: 2,
+        },
+        {
+          label: 'Net Profit',
+          data: netByMonth,
+          type: 'line',
+          borderColor:          '#818CF8',
+          backgroundColor:      'rgba(129,140,248,0.08)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: '#818CF8',
+          fill: false,
+          tension: 0.3,
+          order: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString('en-US', { maximumFractionDigits: 0 }),
+          },
+        },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: {
+          beginAtZero: true,
+          ticks: { font: { size: 10 }, callback: v => '$' + (Math.abs(v) >= 1000 ? (v/1000).toFixed(0)+'k' : v) },
+        },
+      },
+    },
+  });
+}
+
+// ====================================================
+//  REPORTS
+// ====================================================
+function renderFinancials() {
   const fromVal = document.getElementById('report-from')?.value || '';
   const toVal   = document.getElementById('report-to')?.value   || '';
   const carVal  = document.getElementById('report-car')?.value  || '';
 
-  const filtered = allReservations.filter(r => {
+  // ── Revenue from reservations ──────────────────────
+  const resFiltered = allReservations.filter(r => {
     if (r.status === 'cancelled') return false;
     if (fromVal && r.pickup_date < fromVal) return false;
     if (toVal   && r.pickup_date > toVal)   return false;
     if (carVal  && String(r.car_id) !== carVal) return false;
     return true;
   });
+  const resRevenue = resFiltered.reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
 
-  const totalRevenue = filtered.reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
+  // ── Manual income transactions ─────────────────────
+  const txFiltered = allTransactions.filter(t => {
+    if (fromVal && t.transaction_date < fromVal) return false;
+    if (toVal   && t.transaction_date > toVal)   return false;
+    return true;
+  });
+  const txIncome   = txFiltered.filter(t => t.type === 'income').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+  const txExpenses = txFiltered.filter(t => t.type === 'expense').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+  const totalIncome = resRevenue + txIncome;
 
+  // ── Expenses from consignment_expenses ────────────
+  const expFiltered = allExpenses.filter(e => {
+    if (fromVal && e.expense_date < fromVal) return false;
+    if (toVal   && e.expense_date > toVal)   return false;
+    if (carVal  && e.car_id && String(e.car_id) !== carVal) return false;
+    return true;
+  });
+  const expTotal = expFiltered.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+  // ── Maintenance costs from car_services ───────────
+  const svcFiltered = allServices.filter(s => {
+    if (!s.cost) return false;
+    if (fromVal && s.service_date < fromVal) return false;
+    if (toVal   && s.service_date > toVal)   return false;
+    if (carVal  && String(s.car_id) !== carVal) return false;
+    return true;
+  });
+  const svcTotal = svcFiltered.reduce((s, svc) => s + (parseFloat(svc.cost) || 0), 0);
+
+  const totalExpenses = expTotal + svcTotal + txExpenses;
+  const netProfit     = totalIncome - totalExpenses;
+  const margin        = totalIncome > 0 ? (netProfit / totalIncome * 100) : 0;
+
+  // ── Summary cards ──────────────────────────────────
+  _setFinCard('fin-revenue',  '$' + totalIncome.toLocaleString('en-US', { maximumFractionDigits: 0 }));
+  _setFinCard('fin-expenses', '$' + totalExpenses.toLocaleString('en-US', { maximumFractionDigits: 0 }));
+  _setFinCard('fin-profit',   (netProfit < 0 ? '-$' : '$') + Math.abs(netProfit).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+  _setFinCard('fin-margin',   margin.toFixed(1) + '%');
+
+  const profitEl = document.getElementById('fin-profit');
+  if (profitEl) profitEl.style.color = netProfit >= 0 ? '#34D399' : '#F87171';
+
+  // ── P&L chart ──────────────────────────────────────
+  const months = _buildMonthBuckets(fromVal, toVal);
+
+  const incomeByMonth = months.map(ym => {
+    const r = resFiltered.filter(r => r.pickup_date?.startsWith(ym))
+      .reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
+    const t = txFiltered.filter(t => t.type === 'income' && t.transaction_date?.startsWith(ym))
+      .reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+    return r + t;
+  });
+
+  const expensesByMonth = months.map(ym => {
+    const e = expFiltered.filter(e => e.expense_date?.startsWith(ym))
+      .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+    const sv = svcFiltered.filter(sv => sv.service_date?.startsWith(ym))
+      .reduce((s, sv) => s + (parseFloat(sv.cost) || 0), 0);
+    const t = txFiltered.filter(t => t.type === 'expense' && t.transaction_date?.startsWith(ym))
+      .reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+    return e + sv + t;
+  });
+
+  _renderPLChart(months, incomeByMonth, expensesByMonth);
+
+  // ── Revenue by vehicle table ───────────────────────
+  renderRevenueByVehicle(resFiltered, resRevenue);
+
+  // ── Manual transactions table ──────────────────────
+  renderTransactionsTable(fromVal, toVal);
+
+  // ── Summary label ──────────────────────────────────
+  const summary = document.getElementById('report-summary');
+  if (summary) {
+    const parts = [];
+    if (fromVal || toVal) parts.push((fromVal || '…') + ' → ' + (toVal || '…'));
+    if (carVal) parts.push(CAR_NAMES[parseInt(carVal)]);
+    summary.textContent = resFiltered.length + ' bookings' + (parts.length ? ' · ' + parts.join(', ') : '');
+  }
+}
+
+function _setFinCard(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function renderRevenueByVehicle(resFiltered, totalRevenue) {
+  const tbody = document.getElementById('revenue-tbody');
+  if (!tbody) return;
+  const carVal = document.getElementById('report-car')?.value || '';
   const carIds = carVal ? [parseInt(carVal)] : allCars.map(c => c.id);
-  const rows = carIds.map(id => {
-    const bookings = filtered.filter(r => r.car_id === id);
+  const rows   = carIds.map(id => {
+    const bookings = resFiltered.filter(r => r.car_id === id);
     const revenue  = bookings.reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
     const avg      = bookings.length ? revenue / bookings.length : 0;
     const pct      = totalRevenue > 0 ? (revenue / totalRevenue * 100) : 0;
     return { id, bookings: bookings.length, revenue, avg, pct };
   });
-
   tbody.innerHTML = rows.map(r => `
     <tr>
       <td><span class="car-dot-inline" style="background:${CAR_COLORS[r.id]}"></span><strong>${CAR_NAMES[r.id]}</strong></td>
@@ -1978,22 +2265,9 @@ function renderReports() {
         </div>
       </td>
     </tr>`).join('');
-
-  // Update summary label
-  const summary = document.getElementById('report-summary');
-  if (summary) {
-    const parts = [];
-    if (fromVal || toVal) parts.push((fromVal || '…') + ' → ' + (toVal || '…'));
-    if (carVal) parts.push(CAR_NAMES[parseInt(carVal)]);
-    summary.textContent = parts.length
-      ? filtered.length + ' bookings · $' + totalRevenue.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' · ' + parts.join(', ')
-      : filtered.length + ' bookings · $' + totalRevenue.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  }
-
-  if (typeof Chart !== 'undefined') {
-    refreshCharts(filtered);
-  }
 }
+
+function renderReports() { renderFinancials(); }   // backward compat alias
 
 // ====================================================
 //  CSV EXPORT
@@ -2775,7 +3049,7 @@ function switchTab(tab) {
   if (tab === 'cars') renderCarCards();
   if (tab === 'maintenance') { renderFleetStatus(); renderServicesTable(); renderMaintenanceAlerts(); }
   if (tab === 'customers') renderCustomers();
-  if (tab === 'reports') renderReports();
+  if (tab === 'reports') renderFinancials();
   if (tab === 'users') loadUsers();
   if (tab === 'roi')   renderROIFleetCards();
 }
@@ -3027,7 +3301,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   applyRoleRestrictions();
 
-  await Promise.all([loadReservations(), loadBlockedDates(), loadTuroFeeds(), loadConsignments(), loadExpenses(), loadCars(), loadServices(), loadCustomers()]);
+  await Promise.all([loadReservations(), loadBlockedDates(), loadTuroFeeds(), loadConsignments(), loadExpenses(), loadCars(), loadServices(), loadCustomers(), loadTransactions()]);
 
   populateFeedCarDropdown();
   populateCarFilterDropdowns();
@@ -3121,14 +3395,19 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('service-car-filter')?.addEventListener('change', renderServicesTable);
   document.getElementById('service-type-filter')?.addEventListener('change', renderServicesTable);
 
-  // Reports filters
-  document.getElementById('apply-report-btn')?.addEventListener('click', renderReports);
+  // Financials / Reports filters
+  document.getElementById('apply-report-btn')?.addEventListener('click', renderFinancials);
   document.getElementById('clear-report-btn')?.addEventListener('click', () => {
     document.getElementById('report-from').value = '';
     document.getElementById('report-to').value   = '';
     document.getElementById('report-car').value  = '';
-    renderReports();
+    renderFinancials();
   });
+
+  // Transactions
+  document.getElementById('transaction-form')?.addEventListener('submit', saveTransaction);
+  document.getElementById('add-income-btn')?.addEventListener('click',  () => openAddTransaction('income'));
+  document.getElementById('add-expense-fin-btn')?.addEventListener('click', () => openAddTransaction('expense'));
 
   // Customers
   document.getElementById('add-customer-btn')?.addEventListener('click', openAddCustomer);
