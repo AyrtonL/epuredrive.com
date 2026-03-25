@@ -31,21 +31,24 @@ let currentTenantName = null;   // display name
 let currentTenantSlug = null;   // slug — used for public fleet URL
 let isSuperAdmin      = false;  // true only if profiles.is_super_admin = true
 
+// ---- Tenant Branding ----
+let tenantLogoUrl      = null;
+let tenantPrimaryColor = null;
+let tenantAccentColor  = null;
+let tenantBrandName    = null;
+
 // ---- Role ----
 let currentRole = 'admin';      // 'admin' | 'finance' | 'staff' — set after profile loads
 let currentUserId = null;       // auth user uuid
 let currentActiveTab = 'main';  // track current tab for role restrictions
 
-// ---- Plan / Trial ----
-let currentPlan    = 'trial';   // 'trial' | 'starter' | 'pro' | 'suspended'
-let trialStartedAt = null;      // ISO timestamp
-const TRIAL_DAYS             = 14;
-const TRIAL_MAX_RESERVATIONS = 2;
-const TRIAL_MAX_CARS         = 1;
+// ---- Plan ----
+let currentPlan    = 'free';    // 'free' | 'starter' | 'pro' | 'enterprise' | 'suspended'
+const FREE_MAX_CARS          = 1;
 const STARTER_MAX_CARS       = 10;
 const PRO_MAX_CARS           = 30;
-const STARTER_PRICE_ID       = 'price_1TDaQ3HAH4zJnnwfasGBYtYO';
-const PRO_PRICE_ID           = 'price_1TDaQVHAH4zJnnwfPf1Gh6eg';
+const STARTER_PRICE_ID       = 'price_1TDaQ3HAH4zJnnwfasGBYtYO';   // $49/mo
+const PRO_PRICE_ID           = 'price_1TDaQVHAH4zJnnwfPf1Gh6eg';   // $149/mo — update after creating new Stripe price
 const PRO_ONLY_TABS          = ['turo', 'reports', 'consignments', 'users', 'roi'];
 
 // ====================================================
@@ -66,7 +69,7 @@ async function loadTenantProfile(userId, userEmail = '') {
   // 1 — Try profile lookup
   const { data: profile } = await sb
     .from('profiles')
-    .select('tenant_id, full_name, role, is_super_admin, tenants(name, plan, trial_started_at, slug)')
+    .select('tenant_id, full_name, role, is_super_admin, tenants(name, plan, slug, logo_url, primary_color, accent_color, brand_name)')
     .eq('id', userId)
     .maybeSingle();
 
@@ -74,12 +77,17 @@ async function loadTenantProfile(userId, userEmail = '') {
     currentTenantId   = profile.tenant_id;
     currentTenantName = profile.tenants?.name || null;
     currentTenantSlug = profile.tenants?.slug || null;
-    currentPlan       = profile.tenants?.plan  || 'trial';
-    trialStartedAt    = profile.tenants?.trial_started_at || null;
+    currentPlan       = profile.tenants?.plan  || 'free';
     isSuperAdmin      = profile.is_super_admin === true;
+    // Store branding
+    tenantLogoUrl      = profile.tenants?.logo_url || null;
+    tenantPrimaryColor = profile.tenants?.primary_color || null;
+    tenantAccentColor  = profile.tenants?.accent_color || null;
+    tenantBrandName    = profile.tenants?.brand_name || null;
     _setUserUI(profile.full_name, userEmail, profile.role || 'admin');
-    _setTenantUI(currentTenantName);
+    _setTenantUI(tenantBrandName || currentTenantName);
     _setPublicUrlUI(currentTenantSlug);
+    _applyTenantBranding();
     if (isSuperAdmin) {
       const saNav = document.getElementById('super-admin-nav');
       if (saNav) saNav.style.display = '';
@@ -90,18 +98,22 @@ async function loadTenantProfile(userId, userEmail = '') {
   // 2 — Profile missing or RLS blocked — try reading existing tenant directly
   const { data: tenant } = await sb
     .from('tenants')
-    .select('id, name, plan, trial_started_at')
+    .select('id, name, plan, slug, logo_url, primary_color, accent_color, brand_name')
     .limit(1)
     .maybeSingle();
 
   if (tenant?.id) {
     currentTenantId   = tenant.id;
     currentTenantName = tenant.name || null;
-    currentPlan       = tenant.plan || 'trial';
-    trialStartedAt    = tenant.trial_started_at || null;
+    currentPlan       = tenant.plan || 'free';
+    tenantLogoUrl      = tenant.logo_url || null;
+    tenantPrimaryColor = tenant.primary_color || null;
+    tenantAccentColor  = tenant.accent_color || null;
+    tenantBrandName    = tenant.brand_name || null;
     await sb.from('profiles').upsert({ id: userId, tenant_id: tenant.id, role: 'admin' });
     _setUserUI(null, userEmail, 'admin');
-    _setTenantUI(currentTenantName);
+    _setTenantUI(tenantBrandName || currentTenantName);
+    _applyTenantBranding();
     return;
   }
 
@@ -123,12 +135,111 @@ function _setPublicUrlUI(slug) {
   const link     = document.getElementById('public-page-link');
   const openLink = document.getElementById('public-page-open');
   if (!card || !link) return;
-  const base = window.location.origin;
-  const url  = base + '/fleet.html?t=' + encodeURIComponent(slug);
+  // Show subdomain URL (primary) + fallback query string
+  const subdomainUrl = `https://${slug}.epuredrive.com`;
+  const fallbackUrl  = window.location.origin + '/fleet.html?t=' + encodeURIComponent(slug);
+  const url = subdomainUrl;
   link.href        = url;
   link.textContent = url;
   if (openLink) openLink.href = url;
   card.style.display = 'flex';
+}
+
+function _applyTenantBranding() {
+  if (tenantPrimaryColor) {
+    document.documentElement.style.setProperty('--accent', tenantPrimaryColor);
+  }
+  if (tenantAccentColor) {
+    document.documentElement.style.setProperty('--blue', tenantAccentColor);
+  }
+  if (tenantLogoUrl) {
+    const logoEl = document.getElementById('sidebar-logo');
+    if (logoEl) logoEl.src = tenantLogoUrl;
+  }
+}
+
+// ---- Brand Settings Modal ----
+function initBrandSettings() {
+  const form = document.getElementById('brand-settings-form');
+  if (!form) return;
+
+  const nameInput    = document.getElementById('brand-name-input');
+  const primaryInput = document.getElementById('brand-primary-color');
+  const accentInput  = document.getElementById('brand-accent-color');
+  const primaryHex   = document.getElementById('brand-primary-hex');
+  const accentHex    = document.getElementById('brand-accent-hex');
+  const previewName  = document.getElementById('brand-preview-name');
+  const previewSwatch= document.getElementById('brand-preview-swatch');
+  const logoPreview  = document.getElementById('brand-logo-preview');
+
+  // Populate with current values
+  nameInput.value    = tenantBrandName || currentTenantName || '';
+  primaryInput.value = tenantPrimaryColor || '#000000';
+  accentInput.value  = tenantAccentColor || '#3B82F6';
+  primaryHex.textContent = primaryInput.value;
+  accentHex.textContent  = accentInput.value;
+  previewName.textContent = nameInput.value || 'Your Brand';
+  previewSwatch.style.background = `linear-gradient(135deg, ${primaryInput.value}, ${accentInput.value})`;
+  if (tenantLogoUrl) { logoPreview.src = tenantLogoUrl; logoPreview.style.display = 'block'; }
+
+  // Live preview
+  primaryInput.addEventListener('input', () => {
+    primaryHex.textContent = primaryInput.value;
+    previewSwatch.style.background = `linear-gradient(135deg, ${primaryInput.value}, ${accentInput.value})`;
+  });
+  accentInput.addEventListener('input', () => {
+    accentHex.textContent = accentInput.value;
+    previewSwatch.style.background = `linear-gradient(135deg, ${primaryInput.value}, ${accentInput.value})`;
+  });
+  nameInput.addEventListener('input', () => {
+    previewName.textContent = nameInput.value || 'Your Brand';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('brand-save-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    try {
+      // Upload logo if changed
+      const fileInput = document.getElementById('brand-logo-input');
+      let logoUrl = tenantLogoUrl;
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const ext  = file.name.split('.').pop();
+        const path = `${currentTenantId}/logo.${ext}`;
+        const { error: upErr } = await sb.storage.from('tenant-logos').upload(path, file, { upsert: true });
+        if (upErr) throw upErr;
+        const { data: urlData } = sb.storage.from('tenant-logos').getPublicUrl(path);
+        logoUrl = urlData.publicUrl;
+      }
+
+      const updates = {
+        brand_name:    nameInput.value.trim() || null,
+        primary_color: primaryInput.value,
+        accent_color:  accentInput.value,
+        logo_url:      logoUrl,
+      };
+
+      const { error } = await sb.from('tenants').update(updates).eq('id', currentTenantId);
+      if (error) throw error;
+
+      // Update local state
+      tenantBrandName    = updates.brand_name;
+      tenantPrimaryColor = updates.primary_color;
+      tenantAccentColor  = updates.accent_color;
+      tenantLogoUrl      = updates.logo_url;
+      _applyTenantBranding();
+      _setTenantUI(tenantBrandName || currentTenantName);
+
+      closeModal('brand-settings-modal');
+      showToast('Brand settings saved!');
+    } catch (err) {
+      showToast('Failed to save: ' + (err.message || err), 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save Brand Settings';
+    }
+  });
 }
 
 function copyPublicUrl() {
@@ -145,18 +256,18 @@ function _setPlanUI() {
   if (!banner) return;
 
   // Apply plan class to body for CSS feature gating
-  document.body.classList.remove('plan-trial', 'plan-starter', 'plan-pro', 'plan-suspended');
+  document.body.classList.remove('plan-free', 'plan-trial', 'plan-starter', 'plan-pro', 'plan-enterprise', 'plan-suspended');
   document.body.classList.add(`plan-${currentPlan}`);
 
-  if (currentPlan === 'pro') { banner.style.display = 'none'; return; }
+  if (['pro', 'enterprise'].includes(currentPlan)) { banner.style.display = 'none'; return; }
 
   if (currentPlan === 'suspended') {
     banner.style.display = 'flex';
     banner.style.background = 'rgba(239,68,68,0.1)';
     banner.style.borderBottomColor = 'rgba(239,68,68,0.4)';
     banner.innerHTML = `
-      <span style="font-size:0.82rem;color:#EF4444;font-weight:600;">⛔ Account suspended — contact support to reactivate your plan.</span>
-      <a href="mailto:info@epuredrive.com?subject=Reactivate%20Account" style="font-size:0.78rem;font-weight:700;color:#EF4444;text-decoration:none;padding:0.25rem 0.85rem;border:1px solid #EF4444;border-radius:6px;">Contact Us →</a>`;
+      <span style="font-size:0.82rem;color:#EF4444;font-weight:600;">Account suspended — contact support to reactivate your plan.</span>
+      <a href="mailto:info@epuredrive.com?subject=Reactivate%20Account" style="font-size:0.78rem;font-weight:700;color:#EF4444;text-decoration:none;padding:0.25rem 0.85rem;border:1px solid #EF4444;border-radius:6px;">Contact Us</a>`;
     return;
   }
 
@@ -166,39 +277,27 @@ function _setPlanUI() {
     banner.style.borderBottomColor = 'rgba(99,102,241,0.25)';
     banner.innerHTML = `
       <span style="font-size:0.8rem;color:var(--text);">
-        <strong style="color:#818CF8;">⚡ Starter Plan</strong>
+        <strong style="color:#818CF8;">Starter Plan</strong>
         &nbsp;·&nbsp; Cars: <strong>${allCars.length}/${STARTER_MAX_CARS}</strong>
-        &nbsp;·&nbsp; Unlock Reports, Calendar Sync, Consignments &amp; Roles with Pro
+        &nbsp;·&nbsp; Unlock Reports, Turo Sync, Consignments, White-label &amp; Roles with Pro
       </span>
-      <button onclick="startCheckout('${PRO_PRICE_ID}')" style="font-size:0.78rem;font-weight:700;color:#818CF8;background:none;border:1px solid #818CF8;border-radius:6px;padding:0.25rem 0.85rem;cursor:pointer;white-space:nowrap;">Upgrade to Pro $99/mo →</button>`;
+      <button onclick="startCheckout('${PRO_PRICE_ID}')" style="font-size:0.78rem;font-weight:700;color:#818CF8;background:none;border:1px solid #818CF8;border-radius:6px;padding:0.25rem 0.85rem;cursor:pointer;white-space:nowrap;">Upgrade to Pro $149/mo →</button>`;
     return;
   }
 
-  // Trial
-  let daysLeft = TRIAL_DAYS;
-  if (trialStartedAt) {
-    const used = Math.floor((Date.now() - new Date(trialStartedAt)) / 86400000);
-    daysLeft   = Math.max(0, TRIAL_DAYS - used);
-  }
-  const resUsed  = allReservations.filter(r => r.status !== 'cancelled').length;
+  // Free plan
   const carsUsed = allCars.length;
-  const expired  = daysLeft === 0;
-  const atLimit  = resUsed >= TRIAL_MAX_RESERVATIONS || carsUsed >= TRIAL_MAX_CARS;
-  const accent   = (expired || atLimit) ? '#EF4444' : '#F59E0B';
-
+  const atLimit  = carsUsed >= FREE_MAX_CARS;
   banner.style.display = 'flex';
   banner.style.background = 'rgba(245,158,11,0.07)';
   banner.style.borderBottomColor = 'rgba(245,158,11,0.25)';
   banner.innerHTML = `
-    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-      <span style="font-size:0.8rem;font-weight:700;letter-spacing:.04em;color:${accent};">⚡ TRIAL</span>
-      <span style="font-size:0.8rem;color:var(--text);">
-        ${expired ? '<span style="color:#EF4444;font-weight:700;">Expired</span>' : `<strong>${daysLeft}</strong> day${daysLeft !== 1 ? 's' : ''} left`}
-        &nbsp;·&nbsp; Reservations: <strong style="color:${resUsed >= TRIAL_MAX_RESERVATIONS ? '#EF4444' : 'inherit'}">${resUsed}/${TRIAL_MAX_RESERVATIONS}</strong>
-        &nbsp;·&nbsp; Cars: <strong style="color:${carsUsed >= TRIAL_MAX_CARS ? '#EF4444' : 'inherit'}">${carsUsed}/${TRIAL_MAX_CARS}</strong>
-      </span>
-    </div>
-    <button onclick="openModal('upgrade-modal')" style="font-size:0.78rem;font-weight:700;color:${accent};background:none;border:1px solid ${accent};border-radius:6px;padding:0.25rem 0.85rem;cursor:pointer;white-space:nowrap;">Upgrade →</button>`;
+    <span style="font-size:0.8rem;color:var(--text);">
+      <strong style="color:#F59E0B;">Free Plan</strong>
+      &nbsp;·&nbsp; Cars: <strong style="color:${atLimit ? '#EF4444' : 'inherit'}">${carsUsed}/${FREE_MAX_CARS}</strong>
+      &nbsp;·&nbsp; Upgrade to add more cars and unlock all features
+    </span>
+    <button onclick="openModal('upgrade-modal')" style="font-size:0.78rem;font-weight:700;color:#F59E0B;background:none;border:1px solid #F59E0B;border-radius:6px;padding:0.25rem 0.85rem;cursor:pointer;white-space:nowrap;">Upgrade →</button>`;
 }
 
 function checkPlanLimit(type) {
@@ -206,27 +305,11 @@ function checkPlanLimit(type) {
     showToast('Account suspended. Contact support to reactivate.', 'error');
     return false;
   }
-  if (currentPlan === 'pro') return true;
+  if (['pro', 'enterprise'].includes(currentPlan)) return true;
 
-  if (currentPlan === 'trial') {
-    const daysLeft = trialStartedAt
-      ? Math.max(0, TRIAL_DAYS - Math.floor((Date.now() - new Date(trialStartedAt)) / 86400000))
-      : TRIAL_DAYS;
-    if (daysLeft === 0) {
-      showToast('Your trial has expired. Upgrade to continue.', 'error');
-      openModal('upgrade-modal');
-      return false;
-    }
-    if (type === 'reservation') {
-      const used = allReservations.filter(r => r.status !== 'cancelled').length;
-      if (used >= TRIAL_MAX_RESERVATIONS) {
-        showToast(`Trial limit: max ${TRIAL_MAX_RESERVATIONS} reservations. Upgrade to continue.`, 'error');
-        openModal('upgrade-modal');
-        return false;
-      }
-    }
-    if (type === 'car' && allCars.length >= TRIAL_MAX_CARS) {
-      showToast(`Trial limit: max ${TRIAL_MAX_CARS} car. Upgrade to continue.`, 'error');
+  if (currentPlan === 'free') {
+    if (type === 'car' && allCars.length >= FREE_MAX_CARS) {
+      showToast(`Free plan limit: max ${FREE_MAX_CARS} car. Upgrade to add more.`, 'error');
       openModal('upgrade-modal');
       return false;
     }
@@ -358,12 +441,9 @@ function showOnboarding(userId) {
         if (el) el.textContent = company;
         _setPublicUrlUI(currentTenantSlug);
 
-        // Show Step 2 workflow guide
-        const publicUrl = window.location.origin + '/fleet.html?t=' + encodeURIComponent(currentTenantSlug);
-        const linkEl = document.getElementById('onboard-public-link');
-        if (linkEl) { linkEl.href = publicUrl; linkEl.textContent = publicUrl; }
+        // Show Step 2: Brand Setup
         document.getElementById('onboard-step-1').style.display = 'none';
-        document.getElementById('onboard-step-2').style.display = 'block';
+        document.getElementById('onboard-step-brand').style.display = 'block';
       } catch (err) {
         errEl.textContent = 'Setup failed: ' + (err.message || 'Unknown error');
         errEl.style.display = 'block';
@@ -388,6 +468,59 @@ function copyOnboardUrl() {
     () => {}
   );
 }
+
+function _showOnboardStep3() {
+  const publicUrl = `https://${currentTenantSlug}.epuredrive.com`;
+  const linkEl = document.getElementById('onboard-public-link');
+  if (linkEl) { linkEl.href = publicUrl; linkEl.textContent = publicUrl; }
+  document.getElementById('onboard-step-brand').style.display = 'none';
+  document.getElementById('onboard-step-2').style.display = 'block';
+}
+
+function skipOnboardBrand() {
+  _showOnboardStep3();
+}
+
+// Onboard brand save
+document.addEventListener('DOMContentLoaded', () => {
+  const brandBtn = document.getElementById('onboard-brand-btn');
+  if (!brandBtn) return;
+  brandBtn.addEventListener('click', async () => {
+    brandBtn.disabled = true;
+    brandBtn.textContent = 'Saving…';
+    try {
+      const primaryColor = document.getElementById('onboard-primary-color').value;
+      const accentColor  = document.getElementById('onboard-accent-color').value;
+      const fileInput    = document.getElementById('onboard-logo');
+      let logoUrl = null;
+
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const ext  = file.name.split('.').pop();
+        const path = `${currentTenantId}/logo.${ext}`;
+        const { error: upErr } = await sb.storage.from('tenant-logos').upload(path, file, { upsert: true });
+        if (!upErr) {
+          const { data: urlData } = sb.storage.from('tenant-logos').getPublicUrl(path);
+          logoUrl = urlData.publicUrl;
+        }
+      }
+
+      const updates = { primary_color: primaryColor, accent_color: accentColor };
+      if (logoUrl) updates.logo_url = logoUrl;
+      await sb.from('tenants').update(updates).eq('id', currentTenantId);
+
+      tenantPrimaryColor = primaryColor;
+      tenantAccentColor  = accentColor;
+      if (logoUrl) tenantLogoUrl = logoUrl;
+      _applyTenantBranding();
+    } catch (e) {
+      console.error('Brand save error:', e);
+    }
+    brandBtn.disabled = false;
+    brandBtn.textContent = 'Save & Continue →';
+    _showOnboardStep3();
+  });
+});
 
 // ====================================================
 //  TENANT HELPERS
@@ -3036,7 +3169,7 @@ const TAB_TITLES = {
 
 function switchTab(tab) {
   // Block Pro-only tabs for non-pro users
-  if (currentPlan !== 'pro' && PRO_ONLY_TABS.includes(tab)) {
+  if (!['pro', 'enterprise'].includes(currentPlan) && PRO_ONLY_TABS.includes(tab)) {
     openModal('upgrade-modal');
     return;
   }
@@ -3322,6 +3455,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   populateFeedCarDropdown();
   populateCarFilterDropdowns();
   _setPlanUI();
+  initBrandSettings();
 
   // Silently backfill any missing customers from existing reservations
   syncCustomersFromReservations(null, false);

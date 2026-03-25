@@ -50,8 +50,7 @@ exports.handler = async (event) => {
     body: JSON.stringify({
       name,
       slug,
-      plan: 'trial',
-      trial_started_at: new Date().toISOString(),
+      plan: 'free',
     }),
   });
   const tenants = await tenantRes.json();

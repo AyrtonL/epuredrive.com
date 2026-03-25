@@ -1,0 +1,81 @@
+==========================================
+  éPure Drive — SaaS Launch Action Items
+  (Manual steps YOU need to complete)
+==========================================
+
+PRIORITY 1: REQUIRED BEFORE GOING LIVE
+---------------------------------------
+
+1. STRIPE — Create new Pro price at $149/mo
+   - Go to: https://dashboard.stripe.com/prices
+   - Create new recurring price: $149/month
+   - Copy the new price_id (starts with price_...)
+   - Update these files with the new price_id:
+     • admin/js/dashboard.js → PRO_PRICE_ID constant (line ~46)
+     • netlify/functions/stripe-webhook.js → PRO_PRICE_ID constant (line 11)
+   - Verify Starter price is $49/mo (current: price_1TDaQ3HAH4zJnnwfasGBYtYO)
+   - Archive the old $99/mo Pro price in Stripe
+
+2. SUPABASE STORAGE — Create tenant-logos bucket
+   - Go to: https://supabase.com/dashboard → Storage
+   - Create new bucket: "tenant-logos"
+   - Make it PUBLIC (so logos can be displayed on fleet pages)
+   - Allow file types: image/png, image/jpeg, image/svg+xml, image/webp
+
+3. DNS — Set up wildcard subdomain
+   - Go to your DNS provider for epuredrive.com
+   - Add record: *.epuredrive.com CNAME → epuredrivecom.netlify.app
+   - This enables: {company-slug}.epuredrive.com for each tenant
+
+4. NETLIFY — Add wildcard domain
+   - Go to: https://app.netlify.com/sites/epuredrivecom/domain-management
+   - Add custom domain: *.epuredrive.com
+   - Enable SSL for the wildcard (may require Netlify Pro plan)
+   - Note: Wildcard SSL might need Netlify's paid plan
+
+5. CSP HEADER — Update Content-Security-Policy
+   - In netlify.toml, the img-src directive needs to include
+     the tenant-logos bucket URL from Supabase storage
+   - Add to img-src: https://brwzjwbpguiignrxvjdc.supabase.co/storage/v1/object/public/tenant-logos/
+
+
+PRIORITY 2: NICE TO HAVE
+-------------------------
+
+6. STRIPE WEBHOOK — Verify endpoint
+   - Ensure your Stripe webhook at /.netlify/functions/stripe-webhook
+     listens for these events:
+     • checkout.session.completed
+     • customer.subscription.updated
+     • customer.subscription.deleted
+   - The webhook secret env var STRIPE_WEBHOOK_SECRET must be set in Netlify
+
+7. DOMAIN — Verify epuredrive.com main site
+   - The marketing homepage at epuredrive.com should link to
+     the admin signup page for new clients
+   - "Powered by éPure Drive" footer links to epuredrive.com
+
+8. EMAIL — Set up transactional email
+   - Consider setting up a proper email for Enterprise inquiries:
+     info@epuredrive.com (linked from the Enterprise contact button)
+
+
+PRICING SUMMARY
+---------------
+  Free:       $0/forever  | 1 car     | Dashboard, bookings, calendar
+  Starter:    $49/mo      | 10 cars   | Same + more cars
+  Pro:        $149/mo     | 30 cars   | + Turo sync, reports, consignments, white-label, roles
+  Enterprise: Custom      | Unlimited | + Custom domain, API, dedicated support
+
+
+FILES CHANGED IN THIS UPDATE
+-----------------------------
+  admin/js/dashboard.js        — Plan logic, branding, onboarding, pricing
+  admin/dashboard.html         — Upgrade modal, brand settings modal, onboarding steps, CSS
+  admin/superadmin.html        — Plan badges, dropdowns, filter for free/enterprise
+  js/fleet.js                  — Subdomain detection, tenant branding, powered-by footer
+  netlify/functions/create-tenant.js     — Default plan: free (was trial)
+  netlify/functions/superadmin-update.js — Valid plans updated
+  netlify/functions/stripe-webhook.js    — Price IDs (update after creating Stripe prices)
+  netlify.toml                 — Edge function registration
+  netlify/edge-functions/subdomain-rewrite.js — NEW: subdomain routing

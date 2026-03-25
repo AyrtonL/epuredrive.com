@@ -306,13 +306,20 @@ function initBookingForm() {
 async function syncDatabase() {
   try {
     const _p = new URLSearchParams(window.location.search);
-    const tenantSlug = _p.get('t');
     let carsEndpoint = `${SUPABASE_URL}/rest/v1/cars?select=*&status=neq.unavailable&order=id`;
 
+    // Subdomain detection: {slug}.epuredrive.com
+    let tenantSlug = _p.get('t');
+    if (!tenantSlug) {
+      const _host = window.location.hostname;
+      const _match = _host.match(/^([a-z0-9][a-z0-9-]*[a-z0-9])\.epuredrive\.com$/);
+      if (_match && !['www', 'admin', 'app'].includes(_match[1])) tenantSlug = _match[1];
+    }
+
     if (tenantSlug) {
-      // Resolve slug → tenant id, then filter cars by that tenant
+      // Resolve slug → tenant id + branding
       const tRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/tenants?slug=eq.${encodeURIComponent(tenantSlug)}&select=id,name&limit=1`,
+        `${SUPABASE_URL}/rest/v1/tenants?slug=eq.${encodeURIComponent(tenantSlug)}&select=id,name,logo_url,primary_color,accent_color,brand_name,plan&limit=1`,
         { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
       );
       if (tRes.ok) {
@@ -320,11 +327,24 @@ async function syncDatabase() {
         const t = tenants[0];
         if (t?.id) {
           carsEndpoint += `&tenant_id=eq.${t.id}`;
-          // Update page branding with tenant name
-          if (t.name) {
+          window._tenantPlan = t.plan || 'free';
+          // Apply tenant branding
+          const displayName = t.brand_name || t.name;
+          if (displayName) {
             const titleEl = document.querySelector('h1.hero-title, .fleet-page-title');
-            document.title = `${t.name} — Fleet`;
-            if (titleEl) titleEl.textContent = `${t.name} Fleet`;
+            document.title = `${displayName} — Fleet`;
+            if (titleEl) titleEl.textContent = `${displayName} Fleet`;
+          }
+          if (t.logo_url) {
+            const navLogo = document.querySelector('.navbar-img-logo, .navbar img, nav img');
+            if (navLogo) navLogo.src = t.logo_url;
+          }
+          if (t.primary_color) {
+            document.documentElement.style.setProperty('--accent-primary', t.primary_color);
+            document.documentElement.style.setProperty('--black', t.primary_color);
+          }
+          if (t.accent_color) {
+            document.documentElement.style.setProperty('--accent-secondary', t.accent_color);
           }
         }
       }
@@ -379,6 +399,20 @@ async function syncDatabase() {
   } catch (err) { console.error("Database connection fallback to static payload."); }
 }
 
+// ---- "Powered by" Footer ----
+function _addPoweredByFooter() {
+  const plan = window._tenantPlan;
+  // Pro and Enterprise get white-label (no footer)
+  if (['pro', 'enterprise'].includes(plan)) return;
+  // Only show on tenant pages
+  if (!plan) return;
+
+  const footer = document.createElement('div');
+  footer.style.cssText = 'text-align:center;padding:1.5rem 1rem;font-size:0.72rem;color:#9CA3AF;border-top:1px solid rgba(0,0,0,0.06);margin-top:2rem;';
+  footer.innerHTML = '<a href="https://epuredrive.com" target="_blank" rel="noopener" style="color:#9CA3AF;text-decoration:none;font-weight:500;">Powered by <strong style="color:#6B7280;">éPure Drive</strong></a>';
+  document.body.appendChild(footer);
+}
+
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', async () => {
   const page   = document.body.dataset.page;
@@ -393,6 +427,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Sync with DB to get correct prices, descriptions, HP, features
   await syncDatabase();
+  _addPoweredByFooter();
 
   // Grid pages render once with DB data (avoids wrong-price flash from static)
   if (page === 'home') {

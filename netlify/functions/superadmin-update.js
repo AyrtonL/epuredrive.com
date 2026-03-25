@@ -61,7 +61,7 @@ exports.handler = async (event) => {
   }
 
   // Validate plan value if present
-  const validPlans = ['trial', 'starter', 'pro', 'suspended'];
+  const validPlans = ['free', 'starter', 'pro', 'enterprise', 'suspended'];
   if (safe.plan && !validPlans.includes(safe.plan)) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid plan value' }) };
   }

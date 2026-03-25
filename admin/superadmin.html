@@ -44,9 +44,11 @@
   tbody tr:hover td { background: rgba(0,0,0,0.01); }
 
   .plan-badge { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .plan-free     { background: rgba(245,158,11,0.15);  color: #B45309; }
   .plan-trial    { background: rgba(245,158,11,0.15);  color: #B45309; }
   .plan-starter  { background: rgba(99,102,241,0.15);  color: #4338CA; }
   .plan-pro      { background: rgba(16,185,129,0.15);  color: #065F46; }
+  .plan-enterprise { background: rgba(139,92,246,0.15); color: #6D28D9; }
   .plan-suspended{ background: rgba(239,68,68,0.15);   color: #DC2626; }
 
   .btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.9rem; border-radius: 7px; font-family: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; text-decoration: none; }
@@ -119,9 +121,10 @@
     <input type="text" class="search-input" id="sa-search" placeholder="Search company, email, slug…" oninput="filterTable()" />
     <select class="filter-sel" id="sa-plan-filter" onchange="filterTable()">
       <option value="">All Plans</option>
-      <option value="trial">Trial</option>
+      <option value="free">Free</option>
       <option value="starter">Starter</option>
       <option value="pro">Pro</option>
+      <option value="enterprise">Enterprise</option>
       <option value="suspended">Suspended</option>
     </select>
     <button class="btn btn-primary" onclick="loadTenants()" style="margin-left:auto;">
@@ -182,9 +185,10 @@
       <div class="form-group">
         <label>Plan</label>
         <select id="edit-plan">
-          <option value="trial">Trial</option>
+          <option value="free">Free</option>
           <option value="starter">Starter — $49/mo</option>
-          <option value="pro">Pro — $99/mo</option>
+          <option value="pro">Pro — $149/mo</option>
+          <option value="enterprise">Enterprise — Custom</option>
           <option value="suspended">Suspended</option>
         </select>
       </div>
@@ -272,10 +276,8 @@ function renderTable(list) {
   const fmtMoney = n => n > 0 ? '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—';
 
   tbody.innerHTML = list.map(t => {
-    const planClass = `plan-${t.plan || 'trial'}`;
-    const trialCell = t.trialDaysLeft !== null
-      ? (t.trialDaysLeft === 0 ? '<span style="color:var(--red);font-weight:600;">Expired</span>' : `<strong>${t.trialDaysLeft}d</strong> left`)
-      : '—';
+    const planClass = `plan-${t.plan || 'free'}`;
+    const trialCell = t.plan === 'free' ? 'Free' : '—';
     const ownerDisplay = t.owner_email || t.ownerName || '—';
     const lastSeen = t.lastBooking ? fmtDate(t.lastBooking) : (t.last_seen_at ? fmtDate(t.last_seen_at) : '—');
     const stripeLink = t.stripe_customer_id
@@ -288,7 +290,7 @@ function renderTable(list) {
           <div style="font-size:0.72rem;color:var(--muted);">${esc(t.slug || '')}</div>
         </td>
         <td style="font-size:0.8rem;color:var(--muted);">${esc(ownerDisplay)}</td>
-        <td><span class="plan-badge ${planClass}">${t.plan || 'trial'}</span></td>
+        <td><span class="plan-badge ${planClass}">${t.plan || 'free'}</span></td>
         <td style="font-size:0.82rem;">${trialCell}</td>
         <td style="text-align:center;">${t.cars || 0}</td>
         <td style="text-align:center;">${t.bookings || 0}</td>
@@ -333,7 +335,7 @@ function openEdit(id) {
   document.getElementById('edit-owner-name').value   = t.owner_name  || t.ownerName || '';
   document.getElementById('edit-owner-email').value  = t.owner_email || '';
   document.getElementById('edit-owner-phone').value  = t.owner_phone || '';
-  document.getElementById('edit-plan').value         = t.plan        || 'trial';
+  document.getElementById('edit-plan').value         = t.plan        || 'free';
   document.getElementById('edit-notes').value        = t.notes       || '';
   document.getElementById('edit-modal').style.display = 'flex';
 }
@@ -385,7 +387,7 @@ async function quickSuspend(id) {
 
 async function quickActivate(id) {
   const plan = prompt('Activate with plan:', 'starter');
-  if (!plan || !['trial','starter','pro'].includes(plan)) return;
+  if (!plan || !['free','starter','pro','enterprise'].includes(plan)) return;
   await patchTenant(id, { plan });
 }
 
