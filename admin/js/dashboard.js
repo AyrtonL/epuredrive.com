@@ -1493,6 +1493,7 @@ function renderExpensesTable() {
       <td style="color:var(--muted-2);">${esc(e.description || '—')}</td>
       <td style="color:var(--red);font-weight:600;">$${Number(e.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       <td class="actions">
+        <button class="btn-icon write-action" onclick="openEditExpense('${e.id}')" title="Edit" aria-label="Edit expense">✏️</button>
         <button class="btn-icon danger write-action" onclick="deleteExpense('${e.id}', this)" title="Delete" aria-label="Delete expense">🗑️</button>
       </td>
     </tr>`;
@@ -1616,6 +1617,21 @@ function openAddExpense(carId) {
   document.getElementById('expense-modal-title').textContent = 'Add Expense';
   document.getElementById('exp-date').value = todayStr();
   if (carId) document.getElementById('exp-car').value = carId;
+  openModal('expense-modal');
+}
+
+function openEditExpense(id) {
+  const e = allExpenses.find(x => x.id === id);
+  if (!e) return;
+  const form = document.getElementById('expense-form');
+  form.reset();
+  form.dataset.editId = id;
+  document.getElementById('expense-modal-title').textContent = 'Edit Expense';
+  document.getElementById('exp-date').value   = e.expense_date || '';
+  document.getElementById('exp-car').value    = e.car_id || '';
+  document.getElementById('exp-cat').value    = e.category || '';
+  document.getElementById('exp-amount').value = e.amount || '';
+  document.getElementById('exp-desc').value   = e.description || '';
   openModal('expense-modal');
 }
 
