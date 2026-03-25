@@ -27,6 +27,7 @@ let allCustomers    = [];   // rows from customers table
 // ---- Multi-tenancy ----
 let currentTenantId   = null;   // uuid — set after profile loads
 let currentTenantName = null;   // display name
+let currentTenantSlug = null;   // slug — used for public fleet URL
 
 // ---- Role ----
 let currentRole = 'admin';      // 'admin' | 'finance' | 'staff' — set after profile loads
@@ -63,17 +64,19 @@ async function loadTenantProfile(userId, userEmail = '') {
   // 1 — Try profile lookup
   const { data: profile } = await sb
     .from('profiles')
-    .select('tenant_id, full_name, role, tenants(name, plan, trial_started_at)')
+    .select('tenant_id, full_name, role, tenants(name, plan, trial_started_at, slug)')
     .eq('id', userId)
     .maybeSingle();
 
   if (profile?.tenant_id) {
     currentTenantId   = profile.tenant_id;
     currentTenantName = profile.tenants?.name || null;
+    currentTenantSlug = profile.tenants?.slug || null;
     currentPlan       = profile.tenants?.plan  || 'trial';
     trialStartedAt    = profile.tenants?.trial_started_at || null;
     _setUserUI(profile.full_name, userEmail, profile.role || 'admin');
     _setTenantUI(currentTenantName);
+    _setPublicUrlUI(currentTenantSlug);
     return;
   }
 
@@ -105,6 +108,29 @@ async function loadTenantProfile(userId, userEmail = '') {
 function _setTenantUI(name) {
   const el = document.getElementById('tenant-name');
   if (el && name) el.textContent = name;
+}
+
+function _setPublicUrlUI(slug) {
+  if (!slug) return;
+  const card     = document.getElementById('public-page-card');
+  const link     = document.getElementById('public-page-link');
+  const openLink = document.getElementById('public-page-open');
+  if (!card || !link) return;
+  const base = window.location.origin;
+  const url  = base + '/fleet.html?t=' + encodeURIComponent(slug);
+  link.href        = url;
+  link.textContent = url;
+  if (openLink) openLink.href = url;
+  card.style.display = 'flex';
+}
+
+function copyPublicUrl() {
+  const link = document.getElementById('public-page-link');
+  if (!link || !link.href) return;
+  navigator.clipboard.writeText(link.href).then(
+    () => showToast('Link copied to clipboard!'),
+    () => { /* fallback */ document.execCommand('copy'); }
+  );
 }
 
 function _setPlanUI() {
@@ -273,10 +299,13 @@ function applyRoleRestrictions() {
 // ====================================================
 //  ONBOARDING (first login — no tenant yet)
 // ====================================================
+let _onboardResolve = null;
+
 function showOnboarding(userId) {
   return new Promise((resolve) => {
     const overlay = document.getElementById('onboarding-overlay');
     if (!overlay) { resolve(); return; }
+    _onboardResolve = resolve;
     overlay.style.display = 'flex';
 
     document.getElementById('onboard-btn').onclick = async () => {
@@ -298,10 +327,11 @@ function showOnboarding(userId) {
       try {
         // Create tenant
         const slug = company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const tenantSlug = slug + '-' + Date.now();
         const { data: tenant, error: tErr } = await sb
           .from('tenants')
-          .insert({ name: company, slug: slug + '-' + Date.now() })
-          .select('id')
+          .insert({ name: company, slug: tenantSlug })
+          .select('id, slug')
           .single();
         if (tErr) throw tErr;
 
@@ -316,19 +346,40 @@ function showOnboarding(userId) {
 
         currentTenantId   = tenant.id;
         currentTenantName = company;
+        currentTenantSlug = tenant.slug || tenantSlug;
         const el = document.getElementById('tenant-name');
         if (el) el.textContent = company;
+        _setPublicUrlUI(currentTenantSlug);
 
-        overlay.style.display = 'none';
-        resolve();
+        // Show Step 2 workflow guide
+        const publicUrl = window.location.origin + '/fleet.html?t=' + encodeURIComponent(currentTenantSlug);
+        const linkEl = document.getElementById('onboard-public-link');
+        if (linkEl) { linkEl.href = publicUrl; linkEl.textContent = publicUrl; }
+        document.getElementById('onboard-step-1').style.display = 'none';
+        document.getElementById('onboard-step-2').style.display = 'block';
       } catch (err) {
         errEl.textContent = 'Setup failed: ' + (err.message || 'Unknown error');
         errEl.style.display = 'block';
         btn.disabled = false;
-        btn.textContent = 'Get Started';
+        btn.textContent = 'Get Started →';
       }
     };
   });
+}
+
+function closeOnboarding() {
+  const overlay = document.getElementById('onboarding-overlay');
+  if (overlay) overlay.style.display = 'none';
+  if (_onboardResolve) { _onboardResolve(); _onboardResolve = null; }
+}
+
+function copyOnboardUrl() {
+  const link = document.getElementById('onboard-public-link');
+  if (!link || !link.href) return;
+  navigator.clipboard.writeText(link.href).then(
+    () => showToast('Link copied!'),
+    () => {}
+  );
 }
 
 // ====================================================
@@ -2939,7 +2990,9 @@ async function updateUserRole(userId, newRole) {
 
 async function removeUser(userId) {
   if (!window.confirm('Remove this team member? They will lose dashboard access.')) return;
-  const { error } = await sb.from('profiles').delete().eq('id', userId);
+  const { error } = await sb.from('profiles').delete()
+    .eq('id', userId)
+    .eq('tenant_id', currentTenantId);
   if (error) {
     showToast('Failed to remove user: ' + error.message, 'error');
   } else {
@@ -2968,6 +3021,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('resize', initMobileNav);
 
   if (!(await checkAuth())) return;
+
+  // Show onboarding if the user has no tenant yet
+  if (!currentTenantId) await showOnboarding(currentUserId);
+
   applyRoleRestrictions();
 
   await Promise.all([loadReservations(), loadBlockedDates(), loadTuroFeeds(), loadConsignments(), loadExpenses(), loadCars(), loadServices(), loadCustomers()]);

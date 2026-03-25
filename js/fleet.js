@@ -305,8 +305,33 @@ function initBookingForm() {
 // ---- Supabase Initializer ----
 async function syncDatabase() {
   try {
+    const _p = new URLSearchParams(window.location.search);
+    const tenantSlug = _p.get('t');
+    let carsEndpoint = `${SUPABASE_URL}/rest/v1/cars?select=*&status=neq.unavailable&order=id`;
+
+    if (tenantSlug) {
+      // Resolve slug → tenant id, then filter cars by that tenant
+      const tRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/tenants?slug=eq.${encodeURIComponent(tenantSlug)}&select=id,name&limit=1`,
+        { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
+      );
+      if (tRes.ok) {
+        const tenants = await tRes.json();
+        const t = tenants[0];
+        if (t?.id) {
+          carsEndpoint += `&tenant_id=eq.${t.id}`;
+          // Update page branding with tenant name
+          if (t.name) {
+            const titleEl = document.querySelector('h1.hero-title, .fleet-page-title');
+            document.title = `${t.name} — Fleet`;
+            if (titleEl) titleEl.textContent = `${t.name} Fleet`;
+          }
+        }
+      }
+    }
+
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/cars?select=*&status=neq.unavailable&order=id`,
+      carsEndpoint,
       { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
     );
     if (res.ok) {
