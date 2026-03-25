@@ -66,7 +66,7 @@ async function loadTenantProfile(userId, userEmail = '') {
   // 1 — Try profile lookup
   const { data: profile } = await sb
     .from('profiles')
-    .select('tenant_id, full_name, role, tenants(name, plan, trial_started_at, slug)')
+    .select('tenant_id, full_name, role, is_super_admin, tenants(name, plan, trial_started_at, slug)')
     .eq('id', userId)
     .maybeSingle();
 
