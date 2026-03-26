@@ -8,7 +8,7 @@ const crypto = require('crypto');
 
 const SUPABASE_URL      = 'https://brwzjwbpguiignrxvjdc.supabase.co';
 const STARTER_PRICE_ID  = 'price_1TDaQ3HAH4zJnnwfasGBYtYO';
-const PRO_PRICE_ID      = 'price_1TDaQVHAH4zJnnwfPf1Gh6eg';
+const PRO_PRICE_ID      = 'price_1TF2UnHAH4zJnnwfTwU129PO';
 
 function verifySignature(rawBody, sigHeader, secret) {
   const pairs      = sigHeader.split(',').map(p => p.split('='));

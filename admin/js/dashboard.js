@@ -48,7 +48,7 @@ const FREE_MAX_CARS          = 1;
 const STARTER_MAX_CARS       = 10;
 const PRO_MAX_CARS           = 30;
 const STARTER_PRICE_ID       = 'price_1TDaQ3HAH4zJnnwfasGBYtYO';   // $49/mo
-const PRO_PRICE_ID           = 'price_1TDaQVHAH4zJnnwfPf1Gh6eg';   // $149/mo — update after creating new Stripe price
+const PRO_PRICE_ID           = 'price_1TF2UnHAH4zJnnwfTwU129PO';   // $149/mo
 const PRO_ONLY_TABS          = ['turo', 'reports', 'consignments', 'users', 'roi'];
 
 // ====================================================
