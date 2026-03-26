@@ -313,7 +313,7 @@ async function syncDatabase() {
     if (!tenantSlug) {
       const _host = window.location.hostname;
       const _match = _host.match(/^([a-z0-9][a-z0-9-]*[a-z0-9])\.epuredrive\.com$/);
-      if (_match && !['www', 'admin', 'app'].includes(_match[1])) tenantSlug = _match[1];
+      if (_match && !['www', 'admin', 'app', 'api'].includes(_match[1])) tenantSlug = _match[1];
     }
 
     if (tenantSlug) {
