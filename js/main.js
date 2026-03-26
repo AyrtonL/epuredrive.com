@@ -33,8 +33,8 @@ if (hamburger && mobileMenu) {
 
 // ---- Scroll Fade-In Animations ----
 const observerOptions = {
-  threshold: 0.12,
-  rootMargin: '0px 0px -40px 0px'
+  threshold: 0.05,
+  rootMargin: '0px 0px 50px 0px'
 };
 
 const observer = new IntersectionObserver((entries) => {
@@ -47,7 +47,6 @@ const observer = new IntersectionObserver((entries) => {
 }, observerOptions);
 
 document.querySelectorAll('.fade-in').forEach(el => {
-  // If element is already in viewport, make it visible immediately
   const rect = el.getBoundingClientRect();
   if (rect.top < window.innerHeight && rect.bottom > 0) {
     el.classList.add('visible');
@@ -55,6 +54,14 @@ document.querySelectorAll('.fade-in').forEach(el => {
     observer.observe(el);
   }
 });
+
+// Safety net: force all fade-in elements visible after 2s
+// so content is never permanently hidden
+setTimeout(() => {
+  document.querySelectorAll('.fade-in:not(.visible)').forEach(el => {
+    el.classList.add('visible');
+  });
+}, 2000);
 
 // ---- Staggered Card Animations ----
 document.querySelectorAll('.stagger-fade').forEach((container) => {
