@@ -6,16 +6,17 @@
   <title>Reserve a Car — éPure Drive - Rental</title>
   <meta name="description" content="Reserve your premium luxury car in Miami. Instant booking, flexible pickup in Aventura or delivery to MIA & FLL airports. Transparent pricing." />
   <meta name="robots" content="index, follow" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css?v=1234567" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"></noscript>
-  <script>function initApollo(){var n=Math.random().toString(36).substring(7),o=document.createElement("script");
+  <script>function initApollo(){try{var n=Math.random().toString(36).substring(7),o=document.createElement("script");
 o.src="https://assets.apollo.io/micro/website-tracker/tracker.iife.js?nocache="+n,o.async=!0,o.defer=!0,
-o.onload=function(){window.trackingFunctions.onLoad({appId:"69c079914940b600110ccd46"})},
-document.head.appendChild(o)}initApollo();</script>
+o.onload=function(){try{window.trackingFunctions.onLoad({appId:"69c079914940b600110ccd46"})}catch(e){}},
+o.onerror=function(){},document.head.appendChild(o)}catch(e){}}initApollo();</script>
 </head>
 <body data-page="detail">
 
@@ -252,7 +253,13 @@ document.head.appendChild(o)}initApollo();</script>
           <a href="index.html" class="navbar-logo">
             <img src="assets/logo.png" alt="éPure Drive" class="navbar-img-logo" loading="lazy">
           </a>
-          <p>Premium luxury car rentals. Serving Aventura, MIA, and FLL.</p>
+          <p>Premium luxury car rentals. Serving Aventura, MIA, FLL, and the greater South Florida area.</p>
+          <div class="footer-social">
+            <a href="#" class="social-link" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
+            <a href="#" class="social-link" aria-label="X / Twitter"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+            <a href="#" class="social-link" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+            <a href="#" class="social-link" aria-label="YouTube"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg></a>
+          </div>
         </div>
         <div class="footer-col">
           <h4>Company</h4>
@@ -260,6 +267,8 @@ document.head.appendChild(o)}initApollo();</script>
             <li><a href="index.html">Home</a></li>
             <li><a href="fleet.html">Our Fleet</a></li>
             <li><a href="index.html#why-us">About Us</a></li>
+            <li><a href="consignment.html">Consignment</a></li>
+            <li><a href="index.html#for-businesses">For Businesses</a></li>
           </ul>
         </div>
       </div>
@@ -268,6 +277,7 @@ document.head.appendChild(o)}initApollo();</script>
         <div class="footer-bottom-links">
           <a href="privacy.html">Privacy Policy</a>
           <a href="terms.html">Terms &amp; Conditions</a>
+          <a href="rental-agreement.html">Rental Agreement</a>
         </div>
       </div>
     </div>

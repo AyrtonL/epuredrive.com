@@ -52,7 +52,7 @@ input, select, textarea { font-family: inherit; }
 ::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
 
 /* ---- Typography ---- */
-.serif { font-family: 'Plus Jakarta Sans', sans-serif; }
+.serif { font-family: 'Outfit', sans-serif; }
 .section-label {
   font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
@@ -64,7 +64,7 @@ input, select, textarea { font-family: inherit; }
   margin-bottom: 0.75rem;
 }
 .section-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Outfit', sans-serif;
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 800;
   line-height: 1.15;
@@ -135,10 +135,10 @@ input, select, textarea { font-family: inherit; }
 
 /* ---- Section ---- */
 .section {
-  padding: 6rem 0;
+  padding: 4rem 0;
 }
 .section-header {
-  margin-bottom: 3.5rem;
+  margin-bottom: 2.5rem;
 }
 .section-header.center {
   text-align: center;
@@ -576,7 +576,7 @@ select.form-control option { background: #FFFFFF; color: var(--text-primary); }
 /* Cars Grid */
 .cars-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
 }
 
@@ -872,6 +872,7 @@ footer {
 }
 .social-link svg { width: 16px; height: 16px; color: var(--text-secondary); }
 .social-link:hover svg { color: var(--accent-primary); }
+.social-link[href="#"] { opacity: 0.4; pointer-events: none; }
 
 .footer-col h4 {
   font-size: 0.8rem;
@@ -1114,7 +1115,7 @@ footer {
   border: 1px solid var(--border) !important;
   box-shadow: 0 12px 30px rgba(0,0,0,0.08) !important;
   border-radius: 12px !important;
-  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-family: 'Outfit', sans-serif !important;
 }
 .flatpickr-months .flatpickr-month,
 .flatpickr-monthDropdown-months { background: #FFFFFF !important; color: #111 !important; }
@@ -1226,7 +1227,7 @@ footer h4 { color: #FFFFFF !important; }
   .hero-title { font-size: clamp(2.2rem, 8vw, 3.5rem); }
   .hero-stats { gap: 1.5rem; }
 
-  .cars-grid { grid-template-columns: 1fr 1fr; }
+  .cars-grid { grid-template-columns: repeat(2, 1fr); }
 
   .newsletter-inner { flex-direction: column; align-items: flex-start; }
   .footer-top { grid-template-columns: 1fr; gap: 2rem; }
@@ -1244,4 +1245,15 @@ footer h4 { color: #FFFFFF !important; }
   .form-row { grid-template-columns: 1fr; }
   .newsletter-form { flex-direction: column; }
   .newsletter-input { min-width: unset; width: 100%; }
+
+  /* For Businesses pricing tiers — horizontal scroll on small screens */
+  #for-businesses .container > div:first-child > div:last-child {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1rem !important;
+    text-align: center;
+  }
+  #for-businesses .container > div:first-child > div:last-child > div {
+    font-size: 1.4rem !important;
+  }
 }

@@ -25,7 +25,7 @@ const CARS = [
     badge: 'Popular',
     specs: { hp: '200 HP', seats: 5, trans: 'Auto' },
     features: ['Leather Interior', 'Panoramic Sunroof', 'Audi MMI', 'Backup Camera', 'Bluetooth Audio', 'Dual-Zone Climate'],
-    description: 'The 2018 Audi Q3 blends agile handling with premium comfort. Perfect for city driving and weekend getaways alike. (VIN: WA1BCCFS6JR034820)'
+    description: 'The 2018 Audi Q3 blends agile handling with premium comfort. Perfect for city driving and weekend getaways alike.'
   },
   {
     id: 2,
@@ -46,7 +46,7 @@ const CARS = [
     badge: null,
     specs: { hp: '186 HP', seats: 5, trans: 'Auto' },
     features: ['Premium Audio', 'Heated Seats', 'Bluetooth Integration', 'Compact Luxury', 'Sport Suspension', 'Xenon Headlights'],
-    description: 'Experience sharp design and engaging driving dynamics with the 2017 Audi A3 sedan, a refined choice for daily luxury. (VIN: WAUAUGFF3H1028844)'
+    description: 'Experience sharp design and engaging driving dynamics with the 2017 Audi A3 sedan, a refined choice for daily luxury.'
   },
   {
     id: 3,
@@ -67,7 +67,7 @@ const CARS = [
     badge: 'Premium',
     specs: { hp: '335 HP', seats: 5, trans: 'Tiptronic' },
     features: ['Sport Chrono Package', 'Adaptive Air Suspension', 'Bose Surround Sound', 'Panoramic Roof', 'Apple CarPlay', 'Leather Seats'],
-    description: 'The Porsche Cayenne Coupe combines the striking lines of a sports car with the versatility and dominant stance of an SUV. (VIN: WP1BA2AY7MDA42894)'
+    description: 'The Porsche Cayenne Coupe combines the striking lines of a sports car with the versatility and dominant stance of an SUV.'
   },
   {
     id: 4,
@@ -91,7 +91,7 @@ const CARS = [
     badge: null,
     specs: { hp: '276 HP', seats: 7, trans: '8-Speed' },
     features: ['7-Passenger Seating', 'V6 Engine', 'Touchscreen Infotainment', 'Advanced Safety Features', 'Tri-Zone Climate', 'Wireless Charging'],
-    description: 'The 2023 VW Atlas SE V6 is built for families and groups, offering spacious 7-passenger seating without compromising on comfort or power. (VIN: 1V2JR2CA3PC527256)'
+    description: 'The 2023 VW Atlas SE V6 is built for families and groups, offering spacious 7-passenger seating without compromising on comfort or power.'
   }
 ];
 
@@ -212,7 +212,7 @@ function loadCarDetail() {
   if (makeEl) makeEl.textContent = `${car.make} · ${car.year}`;
 
   const descEl = document.getElementById('detail-desc');
-  if (descEl) descEl.textContent = car.description;
+  if (descEl) descEl.textContent = (car.description || '').replace(/\s*\(VIN:[^)]*\)/g, '');
 
   const priceEl = document.getElementById('detail-price');
   if (priceEl) priceEl.textContent = `$${car.price}`;
