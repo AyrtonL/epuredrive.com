@@ -258,48 +258,85 @@ function loadCarDetail() {
   if (returnInput) returnInput.min = today;
 }
 
-// ---- Booking Form Validation ----
+// ---- Booking Form — Dual Submission (Online / WhatsApp) ----
 function initBookingForm() {
   const form = document.getElementById('booking-form');
   if (!form) return;
 
-  // The form now uses native action="checkout.html" method="GET"
-  // So we only validate dates client-side
-  form.addEventListener('submit', (e) => {
+  function validateForm() {
     let valid = true;
-
     form.querySelectorAll('[required]').forEach(field => {
       if (!field.value.trim()) {
         field.style.borderColor = '#ef4444';
         valid = false;
-        e.preventDefault();
         field.addEventListener('input', () => { field.style.borderColor = ''; }, { once: true });
       }
     });
-    
-    // Stop traditional HTTP submission
-    if (valid) {
-      e.preventDefault();
-      
-      const pDate = document.getElementById('pickup-date').value;
-      const rDate = document.getElementById('return-date').value;
-      const carId = document.getElementById('car-id-input').value;
-      const car = CARS.find(c => c.id == carId) || CARS[0];
-      
-      // WhatsApp Routing Pipeline
-      const phone = "17862096770";
-      const totalCost = Math.max(1, Math.round((new Date(rDate) - new Date(pDate)) / 86400000)) * car.price;
-      const textMessage = `Hello! I would like to safely reserve the *${car.make} ${car.model}*.\n\nDates: ${pDate} to ${rDate}\nTotal Anticipated: $${totalCost}`;
-      
-      // Attempt Stripe Checkout if URL provided, otherwise WhatsApp
-      if (car.link && car.link.includes('stripe.com')) {
-        window.location.href = car.link;
-      } else {
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(textMessage)}`;
-        window.open(url, "_blank");
-      }
-    }
+    return valid;
+  }
+
+  function getBookingData() {
+    const carId = document.getElementById('car-id-input').value;
+    const car = CARS.find(c => c.id == carId) || CARS[0];
+    const pDate = document.getElementById('pickup-date').value;
+    const rDate = document.getElementById('return-date').value;
+    const pTime = document.getElementById('pickup-time').value;
+    const rTime = document.getElementById('return-time').value;
+    const loc = form.querySelector('[name="loc"]').value;
+    const protection = document.getElementById('opt-protection').checked ? '1' : '0';
+    const toll = document.getElementById('opt-toll').checked ? '1' : '0';
+    const fuel = document.getElementById('opt-fuel').checked ? '1' : '0';
+    const days = Math.max(1, Math.round((new Date(rDate) - new Date(pDate)) / 86400000));
+    let totalCost = days * car.price;
+    const locFee = (loc === 'mia' || loc === 'fll') ? 120 : 0;
+    totalCost += locFee;
+    if (protection === '1') totalCost += days * 30;
+    if (toll === '1') totalCost += days * 10;
+    if (fuel === '1') totalCost += 80;
+    return { car, carId, pDate, rDate, pTime, rTime, loc, protection, toll, fuel, days, totalCost };
+  }
+
+  function formatTime12(t) {
+    const [h, m] = t.split(':');
+    const hr = parseInt(h);
+    const ampm = hr >= 12 ? 'PM' : 'AM';
+    return `${hr > 12 ? hr - 12 : hr}:${m} ${ampm}`;
+  }
+
+  // Pay & Reserve Online — submit to checkout.html
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    const d = getBookingData();
+    const params = new URLSearchParams({
+      id: d.carId, start: d.pDate, end: d.rDate,
+      start_time: d.pTime, end_time: d.rTime,
+      loc: d.loc, protection: d.protection, toll: d.toll, fuel: d.fuel
+    });
+    window.location.href = `checkout.html?${params.toString()}`;
   });
+
+  // Reserve via WhatsApp
+  const waBtn = document.getElementById('btn-whatsapp');
+  if (waBtn) {
+    waBtn.addEventListener('click', () => {
+      if (!validateForm()) return;
+      const d = getBookingData();
+      const phone = '17862096770';
+      const locLabels = { aventura: 'Aventura (Free)', mia: 'MIA Airport ($120)', fll: 'FLL Airport ($120)' };
+      const addons = [];
+      if (d.protection === '1') addons.push('Standard Protection');
+      if (d.toll === '1') addons.push('Toll Package');
+      if (d.fuel === '1') addons.push('Prepaid Fuel');
+      const msg = `Hello! I'd like to reserve the *${d.car.make} ${d.car.model}*.\n\n`
+        + `Pickup: ${d.pDate} at ${formatTime12(d.pTime)}\n`
+        + `Return: ${d.rDate} at ${formatTime12(d.rTime)}\n`
+        + `Location: ${locLabels[d.loc] || d.loc}\n`
+        + (addons.length ? `Add-ons: ${addons.join(', ')}\n` : '')
+        + `Estimated Total: $${d.totalCost}`;
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    });
+  }
 }
 
 // ---- Supabase Initializer ----

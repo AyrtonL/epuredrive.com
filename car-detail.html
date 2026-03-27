@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=20260326c" />
+  <link rel="stylesheet" href="css/style.css?v=20260327a" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"></noscript>
   <script>function initApollo(){try{var n=Math.random().toString(36).substring(7),o=document.createElement("script");
@@ -163,8 +163,68 @@ o.onerror=function(){},document.head.appendChild(o)}catch(e){}}initApollo();</sc
               <input type="text" class="form-control" name="start" id="pickup-date" placeholder="Select date…" required readonly />
             </div>
             <div class="form-group">
+              <label>Pickup Time</label>
+              <select class="form-control" name="start_time" id="pickup-time">
+                <option value="08:00">8:00 AM</option>
+                <option value="08:30">8:30 AM</option>
+                <option value="09:00">9:00 AM</option>
+                <option value="09:30">9:30 AM</option>
+                <option value="10:00" selected>10:00 AM</option>
+                <option value="10:30">10:30 AM</option>
+                <option value="11:00">11:00 AM</option>
+                <option value="11:30">11:30 AM</option>
+                <option value="12:00">12:00 PM</option>
+                <option value="12:30">12:30 PM</option>
+                <option value="13:00">1:00 PM</option>
+                <option value="13:30">1:30 PM</option>
+                <option value="14:00">2:00 PM</option>
+                <option value="14:30">2:30 PM</option>
+                <option value="15:00">3:00 PM</option>
+                <option value="15:30">3:30 PM</option>
+                <option value="16:00">4:00 PM</option>
+                <option value="16:30">4:30 PM</option>
+                <option value="17:00">5:00 PM</option>
+                <option value="17:30">5:30 PM</option>
+                <option value="18:00">6:00 PM</option>
+                <option value="18:30">6:30 PM</option>
+                <option value="19:00">7:00 PM</option>
+                <option value="19:30">7:30 PM</option>
+                <option value="20:00">8:00 PM</option>
+              </select>
+            </div>
+            <div class="form-group">
               <label>Return Date</label>
               <input type="text" class="form-control" name="end" id="return-date" placeholder="Select date…" required readonly />
+            </div>
+            <div class="form-group">
+              <label>Return Time</label>
+              <select class="form-control" name="end_time" id="return-time">
+                <option value="08:00">8:00 AM</option>
+                <option value="08:30">8:30 AM</option>
+                <option value="09:00">9:00 AM</option>
+                <option value="09:30">9:30 AM</option>
+                <option value="10:00" selected>10:00 AM</option>
+                <option value="10:30">10:30 AM</option>
+                <option value="11:00">11:00 AM</option>
+                <option value="11:30">11:30 AM</option>
+                <option value="12:00">12:00 PM</option>
+                <option value="12:30">12:30 PM</option>
+                <option value="13:00">1:00 PM</option>
+                <option value="13:30">1:30 PM</option>
+                <option value="14:00">2:00 PM</option>
+                <option value="14:30">2:30 PM</option>
+                <option value="15:00">3:00 PM</option>
+                <option value="15:30">3:30 PM</option>
+                <option value="16:00">4:00 PM</option>
+                <option value="16:30">4:30 PM</option>
+                <option value="17:00">5:00 PM</option>
+                <option value="17:30">5:30 PM</option>
+                <option value="18:00">6:00 PM</option>
+                <option value="18:30">6:30 PM</option>
+                <option value="19:00">7:00 PM</option>
+                <option value="19:30">7:30 PM</option>
+                <option value="20:00">8:00 PM</option>
+              </select>
             </div>
             <div class="form-group">
               <label>Pickup Location</label>
@@ -218,13 +278,20 @@ o.onerror=function(){},document.head.appendChild(o)}catch(e){}}initApollo();</sc
               <strong id="booking-total-amount">Select dates</strong>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:1rem;">
-              Continue to Checkout
-            </button>
+            <div class="dual-booking-buttons">
+              <button type="submit" id="btn-pay-online" class="btn btn-primary" style="width:100%;justify-content:center;padding:1rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Pay & Reserve Online
+              </button>
+              <button type="button" id="btn-whatsapp" class="btn btn-outline-whatsapp" style="width:100%;justify-content:center;padding:1rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                Reserve via WhatsApp
+              </button>
+            </div>
           </form>
 
           <p style="font-size:0.75rem;color:var(--text-muted);text-align:center;margin-top:1rem;line-height:1.5;">
-            No payment required today · Free cancellation · Real-time availability
+            Instant confirmation · Free cancellation · Real-time availability
           </p>
         </aside>
       </div>
@@ -283,21 +350,44 @@ o.onerror=function(){},document.head.appendChild(o)}catch(e){}}initApollo();</sc
     </div>
   </footer>
 
-  <script src="js/fleet.js?v=20260326c" defer></script>
+  <script src="js/fleet.js?v=20260327a" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       // Related cars
       const params = new URLSearchParams(window.location.search);
       const currentId = parseInt(params.get('id')) || 1;
       renderCars(CARS.filter(c => c.id !== currentId).slice(0, 4), 'related-grid');
 
-      // Flatpickr date pickers
-      const today = new Date();
+      // Load unavailable dates from reservations
+      let unavailableRanges = [];
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_car_unavailable_ranges`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON,
+            'Authorization': `Bearer ${SUPABASE_ANON}`,
+          },
+          body: JSON.stringify({ p_car_id: currentId }),
+        });
+        if (res.ok) unavailableRanges = await res.json();
+      } catch (_) {}
+
+      const disabled = unavailableRanges.map(r => ({ from: r.start_date, to: r.end_date }));
+      const dayCreate = (dObj, dStr, fp, dayElem) => {
+        const d = dayElem.dateObj?.toISOString().split('T')[0];
+        if (d && unavailableRanges.some(r => d >= r.start_date && d <= r.end_date))
+          dayElem.classList.add('booked');
+      };
+
+      // Flatpickr date pickers with availability blocking
       const fpPickup = flatpickr('#pickup-date', {
         minDate: 'today',
         dateFormat: 'Y-m-d',
         disableMobile: true,
+        disable: disabled,
+        onDayCreate: dayCreate,
         onChange: ([date]) => {
           fpReturn.set('minDate', date);
           calcBookingTotal();
@@ -307,6 +397,8 @@ o.onerror=function(){},document.head.appendChild(o)}catch(e){}}initApollo();</sc
         minDate: 'today',
         dateFormat: 'Y-m-d',
         disableMobile: true,
+        disable: disabled,
+        onDayCreate: dayCreate,
         onChange: () => calcBookingTotal(),
       });
 
@@ -353,8 +445,8 @@ o.onerror=function(){},document.head.appendChild(o)}catch(e){}}initApollo();</sc
       if (returnEl) returnEl.addEventListener('change', calcBookingTotal);
     });
   </script>
-  <script src="js/main.js?v=20260326c"></script>
-<script src="js/lang.js?v=20260326c"></script>
+  <script src="js/main.js?v=20260327a"></script>
+<script src="js/lang.js?v=20260327a"></script>
   <!-- Floating WhatsApp -->
   <a href="https://wa.me/17862096770" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px;color:#fff;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>

@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="css/style.css?v=1234567">
+    <link rel="stylesheet" href="css/style.css?v=20260327a">
     <style>
         .checkout-container {
             max-width: 1200px;
@@ -640,6 +640,10 @@ document.head.appendChild(o)}initApollo();</script>
         const locParam = params.get('loc');
         if (locParam) document.getElementById('co-location').value = locParam;
 
+        // Store times from URL
+        window._pickupTime = params.get('start_time') || '10:00';
+        window._returnTime = params.get('end_time') || '10:00';
+
         // Pre-select add-ons from URL
         if (params.get('protection') === '1') {
             insurancePlan = 'premium';
@@ -674,13 +678,16 @@ document.head.appendChild(o)}initApollo();</script>
     });
 
     // ---- Pre-filled dates from URL ----
+    function _fmt12(t) { const [h,m]=t.split(':'); const hr=parseInt(h); return `${hr>12?hr-12:hr}:${m} ${hr>=12?'PM':'AM'}`; }
     function showConfirmedDates(start, end) {
         const opts  = { month: 'long', day: 'numeric', year: 'numeric' };
         const sDate = new Date(start + 'T12:00:00');
         const eDate = new Date(end   + 'T12:00:00');
         const days  = Math.max(1, Math.ceil((eDate - sDate) / 86400000));
+        const pTime = window._pickupTime ? ` at ${_fmt12(window._pickupTime)}` : '';
+        const rTime = window._returnTime ? ` at ${_fmt12(window._returnTime)}` : '';
         document.getElementById('dates-confirmed-text').textContent =
-            sDate.toLocaleDateString('en-US', opts) + ' → ' + eDate.toLocaleDateString('en-US', opts);
+            sDate.toLocaleDateString('en-US', opts) + pTime + ' → ' + eDate.toLocaleDateString('en-US', opts) + rTime;
         document.getElementById('dates-confirmed-days').textContent = days + ' day' + (days !== 1 ? 's' : '');
         document.getElementById('dates-confirmed-card').style.display = 'flex';
         document.getElementById('date-pickers-section').style.display = 'none';
@@ -1045,26 +1052,35 @@ document.head.appendChild(o)}initApollo();</script>
         const activeAddons  = Object.entries(addons).filter(([,a]) => a.active).map(([k]) => k);
         if (insurancePlan === 'premium') activeAddons.unshift('insurance-premium');
 
-        const { error: dbError } = await _sb.from('reservations').insert({
-            car_id:          selectedCar.id,
-            customer_name:   customerName,
-            customer_email:  customerEmail,
-            customer_phone:  customerPhone,
-            pickup_date:     pickupDate,
-            return_date:     returnDate,
-            pickup_location: locationText,
-            total_amount:    totalAmount,
-            customer_dob:    document.getElementById('cust-dob').value || null,
-            license_state:   driverType === 'us' ? document.getElementById('cust-license-state').value : null,
-            license_country: driverType === 'international' ? document.getElementById('cust-license-country').value.trim() : null,
-            license_number:  driverType === 'us'
+        // Generate confirmation number: EPD-YYYYMMDD-XXXX
+        const now = new Date();
+        const datePart = now.toISOString().slice(0,10).replace(/-/g, '');
+        const randPart = String(Math.floor(1000 + Math.random() * 9000));
+        const confirmationNumber = `EPD-${datePart}-${randPart}`;
+
+        const { data: resData, error: dbError } = await _sb.from('reservations').insert({
+            car_id:              selectedCar.id,
+            customer_name:       customerName,
+            customer_email:      customerEmail,
+            customer_phone:      customerPhone,
+            pickup_date:         pickupDate,
+            return_date:         returnDate,
+            pickup_time:         window._pickupTime || '10:00',
+            return_time:         window._returnTime || '10:00',
+            pickup_location:     locationText,
+            total_amount:        totalAmount,
+            customer_dob:        document.getElementById('cust-dob').value || null,
+            license_state:       driverType === 'us' ? document.getElementById('cust-license-state').value : null,
+            license_country:     driverType === 'international' ? document.getElementById('cust-license-country').value.trim() : null,
+            license_number:      driverType === 'us'
                 ? document.getElementById('cust-license-number').value.trim().toUpperCase()
                 : document.getElementById('cust-license-number-intl').value.trim().toUpperCase(),
-            passport_number: driverType === 'international' ? document.getElementById('cust-passport').value.trim().toUpperCase() : null,
-            addons:          activeAddons.length ? activeAddons : null,
-            status:          'confirmed',
-            source:          'website',
-        });
+            passport_number:     driverType === 'international' ? document.getElementById('cust-passport').value.trim().toUpperCase() : null,
+            addons:              activeAddons.length ? activeAddons : null,
+            status:              'confirmed',
+            source:              'website',
+            confirmation_number: confirmationNumber,
+        }).select();
 
         if (dbError) {
             console.error(dbError);
@@ -1072,17 +1088,21 @@ document.head.appendChild(o)}initApollo();</script>
             return;
         }
 
+        const savedConfNum = (resData && resData[0]?.confirmation_number) || confirmationNumber;
+
         // Notify via Formspree
         fetch('https://formspree.io/f/xlgpzldj', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 Car: selectedCar.make + ' ' + selectedCar.model,
-                'Pick-up': pickupDate, Return: returnDate,
+                'Pick-up': pickupDate + ' at ' + _fmt12(window._pickupTime || '10:00'),
+                'Return': returnDate + ' at ' + _fmt12(window._returnTime || '10:00'),
                 Location: locationText, Customer: customerName,
                 Email: customerEmail, Phone: customerPhone,
                 'Total': '$' + totalAmount.toLocaleString(), Status: 'PAID',
                 Coverage: insurancePlan, Extras: activeAddons.join(', ') || 'none',
+                'Confirmation': savedConfNum,
             }),
         }).catch(() => {});
 
@@ -1093,9 +1113,13 @@ document.head.appendChild(o)}initApollo();</script>
                     <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
                 <h2 style="font-size:2rem;color:#fff;margin-bottom:12px;">Booking Confirmed</h2>
+                <p style="color:var(--gold);font-size:1.1rem;font-weight:600;margin-bottom:16px;">Confirmation #${_escHtml(savedConfNum)}</p>
                 <p style="color:var(--text-muted);margin-bottom:8px;">Thank you, ${_escHtml(customerName)}. Your payment was successful.</p>
                 <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:32px;">A confirmation will be sent to ${_escHtml(customerEmail)}.</p>
-                <a href="index.html" class="btn btn-primary" style="text-decoration:none;padding:14px 32px;">Return Home</a>
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                    <a href="reservation.html?conf=${encodeURIComponent(savedConfNum)}" class="btn btn-primary" style="text-decoration:none;padding:14px 32px;">View Reservation</a>
+                    <a href="index.html" class="btn btn-secondary" style="text-decoration:none;padding:14px 32px;">Return Home</a>
+                </div>
             </div>`;
     }
     </script>

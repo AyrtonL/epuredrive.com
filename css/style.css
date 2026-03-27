@@ -113,6 +113,26 @@ input, select, textarea { font-family: inherit; }
   border-color: var(--text-primary);
   transform: translateY(-2px);
 }
+.btn-outline-whatsapp {
+  border: 1.5px solid #25D366;
+  color: #25D366;
+  background: transparent;
+  font-weight: 600;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  cursor: pointer; font-size: 0.88rem;
+  border-radius: var(--radius-btn);
+  transition: var(--transition);
+}
+.btn-outline-whatsapp:hover {
+  background: #25D366;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3);
+}
+.btn-outline-whatsapp svg { stroke: currentColor; }
+.dual-booking-buttons {
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
 .btn-ghost {
   color: var(--text-secondary);
   border: 1px solid var(--border);
@@ -1146,6 +1166,7 @@ span.flatpickr-weekday { color: #888 !important; background: transparent !import
 .flatpickr-months .flatpickr-next-month svg { fill: #888 !important; }
 .flatpickr-months .flatpickr-prev-month:hover svg,
 .flatpickr-months .flatpickr-next-month:hover svg { fill: var(--accent-primary) !important; }
+.flatpickr-day.booked { background: rgba(239,68,68,0.1) !important; color: #ef4444 !important; text-decoration: line-through; cursor: not-allowed; pointer-events: none; }
 
 /* Page Header (fleet page) */
 .page-header {
