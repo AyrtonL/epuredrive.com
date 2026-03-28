@@ -1,0 +1,199 @@
+============================================================
+  ePure Drive — REPORTE DIARIO DE PROYECTO
+  Fecha: 28 de marzo de 2026
+  Dias para go-live: 19 (objetivo: 16 abril)
+  Generado automaticamente por Claude PM Agent
+============================================================
+
+
+1. RESUMEN DEL ESTADO
+---------------------
+
+PROGRESO REAL VS OBJETIVO:
+La aplicacion esta desplegada en https://epuredrive.com (Netlify, deploy: READY).
+Supabase activo y saludable. Hay 2 tenants de prueba (ambos en plan "pro" sin pago),
+4 autos en flota, 18 reservaciones de prueba, 18 clientes. Ultima actividad en DB:
+23 de marzo — 5 dias sin nuevos datos.
+
+CORRECCION DEL REPORTE ANTERIOR: Las 10 reservaciones reportadas ayer como "status
+desconocido" son en realidad "completed" — estado valido. NO hay bug en el flujo de
+reservas. Ese riesgo queda descartado.
+
+El proyecto esta al 65-70% del camino al go-live. La infraestructura tecnica base
+funciona. Los 5 items criticos de monetizacion y multi-tenancy siguen sin tocarse:
+Stripe, DNS wildcard, SSL, Storage y testing end-to-end. Sin revenue = sin go-live.
+
+RIESGOS ACTUALES:
+- CRITICO: 0 pagadores, 0 transacciones. El flujo de cobro Stripe no esta validado.
+- CRITICO: Los subdominios wildcard (tenant.epuredrive.com) no estan configurados.
+  Sin esto, el multi-tenancy no funciona en produccion.
+- ALTO: El tenant "test" no tiene autos ni configuracion — hay que limpiarlo o
+  usarlo para hacer el primer test end-to-end antes del go-live.
+- ALTO: 19 dias para go-live con items criticos intactos. El tiempo es el mayor riesgo.
+- MEDIO: Sin email transaccional — los clientes no reciben confirmaciones.
+- BAJO: La tabla "transactions" tiene 0 registros — sin trazabilidad financiera.
+
+
+2. TAREAS PRIORITARIAS PARA HOY
+---------------------------------
+(Ordenadas por impacto — alta a baja)
+
+1. Crear el precio Pro en Stripe a $149/mes y actualizar PRO_PRICE_ID en:
+   admin/js/dashboard.js (linea ~46) y netlify/functions/stripe-webhook.js (linea 11)
+
+2. Configurar DNS wildcard: agregar registro *.epuredrive.com CNAME hacia
+   epuredrivecom.netlify.app en el proveedor de dominio de epuredrive.com
+
+3. Agregar dominio wildcard *.epuredrive.com en Netlify (Domain Management)
+   y habilitar SSL wildcard — verificar si el plan Pro ya lo incluye
+
+4. Crear bucket "tenant-logos" en Supabase Storage: publico, tipos image/png,
+   image/jpeg, image/svg+xml, image/webp
+
+5. Ejecutar un checkout completo de prueba con tarjeta Stripe test y verificar
+   que el webhook actualiza stripe_customer_id en la tabla tenants
+
+6. Usar el tenant "test" para simular un flujo completo: login -> subir logo ->
+   agregar auto -> crear reserva -> verificar en la fleet page del subdominio
+
+7. Verificar que STRIPE_WEBHOOK_SECRET esta configurada en Netlify Environment
+   Variables y que el webhook escucha: checkout.session.completed,
+   customer.subscription.updated, customer.subscription.deleted
+
+8. Archivar el precio viejo de $99/mes en Stripe para evitar confusiones futuras
+
+
+3. MEJORAS IDENTIFICADAS
+--------------------------
+
+PRODUCTO:
+- El tenant "test" existe sin autos ni configuracion desde hace 4 dias — usarlo hoy
+  como tenant de testing real o eliminarlo antes del go-live
+- La tabla "transactions" sigue sin uso. Implementar registro automatico de
+  transacciones cuando el webhook de Stripe confirme un pago exitoso
+- Agregar onboarding guiado para nuevos tenants: primer login -> subir logo ->
+  configurar marca -> agregar primer auto (flujo de 3 pasos, reducir friccion inicial)
+- Todos los autos siguen en status "available" sin reservas activas — verificar que
+  el calendario de disponibilidad funciona correctamente con reservas reales
+
+MARKETING:
+- Sin un primer cliente pagador real, no hay case study ni prueba social para el
+  go-live. Contactar hoy a 2 o 3 owners de rental conocidos para ofrecerles acceso
+  beta gratuito a cambio de feedback documentado
+- Crear una pagina de waitlist o "early access" en epuredrive.com para capturar
+  leads antes del 16 de abril
+
+OPERACION:
+- Archivar el precio $99/mo en Stripe para que no aparezca en la interfaz
+- Definir un protocolo de soporte minimo para el go-live: al menos un canal
+  (WhatsApp, email o chat) donde los primeros clientes puedan reportar problemas
+
+
+4. BLOQUEOS Y SOLUCIONES
+--------------------------
+
+BLOQUEO 1: Stripe sin configurar — 0 tenants pagadores
+- Impacto: El SaaS no puede generar revenue. Sin validacion del flujo de cobro,
+  el go-live es prematuro.
+- Solucion: Crear el precio Pro hoy en el dashboard de Stripe, actualizar los
+  dos archivos con el nuevo price_id, y ejecutar un checkout de prueba completo.
+  Tiempo estimado: 2 horas.
+
+BLOQUEO 2: Wildcard DNS y SSL no configurados
+- Impacto: La feature core del producto (tenant.epuredrive.com) no funciona en
+  produccion. Los clientes no pueden tener su URL propia.
+- Solucion: Configurar el registro DNS wildcard hoy y agregar el dominio en
+  Netlify. Si el plan Pro no incluye SSL wildcard, evaluar upgrade o usar un
+  proxy con Cloudflare (opcion gratuita que soporta wildcards).
+
+BLOQUEO 3: Sin email transaccional
+- Impacto: Los clientes no reciben confirmaciones de reserva ni de pago. Genera
+  desconfianza desde el primer dia.
+- Solucion: Integrar Resend (setup en 1 hora, free tier suficiente para el
+  volumen inicial). Conectar con el webhook de Stripe y el flujo de reservas.
+
+BLOQUEO 4: Sin testing end-to-end documentado
+- Impacto: No hay certeza de que el flujo completo (registro -> pago -> fleet
+  page -> reserva del cliente final) funcione sin errores en produccion.
+- Solucion: Usar el tenant "test" para ejecutar el flujo completo hoy y
+  documentar cada paso. Herramienta recomendada: Playwright para automatizarlo.
+
+
+5. CHECKLIST GO-LIVE
+----------------------
+
+CRITICO (sin esto no se puede lanzar):
+[ ] Stripe: Crear precio Pro $149/mes y actualizar price IDs en el codigo
+[ ] Stripe: Validar webhook end-to-end (checkout -> subscription activa -> tenant actualizado en DB)
+[ ] DNS: Registro wildcard *.epuredrive.com apuntando a Netlify
+[ ] Netlify: SSL wildcard habilitado para subdominios de tenants
+[ ] Supabase Storage: Bucket "tenant-logos" publico creado
+[ ] Testing: Al menos 1 flujo completo (registro tenant -> pago -> fleet page -> reserva cliente)
+[ ] Verificar: STRIPE_WEBHOOK_SECRET configurada en Netlify env vars
+
+IMPORTANTE:
+[ ] Email transaccional configurado (Resend o Postmark — confirmaciones de reservas y pagos)
+[ ] Homepage epuredrive.com con pricing visible y CTA de signup claro
+[ ] Archivar precio viejo $99/mes en Stripe
+[ ] Tabla transactions registrando pagos automaticamente via webhook
+[ ] Onboarding de nuevo tenant funcional en el dashboard
+[ ] Limpiar o convertir el tenant "test" antes del go-live
+
+OPCIONAL:
+[ ] Email info@epuredrive.com para consultas Enterprise
+[ ] Analytics basico en el sitio publico (Plausible o Google Analytics)
+[ ] Documentacion minima de usuario (agregar auto, crear reserva)
+[ ] Al menos 1 cliente beta real con feedback documentado antes del go-live
+
+
+6. FOCO DEL DIA
+-----------------
+
+Desbloquear Stripe hoy: crear el precio Pro, actualizar el codigo, ejecutar
+el primer checkout exitoso y confirmar que el tenant queda con stripe_customer_id
+en la base de datos.
+
+
+============================================================
+  DATOS EN VIVO AL MOMENTO DEL REPORTE
+  Fuente: Supabase brwzjwbpguiignrxvjdc | Netlify epuredrivecom
+============================================================
+  DB Status:              ACTIVE_HEALTHY
+  Netlify Deploy:         READY (live en https://epuredrive.com)
+  Dias hasta go-live:     19 (16 abril 2026)
+  Tenants totales:        2 (0 pagadores)
+    - ePure Drive:        4 autos | plan: pro | stripe: null
+    - test:               0 autos | plan: pro | stripe: null
+  Autos en flota:         4 (todos status: available)
+  Reservaciones:          18 total | 8 confirmed | 10 completed
+  Ultima reserva creada:  23 de marzo de 2026 (5 dias de inactividad)
+  Clientes:               18
+  Transacciones:          0
+  Consignaciones:         0
+  Stripe conectado:       NO (stripe_customer_id null en ambos tenants)
+  Items criticos pendientes: 7 de 7 sin completar
+============================================================
+
+NOTA SOBRE AGENTES AI RECOMENDADOS:
+Actualmente usas Claude + Gemini + Codex. Para llegar al go-live del 16 de
+abril de forma eficiente, agrega estos segun prioridad:
+
+ALTA PRIORIDAD:
+- Playwright (testing): Automatiza el flujo de reservas y pagos end-to-end
+  sin hacerlo manualmente cada vez. Critico para detectar regresiones antes
+  del go-live. Integra directamente con Claude Code.
+- Resend (email): No es un agente AI pero es la herramienta mas rapida para
+  resolver el bloqueo de email transaccional. Setup en 1 hora.
+
+MEDIA PRIORIDAD:
+- Cursor IDE: Desarrollo mas rapido con contexto de codebase completo. Util
+  si el equipo esta haciendo cambios frecuentes al codigo.
+- v0 (Vercel): Para iterar rapido en componentes UI de la landing page y
+  el dashboard sin escribir CSS desde cero.
+
+BAJA PRIORIDAD (post go-live):
+- PostHog (free tier): Analytics de usuarios desde dia 1. Saber donde se
+  pierden los visitantes en el funnel de signup.
+- Loops o Customer.io: Para secuencias de onboarding por email una vez que
+  tengas tenants reales registrandose.
+============================================================
