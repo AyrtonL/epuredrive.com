@@ -1087,12 +1087,14 @@ function renderGmailSync() {
     ? new Date(gmailSync.last_checked).toLocaleString()
     : 'Never';
 
+  const isUnknown = gmailSync.gmail_address === 'unknown@gmail.com';
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
       <span style="color:#10B981;font-size:0.85rem;">✓ Connected: ${esc(gmailSync.gmail_address)}</span>
       <span style="color:var(--muted);font-size:0.78rem;">Last synced: ${lastSynced}</span>
       <button class="btn btn-outline" style="font-size:0.8rem;color:#f87171;border-color:#f87171;" onclick="disconnectGmail()">Disconnect</button>
-    </div>`;
+    </div>
+    ${isUnknown ? `<p style="font-size:0.78rem;color:#f59e0b;margin-top:0.5rem;">⚠ Email address not detected. Disconnect and reconnect to fix.</p>` : ''}`;
 }
 
 function connectGmail() {
@@ -3252,7 +3254,7 @@ function switchTab(tab) {
   if (titleEl && TAB_TITLES[tab]) { titleEl.innerHTML = TAB_TITLES[tab]; }
   
   if (tab === 'bookings') { if (calendar) calendar.updateSize(); markBookingsSeen(); }
-  if (tab === 'turo') { renderCalendarFeeds(); loadGmailSync().then(renderGmailSync); }
+  if (tab === 'turo') { loadGmailSync().then(renderGmailSync); }
   if (tab === 'consignments') renderConsignments();
   if (tab === 'expenses') renderExpensesTable();
   if (tab === 'cars') renderCarCards();
