@@ -18,6 +18,7 @@ let allReservations = [];
 let allBlocked      = [];
 let activeCarFilter = 'all';
 let turoFeeds       = {};   // { carId: { url, lastSynced } }
+let gmailSync       = null;  // { id, gmail_address, last_checked, active } or null
 let allConsignments  = [];
 let allExpenses      = [];
 let allCars          = [];   // rows from cars table (with extra detail columns)
@@ -1050,6 +1051,62 @@ function showDetail(r) {
 
 function copyPortalLink(_bookingId) {
   showToast('Booking portal coming soon.', 'info');
+}
+
+// ====================================================
+//  GMAIL SYNC
+// ====================================================
+async function loadGmailSync() {
+  const { data } = await withTenant(sb.from('turo_email_syncs').select('id,gmail_address,last_checked,active').limit(1).maybeSingle());
+  gmailSync = data || null;
+}
+
+function renderGmailSync() {
+  const el = document.getElementById('gmail-sync-status');
+  if (!el) return;
+
+  if (!gmailSync) {
+    el.innerHTML = `
+      <button class="btn btn-primary write-action" onclick="connectGmail()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:5px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+        Connect Gmail
+      </button>`;
+    return;
+  }
+
+  if (!gmailSync.active) {
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+        <span style="color:#f87171;font-size:0.85rem;">⚠ Gmail disconnected — token expired or revoked.</span>
+        <button class="btn btn-outline" style="font-size:0.8rem;" onclick="connectGmail()">Reconnect</button>
+      </div>`;
+    return;
+  }
+
+  const lastSynced = gmailSync.last_checked
+    ? new Date(gmailSync.last_checked).toLocaleString()
+    : 'Never';
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+      <span style="color:#10B981;font-size:0.85rem;">✓ Connected: ${esc(gmailSync.gmail_address)}</span>
+      <span style="color:var(--muted);font-size:0.78rem;">Last synced: ${lastSynced}</span>
+      <button class="btn btn-outline" style="font-size:0.8rem;color:#f87171;border-color:#f87171;" onclick="disconnectGmail()">Disconnect</button>
+    </div>`;
+}
+
+function connectGmail() {
+  const tenantId = currentProfile?.tenant_id;
+  if (!tenantId) { showToast('Not logged in', 'error'); return; }
+  window.location.href = `/.netlify/functions/gmail-oauth-start?tenant_id=${tenantId}`;
+}
+
+async function disconnectGmail() {
+  if (!gmailSync || !confirm('Disconnect Gmail? Auto-sync will stop.')) return;
+  await sb.from('turo_email_syncs').delete().eq('id', gmailSync.id);
+  gmailSync = null;
+  renderGmailSync();
+  showToast('Gmail disconnected', 'info');
 }
 
 // ====================================================
@@ -3194,7 +3251,7 @@ function switchTab(tab) {
   if (titleEl && TAB_TITLES[tab]) { titleEl.innerHTML = TAB_TITLES[tab]; }
   
   if (tab === 'bookings') { if (calendar) calendar.updateSize(); markBookingsSeen(); }
-  if (tab === 'turo') renderCalendarFeeds();
+  if (tab === 'turo') { renderCalendarFeeds(); loadGmailSync().then(renderGmailSync); }
   if (tab === 'consignments') renderConsignments();
   if (tab === 'expenses') renderExpensesTable();
   if (tab === 'cars') renderCarCards();
@@ -3470,6 +3527,16 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   if (_urlP.get('upgrade_cancelled') === '1') {
     window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  // Show Gmail connected/error toast from OAuth redirect
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('gmail') === 'connected') {
+    showToast('Gmail connected successfully!', 'success');
+    history.replaceState({}, '', window.location.pathname + window.location.hash);
+  } else if (urlParams.get('gmail') === 'error') {
+    showToast('Gmail connection failed. Please try again.', 'error');
+    history.replaceState({}, '', window.location.pathname + window.location.hash);
   }
 
   updateStats();
