@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=20260327a" />
+  <link rel="stylesheet" href="css/style.css?v=20260328a" />
   <style>
     .res-container { max-width: 680px; margin: 120px auto 60px; padding: 0 5%; }
     .res-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 40px; }
@@ -31,10 +31,14 @@
     .res-total-label { font-size: 0.9rem; color: var(--text-secondary); }
     .res-total-amount { font-size: 1.3rem; font-weight: 700; }
     .res-divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
-    .res-loading { text-align: center; padding: 80px 0; color: var(--text-secondary); }
-    .res-error { text-align: center; padding: 80px 0; }
-    .res-error h2 { color: var(--text-primary); margin-bottom: 8px; }
-    .res-error p { color: var(--text-secondary); margin-bottom: 24px; }
+    .res-loading { text-align: center; padding: 80px 0; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+    .res-spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent-primary); border-radius: 50%; animation: res-spin 0.8s linear infinite; }
+    @keyframes res-spin { to { transform: rotate(360deg); } }
+    .res-error { text-align: center; padding: 60px 20px; }
+    .res-error-icon { width: 72px; height: 72px; background: #f7f7f8; border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+    .res-error h2 { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 10px; }
+    .res-error p { color: var(--text-secondary); margin-bottom: 28px; max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+    .res-error-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
     .res-actions { display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap; }
     .res-addons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
     .res-addon-tag { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 0.8rem; color: var(--text-secondary); }
@@ -54,19 +58,25 @@
       </a>
       <ul class="nav-links">
         <li><a href="index.html">Home</a></li>
-        <li><a href="fleet.html">Fleet</a></li>
-        <li><a href="index.html#how-it-works">How It Works</a></li>
-        <li><a href="index.html#why-us">About</a></li>
+        <li><a href="fleet.html">Our Fleet</a></li>
+        <li><a href="index.html#why-us">Why Us</a></li>
       </ul>
-      <div class="nav-actions">
-        <a href="fleet.html" class="btn btn-primary btn-sm">Book Now</a>
+      <div class="navbar-actions">
+        <span class="navbar-phone">
+          <a href="https://wa.me/17862096770" target="_blank" rel="noopener noreferrer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+            WhatsApp
+          </a>
+        </span>
+        <a href="fleet.html" class="btn btn-primary">Book Now</a>
       </div>
     </div>
   </nav>
 
   <div class="res-container" id="res-main">
     <div class="res-loading" id="res-loading">
-      <p>Loading your reservation...</p>
+      <div class="res-spinner"></div>
+      <p>Loading your reservation…</p>
     </div>
   </div>
 
@@ -132,11 +142,18 @@
       const container = document.getElementById('res-main');
 
       if (!conf) {
+        document.title = 'Reservation Not Found — éPure Drive';
         container.innerHTML = `
           <div class="res-error">
-            <h2>No Reservation Found</h2>
-            <p>Please check your confirmation email for the correct link.</p>
-            <a href="index.html" class="btn btn-primary" style="text-decoration:none;padding:12px 28px;">Go Home</a>
+            <div class="res-error-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="12"/><line x1="11" y1="16" x2="11.01" y2="16"/></svg>
+            </div>
+            <h2>No Confirmation Found</h2>
+            <p>It looks like you arrived here without a confirmation link. Check your booking email or contact us directly — we'll sort it out.</p>
+            <div class="res-error-actions">
+              <a href="fleet.html" class="btn btn-primary" style="text-decoration:none;padding:12px 28px;">Browse Our Fleet</a>
+              <a href="https://wa.me/17862096770" target="_blank" class="btn btn-outline" style="text-decoration:none;padding:12px 28px;">Chat on WhatsApp</a>
+            </div>
           </div>`;
         return;
       }
@@ -151,11 +168,18 @@
         const r = data?.[0];
 
         if (!r) {
+          document.title = 'Reservation Not Found — éPure Drive';
           container.innerHTML = `
             <div class="res-error">
+              <div class="res-error-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
               <h2>Reservation Not Found</h2>
-              <p>We couldn't find a reservation with confirmation <strong>${escHtml(conf)}</strong>.</p>
-              <a href="index.html" class="btn btn-primary" style="text-decoration:none;padding:12px 28px;">Go Home</a>
+              <p>We couldn't find a reservation matching <strong style="color:#111;">${escHtml(conf)}</strong>. Check your confirmation email or contact us and we'll look it up for you.</p>
+              <div class="res-error-actions">
+                <a href="fleet.html" class="btn btn-primary" style="text-decoration:none;padding:12px 28px;">Browse Our Fleet</a>
+                <a href="https://wa.me/17862096770?text=${encodeURIComponent('Hi, I need help finding my reservation. Confirmation: ' + conf)}" target="_blank" class="btn btn-outline" style="text-decoration:none;padding:12px 28px;">Chat on WhatsApp</a>
+              </div>
             </div>`;
           return;
         }
@@ -255,15 +279,23 @@
           </div>`;
       } catch (err) {
         console.error(err);
+        document.title = 'Error — éPure Drive';
         container.innerHTML = `
           <div class="res-error">
-            <h2>Something went wrong</h2>
-            <p>Please try again or contact us directly.</p>
-            <a href="index.html" class="btn btn-primary" style="text-decoration:none;padding:12px 28px;">Go Home</a>
+            <div class="res-error-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <h2>Something Went Wrong</h2>
+            <p>We had trouble loading your reservation. This is usually temporary — try refreshing the page or reach out to us and we'll help right away.</p>
+            <div class="res-error-actions">
+              <button onclick="window.location.reload()" class="btn btn-primary" style="padding:12px 28px;cursor:pointer;">Try Again</button>
+              <a href="https://wa.me/17862096770" target="_blank" class="btn btn-outline" style="text-decoration:none;padding:12px 28px;">Chat on WhatsApp</a>
+              <a href="index.html" class="btn btn-outline" style="text-decoration:none;padding:12px 28px;">Go Home</a>
+            </div>
           </div>`;
       }
     });
   </script>
-  <script src="js/main.js?v=20260327a" defer></script>
+  <script src="js/main.js?v=20260328a" defer></script>
 </body>
 </html>

@@ -220,6 +220,10 @@ function loadCarDetail() {
   const priceWeekEl = document.getElementById('detail-price-week');
   if (priceWeekEl) priceWeekEl.textContent = `$${car.price * 6} / week`;
 
+  // Update mobile sticky bar price
+  const mobileBarPrice = document.getElementById('mobile-bar-price');
+  if (mobileBarPrice) mobileBarPrice.innerHTML = `$${car.price}<span>/day</span>`;
+
   const featuresEl = document.getElementById('detail-features');
   if (featuresEl) {
     featuresEl.innerHTML = car.features.map(f => `<li>${f}</li>`).join('');
