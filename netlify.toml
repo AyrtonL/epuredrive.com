@@ -37,3 +37,6 @@
   for = "/js/*"
   [headers.values]
     Cache-Control = "public, max-age=86400"
+
+[functions.sync-ical-cron]
+  schedule = "*/30 * * * *"
