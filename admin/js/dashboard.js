@@ -2690,6 +2690,8 @@ async function loadCars() {
   } else {
     allCars = [];
   }
+  const el = document.getElementById('stat-total-cars');
+  if (el) el.textContent = allCars.length;
 }
 
 async function loadServices() {
