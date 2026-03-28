@@ -69,8 +69,9 @@ function parseIcal(icsText, tenantId, carId, sourceName = 'Calendar') {
             : 'ical';
 
   // Convert iCal date string (with or without time) → YYYY-MM-DD
+  // Handles basic format (20260322), datetime (20260322T140000Z), and offset (20260322T140000-05:00)
   const toDate = (s) => {
-    const raw = s.replace(/[TZ\-]/g, '').slice(0, 8);
+    const raw = s.replace(/[-:]/g, '').slice(0, 15).replace(/[TZ].*$/, '');
     return `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}`;
   };
 
@@ -181,12 +182,20 @@ exports.handler = async () => {
   for (const feed of feeds) {
     try {
       // 1. Fetch the iCal file directly (no CORS proxy needed server-side)
-      const icalRes = await fetch(feed.ical_url, {
-        headers: { 'User-Agent': 'epuredrive-ical-sync/1.0' },
-        redirect: 'follow',
-      });
-      if (!icalRes.ok) throw new Error(`iCal fetch returned ${icalRes.status}`);
-      const icsText = await icalRes.text();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      let icsText;
+      try {
+        const icalRes = await fetch(feed.ical_url, {
+          headers: { 'User-Agent': 'epuredrive-ical-sync/1.0' },
+          redirect: 'follow',
+          signal: controller.signal,
+        });
+        if (!icalRes.ok) throw new Error(`iCal fetch returned ${icalRes.status}`);
+        icsText = await icalRes.text();
+      } finally {
+        clearTimeout(timeout);
+      }
 
       const sourceName = feed.source_name || 'Calendar';
 
@@ -204,7 +213,9 @@ exports.handler = async () => {
         );
       } else {
         // Delete ical reservations whose notes reference this source by name (bracket pattern)
-        const encodedSource = encodeURIComponent(`*[${sourceName}]*`);
+        // Sanitise sourceName: strip chars that could break the PostgREST query string
+        const safeName = (sourceName).replace(/[[\]*&?%]/g, '');
+        const encodedSource = encodeURIComponent(`*[${safeName}]*`);
         await sbDelete(
           `reservations?car_id=eq.${feed.car_id}&tenant_id=eq.${feed.tenant_id}&source=eq.ical&notes=ilike.${encodedSource}`,
           serviceKey
