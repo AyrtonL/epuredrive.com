@@ -76,7 +76,7 @@ exports.handler = async (event) => {
         access_token:  tokens.access_token,
         refresh_token: tokens.refresh_token,
         active:        true,
-        last_checked:  new Date().toISOString(),
+        last_checked:  new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
       }),
     }
   );

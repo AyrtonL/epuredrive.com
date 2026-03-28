@@ -141,7 +141,19 @@ function parseTuroEmail(body, subject, messageId) {
   if (!isConfirmed && !isCancelled && !isModified) return null;
 
   if (isCancelled) {
-    return { type: 'cancel', messageId };
+    // Try to extract trip details from cancellation email for reservation matching
+    const cancelGuestMatch = body.match(/(.+?)'s trip with your/i)
+                          || body.match(/trip (?:for|with) (.+?) has been cancel/i);
+    const cancelDatesMatch = body.match(
+      /(?:from|booked from) ((?:\w+ ){1,2}\w+ \d{1,2},\s*\d{4}[^t]*?) to ((?:\w+ ){1,2}\w+ \d{1,2},\s*\d{4}[^.]*?)\./i
+    );
+    return {
+      type:          'cancel',
+      messageId,
+      customer_name: cancelGuestMatch?.[1]?.trim() || null,
+      pickup_date:   cancelDatesMatch ? parseTuroDate(cancelDatesMatch[1]) : null,
+      return_date:   cancelDatesMatch ? parseTuroDate(cancelDatesMatch[2]) : null,
+    };
   }
 
   const guestMatch = body.match(/Cha-?ching!\s*(.+?)'s trip with your/i)
@@ -229,15 +241,22 @@ exports.handler = async () => {
 
   for (const sync of syncs) {
     try {
-      const afterTimestamp = Math.floor(new Date(sync.last_checked).getTime() / 1000);
+      const checkedAt      = sync.last_checked
+        ? new Date(sync.last_checked)
+        : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const afterTimestamp = Math.floor(checkedAt.getTime() / 1000);
       const query          = `from:noreply@mail.turo.com after:${afterTimestamp}`;
 
-      const searchResult = await gmailFetch(
-        `/messages?q=${encodeURIComponent(query)}&maxResults=50`,
-        sync, serviceKey
-      );
+      // Fetch all pages of matching emails
+      const messages = [];
+      let pageToken  = undefined;
+      do {
+        const qs         = `/messages?q=${encodeURIComponent(query)}&maxResults=50${pageToken ? `&pageToken=${pageToken}` : ''}`;
+        const pageResult = await gmailFetch(qs, sync, serviceKey);
+        if (pageResult.messages) messages.push(...pageResult.messages);
+        pageToken = pageResult.nextPageToken;
+      } while (pageToken);
 
-      const messages = searchResult.messages || [];
       if (!messages.length) {
         await sbPatch(`turo_email_syncs?id=eq.${sync.id}`, { last_checked: new Date().toISOString() }, serviceKey);
         continue;
@@ -253,19 +272,26 @@ exports.handler = async () => {
           if (!parsed) continue;
 
           if (parsed.type === 'cancel') {
-            const existing = await sbGet(
-              `reservations?tenant_id=eq.${sync.tenant_id}&notes=eq.Turo %23${msg.id}&select=id`,
-              serviceKey
-            );
-            for (const r of existing) {
+            // Match by customer_name + pickup_date when available (cancel email has different messageId than booking)
+            let cancelMatches = [];
+            if (parsed.customer_name && parsed.pickup_date) {
+              cancelMatches = await sbGet(
+                `reservations?tenant_id=eq.${sync.tenant_id}&customer_name=eq.${encodeURIComponent(parsed.customer_name)}&pickup_date=eq.${parsed.pickup_date}&source=eq.turo&select=id`,
+                serviceKey
+              );
+            }
+            for (const r of cancelMatches) {
               await sbPatch(`reservations?id=eq.${r.id}`, { status: 'cancelled' }, serviceKey);
+            }
+            if (!cancelMatches.length) {
+              console.warn(`[poll-turo-emails] Cancel email ${msg.id}: no matching reservation found`);
             }
             totalSynced++;
             continue;
           }
 
           const existing = await sbGet(
-            `reservations?tenant_id=eq.${sync.tenant_id}&notes=eq.Turo %23${msg.id}&select=id`,
+            `reservations?tenant_id=eq.${sync.tenant_id}&notes=like.Turo %23${msg.id}%&select=id`,
             serviceKey
           );
 
@@ -313,7 +339,7 @@ exports.handler = async () => {
       console.log(`[poll-turo-emails] Tenant ${sync.tenant_id} (${sync.gmail_address}): ${messages.length} emails processed`);
     } catch (err) {
       console.error(`[poll-turo-emails] Sync ${sync.id} failed: ${err.message}`);
-      if (/token refresh failed/i.test(err.message)) {
+      if (/token refresh failed|403|access.?denied|insufficient.?permission/i.test(err.message)) {
         await sbPatch(`turo_email_syncs?id=eq.${sync.id}`, { active: false }, serviceKey).catch(() => {});
       }
       errors++;

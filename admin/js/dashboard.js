@@ -1096,14 +1096,15 @@ function renderGmailSync() {
 }
 
 function connectGmail() {
-  const tenantId = currentProfile?.tenant_id;
+  const tenantId = currentTenantId;
   if (!tenantId) { showToast('Not logged in', 'error'); return; }
   window.location.href = `/.netlify/functions/gmail-oauth-start?tenant_id=${tenantId}`;
 }
 
 async function disconnectGmail() {
   if (!gmailSync || !confirm('Disconnect Gmail? Auto-sync will stop.')) return;
-  await sb.from('turo_email_syncs').delete().eq('id', gmailSync.id);
+  const { error } = await sb.from('turo_email_syncs').delete().eq('id', gmailSync.id);
+  if (error) { showToast('Failed to disconnect Gmail', 'error'); return; }
   gmailSync = null;
   renderGmailSync();
   showToast('Gmail disconnected', 'info');
