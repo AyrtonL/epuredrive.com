@@ -22,8 +22,9 @@ function sbHeaders(serviceKey) {
 exports.handler = async (event) => {
   const { code, state: tenantId, error } = event.queryStringParameters || {};
 
-  if (error || !code || !tenantId) {
-    console.error('[gmail-oauth-callback] Missing params or Google error:', error);
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (error || !code || !tenantId || !UUID_RE.test(tenantId)) {
+    console.error('[gmail-oauth-callback] Missing params, Google error, or invalid tenantId:', { error, tenantId });
     return { statusCode: 302, headers: { Location: ERROR_URL }, body: '' };
   }
 
@@ -59,7 +60,8 @@ exports.handler = async (event) => {
   const profileRes   = await fetch('https://www.googleapis.com/gmail/v1/users/me/profile', {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   });
-  const profile      = await profileRes.json();
+  const profile      = profileRes.ok ? await profileRes.json() : {};
+  if (!profileRes.ok) console.warn('[gmail-oauth-callback] Could not fetch Gmail profile:', profileRes.status);
   const gmailAddress = profile.emailAddress || 'unknown@gmail.com';
 
   // 3. Upsert into turo_email_syncs (one row per tenant, update if exists)
