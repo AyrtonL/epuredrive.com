@@ -82,22 +82,42 @@ async function gmailFetch(path, sync, serviceKey, retried = false) {
 
 function getMessageBody(payload) {
   if (!payload) return '';
-  if (payload.mimeType === 'text/plain' && payload.body?.data) {
-    return Buffer.from(payload.body.data, 'base64url').toString('utf-8');
-  }
-  if (payload.parts) {
-    for (const part of payload.parts) {
-      const body = getMessageBody(part);
-      if (body) return body;
+
+  // First pass: prefer text/plain anywhere in the tree
+  function findPlain(p) {
+    if (p.mimeType === 'text/plain' && p.body?.data) {
+      return Buffer.from(p.body.data, 'base64url').toString('utf-8');
     }
+    if (p.parts) {
+      for (const child of p.parts) {
+        const found = findPlain(child);
+        if (found) return found;
+      }
+    }
+    return null;
   }
-  if (payload.mimeType === 'text/html' && payload.body?.data) {
-    return Buffer.from(payload.body.data, 'base64url').toString('utf-8')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/\s+/g, ' ');
+
+  const plain = findPlain(payload);
+  if (plain) return plain;
+
+  // Second pass: fall back to text/html anywhere in the tree
+  function findHtml(p) {
+    if (p.mimeType === 'text/html' && p.body?.data) {
+      return Buffer.from(p.body.data, 'base64url').toString('utf-8')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ');
+    }
+    if (p.parts) {
+      for (const child of p.parts) {
+        const found = findHtml(child);
+        if (found) return found;
+      }
+    }
+    return null;
   }
-  return '';
+
+  return findHtml(payload) || '';
 }
 
 function parseTuroDate(str) {
@@ -107,8 +127,8 @@ function parseTuroDate(str) {
     September:'09', October:'10', November:'11', December:'12',
   };
   const m = str.match(/(\w+)\s+(\d{1,2}),\s+(\d{4})/);
-  if (!m) return null;
-  return `${m[3]}-${months[m[1]] || '01'}-${String(m[2]).padStart(2, '0')}`;
+  if (!m || !months[m[1]]) return null;
+  return `${m[3]}-${months[m[1]]}-${String(m[2]).padStart(2, '0')}`;
 }
 
 function parseTuroEmail(body, subject, messageId) {
@@ -234,7 +254,7 @@ exports.handler = async () => {
 
           if (parsed.type === 'cancel') {
             const existing = await sbGet(
-              `reservations?tenant_id=eq.${sync.tenant_id}&notes=like.*${msg.id}*&select=id`,
+              `reservations?tenant_id=eq.${sync.tenant_id}&notes=eq.Turo %23${msg.id}&select=id`,
               serviceKey
             );
             for (const r of existing) {
