@@ -395,13 +395,27 @@ async function pollIcloud(sync, serviceKey) {
         ? new Date(sync.last_checked)
         : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-      const uids = await client.search(
+      const allUids = await client.search(
         { from: 'noreply@mail.turo.com', since: checkedAt },
         { uid: true }
       );
 
+      // Step 1: fetch envelopes only to filter relevant subjects — avoids
+      // downloading full bodies for earnings/messages/invoices and prevents timeout.
+      const relevantUids = [];
+      for (const uid of allUids) {
+        try {
+          const msg     = await client.fetchOne(String(uid), { envelope: true }, { uid: true });
+          const subject = msg.envelope?.subject || '';
+          if (/booked|cancel|modif|updated.*trip|trip.*updated/i.test(subject)) {
+            relevantUids.push(uid);
+          }
+        } catch { /* skip */ }
+      }
+
+      // Step 2: fetch full source only for relevant emails
       let synced = 0;
-      for (const uid of uids) {
+      for (const uid of relevantUids) {
         try {
           const msg     = await client.fetchOne(String(uid), { source: true }, { uid: true });
           const raw     = msg.source.toString('utf-8');
