@@ -18,7 +18,8 @@ let allReservations = [];
 let allBlocked      = [];
 let activeCarFilter = 'all';
 let turoFeeds       = {};   // { carId: { url, lastSynced } }
-let gmailSync       = null;  // { id, gmail_address, last_checked, active } or null
+let gmailSync        = null;  // { id, gmail_address, last_checked, active } or null
+let selectedProvider = 'gmail';
 let allConsignments  = [];
 let allExpenses      = [];
 let allCars          = [];   // rows from cars table (with extra detail columns)
@@ -1057,7 +1058,7 @@ function copyPortalLink(_bookingId) {
 //  GMAIL SYNC
 // ====================================================
 async function loadGmailSync() {
-  const { data } = await withTenant(sb.from('turo_email_syncs').select('id,gmail_address,last_checked,active').limit(1).maybeSingle());
+  const { data } = await withTenant(sb.from('turo_email_syncs').select('id,gmail_address,last_checked,active,provider').limit(1).maybeSingle());
   gmailSync = data || null;
 }
 
@@ -1065,36 +1066,121 @@ function renderGmailSync() {
   const el = document.getElementById('gmail-sync-status');
   if (!el) return;
 
+  // ── Not connected ──────────────────────────────────────────────────────────
   if (!gmailSync) {
     el.innerHTML = `
-      <button class="btn btn-primary write-action" onclick="connectGmail()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:5px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
-        Connect Gmail
-      </button>`;
+      <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;width:fit-content;margin-bottom:1rem;overflow:hidden;">
+        <button id="provider-tab-gmail" onclick="selectProvider('gmail')"
+          style="padding:0.4rem 1.1rem;font-size:0.8rem;font-weight:600;border:none;cursor:pointer;
+                 background:${selectedProvider==='gmail'?'var(--accent)':'transparent'};
+                 color:${selectedProvider==='gmail'?'#fff':'var(--muted)'};transition:all .15s;">
+          Gmail
+        </button>
+        <button id="provider-tab-icloud" onclick="selectProvider('icloud')"
+          style="padding:0.4rem 1.1rem;font-size:0.8rem;font-weight:600;border:none;cursor:pointer;
+                 background:${selectedProvider==='icloud'?'var(--accent)':'transparent'};
+                 color:${selectedProvider==='icloud'?'#fff':'var(--muted)'};transition:all .15s;">
+          iCloud
+        </button>
+      </div>
+      ${selectedProvider === 'gmail' ? `
+        <button class="btn btn-primary write-action" onclick="connectGmail()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            style="vertical-align:-2px;margin-right:5px;">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,12 2,6"/>
+          </svg>
+          Connect Gmail
+        </button>
+      ` : `
+        <div style="display:flex;flex-direction:column;gap:0.6rem;max-width:420px;">
+          <div class="form-group" style="margin:0;">
+            <label style="font-size:0.8rem;">iCloud email</label>
+            <input type="email" id="icloud-email" placeholder="you@icloud.com"
+              style="width:100%;padding:0.4rem 0.6rem;font-size:0.85rem;" />
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label style="font-size:0.8rem;">App-specific password</label>
+            <input type="password" id="icloud-password" placeholder="xxxx-xxxx-xxxx-xxxx"
+              style="width:100%;padding:0.4rem 0.6rem;font-size:0.85rem;" />
+          </div>
+          <button class="btn btn-primary write-action" onclick="connectIcloud()">Connect iCloud</button>
+          <p style="font-size:0.75rem;color:var(--muted);margin:0;">
+            Generate your app-specific password at
+            <a href="https://appleid.apple.com" target="_blank" rel="noopener"
+              style="color:var(--accent);">appleid.apple.com</a>
+            → Account Security → App-Specific Passwords.
+          </p>
+        </div>
+      `}`;
     return;
   }
 
+  // ── Broken connection ──────────────────────────────────────────────────────
   if (!gmailSync.active) {
+    const providerLabel = gmailSync.provider === 'icloud' ? 'iCloud' : 'Gmail';
     el.innerHTML = `
       <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-        <span style="color:#f87171;font-size:0.85rem;">⚠ Gmail disconnected — token expired or revoked.</span>
-        <button class="btn btn-outline" style="font-size:0.8rem;" onclick="connectGmail()">Reconnect</button>
+        <span style="color:#f87171;font-size:0.85rem;">⚠ ${providerLabel} disconnected — credentials expired or revoked.</span>
+        <button class="btn btn-outline" style="font-size:0.8rem;" onclick="${gmailSync.provider === 'icloud' ? "selectProvider('icloud');disconnectEmailSync(true)" : 'connectGmail()'}">Reconnect</button>
       </div>`;
     return;
   }
 
-  const lastSynced = gmailSync.last_checked
+  // ── Connected ──────────────────────────────────────────────────────────────
+  const lastSynced  = gmailSync.last_checked
     ? new Date(gmailSync.last_checked).toLocaleString()
     : 'Never';
+  const isUnknown   = gmailSync.gmail_address === 'unknown@gmail.com';
+  const providerTag = gmailSync.provider === 'icloud'
+    ? '<span style="font-size:0.75rem;color:var(--muted);background:var(--surface-2);padding:0.1rem 0.4rem;border-radius:4px;margin-left:0.3rem;">iCloud</span>'
+    : '';
 
-  const isUnknown = gmailSync.gmail_address === 'unknown@gmail.com';
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-      <span style="color:#10B981;font-size:0.85rem;">✓ Connected: ${esc(gmailSync.gmail_address)}</span>
+      <span style="color:#10B981;font-size:0.85rem;">✓ Connected: ${esc(gmailSync.gmail_address)}${providerTag}</span>
       <span style="color:var(--muted);font-size:0.78rem;">Last synced: ${lastSynced}</span>
-      <button class="btn btn-outline" style="font-size:0.8rem;color:#f87171;border-color:#f87171;" onclick="disconnectGmail()">Disconnect</button>
+      <button class="btn btn-outline" style="font-size:0.8rem;color:#f87171;border-color:#f87171;"
+        onclick="disconnectEmailSync()">Disconnect</button>
     </div>
     ${isUnknown ? `<p style="font-size:0.78rem;color:#f59e0b;margin-top:0.5rem;">⚠ Email address not detected. Disconnect and reconnect to fix.</p>` : ''}`;
+}
+
+function selectProvider(p) {
+  selectedProvider = p;
+  renderGmailSync();
+}
+
+async function connectIcloud() {
+  const tenantId = currentTenantId;
+  if (!tenantId) { showToast('Not logged in', 'error'); return; }
+
+  const email    = document.getElementById('icloud-email')?.value?.trim();
+  const password = document.getElementById('icloud-password')?.value?.trim();
+  if (!email || !password) { showToast('Enter iCloud email and password', 'error'); return; }
+
+  const btn = document.querySelector('#gmail-sync-status .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Connecting…'; }
+
+  try {
+    const res  = await fetch('/.netlify/functions/icloud-connect', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ tenant_id: tenantId, email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Connection failed', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = 'Connect iCloud'; }
+      return;
+    }
+    await loadGmailSync();
+    renderGmailSync();
+    showToast('iCloud connected', 'success');
+  } catch {
+    showToast('Network error — try again', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Connect iCloud'; }
+  }
 }
 
 function connectGmail() {
@@ -1103,13 +1189,15 @@ function connectGmail() {
   window.location.href = `/.netlify/functions/gmail-oauth-start?tenant_id=${tenantId}`;
 }
 
-async function disconnectGmail() {
-  if (!gmailSync || !confirm('Disconnect Gmail? Auto-sync will stop.')) return;
+async function disconnectEmailSync(skipConfirm = false) {
+  if (!gmailSync) return;
+  const label = gmailSync.provider === 'icloud' ? 'iCloud' : 'Gmail';
+  if (!skipConfirm && !confirm(`Disconnect ${label}? Auto-sync will stop.`)) return;
   const { error } = await sb.from('turo_email_syncs').delete().eq('id', gmailSync.id);
-  if (error) { showToast('Failed to disconnect Gmail', 'error'); return; }
+  if (error) { showToast(`Failed to disconnect ${label}`, 'error'); return; }
   gmailSync = null;
   renderGmailSync();
-  showToast('Gmail disconnected', 'info');
+  showToast(`${label} disconnected`, 'info');
 }
 
 // ====================================================
