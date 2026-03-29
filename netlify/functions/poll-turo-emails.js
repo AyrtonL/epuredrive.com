@@ -426,7 +426,7 @@ async function pollIcloud(sync, serviceKey) {
           await processEmail(parsed, sync, serviceKey);
           synced++;
         } catch (msgErr) {
-          console.error(`[poll-turo-emails] iCloud UID ${uid} failed:`, msgErr.message);
+          console.error(`[poll-turo-emails] iCloud UID ${uid} FAILED: ${msgErr.message}`);
         }
       }
       return synced;
