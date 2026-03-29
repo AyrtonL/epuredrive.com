@@ -120,6 +120,58 @@ function getMessageBody(payload) {
   return findHtml(payload) || '';
 }
 
+// ── IMAP raw email body extractor ────────────────────────────────────────────
+// Parses a raw RFC 2822 message string and returns the best plain-text body.
+
+function getImapBody(rawEmail) {
+  const raw = typeof rawEmail === 'string' ? rawEmail : rawEmail.toString('utf-8');
+
+  // Look for a MIME boundary
+  const boundaryMatch = raw.match(/Content-Type:\s*multipart\/[^;]+;\s*boundary="([^"]+)"/i)
+                     || raw.match(/Content-Type:\s*multipart\/[^;]+;\s*boundary=([^\s;]+)/i);
+
+  if (boundaryMatch) {
+    const boundary = boundaryMatch[1];
+    const escaped  = boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const parts    = raw.split(new RegExp(`--${escaped}`));
+
+    let plainText = null;
+    let htmlText  = null;
+
+    for (const part of parts) {
+      const headerEnd = part.indexOf('\r\n\r\n');
+      if (headerEnd < 0) continue;
+      const headers = part.slice(0, headerEnd);
+      let   body    = part.slice(headerEnd + 4);
+
+      // Decode transfer encoding
+      if (/Content-Transfer-Encoding:\s*quoted-printable/i.test(headers)) {
+        body = body
+          .replace(/=\r?\n/g, '')
+          .replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+      } else if (/Content-Transfer-Encoding:\s*base64/i.test(headers)) {
+        body = Buffer.from(body.replace(/\s/g, ''), 'base64').toString('utf-8');
+      }
+
+      if (/Content-Type:\s*text\/plain/i.test(headers) && !plainText) {
+        plainText = body.trim();
+      } else if (/Content-Type:\s*text\/html/i.test(headers) && !htmlText) {
+        htmlText = body
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+    }
+
+    return plainText || htmlText || '';
+  }
+
+  // Non-MIME: body is everything after the first blank line
+  const bodyStart = raw.indexOf('\r\n\r\n');
+  return bodyStart >= 0 ? raw.slice(bodyStart + 4).trim() : raw.trim();
+}
+
 function parseTuroDate(str) {
   const months = {
     January:'01', February:'02', March:'03',    April:'04',
@@ -214,13 +266,162 @@ async function findCarId(tenantId, vehicleName, serviceKey) {
   return null;
 }
 
+// ── Shared email processing (cancel / upsert / dedup) ────────────────────────
+// Used by both pollGmail and pollIcloud. Returns true if a reservation was touched.
+
+async function processEmail(parsed, sync, serviceKey) {
+  if (parsed.type === 'cancel') {
+    let cancelMatches = [];
+    if (parsed.customer_name && parsed.pickup_date) {
+      cancelMatches = await sbGet(
+        `reservations?tenant_id=eq.${sync.tenant_id}&customer_name=eq.${encodeURIComponent(parsed.customer_name)}&pickup_date=eq.${parsed.pickup_date}&source=eq.turo&select=id`,
+        serviceKey
+      );
+    }
+    for (const r of cancelMatches) {
+      await sbPatch(`reservations?id=eq.${r.id}`, { status: 'cancelled' }, serviceKey);
+    }
+    if (!cancelMatches.length) {
+      console.warn(`[poll-turo-emails] Cancel ${parsed.messageId}: no matching reservation found`);
+    }
+    return true;
+  }
+
+  const existing = await sbGet(
+    `reservations?tenant_id=eq.${sync.tenant_id}&notes=like.Turo %23${parsed.messageId}%&select=id`,
+    serviceKey
+  );
+
+  const carId            = await findCarId(sync.tenant_id, parsed.vehicle_name, serviceKey);
+  const notesWithVehicle = carId
+    ? parsed.notes
+    : `${parsed.notes} [vehicle: ${parsed.vehicle_name || 'unknown'}]`;
+
+  const reservationData = {
+    tenant_id:     sync.tenant_id,
+    car_id:        carId,
+    customer_name: parsed.customer_name,
+    pickup_date:   parsed.pickup_date,
+    return_date:   parsed.return_date,
+    total_amount:  parsed.total_amount,
+    status:        parsed.status,
+    source:        parsed.source,
+    notes:         notesWithVehicle,
+  };
+
+  if (existing.length > 0) {
+    await sbPatch(
+      `reservations?id=eq.${existing[0].id}`,
+      { pickup_date: parsed.pickup_date, return_date: parsed.return_date,
+        total_amount: parsed.total_amount, status: parsed.status },
+      serviceKey
+    );
+  } else {
+    await sbInsert('reservations', reservationData, serviceKey);
+  }
+
+  return true;
+}
+
+// ── Provider-specific pollers ─────────────────────────────────────────────────
+
+async function pollGmail(sync, serviceKey) {
+  const checkedAt      = sync.last_checked
+    ? new Date(sync.last_checked)
+    : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const afterTimestamp = Math.floor(checkedAt.getTime() / 1000);
+  const query          = `from:noreply@mail.turo.com after:${afterTimestamp}`;
+
+  const messages = [];
+  let pageToken  = undefined;
+  do {
+    const qs         = `/messages?q=${encodeURIComponent(query)}&maxResults=50${pageToken ? `&pageToken=${pageToken}` : ''}`;
+    const pageResult = await gmailFetch(qs, sync, serviceKey);
+    if (pageResult.messages) messages.push(...pageResult.messages);
+    pageToken = pageResult.nextPageToken;
+  } while (pageToken);
+
+  if (!messages.length) return 0;
+
+  let synced = 0;
+  for (const msg of messages) {
+    try {
+      const full    = await gmailFetch(`/messages/${msg.id}?format=full`, sync, serviceKey);
+      const subject = full.payload?.headers?.find(h => h.name.toLowerCase() === 'subject')?.value || '';
+      const body    = getMessageBody(full.payload);
+      const parsed  = parseTuroEmail(body, subject, msg.id);
+      if (!parsed) continue;
+      await processEmail(parsed, sync, serviceKey);
+      synced++;
+    } catch (msgErr) {
+      console.error(`[poll-turo-emails] Gmail message ${msg.id} failed:`, msgErr.message);
+    }
+  }
+  return synced;
+}
+
+async function pollIcloud(sync, serviceKey) {
+  const { ImapFlow } = require('imapflow');
+
+  const client = new ImapFlow({
+    host:   'imap.mail.me.com',
+    port:   993,
+    secure: true,
+    auth:   { user: sync.gmail_address, pass: sync.app_specific_password },
+    logger: false,
+  });
+
+  await client.connect();
+
+  try {
+    const lock = await client.getMailboxLock('INBOX');
+    try {
+      const checkedAt = sync.last_checked
+        ? new Date(sync.last_checked)
+        : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+      const uids = await client.search(
+        { from: 'noreply@mail.turo.com', since: checkedAt },
+        { uid: true }
+      );
+
+      let synced = 0;
+      for (const uid of uids) {
+        try {
+          const msg     = await client.fetchOne(String(uid), { source: true }, { uid: true });
+          const raw     = msg.source.toString('utf-8');
+          const subject = raw.match(/^Subject:\s*(.+)$/mi)?.[1]?.trim() || '';
+          const body    = getImapBody(raw);
+          const parsed  = parseTuroEmail(body, subject, `icloud-${uid}`);
+          if (!parsed) continue;
+          await processEmail(parsed, sync, serviceKey);
+          synced++;
+        } catch (msgErr) {
+          console.error(`[poll-turo-emails] iCloud UID ${uid} failed:`, msgErr.message);
+        }
+      }
+      return synced;
+    } finally {
+      lock.release();
+    }
+  } catch (err) {
+    // Rethrow auth errors with a recognisable prefix so the handler can set active=false
+    if (/authenticationfailed|invalid credentials|auth/i.test(err.message)) {
+      throw new Error(`403: iCloud auth failed — ${err.message}`);
+    }
+    throw err;
+  } finally {
+    await client.logout().catch(() => {});
+  }
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 exports.handler = async () => {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey || !process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-    console.error('[poll-turo-emails] Missing required env vars');
-    return { statusCode: 500, body: 'Missing env vars' };
+  if (!serviceKey) {
+    console.error('[poll-turo-emails] Missing SUPABASE_SERVICE_ROLE_KEY');
+    return { statusCode: 500, body: 'Missing SUPABASE_SERVICE_ROLE_KEY' };
   }
 
   let syncs;
@@ -241,94 +442,9 @@ exports.handler = async () => {
 
   for (const sync of syncs) {
     try {
-      const checkedAt      = sync.last_checked
-        ? new Date(sync.last_checked)
-        : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const afterTimestamp = Math.floor(checkedAt.getTime() / 1000);
-      const query          = `from:noreply@mail.turo.com after:${afterTimestamp}`;
-
-      // Fetch all pages of matching emails
-      const messages = [];
-      let pageToken  = undefined;
-      do {
-        const qs         = `/messages?q=${encodeURIComponent(query)}&maxResults=50${pageToken ? `&pageToken=${pageToken}` : ''}`;
-        const pageResult = await gmailFetch(qs, sync, serviceKey);
-        if (pageResult.messages) messages.push(...pageResult.messages);
-        pageToken = pageResult.nextPageToken;
-      } while (pageToken);
-
-      if (!messages.length) {
-        await sbPatch(`turo_email_syncs?id=eq.${sync.id}`, { last_checked: new Date().toISOString() }, serviceKey);
-        continue;
-      }
-
-      for (const msg of messages) {
-        try {
-          const full    = await gmailFetch(`/messages/${msg.id}?format=full`, sync, serviceKey);
-          const subject = full.payload?.headers?.find(h => h.name.toLowerCase() === 'subject')?.value || '';
-          const body    = getMessageBody(full.payload);
-
-          const parsed = parseTuroEmail(body, subject, msg.id);
-          if (!parsed) continue;
-
-          if (parsed.type === 'cancel') {
-            // Match by customer_name + pickup_date when available (cancel email has different messageId than booking)
-            let cancelMatches = [];
-            if (parsed.customer_name && parsed.pickup_date) {
-              cancelMatches = await sbGet(
-                `reservations?tenant_id=eq.${sync.tenant_id}&customer_name=eq.${encodeURIComponent(parsed.customer_name)}&pickup_date=eq.${parsed.pickup_date}&source=eq.turo&select=id`,
-                serviceKey
-              );
-            }
-            for (const r of cancelMatches) {
-              await sbPatch(`reservations?id=eq.${r.id}`, { status: 'cancelled' }, serviceKey);
-            }
-            if (!cancelMatches.length) {
-              console.warn(`[poll-turo-emails] Cancel email ${msg.id}: no matching reservation found`);
-            }
-            totalSynced++;
-            continue;
-          }
-
-          const existing = await sbGet(
-            `reservations?tenant_id=eq.${sync.tenant_id}&notes=like.Turo %23${msg.id}%&select=id`,
-            serviceKey
-          );
-
-          const carId = await findCarId(sync.tenant_id, parsed.vehicle_name, serviceKey);
-
-          const notesWithVehicle = carId
-            ? parsed.notes
-            : `${parsed.notes} [vehicle: ${parsed.vehicle_name || 'unknown'}]`;
-
-          const reservationData = {
-            tenant_id:      sync.tenant_id,
-            car_id:         carId,
-            customer_name:  parsed.customer_name,
-            pickup_date:    parsed.pickup_date,
-            return_date:    parsed.return_date,
-            total_amount:   parsed.total_amount,
-            status:         parsed.status,
-            source:         parsed.source,
-            notes:          notesWithVehicle,
-          };
-
-          if (existing.length > 0) {
-            await sbPatch(
-              `reservations?id=eq.${existing[0].id}`,
-              { pickup_date: parsed.pickup_date, return_date: parsed.return_date,
-                total_amount: parsed.total_amount, status: parsed.status },
-              serviceKey
-            );
-          } else {
-            await sbInsert('reservations', reservationData, serviceKey);
-          }
-
-          totalSynced++;
-        } catch (msgErr) {
-          console.error(`[poll-turo-emails] Message ${msg.id} failed:`, msgErr.message);
-        }
-      }
+      const synced = sync.provider === 'icloud'
+        ? await pollIcloud(sync, serviceKey)
+        : await pollGmail(sync, serviceKey);
 
       await sbPatch(
         `turo_email_syncs?id=eq.${sync.id}`,
@@ -336,10 +452,11 @@ exports.handler = async () => {
         serviceKey
       );
 
-      console.log(`[poll-turo-emails] Tenant ${sync.tenant_id} (${sync.gmail_address}): ${messages.length} emails processed`);
+      totalSynced += synced;
+      console.log(`[poll-turo-emails] Tenant ${sync.tenant_id} (${sync.gmail_address}) [${sync.provider || 'gmail'}]: ${synced} emails processed`);
     } catch (err) {
       console.error(`[poll-turo-emails] Sync ${sync.id} failed: ${err.message}`);
-      if (/token refresh failed|403|access.?denied|insufficient.?permission/i.test(err.message)) {
+      if (/token refresh failed|403|access.?denied|insufficient.?permission|authenticationfailed/i.test(err.message)) {
         await sbPatch(`turo_email_syncs?id=eq.${sync.id}`, { active: false }, serviceKey).catch(() => {});
       }
       errors++;
