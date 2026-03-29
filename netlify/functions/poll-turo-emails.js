@@ -288,7 +288,7 @@ async function processEmail(parsed, sync, serviceKey) {
   }
 
   const existing = await sbGet(
-    `reservations?tenant_id=eq.${sync.tenant_id}&notes=like.Turo %23${parsed.messageId}%&select=id`,
+    `reservations?tenant_id=eq.${sync.tenant_id}&notes=like.%25Turo %23${parsed.messageId}%&select=id`,
     serviceKey
   );
 
@@ -371,9 +371,8 @@ async function pollIcloud(sync, serviceKey) {
     logger: false,
   });
 
-  await client.connect();
-
   try {
+    await client.connect();
     const lock = await client.getMailboxLock('INBOX');
     try {
       const checkedAt = sync.last_checked
