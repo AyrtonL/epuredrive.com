@@ -212,7 +212,7 @@ function parseTuroEmail(body, subject, messageId) {
     const cancelGuestMatch = body.match(/(.+?)'s trip with your/i)
                           || body.match(/trip (?:for|with) (.+?) has been cancel/i);
     const cancelDatesMatch = body.match(
-      /(?:from|booked from) ((?:\w+ ){1,2}\w+ \d{1,2},\s*\d{4}[^t]*?) to ((?:\w+ ){1,2}\w+ \d{1,2},\s*\d{4}[^.]*?)\./i
+      /(?:from|booked from) (.+?\d{4}).+? to (.+?\d{4})/i
     );
     return {
       type:          'cancel',
@@ -229,8 +229,9 @@ function parseTuroEmail(body, subject, messageId) {
 
   const vehicleMatch = body.match(/trip with your (.+?) is (?:booked|confirmed|modified)/i);
 
+  // Match "booked from [optional day,] Month DD, YYYY[, time] to [optional day,] Month DD, YYYY"
   const datesMatch = body.match(
-    /booked from ((?:\w+ ){1,2}\w+ \d{1,2},\s*\d{4}[^t]*?) to ((?:\w+ ){1,2}\w+ \d{1,2},\s*\d{4}[^.]*?)\./i
+    /booked from (.+?\d{4}).+? to (.+?\d{4})/i
   );
   if (!datesMatch) return null;
 
