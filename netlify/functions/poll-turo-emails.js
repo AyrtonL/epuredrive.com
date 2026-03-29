@@ -146,9 +146,12 @@ function getImapBody(rawEmail) {
 
       // Decode transfer encoding
       if (/Content-Transfer-Encoding:\s*quoted-printable/i.test(headers)) {
-        body = body
+        // Decode QP escapes to raw bytes (Latin-1), then re-read as UTF-8
+        // so that multi-byte sequences like =E2=80=99 (U+2019 ') come out correctly.
+        const qpDecoded = body
           .replace(/=\r?\n/g, '')
           .replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+        body = Buffer.from(qpDecoded, 'latin1').toString('utf-8');
       } else if (/Content-Transfer-Encoding:\s*base64/i.test(headers)) {
         body = Buffer.from(body.replace(/\s/g, ''), 'base64').toString('utf-8');
       }
@@ -208,8 +211,8 @@ function parseTuroEmail(body, subject, messageId) {
     };
   }
 
-  const guestMatch = body.match(/Cha-?ching!\s*(.+?)'s trip with your/i)
-                  || body.match(/(.+?)'s trip with your/i);
+  const guestMatch = body.match(/Cha-?ching!\s*(.+?)[\u2019']s trip with your/i)
+                  || body.match(/(.+?)[\u2019']s trip with your/i);
   if (!guestMatch) return null;
 
   const vehicleMatch = body.match(/trip with your (.+?) is (?:booked|confirmed|modified)/i);
