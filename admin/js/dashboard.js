@@ -1131,6 +1131,14 @@ function renderGmailSync() {
   const lastSynced  = gmailSync.last_checked
     ? new Date(gmailSync.last_checked).toLocaleString()
     : 'Never';
+  const nextSync    = (() => {
+    const now  = new Date();
+    const next = new Date(now);
+    next.setMinutes(Math.ceil(now.getMinutes() / 15) * 15, 0, 0);
+    if (next <= now) next.setMinutes(next.getMinutes() + 15);
+    const diff = Math.round((next - now) / 60000);
+    return diff <= 1 ? 'less than a minute' : `~${diff} min`;
+  })();
   const isUnknown   = gmailSync.gmail_address === 'unknown@gmail.com';
   const providerTag = gmailSync.provider === 'icloud'
     ? '<span style="font-size:0.75rem;color:var(--muted);background:var(--surface-2);padding:0.1rem 0.4rem;border-radius:4px;margin-left:0.3rem;">iCloud</span>'
@@ -1140,10 +1148,28 @@ function renderGmailSync() {
     <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
       <span style="color:#10B981;font-size:0.85rem;">✓ Connected: ${esc(gmailSync.gmail_address)}${providerTag}</span>
       <span style="color:var(--muted);font-size:0.78rem;">Last synced: ${lastSynced}</span>
+      <span style="color:var(--muted);font-size:0.78rem;">Next: ${nextSync}</span>
+      <button id="sync-now-btn" class="btn btn-outline" style="font-size:0.8rem;"
+        onclick="syncNow()">Sync Now</button>
       <button class="btn btn-outline" style="font-size:0.8rem;color:#f87171;border-color:#f87171;"
         onclick="disconnectEmailSync()">Disconnect</button>
     </div>
     ${isUnknown ? `<p style="font-size:0.78rem;color:#f59e0b;margin-top:0.5rem;">⚠ Email address not detected. Disconnect and reconnect to fix.</p>` : ''}`;
+}
+
+async function syncNow() {
+  const btn = document.getElementById('sync-now-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
+  try {
+    await fetch('/.netlify/functions/poll-turo-emails');
+    await loadGmailSync();
+    renderGmailSync();
+    showToast('Sync complete', 'success');
+    loadReservations();
+  } catch {
+    showToast('Sync failed — try again', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Sync Now'; }
+  }
 }
 
 function selectProvider(p) {

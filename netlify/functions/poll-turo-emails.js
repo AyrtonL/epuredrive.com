@@ -122,11 +122,24 @@ function getMessageBody(payload) {
 
 // ── IMAP raw email body extractor ────────────────────────────────────────────
 // Parses a raw RFC 2822 message string and returns the best plain-text body.
+// Handles nested multipart (e.g. multipart/mixed → multipart/alternative → text/plain).
 
-function getImapBody(rawEmail) {
-  const raw = typeof rawEmail === 'string' ? rawEmail : rawEmail.toString('utf-8');
+function decodeMimePart(body, headers) {
+  if (/Content-Transfer-Encoding:\s*quoted-printable/i.test(headers)) {
+    // Decode QP to raw bytes (Latin-1), then re-read as UTF-8 so that
+    // multi-byte sequences like =E2=80=99 (U+2019 ') are correct.
+    const qp = body
+      .replace(/=\r?\n/g, '')
+      .replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+    return Buffer.from(qp, 'latin1').toString('utf-8');
+  }
+  if (/Content-Transfer-Encoding:\s*base64/i.test(headers)) {
+    return Buffer.from(body.replace(/\s/g, ''), 'base64').toString('utf-8');
+  }
+  return body;
+}
 
-  // Look for a MIME boundary
+function extractMimeParts(raw) {
   const boundaryMatch = raw.match(/Content-Type:\s*multipart\/[^;]+;\s*boundary="([^"]+)"/i)
                      || raw.match(/Content-Type:\s*multipart\/[^;]+;\s*boundary=([^\s;]+)/i);
 
@@ -134,45 +147,44 @@ function getImapBody(rawEmail) {
     const boundary = boundaryMatch[1];
     const escaped  = boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const parts    = raw.split(new RegExp(`--${escaped}`));
-
-    let plainText = null;
-    let htmlText  = null;
+    let plainText  = null;
+    let htmlText   = null;
 
     for (const part of parts) {
       const headerEnd = part.indexOf('\r\n\r\n');
       if (headerEnd < 0) continue;
       const headers = part.slice(0, headerEnd);
-      let   body    = part.slice(headerEnd + 4);
+      const body    = part.slice(headerEnd + 4);
 
-      // Decode transfer encoding
-      if (/Content-Transfer-Encoding:\s*quoted-printable/i.test(headers)) {
-        // Decode QP escapes to raw bytes (Latin-1), then re-read as UTF-8
-        // so that multi-byte sequences like =E2=80=99 (U+2019 ') come out correctly.
-        const qpDecoded = body
-          .replace(/=\r?\n/g, '')
-          .replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
-        body = Buffer.from(qpDecoded, 'latin1').toString('utf-8');
-      } else if (/Content-Transfer-Encoding:\s*base64/i.test(headers)) {
-        body = Buffer.from(body.replace(/\s/g, ''), 'base64').toString('utf-8');
+      // Recurse into nested multipart (e.g. multipart/alternative inside multipart/mixed)
+      if (/Content-Type:\s*multipart\//i.test(headers)) {
+        const nested = extractMimeParts(part.trim());
+        if (nested && !plainText) plainText = nested;
+        continue;
       }
 
+      const decoded = decodeMimePart(body, headers);
       if (/Content-Type:\s*text\/plain/i.test(headers) && !plainText) {
-        plainText = body.trim();
+        plainText = decoded.trim();
       } else if (/Content-Type:\s*text\/html/i.test(headers) && !htmlText) {
-        htmlText = body
+        htmlText = decoded
           .replace(/<[^>]+>/g, ' ')
           .replace(/&nbsp;/g, ' ')
           .replace(/\s+/g, ' ')
           .trim();
       }
     }
-
     return plainText || htmlText || '';
   }
 
   // Non-MIME: body is everything after the first blank line
   const bodyStart = raw.indexOf('\r\n\r\n');
   return bodyStart >= 0 ? raw.slice(bodyStart + 4).trim() : raw.trim();
+}
+
+function getImapBody(rawEmail) {
+  const raw = typeof rawEmail === 'string' ? rawEmail : rawEmail.toString('utf-8');
+  return extractMimeParts(raw);
 }
 
 function parseTuroDate(str) {
