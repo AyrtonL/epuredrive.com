@@ -35,9 +35,8 @@ exports.handler = async (event) => {
     await client.connect();
 
     // List all mailboxes
-    for await (const mailbox of client.list()) {
-      result.mailboxes.push(mailbox.path);
-    }
+    const mailboxList = await client.list();
+    result.mailboxes = mailboxList.map(m => m.path);
 
     // Search INBOX broadly (last 60 days, no from filter)
     const lock = await client.getMailboxLock('INBOX');
