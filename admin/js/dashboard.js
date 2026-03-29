@@ -832,6 +832,7 @@ function openEdit(id) {
   document.getElementById('f-location').value = r.pickup_location || 'Aventura';
   document.getElementById('f-amount').value   = r.total_amount || '';
   document.getElementById('f-status').value   = r.status;
+  document.getElementById('f-source').value   = r.source || 'admin';
   document.getElementById('f-notes').value    = r.notes || '';
   openModal('reservation-modal');
 }
@@ -937,8 +938,8 @@ async function saveReservation(e) {
     pickup_location: document.getElementById('f-location').value,
     total_amount:    parseFloat(document.getElementById('f-amount').value) || null,
     status:          document.getElementById('f-status').value,
+    source:          document.getElementById('f-source').value,
     notes:           document.getElementById('f-notes').value.trim(),
-    source:          'admin',
     ...tenantPayload(),
   };
 
