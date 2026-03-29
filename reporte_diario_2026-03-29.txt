@@ -1,0 +1,256 @@
+============================================================
+  ePure Drive — REPORTE DIARIO DE PROYECTO
+  Fecha: 29 de marzo de 2026
+  Dias para go-live: 18 (objetivo: 16 abril)
+  Generado automaticamente por Claude PM Agent
+============================================================
+
+
+1. RESUMEN DEL ESTADO
+---------------------
+
+PROGRESO REAL VS OBJETIVO:
+La aplicacion esta viva en https://epuredrive.com (Netlify: READY). Supabase: ACTIVE_HEALTHY.
+El 28 de marzo fue el dia mas productivo en desarrollo desde el inicio del proyecto:
+se implementaron 6 funciones nuevas o actualizadas en el mismo dia — Gmail OAuth,
+iCloud Calendar sync, Turo email poller, debug de sincronizacion, fleet.js y dashboard.js.
+El resultado ya se ve en la base de datos: el tenant "test" agrego 1 auto (Toyota Camry)
+y creo la primera reserva de prueba con ese flujo (01-04 al 04-04, $255, status: confirmed).
+
+Estado en numeros:
+  Tenants: 2 | Autos: 5 (+1 ayer) | Reservas: 19 (+1 ayer) | Clientes: 19 (+1 ayer)
+  Turo feeds activos: 1 | Gmail syncs configurados: 1 | Car services registrados: 4
+  Transacciones Stripe: 0 | Tenants pagadores: 0
+
+Progreso estimado hacia go-live: 70-75%. La arquitectura base + integraciones de
+sincronizacion estan tomando forma. Pero los 7 items criticos de monetizacion siguen
+intactos. Con 18 dias restantes, el margen es ajustado.
+
+CAMBIOS DETECTADOS DESDE EL REPORTE ANTERIOR (28 marzo):
++ 1 auto nuevo en tenant "test" (Toyota Camry)
++ 1 reserva de prueba creada manualmente (Test Customer, $255)
++ 1 cliente nuevo
++ Gmail OAuth completo (oauth-start + oauth-callback)
++ iCloud Calendar connect implementado
++ Turo email poller actualizado (poll-turo-emails.js, 17KB — funcion mas grande del proyecto)
++ iCloud sync debug function agregada
++ sync-ical-cron.js actualizado
++ admin/dashboard.html y dashboard.js actualizados
+
+RIESGOS ACTUALES:
+- CRITICO: Stripe sigue en 0. El flujo de cobro no existe en produccion.
+  El SaaS no puede generar revenue si nadie paga. Este es el riesgo #1.
+- CRITICO: DNS wildcard y SSL no confirmados. Sin subdominios, el multi-tenancy
+  no funciona para clientes reales.
+- ALTO: El desarrollo se esta enfocando en features avanzadas (Gmail/iCloud sync)
+  antes de resolver los prerequisitos criticos (Stripe, DNS). Riesgo de scope creep.
+- ALTO: 18 dias para go-live con 7 checklist items criticos sin completar.
+- MEDIO: Sin email transaccional — confirmaciones de reservas no se envian.
+- BAJO: La tabla "transactions" sigue en 0 — sin trazabilidad financiera.
+
+
+2. TAREAS PRIORITARIAS PARA HOY
+---------------------------------
+(Ordenadas por impacto — alta a baja. Maximo 8.)
+
+1. Crear el precio Pro en Stripe a $149/mes y actualizar PRO_PRICE_ID en
+   admin/js/dashboard.js (linea ~46) y netlify/functions/stripe-webhook.js (linea 11).
+   Sin esto, nadie puede pagar. Tiempo estimado: 1 hora.
+
+2. Ejecutar un checkout completo de prueba con tarjeta Stripe test (4242 4242 4242 4242)
+   y verificar que el webhook actualiza stripe_customer_id en la tabla tenants.
+   Este es el test mas critico del proyecto. Tiempo estimado: 2 horas.
+
+3. Configurar DNS wildcard: agregar *.epuredrive.com CNAME hacia
+   epuredrivecom.netlify.app y agregar el dominio en Netlify Domain Management.
+   Sin esto, los subdominios de tenants no funcionan en produccion.
+
+4. Verificar que STRIPE_WEBHOOK_SECRET esta configurada en Netlify Environment
+   Variables. Si no esta, el webhook no procesa ningun evento.
+
+5. Probar el flujo completo del tenant "test" de punta a punta: subdominio ->
+   fleet page -> reserva del cliente final -> confirmacion. Documentar errores.
+
+6. Crear bucket "tenant-logos" en Supabase Storage si no existe aun (publico,
+   tipos: image/png, image/jpeg, image/svg+xml, image/webp).
+
+7. Verificar que las funciones nuevas (poll-turo-emails, icloud-connect) estan
+   correctamente deployadas en Netlify y no generan errores en los logs.
+
+8. Contactar a 1 o 2 owners de rental conocidos para ofrecerles acceso beta.
+   Un cliente real antes del go-live es invaluable para detectar bugs reales.
+
+
+3. MEJORAS IDENTIFICADAS
+--------------------------
+
+PRODUCTO:
+- El Turo email poller (17KB) es la funcion mas compleja del proyecto. Antes del
+  go-live necesita ser probada con un Gmail real conectado y confirmar que las
+  reservas de Turo se importan correctamente a la DB.
+- El flujo de reserva del tenant "test" funciono (1 reserva creada ayer con $255).
+  Documentar ese flujo como el "happy path" oficial del producto.
+- El iCal sync esta configurado (1 turo_feed activo) pero no hay datos en
+  reservations con source="ical". Verificar que el cron esta corriendo en Netlify
+  y que las reservas de Turo se importan.
+- Car services tiene 4 registros — hay actividad real de mantenimiento en el sistema.
+  Esto es buena senhal de que el dashboard se esta usando realmente.
+- Implementar registro automatico en tabla "transactions" cuando Stripe confirme pago.
+
+MARKETING:
+- La reserva de $255 (3 dias, Toyota Camry) establece un precio de referencia real
+  (~$85/dia). Usar esto en el pricing de la landing page como ejemplo real.
+- Preparar un video corto de 60-90 segundos mostrando el flujo completo del producto
+  (dashboard -> agregar auto -> reserva del cliente) para usarlo en el go-live.
+- Crear pagina de early access en epuredrive.com para capturar leads antes del 16 abril.
+
+OPERACION:
+- Prioridad clara para los proximos 3 dias: Stripe primero, DNS segundo, email tercero.
+  Las integraciones avanzadas (Gmail/iCloud/Turo) son features que pueden seguir
+  mejorando post go-live. El cobro no puede esperar.
+- Definir un canal de soporte para el go-live: WhatsApp Business o email dedicado.
+
+
+4. BLOQUEOS Y SOLUCIONES
+--------------------------
+
+BLOQUEO 1: Stripe sin configurar (dia 10 del proyecto, sigue igual)
+- Impacto: Sin revenue real posible. El go-live sin Stripe es un beta gratuito,
+  no un lanzamiento comercial.
+- Solucion: Hoy. Crear el precio Pro en stripe.com/dashboard, actualizar los
+  dos archivos con el nuevo price_id, ejecutar checkout de prueba end-to-end.
+  Si el webhook no funciona, revisar Netlify logs en Functions → stripe-webhook.
+- Tiempo estimado: 2-3 horas en total.
+
+BLOQUEO 2: DNS wildcard no configurado
+- Impacto: Los tenants no pueden tener su propia URL (tenant.epuredrive.com).
+  La feature core del producto no funciona en produccion.
+- Solucion: En el proveedor DNS de epuredrive.com, agregar:
+  Tipo: CNAME | Host: * | Valor: epuredrivecom.netlify.app
+  Luego en Netlify → Domain Management → Add domain: *.epuredrive.com
+  Si el plan actual no incluye SSL wildcard, usar Cloudflare como proxy
+  (gratis, soporta wildcards SSL sin costo adicional).
+- Tiempo estimado: 1-2 horas.
+
+BLOQUEO 3: Integraciones avanzadas sin verificar en produccion
+- Impacto: poll-turo-emails y sync-ical-cron corren cada 15 y 30 minutos en
+  Netlify. Si tienen errores en produccion, consumen recursos sin resultado
+  y pueden enmascarar bugs criticos.
+- Solucion: Revisar Netlify → Functions → Logs para estas dos funciones
+  hoy. Verificar que el Gmail OAuth conectado esta funcionando y que el
+  iCal feed importa reservas correctamente.
+- Tiempo estimado: 1 hora.
+
+BLOQUEO 4: Sin email transaccional
+- Impacto: Los clientes finales que hacen reservas no reciben confirmacion.
+  Genera desconfianza desde el primer dia. Los owners tampoco reciben alertas.
+- Solucion: Integrar Resend (resend.com) — setup en 1 hora, free tier incluye
+  3,000 emails/mes. Conectar al flujo de reservas (nueva reserva → email al
+  cliente) y al webhook de Stripe (pago exitoso → email al tenant).
+- Tiempo estimado: 3-4 horas.
+
+
+5. CHECKLIST GO-LIVE
+----------------------
+
+CRITICO (sin esto no se puede lanzar):
+[ ] Stripe: Crear precio Pro $149/mes y actualizar price IDs en el codigo
+[ ] Stripe: Ejecutar checkout de prueba end-to-end y confirmar stripe_customer_id en DB
+[ ] Stripe: Verificar que STRIPE_WEBHOOK_SECRET esta en Netlify env vars
+[ ] Stripe: Webhook escucha checkout.session.completed, subscription.updated, subscription.deleted
+[ ] DNS: Registro wildcard *.epuredrive.com CNAME hacia epuredrivecom.netlify.app
+[ ] Netlify: SSL wildcard habilitado para subdominios de tenants
+[ ] Supabase Storage: Bucket "tenant-logos" publico creado (posiblemente ya hecho — verificar)
+[ ] Testing: Flujo completo verificado (registro tenant -> pago -> fleet page -> reserva cliente)
+
+IMPORTANTE:
+[ ] Email transaccional (Resend o similar) — confirmaciones de reservas y pagos
+[ ] Turo email poller verificado en produccion con Gmail real conectado
+[ ] iCal sync verificado — reservas de Turo importandose correctamente
+[ ] Homepage epuredrive.com con pricing visible y CTA de signup claro
+[ ] Archivar precio viejo $99/mes en Stripe
+[ ] Tabla transactions registrando pagos automaticamente
+[ ] Onboarding de nuevo tenant funcional en el dashboard
+
+OPCIONAL:
+[ ] Email info@epuredrive.com para consultas Enterprise
+[ ] Analytics basico (Plausible o Google Analytics)
+[ ] Video demo del producto (60-90 segundos)
+[ ] Al menos 1 cliente beta real con feedback antes del go-live
+[ ] Documentacion minima de usuario
+
+
+6. FOCO DEL DIA
+-----------------
+
+Desbloquear Stripe hoy sin excusas: crear el precio Pro, actualizar el codigo,
+y ejecutar el primer checkout exitoso — es el unico item que define si esto es
+un negocio real o un proyecto de desarrollo.
+
+
+============================================================
+  DATOS EN VIVO AL MOMENTO DEL REPORTE
+  Fuente: Supabase brwzjwbpguiignrxvjdc | Netlify epuredrivecom
+============================================================
+  DB Status:              ACTIVE_HEALTHY
+  Netlify Deploy:         READY (live en https://epuredrive.com)
+  Dias hasta go-live:     18 (16 abril 2026)
+
+  TENANTS (2 total | 0 pagadores):
+    ePure Drive   | 4 autos | plan: pro | stripe: null | slug: ayrtonn-lg-1774229361678
+    test          | 1 auto  | plan: pro | stripe: null | slug: test-1774396633453
+
+  FLOTA Y ACTIVIDAD:
+    Autos totales:          5 (+1 desde ayer)
+    Reservas totales:       19 (+1 desde ayer)
+      - confirmed:          9
+      - completed:          10
+    Ultima reserva:         28 marzo 2026, 20:19 UTC
+      (Test Customer | Toyota Camry | tenant: test | $255 | 01-04 al 04-04)
+    Clientes:               19 (+1 desde ayer)
+    Transacciones:          0
+
+  INTEGRACIONES:
+    Turo iCal feeds:        1 activo
+    Gmail/Turo syncs:       1 configurado
+    Blocked dates:          1
+    Car services:           4 registros
+    Consignaciones:         0
+    Stripe conectado:       NO (stripe_customer_id null en ambos tenants)
+
+  FUNCIONES ACTUALIZADAS AYER (28 marzo):
+    poll-turo-emails.js     23:20 — Turo email poller (Gmail OAuth)
+    debug-icloud-sync.js    23:15 — iCloud sync debug
+    icloud-connect.js       22:03 — iCloud calendar connection
+    admin/dashboard.js      23:09 — Dashboard logic
+    admin/dashboard.html    22:10 — Dashboard UI
+    gmail-oauth-callback.js 18:35 — Gmail OAuth callback
+    gmail-oauth-start.js    18:18 — Gmail OAuth start
+    sync-ical-cron.js       16:59 — iCal sync cron (cada 30 min)
+
+  ITEMS CRITICOS GO-LIVE: 8 sin completar
+============================================================
+
+
+NOTA SOBRE AGENTES AI — ACTUALIZACION:
+Actualmente usas Claude + Gemini + Codex. Recomendacion para llegar al 16 abril:
+
+ALTA PRIORIDAD (agregar esta semana):
+- Playwright: Automatiza el testing end-to-end del flujo de reservas y pagos.
+  Sin esto, cada cambio requiere testing manual. Integra nativamente con Claude Code.
+  Instalar: npm init playwright@latest | Tiempo de setup: 2-3 horas.
+- Resend: No es un agente AI, pero es el desbloqueador mas rapido para email
+  transaccional. Free tier = 3,000 emails/mes. Setup: 1 hora. (resend.com)
+
+MEDIA PRIORIDAD (semana 2 — post Stripe):
+- Cursor IDE: Aceleracion de desarrollo con contexto de codebase completo.
+  Util para iterar rapido en el dashboard y las funciones de Netlify.
+- v0 by Vercel (v0.dev): Para iterar rapido en la landing page y componentes UI
+  sin escribir CSS manualmente.
+
+BAJA PRIORIDAD (post go-live):
+- PostHog (free tier): Analytics de producto desde dia 1. Saber donde se pierden
+  los visitantes en el funnel de signup es critico para optimizar post-lanzamiento.
+- Loops.so o Customer.io: Secuencias de onboarding por email para nuevos tenants.
+  No urgente hasta tener los primeros clientes reales.
+============================================================
