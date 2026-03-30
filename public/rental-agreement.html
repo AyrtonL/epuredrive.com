@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rental Agreement — éPure Drive - Rental</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      font-size: 10.5pt;
+      color: #111;
+      background: #e8e8e8;
+    }
+
+    .print-toolbar {
+      background: #111;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .print-toolbar span { color: #aaa; font-size: 0.9rem; }
+    .print-btn {
+      padding: 0.6rem 1.8rem;
+      background: #00d2ff;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-left: auto;
+    }
+    .print-btn:hover { background: #5ce6ff; }
+
+    .page {
+      max-width: 870px;
+      margin: 1.5rem auto;
+      background: white;
+      padding: 2.2rem 2.5rem;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.18);
+    }
+
+    /* ---- HEADER ---- */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 3px solid #00d2ff;
+      padding-bottom: 1.2rem;
+      margin-bottom: 1.4rem;
+    }
+    .header-logo img { height: 56px; object-fit: contain; }
+    .header-company { margin-top: 0.5rem; }
+    .header-company .name { font-size: 1.3rem; font-weight: 800; letter-spacing: 0.04em; }
+    .header-company .sub { font-size: 0.78rem; color: #555; line-height: 1.7; margin-top: 0.2rem; }
+    .header-right { text-align: right; }
+    .header-right .doc-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #111;
+      margin-bottom: 0.6rem;
+    }
+    .header-right .meta { font-size: 0.8rem; color: #444; line-height: 1.8; }
+    .header-right .meta-input {
+      border: none;
+      border-bottom: 1px solid #999;
+      background: transparent;
+      font-size: 0.8rem;
+      padding: 0.05rem 0.2rem;
+      width: 130px;
+      outline: none;
+      color: #111;
+    }
+
+    /* ---- SECTION TITLE ---- */
+    .sec-title {
+      background: #111;
+      color: white;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin: 1.2rem 0 0.6rem;
+    }
+    .sec-title.accent { background: #00d2ff; color: #000; }
+
+    /* ---- INFO TABLE ---- */
+    table.t {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.87rem;
+      margin-bottom: 0.5rem;
+    }
+    table.t td {
+      padding: 0.32rem 0.55rem;
+      border: 1px solid #d8d8d8;
+      vertical-align: middle;
+    }
+    table.t td.lbl {
+      font-weight: 700;
+      background: #f5f5f5;
+      color: #333;
+      width: 22%;
+      white-space: nowrap;
+    }
+    table.t td.lbl-sm { font-weight: 700; background: #f5f5f5; color: #333; }
+    table.t td.val { color: #111; }
+
+    /* ---- FORM INPUTS ---- */
+    .fi {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid #bbb;
+      background: transparent;
+      font-size: 0.87rem;
+      padding: 0.1rem 0.2rem;
+      outline: none;
+      color: #111;
+      font-family: inherit;
+    }
+    .fi:focus { border-bottom-color: #00d2ff; }
+    select.fi { cursor: pointer; }
+    textarea.fi { height: 55px; border: 1px solid #ccc; border-radius: 3px; padding: 0.3rem; resize: vertical; }
+
+    /* ---- FUEL INDICATOR ---- */
+    .fuel-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+    }
+    .fuel-bar span { color: #888; }
+
+    /* ---- TOTALS ---- */
+    .charge-row { display: flex; justify-content: space-between; padding: 0.28rem 0; border-bottom: 1px solid #f0f0f0; font-size: 0.87rem; }
+    .charge-row.total { font-weight: 800; font-size: 1rem; border-top: 2px solid #111; border-bottom: 2px solid #111; padding: 0.4rem 0; margin-top: 0.2rem; }
+    .charge-row .label { color: #444; }
+    .charge-row .amount { font-weight: 600; }
+    .charge-row.total .amount { color: #00d2ff; }
+    .charges-box { background: #fafafa; border: 1px solid #ddd; padding: 0.8rem 1rem; border-radius: 4px; }
+
+    /* ---- DAMAGE DIAGRAM ---- */
+    .damage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.5rem; }
+    .damage-box { border: 1px solid #ddd; border-radius: 4px; padding: 0.6rem; }
+    .damage-box h4 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: #888; margin-bottom: 0.4rem; }
+
+    /* ---- TERMS ---- */
+    .terms { font-size: 7.5pt; line-height: 1.55; color: #333; text-align: justify; }
+    .terms h4 { font-size: 7.5pt; font-weight: 700; margin: 0.55rem 0 0.15rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .terms p { margin-bottom: 0.25rem; }
+
+    /* ---- SIGNATURES ---- */
+    .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 1.2rem; }
+    .sig-block { }
+    .sig-line { border-bottom: 1.5px solid #333; height: 2.2rem; margin-bottom: 0.25rem; }
+    .sig-label { font-size: 0.75rem; color: #666; }
+    .sig-sub { margin-top: 0.8rem; }
+    .sig-sub .sig-line { height: 1.5rem; border-bottom: 1px solid #999; }
+
+    /* ---- NOTICE BOX ---- */
+    .notice {
+      background: #fffbea;
+      border: 1px solid #f0c040;
+      border-left: 4px solid #f0c040;
+      padding: 0.7rem 1rem;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      border-radius: 0 4px 4px 0;
+      margin: 0.8rem 0;
+    }
+
+    /* ---- PAGE BREAK ---- */
+    .page-break { page-break-before: always; padding-top: 1.5rem; }
+
+    /* ---- FOOTER ---- */
+    .doc-footer {
+      text-align: center;
+      margin-top: 1.8rem;
+      padding-top: 0.8rem;
+      border-top: 1px solid #ddd;
+      font-size: 0.72rem;
+      color: #888;
+    }
+
+    /* ---- PRINT ---- */
+    @media print {
+      body { background: white; }
+      .print-toolbar { display: none; }
+      .page { box-shadow: none; margin: 0; padding: 1.5cm; max-width: 100%; }
+      .fi { border-bottom: 1px solid #999 !important; }
+      textarea.fi { border: 1px solid #999 !important; }
+    }
+    @page { size: letter; margin: 0.6in; }
+  </style>
+  <script>function initApollo(){var n=Math.random().toString(36).substring(7),o=document.createElement("script");
+o.src="https://assets.apollo.io/micro/website-tracker/tracker.iife.js?nocache="+n,o.async=!0,o.defer=!0,
+o.onload=function(){window.trackingFunctions.onLoad({appId:"69c079914940b600110ccd46"})},
+document.head.appendChild(o)}initApollo();</script>
+</head>
+<body>
+
+  <!-- TOOLBAR (hidden on print) -->
+  <div class="print-toolbar">
+    <img src="assets/logo.png" alt="éPure Drive" style="height:32px;opacity:0.9;">
+    <span>Rental Agreement — Fillable Form</span>
+    <button class="print-btn" onclick="window.print()">&#128424; Print / Save as PDF</button>
+  </div>
+
+  <div class="page">
+
+    <!-- =================== HEADER =================== -->
+    <div class="header">
+      <div>
+        <div class="header-logo">
+          <img src="assets/logo.png" alt="éPure Drive">
+        </div>
+        <div class="header-company">
+          <div class="name">éPure Drive</div>
+          <div class="sub">
+            Operating as Route 305 Rental Car<br>
+            Owner: Ayrton Paul Lohigorry<br>
+            19707 Turnberry Way, Aventura, Florida 33180<br>
+            &#9990; (786) 209-6770 &nbsp;|&nbsp; route305.rental@gmail.com
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="doc-title">Rental Agreement</div>
+        <div class="meta">
+          Agreement&nbsp;#:&nbsp;<input class="meta-input" type="text" placeholder="RA-0001"><br>
+          Date:&nbsp;<input class="meta-input" type="text" placeholder="MM/DD/YYYY"><br>
+          Rental&nbsp;Period:&nbsp;<input class="meta-input" type="text" placeholder="e.g. 7 days">
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== RESERVATION SUMMARY =================== -->
+    <div class="sec-title">Reservation Summary</div>
+    <table class="t">
+      <tr>
+        <td class="lbl">Pickup Location</td>
+        <td class="val"><input class="fi" type="text" placeholder="Address / Airport"></td>
+        <td class="lbl">Return Location</td>
+        <td class="val"><input class="fi" type="text" placeholder="Address / Airport"></td>
+      </tr>
+      <tr>
+        <td class="lbl">Date &amp; Time Out</td>
+        <td class="val"><input class="fi" type="text" placeholder="MM/DD/YYYY – HH:MM AM/PM"></td>
+        <td class="lbl">Date &amp; Time Due</td>
+        <td class="val"><input class="fi" type="text" placeholder="MM/DD/YYYY – HH:MM AM/PM"></td>
+      </tr>
+      <tr>
+        <td class="lbl">Miles Allowed</td>
+        <td class="val"><input class="fi" type="text" placeholder="e.g. 700 mi (included)"> miles</td>
+        <td class="lbl">Overage Rate</td>
+        <td class="val"><input class="fi" type="text" placeholder="$0.25 / mile over"> per mile</td>
+      </tr>
+    </table>
+
+    <!-- =================== VEHICLE INFORMATION =================== -->
+    <div class="sec-title">Vehicle Information</div>
+    <table class="t">
+      <tr>
+        <td class="lbl">Brand &amp; Model</td>
+        <td class="val"><input class="fi" type="text" placeholder="e.g. Audi Q3 2.0 FWD"></td>
+        <td class="lbl">Year</td>
+        <td class="val"><input class="fi" type="text" placeholder="e.g. 2018"></td>
+      </tr>
+      <tr>
+        <td class="lbl">VIN Number</td>
+        <td class="val"><input class="fi" type="text" placeholder="17-character VIN"></td>
+        <td class="lbl">License Plate</td>
+        <td class="val"><input class="fi" type="text" placeholder="e.g. EB21YC"></td>
+      </tr>
+      <tr>
+        <td class="lbl">Color</td>
+        <td class="val"><input class="fi" type="text" placeholder="e.g. Navarra Blue"></td>
+        <td class="lbl">Transmission</td>
+        <td class="val">
+          <select class="fi">
+            <option value="">Select...</option>
+            <option>Automatic</option>
+            <option>Manual</option>
+            <option>CVT</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td class="lbl">Odometer Out</td>
+        <td class="val"><input class="fi" type="text" placeholder="e.g. 114,000"> mi</td>
+        <td class="lbl">Odometer In</td>
+        <td class="val"><input class="fi" type="text" placeholder="Upon return"> mi</td>
+      </tr>
+      <tr>
+        <td class="lbl">Fuel Level Out</td>
+        <td class="val">
+          <select class="fi">
+            <option>Full ████████</option>
+            <option>3/4  ██████░░</option>
+            <option>1/2  ████░░░░</option>
+            <option>1/4  ██░░░░░░</option>
+            <option>Empty ░░░░░░░░</option>
+          </select>
+        </td>
+        <td class="lbl">Fuel Level In</td>
+        <td class="val">
+          <select class="fi">
+            <option value="">Upon return</option>
+            <option>Full ████████</option>
+            <option>3/4  ██████░░</option>
+            <option>1/2  ████░░░░</option>
+            <option>1/4  ██░░░░░░</option>
+            <option>Empty ░░░░░░░░</option>
+          </select>
+        </td>
+      </tr>
+    </table>
+
+    <!-- =================== RENTER INFORMATION =================== -->
+    <div class="sec-title">Renter Information</div>
+    <table class="t">
+      <tr>
+        <td class="lbl">Full Name</td>
+        <td class="val"><input class="fi" type="text" placeholder="First and Last Name"></td>
+        <td class="lbl">Date of Birth</td>
+        <td class="val"><input class="fi" type="text" placeholder="MM/DD/YYYY"></td>
+      </tr>
+      <tr>
+        <td class="lbl">Driver License #</td>
+        <td class="val"><input class="fi" type="text" placeholder="License Number"></td>
+        <td class="lbl">License State</td>
+        <td class="val"><input class="fi" type="text" placeholder="e.g. FL"></td>
+      </tr>
+      <tr>
+        <td class="lbl">Phone</td>
+        <td class="val"><input class="fi" type="text" placeholder="(XXX) XXX-XXXX"></td>
+        <td class="lbl">Email</td>
+        <td class="val"><input class="fi" type="email" placeholder="email@example.com"></td>
+      </tr>
+      <tr>
+        <td class="lbl">Home Address</td>
+        <td colspan="3" class="val"><input class="fi" type="text" placeholder="Street, City, State, ZIP"></td>
+      </tr>
+      <tr>
+        <td class="lbl">Insurance Info</td>
+        <td class="val"><input class="fi" type="text" placeholder="Provider / Policy # (if applicable)"></td>
+        <td class="lbl">Insurance Type</td>
+        <td class="val">
+          <select class="fi">
+            <option value="">Select...</option>
+            <option>Own USA Renter's Insurance</option>
+            <option>Owner's Insurance (Route 305)</option>
+            <option>None — Full Liability Assumed</option>
+          </select>
+        </td>
+      </tr>
+    </table>
+
+    <!-- =================== ADDITIONAL DRIVER =================== -->
+    <div class="sec-title">Additional Driver (Optional)</div>
+    <table class="t">
+      <tr>
+        <td class="lbl">Full Name</td>
+        <td class="val"><input class="fi" type="text" placeholder="First and Last Name"></td>
+        <td class="lbl">Date of Birth</td>
+        <td class="val"><input class="fi" type="text" placeholder="MM/DD/YYYY"></td>
+      </tr>
+      <tr>
+        <td class="lbl">Driver License #</td>
+        <td class="val"><input class="fi" type="text" placeholder="License Number"></td>
+        <td class="lbl">License State</td>
+        <td class="val"><input class="fi" type="text" placeholder="e.g. FL"></td>
+      </tr>
+    </table>
+
+    <!-- =================== CHARGE INFORMATION =================== -->
+    <div class="sec-title">Charge Information</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <!-- Left: line items -->
+      <table class="t">
+        <tr>
+          <td class="lbl-sm" style="width:55%">Rental Rate</td>
+          <td class="val"><input class="fi" type="text" placeholder="e.g. 7 days @ $60/day"></td>
+        </tr>
+        <tr>
+          <td class="lbl-sm">Subtotal</td>
+          <td class="val">$ <input class="fi" type="text" style="width:80%" placeholder="0.00"></td>
+        </tr>
+        <tr>
+          <td class="lbl-sm">Insurance Fee</td>
+          <td class="val">$ <input class="fi" type="text" style="width:80%" placeholder="Owner / N/A"></td>
+        </tr>
+        <tr>
+          <td class="lbl-sm">Delivery Fee</td>
+          <td class="val">$ <input class="fi" type="text" style="width:80%" placeholder="0 / 120"></td>
+        </tr>
+        <tr>
+          <td class="lbl-sm">Taxes (9.5%)</td>
+          <td class="val">$ <input class="fi" type="text" style="width:80%" placeholder="0.00"></td>
+        </tr>
+        <tr>
+          <td class="lbl-sm">Surcharge / Other</td>
+          <td class="val">$ <input class="fi" type="text" style="width:80%" placeholder="N/A"></td>
+        </tr>
+        <tr style="background:#f0f0f0;">
+          <td class="lbl-sm" style="font-size:0.95rem;font-weight:800;">TOTAL</td>
+          <td class="val" style="font-weight:800;font-size:0.95rem;">$ <input class="fi" type="text" style="width:80%;font-weight:800;" placeholder="0.00"></td>
+        </tr>
+      </table>
+      <!-- Right: payment -->
+      <table class="t">
+        <tr>
+          <td class="lbl-sm" style="width:55%">Amount Paid</td>
+          <td class="val">$ <input class="fi" type="text" style="width:80%" placeholder="0.00"></td>
+        </tr>
+        <tr>
+          <td class="lbl-sm">Amount Outstanding</td>
+          <td class="val">$ <input class="fi" type="text" style="width:80%" placeholder="0.00"></td>
+        </tr>
+        <tr>
+          <td class="lbl-sm">Security Deposit</td>
+          <td class="val">$ <input class="fi" type="text" style="width:80%" placeholder="200.00"></td>
+        </tr>
+        <tr>
+          <td class="lbl-sm">Payment Method</td>
+          <td class="val">
+            <select class="fi">
+              <option>Cash</option>
+              <option>Credit Card</option>
+              <option>Debit Card</option>
+              <option>Zelle</option>
+              <option>Venmo</option>
+              <option>CashApp</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td class="lbl-sm">Deposit Refund Date</td>
+          <td class="val"><input class="fi" type="text" placeholder="MM/DD/YYYY"></td>
+        </tr>
+        <tr>
+          <td class="lbl-sm">Miles Used</td>
+          <td class="val"><input class="fi" type="text" placeholder="Upon return"> mi</td>
+        </tr>
+        <tr>
+          <td class="lbl-sm">Overage Charge</td>
+          <td class="val">$ <input class="fi" type="text" style="width:80%" placeholder="0.00"></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- =================== DAMAGE REPORT =================== -->
+    <div class="sec-title">Vehicle Condition &amp; Damage Report</div>
+    <div class="damage-grid">
+      <div class="damage-box">
+        <h4>&#9660; Check-OUT (Pre-existing damage at pickup)</h4>
+        <textarea class="fi" placeholder="Describe any pre-existing scratches, dents, chips, or damage noted before rental begins..."></textarea>
+      </div>
+      <div class="damage-box">
+        <h4>&#9650; Check-IN (Condition upon return)</h4>
+        <textarea class="fi" placeholder="Describe any new damage discovered at vehicle return..."></textarea>
+      </div>
+    </div>
+
+    <!-- =================== TERMS & CONDITIONS =================== -->
+    <div class="sec-title">Terms &amp; Conditions</div>
+    <div class="terms">
+      <p>This Car Rental Agreement is entered into between <strong>Ayrton Paul Lohigorry, operating as Route 305 Rental Car / éPure Drive</strong> ("Owner/We/Us") and the Renter identified above ("You/Renter"). Both parties agree to the following terms:</p>
+
+      <h4>1. Definitions</h4>
+      <p>"Agreement" means all terms herein. "You/Your" means the Renter, any Authorized Driver, and any person billed at your direction. "Authorized Driver" means the Renter and any additional driver listed herein with a valid driver's license, at least 21 years of age. Only Authorized Drivers may operate the Vehicle. "Vehicle" means the automobile identified herein and all its tires, tools, accessories, equipment, keys and documents. "Physical Damage" means damage from collision or upset, excluding theft, vandalism, acts of nature, hail, flood, or fire.</p>
+
+      <h4>2. Rental, Indemnity and Warranties</h4>
+      <p>This is a contract for rental only. You may not sublease the Vehicle. We may repossess the Vehicle without notice if abandoned or used in violation of law or this Agreement. You agree to indemnify, defend, and hold us harmless from all claims, liability, costs, and attorney fees arising from this rental. We make no warranties, express or implied, regarding the Vehicle.</p>
+
+      <h4>3. Condition and Return of Vehicle</h4>
+      <p>You must return the Vehicle to the specified location on the due-in date and time, in the same condition received except for ordinary wear. Extensions require our prior written approval. You must maintain all fluid levels and return the Vehicle with at least the same fuel level. Service or replacement of parts during the rental requires our prior written approval.</p>
+
+      <h4>4. Responsibility for Damage or Loss; Police Reporting</h4>
+      <p>You are responsible for all damage to, loss of, or theft of the Vehicle during the Rental Period, including damage from collision, weather, terrain, and acts of God. Your responsibility includes: (a) repair costs or fair market value in case of total loss, less salvage; (b) loss of use at the daily rental rate for each day the Vehicle is unavailable; (c) an administrative fee: $0–$250 damage = $50; $251–$500 = $75; $501–$750 = $100; $751–$1,500 = $150; $1,501–$2,500 = $200; over $2,500 = $250; (d) storage, impound, and other incidental damages; (e) all enforcement and collection costs including attorney fees. You must report all accidents, theft, and vandalism to us and the police immediately upon discovery.</p>
+
+      <h4>5. Insurance</h4>
+      <p>You are responsible for damage or loss you cause to others. If you have your own valid USA renter's insurance, it will provide coverage. If not, you must pay the renter's insurance fee, or assume full liability for all damages, injuries, and third-party claims. If extra insurance is contracted, the deductible is $1,000 for vehicles valued under $35,000, and $2,500 for vehicles $35,000 or more. Coverage is void if this Agreement is breached or if you fail to cooperate in any loss investigation.</p>
+
+      <h4>6. Prohibited Uses (voids coverage and terminates rental)</h4>
+      <p>The following are prohibited: (a) operation by anyone not listed as an Authorized Driver, or by anyone with a suspended license; (b) operation under the influence of drugs or alcohol; (c) use for any illegal purpose; (d) use for hire, pushing, or towing; (e) use in any race, speed test, or contest; (f) teaching anyone to drive; (g) carrying hazardous or illegal materials; (h) use outside Florida without prior written approval; (i) driving on unpaved roads; (j) carrying more passengers than seat belts; (k) odometer tampering; (l) continued operation when fluid levels are dangerously low; (m) smoking or vaping any substance in the Vehicle. <strong>PROHIBITED USE AUTOMATICALLY TERMINATES THIS RENTAL AND VOIDS ALL COVERAGE.</strong></p>
+
+      <h4>7. Mileage</h4>
+      <p>The rental includes the mileage allowance stated in the Reservation Summary. Miles driven beyond the stated allowance will be charged at the overage rate specified (default $0.25/mile), billed at return.</p>
+
+      <h4>8. Payment and Charges</h4>
+      <p>You permit us to hold a security deposit. You agree to pay all charges including: rental rate, optional services, fuel and refueling fees, government taxes, fees to locate or recover the Vehicle, attorney fees, a 2% per month late payment fee (or maximum permitted by law), a $50 fee for returned checks, reasonable cleaning fees for excessive mess or smoking evidence, towing and storage charges, key/transponder replacement fees, and a surcharge for returning the Vehicle to a different location or after the due-in date.</p>
+
+      <h4>9. Tolls &amp; Traffic Violations</h4>
+      <p>You are liable for all tolls, parking citations, photo enforcement fees, fines for toll evasion, and other violations assessed during the rental period. You authorize us to pay any toll or violation on your behalf and charge you the face value plus applicable taxes and an administrative fee per occurrence.</p>
+
+      <h4>10. Personal Property</h4>
+      <p>We are not responsible for loss of or damage to personal property left in or on the Vehicle. Property left for more than 30 days may be disposed of at our discretion. You should wipe all personal data from the Vehicle's infotainment system before returning it.</p>
+
+      <h4>11. GPS &amp; Telematics</h4>
+      <p>The Vehicle may be equipped with GPS, telematics systems, or event data recorders. You acknowledge and authorize remote monitoring, including collection of location, odometer, fuel level, and diagnostic data. We may disable the Vehicle upon breach of this Agreement. You agree to inform all drivers and passengers of this provision.</p>
+
+      <h4>12. Modifications &amp; Entire Agreement</h4>
+      <p>No term may be waived or modified except by a writing signed by us. This Agreement constitutes the entire agreement between the Parties. All prior representations are void. Governing law: State of Florida. Venue: Miami-Dade or Broward County courts.</p>
+
+      <h4>13. Miscellaneous</h4>
+      <p>If any provision is deemed void or unenforceable, the remaining provisions remain valid. You release us from liability for consequential, special, or punitive damages to the extent permitted by law.</p>
+    </div>
+
+    <!-- =================== ACKNOWLEDGMENT =================== -->
+    <div class="notice">
+      <strong>By signing below, the Renter confirms that they have read, understood, and agree to all terms and conditions of this Rental Agreement without exception or reservation.</strong> The Renter confirms the Vehicle was received in the condition noted above and agrees to return it in the same or better condition at the agreed time and location.
+    </div>
+
+    <!-- =================== SIGNATURES =================== -->
+    <div class="sig-grid">
+      <div class="sig-block">
+        <div class="sig-line"></div>
+        <div class="sig-label"><strong>Renter Signature</strong></div>
+        <div class="sig-sub">
+          <div class="sig-line"></div>
+          <div class="sig-label">Printed Name</div>
+        </div>
+        <div class="sig-sub">
+          <div class="sig-line"></div>
+          <div class="sig-label">Date</div>
+        </div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-line"></div>
+        <div class="sig-label"><strong>Owner / Authorized Agent — éPure Drive</strong></div>
+        <div class="sig-sub">
+          <div class="sig-line"></div>
+          <div class="sig-label">Ayrton Paul Lohigorry / Authorized Representative</div>
+        </div>
+        <div class="sig-sub">
+          <div class="sig-line"></div>
+          <div class="sig-label">Date</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== PAGE 2: RETURN SECTION =================== -->
+    <div class="page-break">
+      <div class="sec-title accent">&#9650; Vehicle Return — Check-In Confirmation (Page 2)</div>
+
+      <table class="t" style="margin-top:0.6rem;">
+        <tr>
+          <td class="lbl">Actual Return Date &amp; Time</td>
+          <td class="val"><input class="fi" type="text" placeholder="MM/DD/YYYY – HH:MM AM/PM"></td>
+          <td class="lbl">Total Days Rented</td>
+          <td class="val"><input class="fi" type="text" placeholder="e.g. 7 days"></td>
+        </tr>
+        <tr>
+          <td class="lbl">Odometer Reading In</td>
+          <td class="val"><input class="fi" type="text"> mi</td>
+          <td class="lbl">Total Miles Used</td>
+          <td class="val"><input class="fi" type="text"> mi</td>
+        </tr>
+        <tr>
+          <td class="lbl">Fuel Level Returned</td>
+          <td class="val">
+            <select class="fi">
+              <option value="">Select...</option>
+              <option>Full ████████</option>
+              <option>3/4  ██████░░</option>
+              <option>1/2  ████░░░░</option>
+              <option>1/4  ██░░░░░░</option>
+              <option>Empty ░░░░░░░░</option>
+            </select>
+          </td>
+          <td class="lbl">Fuel Surcharge</td>
+          <td class="val">$ <input class="fi" type="text" style="width:75%" placeholder="0.00"></td>
+        </tr>
+        <tr>
+          <td class="lbl">New Damage Found</td>
+          <td colspan="3" class="val"><textarea class="fi" placeholder="Describe any new damage discovered at vehicle return..."></textarea></td>
+        </tr>
+        <tr>
+          <td class="lbl">Additional Charges</td>
+          <td class="val"><input class="fi" type="text" placeholder="Cleaning, damage, overage..."></td>
+          <td class="lbl">Amount</td>
+          <td class="val">$ <input class="fi" type="text" style="width:75%" placeholder="0.00"></td>
+        </tr>
+        <tr style="background:#f5f5f5;">
+          <td class="lbl" style="font-weight:800;">Final Balance Due</td>
+          <td class="val" style="font-weight:800;">$ <input class="fi" type="text" style="width:75%;font-weight:800;" placeholder="0.00"></td>
+          <td class="lbl">Security Deposit Returned</td>
+          <td class="val">$ <input class="fi" type="text" style="width:75%" placeholder="0.00"></td>
+        </tr>
+      </table>
+
+      <div class="notice" style="margin-top:1rem;">
+        Both parties confirm the Vehicle has been returned, inspected, and any applicable charges or refunds have been agreed upon and settled.
+      </div>
+
+      <div class="sig-grid" style="margin-top:1rem;">
+        <div class="sig-block">
+          <div class="sig-line"></div>
+          <div class="sig-label"><strong>Renter Signature (Return)</strong></div>
+          <div class="sig-sub">
+            <div class="sig-line"></div>
+            <div class="sig-label">Printed Name</div>
+          </div>
+          <div class="sig-sub">
+            <div class="sig-line"></div>
+            <div class="sig-label">Date of Return</div>
+          </div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-line"></div>
+          <div class="sig-label"><strong>Owner / Agent Signature (Return)</strong></div>
+          <div class="sig-sub">
+            <div class="sig-line"></div>
+            <div class="sig-label">Ayrton Paul Lohigorry / Authorized Agent</div>
+          </div>
+          <div class="sig-sub">
+            <div class="sig-line"></div>
+            <div class="sig-label">Date of Return</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-footer">
+        éPure Drive &nbsp;·&nbsp; Route 305 Rental Car &nbsp;·&nbsp; 19707 Turnberry Way, Aventura, Florida 33180
+        &nbsp;·&nbsp; (786) 209-6770 &nbsp;·&nbsp; route305.rental@gmail.com &nbsp;·&nbsp; epuredrive.com
+      </div>
+    </div>
+
+  </div><!-- .page -->
+
+  <div style="text-align:center;padding:1rem;">
+    <button class="print-btn" onclick="window.print()">&#128424; Print / Save as PDF</button>
+  </div>
+
+<script src="js/lang.js"></script>
+  <!-- Floating WhatsApp -->
+  <a href="https://wa.me/17862096770" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px;color:#fff;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+  </a>
+</body>
+</html>
