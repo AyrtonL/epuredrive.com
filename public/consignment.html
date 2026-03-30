@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consignment — éPure Drive</title>
+  <meta name="description" content="Turn your luxury vehicle into a revenue stream. Partner with éPure Drive's premium consignment program in South Florida." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css?v=1234567" />
+  <style>
+    .consignment-hero {
+      padding: calc(var(--nav-height) + 4rem) 0 5rem;
+      background: linear-gradient(180deg, rgba(201,168,76,0.08) 0%, transparent 100%);
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .consignment-body {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 5rem;
+    }
+    .consignment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin: 3rem 0;
+    }
+    .benefit-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 2rem;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    .benefit-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--accent-primary);
+    }
+    .benefit-icon {
+      color: var(--accent-primary);
+      margin-bottom: 1rem;
+    }
+    .benefit-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+    }
+    .benefit-desc {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .rules-section {
+      margin-top: 5rem;
+      background: rgba(0, 210, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 3rem;
+    }
+    .rules-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .rule-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .rule-num {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      background: var(--accent-primary);
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .rule-content h4 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.4rem;
+    }
+    .rule-content p {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .cta-section {
+      text-align: center;
+      margin-top: 5rem;
+    }
+    .cta-section h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    @media(max-width: 768px) {
+      .rules-section { padding: 2rem 1.5rem; }
+    }
+  </style>
+  <script>function initApollo(){var n=Math.random().toString(36).substring(7),o=document.createElement("script");
+o.src="https://assets.apollo.io/micro/website-tracker/tracker.iife.js?nocache="+n,o.async=!0,o.defer=!0,
+o.onload=function(){window.trackingFunctions.onLoad({appId:"69c079914940b600110ccd46"})},
+document.head.appendChild(o)}initApollo();</script>
+</head>
+<body data-page="consignment">
+
+  <!-- ===================== NAVBAR ===================== -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="navbar-inner">
+      <a href="index.html" class="navbar-logo">
+        <img src="assets/logo.png" alt="éPure Drive" class="navbar-img-logo">
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="fleet.html">Our Fleet</a></li>
+        <li><a href="index.html#why-us">Why Us</a></li>
+        <li><a href="consignment.html" class="active">Consignment</a></li>
+      </ul>
+
+      <div class="navbar-actions">
+        <a href="#" id="lang-toggle" style="font-weight:700; margin-right: 15px; color: var(--accent-primary); text-decoration: none;">ES</a>
+        <span class="navbar-phone">
+          <a href="https://wa.me/17862096770" target="_blank" rel="noopener noreferrer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+            WhatsApp
+          </a>
+        </span>
+        <a href="fleet.html" class="btn btn-primary">Book Now</a>
+      </div>
+
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html">Home</a>
+    <a href="fleet.html">Our Fleet</a>
+    <a href="consignment.html" style="color: var(--accent-primary);">Consignment</a>
+  </div>
+
+  <!-- ===================== HERO ===================== -->
+  <div class="consignment-hero">
+    <div class="container fade-in">
+      <span class="section-label">Partnership Program</span>
+      <h1 class="section-title">Turn Your Luxury Vehicle<br/>Into Passive Income</h1>
+      <p class="section-subtitle" style="margin-top:1rem; max-width: 600px; margin-left:auto; margin-right:auto;">
+        Don't let your depreciating asset sit in the garage. Partner with éPure Drive and earn money while we handle everything from marketing to maintenance.
+      </p>
+      <div style="margin-top: 2rem;">
+        <a href="https://wa.me/17862096770?text=I'm%20interested%20in%20the%20Consignment%20program" class="btn btn-primary btn-lg" target="_blank" rel="noopener noreferrer">Apply for Consignment</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== BODY ===================== -->
+  <div class="consignment-body fade-in">
+    
+    <div style="text-align: center;">
+      <h2 style="font-size: 1.8rem; font-weight: 700;">Why Consign With éPure Drive?</h2>
+      <p style="color: var(--text-secondary); margin-top: 0.5rem;">The easiest way to monetize your exotic or luxury car.</p>
+    </div>
+
+    <div class="consignment-grid">
+      <div class="benefit-card">
+        <div class="benefit-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="benefit-title">Maximize Your ROI</div>
+        <div class="benefit-desc">
+          Vehicles lose value over time. By placing your car in our fleet, it generates steady monthly revenue to offset ownership costs, depreciation, and insurance. 
+        </div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="benefit-title">Fully Insured & Protected</div>
+        <div class="benefit-desc">
+          Your peace of mind is our priority. Every rental is fully covered by our commercial insurance policy and rigorous renter screening processes. GPS tracking is included.
+        </div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 9.36l-7.53 7.53a1 1 0 0 1-1.4 0l-1.4-1.4a1 1 0 0 1 0-1.4l7.53-7.53a6 6 0 0 1 9.36-7.94z"/></svg>
+        </div>
+        <div class="benefit-title">Professional Maintenance</div>
+        <div class="benefit-desc">
+          We treat your car like our own. It is meticulously hand-washed before and after every rental, and we manage all routine maintenance schedules.
+        </div>
+      </div>
+      
+      <div class="benefit-card">
+        <div class="benefit-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="benefit-title">Expert Marketing</div>
+        <div class="benefit-desc">
+          Our established client base and marketing footprint guarantee high occupancy rates. We capture premium clients in Aventura, MIA, and FLL.
+        </div>
+      </div>
+    </div>
+
+
+    <div class="rules-section">
+      <h3 class="rules-title">How It Works & The Rules</h3>
+      
+      <div class="rule-item">
+        <div class="rule-num">1</div>
+        <div class="rule-content">
+          <h4>Vehicle Requirements</h4>
+          <p>We accept premium luxury and exotic vehicles (e.g., Porsche, Audi, Mercedes, BMW, Ferrari). Vehicles must generally be <strong>year 2020 or newer</strong>, have a clean title (no rebuilt/salvage), and be in excellent mechanical and cosmetic condition.</p>
+        </div>
+      </div>
+
+      <div class="rule-item">
+        <div class="rule-num">2</div>
+        <div class="rule-content">
+          <h4>Onboarding & Prep</h4>
+          <p>Once approved, we bring the car in for a full inspection, install a discreet GPS tracker, and take professional photographs. We execute a legal Consignment Agreement protecting your asset.</p>
+        </div>
+      </div>
+
+      <div class="rule-item">
+        <div class="rule-num">3</div>
+        <div class="rule-content">
+          <h4>Hands-Off Management</h4>
+          <p>We handle everything: reservations, customer inquiries, background checks, airport deliveries, detailing, and logistics. You do nothing but collect payments.</p>
+        </div>
+      </div>
+
+      <div class="rule-item">
+        <div class="rule-num">4</div>
+        <div class="rule-content">
+          <h4>Revenue Split</h4>
+          <p>Profits are split transparently. Our standard split heavily favors the vehicle owner. You will receive a detailed monthly report outlining trips, mileage, and your total earnings.</p>
+        </div>
+      </div>
+      
+      <div class="rule-item">
+        <div class="rule-num">5</div>
+        <div class="rule-content">
+          <h4>Personal Use</h4>
+          <p>Need your car for the weekend? No problem. Owners can block off dates in the calendar to use their own vehicle, as long as it isn't already booked by a client.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-section">
+      <h3>Ready to start earning?</h3>
+      <p style="color:var(--text-secondary); margin-bottom: 2rem;">Message our team with your vehicle's make, model, and year to get a revenue estimate.</p>
+      <a href="https://wa.me/17862096770?text=I%20would%20like%20to%20learn%20more%20about%20consigning%20my%20vehicle." class="btn btn-primary" target="_blank" rel="noopener noreferrer">Contact Us on WhatsApp</a>
+    </div>
+
+  </div>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="index.html" class="navbar-logo">
+            <img src="assets/logo.png" alt="éPure Drive" class="navbar-img-logo" loading="lazy">
+          </a>
+          <p>Premium luxury car rentals. Serving Aventura, MIA, FLL, and the greater South Florida area.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="fleet.html">Our Fleet</a></li>
+            <li><a href="consignment.html">Consignment</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+            <li><a href="rental-agreement.html">Rental Agreement</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2025 éPure Drive. All rights reserved. Aventura, FL.</p>
+        <div class="footer-bottom-links">
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="terms.html">Terms &amp; Conditions</a>
+          <a href="rental-agreement.html">Rental Agreement</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+<script src="js/lang.js"></script>
+  <!-- Floating WhatsApp -->
+  <a href="https://wa.me/17862096770" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px;color:#fff;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+  </a>
+</body>
+</html>

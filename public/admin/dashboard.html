@@ -1,0 +1,2574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — éPure Drive Admin</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            corePlugins: { preflight: false },
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-high": "#e6e8ea",
+                        "error": "#ba1a1a",
+                        "surface": "#f7f9fb",
+                        "surface-container-low": "#f2f4f6",
+                        "outline-variant": "#c6c6cd",
+                        "inverse-surface": "#2d3133",
+                        "secondary": "#006c49",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "primary-container": "#111c2d",
+                        "primary-fixed": "#d8e3fb",
+                        "surface-variant": "#e0e3e5",
+                        "background": "#f7f9fb",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-background": "#191c1e",
+                        "secondary-container": "#6cf8bb",
+                        "inverse-on-surface": "#eff1f3",
+                        "primary": "#000000",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-primary-fixed": "#111c2d",
+                        "surface-container": "#eceef0",
+                        "on-surface": "#191c1e",
+                        "outline": "#76777d",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    fontFamily: { "headline": ["Manrope"], "body": ["Inter"] },
+                }
+            }
+        }
+  </script>
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f3f4f6;
+      --surface:   #ffffff;
+      --surface-2: #f9fafb;
+      --surface-3: #e5e7eb;
+      --border:    rgba(0,0,0,0.08);
+      --accent:    #111111;
+      --text:      #111827;
+      --muted:     #6b7280;
+      --muted-2:   #4b5563;
+      --btn-text:  #ffffff;
+      --sidebar:   200px;
+      --blue:      #3B82F6;
+      --purple:    #8B5CF6;
+      --gold:      #F59E0B;
+      --teal:      #10B981;
+      --red:       #EF4444;
+      --orange:    #F97316;
+    }
+
+    body.dark-mode {
+      --bg:        #0a0a0a;
+      --surface:   #111111;
+      --surface-2: #181818;
+      --surface-3: #202020;
+      --border:    rgba(255,255,255,0.07);
+      --accent:    #00d2ff;
+      --text:      #f0f0f0;
+      --muted:     #666;
+      --muted-2:   #999;
+      --btn-text:  #000000;
+    }
+    
+    body.dark-mode .fc .fc-button-primary:not(:disabled).fc-button-active,
+    body.dark-mode .fc .fc-button-primary:not(:disabled):active {
+      background: rgba(0, 210, 255, 0.1) !important;
+    }
+    body.dark-mode .car-btn.active { background: rgba(0, 210, 255, 0.08) !important; color: var(--accent) !important; }
+    body.dark-mode .fc .fc-day-today { background: rgba(0,210,255,0.06) !important; }
+    
+    body.dark-mode .stat-card,
+    body.dark-mode .dash-card,
+    body.dark-mode .table-section,
+    body.dark-mode .recent-bookings-card,
+    body.dark-mode .consignment-card,
+    body.dark-mode .turo-card,
+    body.dark-mode .modal-box { box-shadow: none; }
+    body.dark-mode table th { background: var(--surface-2); color: var(--muted); }
+
+    .stat-card,
+    .dash-card,
+    .table-section,
+    .recent-bookings-card,
+    .consignment-card,
+    .turo-card,
+    .modal-box { box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    table th { background: #f1f5f9; color: #374151; }
+    .badge-yellow { background: rgba(245,158,11,0.12); color: #b45309; }
+    .badge-blue   { background: rgba(59,130,246,0.12); color: #1d4ed8; }
+    .badge-green  { background: rgba(16,185,129,0.12); color: #065f46; }
+    .badge-gray   { background: rgba(107,114,128,0.1); color: #4b5563; }
+    .badge-red    { background: rgba(239,68,68,0.1);   color: #dc2626; }
+    .expiry-warn   { color: #b45309; }
+    .expiry-danger { color: #dc2626; }
+    .split-owner  { background: rgba(16,185,129,0.12); color: #065f46; }
+    .split-epure  { background: rgba(0,168,204,0.10);  color: #0369a1; }
+    .service-type-badge { opacity: 0.9; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ---- SIDEBAR ---- */
+    .sidebar {
+      width: var(--sidebar);
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 1.25rem 1.25rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo img { height: 26px; }
+    .sidebar-logo span {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 0.3rem;
+    }
+    .sidebar-user {
+      padding: 0.85rem 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .user-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--btn-text);
+      font-weight: 700;
+      font-size: 0.72rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-info-name { font-size: 0.8rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-info-role { font-size: 0.68rem; color: var(--muted); text-transform: capitalize; }
+
+    /* ---- ROLE BADGE ---- */
+    .role-badge { display:inline-block; font-size:0.6rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; padding:2px 7px; border-radius:99px; }
+    .role-badge.admin   { background:rgba(17,17,17,0.1); color:var(--text); }
+    .role-badge.finance { background:rgba(59,130,246,0.15); color:#2563EB; }
+    .role-badge.staff   { background:rgba(107,114,128,0.15); color:var(--muted-2); }
+    body.dark-mode .role-badge.admin   { background:rgba(0,210,255,0.15); color:var(--accent); }
+    body.dark-mode .role-badge.finance { background:rgba(59,130,246,0.18); color:#60a5fa; }
+    body.dark-mode .role-badge.staff   { background:rgba(255,255,255,0.08); color:var(--muted); }
+
+    /* ---- ROLE-BASED VISIBILITY ---- */
+    /* Finance: can VIEW everything except Maintenance, Sync, Users. Cannot write. */
+    body.role-finance .write-action           { display:none !important; }
+    body.role-finance .nav-item[data-tab="maintenance"] { display:none !important; }
+    body.role-finance .nav-item[data-tab="turo"]        { display:none !important; }
+    body.role-finance .nav-item[data-tab="users"]       { display:none !important; }
+    /* Staff: can operate but not see Reports, Consignments, Users */
+    body.role-staff .nav-item[data-tab="reports"]       { display:none !important; }
+    body.role-staff .nav-item[data-tab="consignments"]  { display:none !important; }
+    body.role-staff .nav-item[data-tab="users"]         { display:none !important; }
+    /* Staff CAN see Expenses (they log costs) — no rule needed */
+
+    /* ---- USERS TAB ---- */
+    .users-grid { display:grid; gap:1rem; margin-top:1rem; }
+    .user-card { background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; }
+    .user-card-avatar { width:38px; height:38px; border-radius:50%; background:var(--accent); color:var(--btn-text); font-weight:700; font-size:0.8rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; text-transform:uppercase; }
+    .user-card-info { flex:1; min-width:0; }
+    .user-card-name { font-size:0.9rem; font-weight:600; }
+    .user-card-email { font-size:0.75rem; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .user-card-actions { display:flex; align-items:center; gap:0.5rem; }
+    .role-select { background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:0.78rem; padding:4px 8px; border-radius:8px; cursor:pointer; }
+    .role-select:focus { outline:none; border-color:var(--accent); }
+    .btn-icon-danger { background:none; border:none; color:var(--muted); cursor:pointer; padding:4px; border-radius:6px; transition:color 0.15s; }
+    .btn-icon-danger:hover { color:var(--red); }
+    .invite-empty { text-align:center; padding:3rem 0; color:var(--muted); font-size:0.9rem; }
+    .user-role-select { background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:0.78rem; padding:4px 8px; border-radius:8px; cursor:pointer; }
+    .user-role-select:focus { outline:none; border-color:var(--accent); }
+    .mileage-bar { width:100%; height:4px; background:var(--border); border-radius:4px; margin-top:5px; }
+    .mileage-bar-fill { height:100%; border-radius:4px; transition:width 0.4s; }
+
+    /* Plan feature gating — lock badge on Pro-only nav items */
+    body.plan-free .nav-item[data-tab="turo"]::after,
+    body.plan-free .nav-item[data-tab="reports"]::after,
+    body.plan-free .nav-item[data-tab="consignments"]::after,
+    body.plan-free .nav-item[data-tab="users"]::after,
+    body.plan-free .nav-item[data-tab="roi"]::after,
+    body.plan-starter .nav-item[data-tab="turo"]::after,
+    body.plan-starter .nav-item[data-tab="reports"]::after,
+    body.plan-starter .nav-item[data-tab="consignments"]::after,
+    body.plan-starter .nav-item[data-tab="users"]::after,
+    body.plan-starter .nav-item[data-tab="roi"]::after { content:'PRO'; font-size:0.55rem; font-weight:700; letter-spacing:.04em; background:rgba(245,158,11,0.2); color:#F59E0B; padding:1px 5px; border-radius:4px; margin-left:auto; }
+    /* Upgrade plan card */
+    .upgrade-card { background:var(--surface-2); border:1px solid var(--border); border-radius:14px; padding:1.5rem; text-align:center; cursor:pointer; transition:border-color .2s,transform .15s; }
+    .upgrade-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+    .upgrade-card.featured { border-color:#818CF8; }
+    .upgrade-card .plan-price { font-size:2rem; font-weight:800; margin:0.5rem 0; }
+    .upgrade-card .plan-features { font-size:0.78rem; color:var(--muted); text-align:left; margin-top:0.75rem; line-height:1.8; }
+
+    /* Toast notifications */
+    .dash-toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#1E293B; color:#fff; padding:0.65rem 1.1rem; border-radius:10px; font-size:0.85rem; box-shadow:0 4px 20px rgba(0,0,0,.3); z-index:9999; opacity:0; transform:translateY(8px); transition:opacity .25s,transform .25s; pointer-events:none; }
+    .dash-toast.dash-toast-show { opacity:1; transform:translateY(0); }
+    .dash-toast.dash-toast-error { background:#EF4444; }
+
+    /* Mobile sidebar drawer */
+    #sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:49; }
+
+    /* ---- RESPONSIVE BREAKPOINTS ---- */
+
+    /* Tablet: collapse two-column layouts */
+    @media (max-width: 1024px) {
+      .dash-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Desktop: restore sidebar (overrides inline style) */
+    @media (min-width: 1025px) {
+      #main-sidebar { transform: none !important; }
+      #mobile-menu-btn { display: none !important; }
+    }
+
+    /* Mobile + tablet: sidebar drawer + layout reflow */
+    @media (max-width: 1024px) {
+      #main-sidebar { transform:translateX(-100%) !important; transition:transform 0.25s ease !important; }
+      #main-sidebar.sidebar-open { transform:translateX(0) !important; }
+      main { margin-left:0 !important; }
+      .main { margin-left:0 !important; }
+      .ml-64 { margin-left:0 !important; }
+      .px-8 { padding-left:1rem !important; padding-right:1rem !important; }
+      #sidebar-overlay.active { display:block; }
+      #mobile-menu-btn { display:flex !important; }
+      #topbar-title { font-size: 1rem !important; }
+
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .content { padding: 1rem !important; }
+      .topbar { padding: 0.75rem 1rem; }
+
+      .form-grid { grid-template-columns: 1fr; }
+      .turo-grid { grid-template-columns: 1fr; }
+      .modal-box { padding: 1.25rem; }
+      .modal-box.wide { max-width: 100%; }
+
+      .table-filters { flex-direction: column; align-items: stretch; }
+      .search-input { width: 100%; }
+      .filter-select { width: 100%; }
+
+      /* Topbar action buttons — icon only on mobile */
+      #block-btn span.material-symbols-outlined,
+      #add-res-btn span.material-symbols-outlined { margin: 0; }
+      #block-btn { padding: 0.5rem; min-width: 36px; justify-content: center; }
+      #add-res-btn { padding: 0.5rem; min-width: 36px; justify-content: center; }
+      #block-btn .btn-label,
+      #add-res-btn .btn-label { display: none; }
+
+      .consignment-stats { grid-template-columns: repeat(2, 1fr); }
+      .stat-value { font-size: 1.6rem; }
+    }
+
+    /* Small phones */
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .stat-value { font-size: 1.4rem; }
+      .consignment-grid { grid-template-columns: 1fr; }
+      .cars-grid { grid-template-columns: 1fr; }
+      .consignment-stats { grid-template-columns: 1fr 1fr; }
+      .content { padding: 0.75rem !important; }
+      .booking-row { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+    }
+
+    .sidebar-nav { flex: 1; padding: 1rem 0; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.65rem 1.25rem;
+      color: var(--muted-2);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 0;
+      transition: all 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      text-decoration: none;
+    }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); }
+    #logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 0;
+      transition: color 0.2s;
+    }
+    #logout-btn:hover { color: var(--red); }
+
+    /* ---- MAIN ---- */
+    .main {
+      margin-left: var(--sidebar);
+      flex: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .topbar {
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+    }
+    .topbar-title { font-size: 1.1rem; font-weight: 600; }
+    .topbar-actions { display: flex; gap: 0.75rem; }
+    .content { padding: 2rem; flex: 1; }
+
+    /* ---- STATS ---- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+    }
+    .stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+    .stat-value { font-size: 2.2rem; font-weight: 700; line-height: 1; margin: 0.8rem 0; color: var(--text); }
+    .stat-value span { font-size: 1rem; color: var(--muted); font-weight: 400; margin-left: 0.3rem; }
+    .stat-sub { font-size: 0.8rem; color: var(--teal); font-weight: 500; display:flex; align-items:center; gap: 0.3rem;}
+    .stat-sub.negative { color: var(--red); }
+    .stat-sub span { color: var(--muted); font-weight:400; font-size:0.75rem;}
+
+    /* ---- DASHBOARD TAB ---- */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .dash-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+    .dash-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .dash-card p { font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+    .chart-container { position: relative; height: 300px; width: 100%; }
+    
+    .recent-bookings-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .booking-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .booking-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .b-customer { font-weight: 600; font-size: 0.95rem; }
+    .b-car { font-size: 0.85rem; color: var(--muted); margin-top:0.2rem; }
+    .b-price { font-weight: 600; font-size: 0.95rem; }
+
+    /* ---- CAR FILTER ---- */
+    .car-filters {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .car-filters span { font-size: 0.75rem; color: var(--muted); margin-right: 0.25rem; }
+    .car-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--muted-2);
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .car-btn .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .car-btn:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
+    .car-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(201,168,76,0.08); }
+
+    /* ---- LEGEND ---- */
+    .legend {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--muted-2); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ---- CALENDAR ---- */
+    .calendar-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .cal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* FullCalendar dark overrides */
+    .fc { color: var(--text); }
+    .fc .fc-toolbar-title { font-size: 1rem; font-weight: 600; color: var(--text); }
+    .fc .fc-button {
+      background: var(--surface-3) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--muted-2) !important;
+      font-family: inherit !important;
+      font-size: 0.78rem !important;
+      padding: 0.35rem 0.75rem !important;
+      box-shadow: none !important;
+      text-transform: capitalize;
+      border-radius: 8px !important;
+    }
+    .fc .fc-button-group .fc-button:first-child { border-radius: 8px 0 0 8px !important; }
+    .fc .fc-button-group .fc-button:last-child  { border-radius: 0 8px 8px 0 !important; }
+    .fc .fc-button-group .fc-button:only-child  { border-radius: 8px !important; }
+    .fc .fc-button:hover { color: var(--text) !important; background: var(--surface-2) !important; }
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:not(:disabled):active {
+      background: rgba(201,168,76,0.15) !important;
+      border-color: var(--accent) !important;
+      color: var(--accent) !important;
+    }
+    .fc-theme-standard td, .fc-theme-standard th,
+    .fc-theme-standard .fc-scrollgrid { border-color: var(--border) !important; }
+    .fc .fc-daygrid-day { background: transparent; }
+    .fc .fc-daygrid-day:hover { background: rgba(255,255,255,0.02); }
+    .fc .fc-day-today { background: rgba(201,168,76,0.06) !important; }
+    .fc .fc-day-today .fc-daygrid-day-number { color: var(--accent) !important; font-weight: 600; }
+    .fc .fc-daygrid-day-number, .fc .fc-col-header-cell-cushion {
+      color: var(--muted-2);
+      font-size: 0.8rem;
+      text-decoration: none;
+    }
+    .fc-icon-chevron-left::before { content: "‹" !important; font-family: sans-serif !important; font-size: 1.5rem !important; line-height: 1 !important; }
+    .fc-icon-chevron-right::before { content: "›" !important; font-family: sans-serif !important; font-size: 1.5rem !important; line-height: 1 !important; }
+    
+    .fc .fc-col-header-cell { background: var(--surface-2); }
+    .fc .fc-daygrid-event {
+      border-radius: 4px;
+      font-size: 0.72rem;
+      padding: 1px 4px;
+      font-family: inherit;
+    }
+    .fc .fc-list-event:hover td { background: rgba(255,255,255,0.03); }
+    .fc .fc-list-day-cushion { background: var(--surface-2); }
+    .fc .fc-list-empty { background: var(--surface); color: var(--muted); }
+    .fc .fc-list-table td { border-color: var(--border); color: var(--text); }
+    .fc .fc-list-event-time { color: var(--muted); }
+
+    /* ---- TABLE ---- */
+    .table-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .table-header h3 { font-size: 0.95rem; font-weight: 600; }
+    .table-filters { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+    .search-input {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.85rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+      outline: none;
+      width: 200px;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .filter-select {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.75rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+      outline: none;
+      cursor: pointer;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 0.6rem 1rem;
+      text-align: left;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+    }
+    tbody td {
+      padding: 0.85rem 1rem;
+      font-size: 0.84rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,0.02); }
+    tbody td small { color: var(--muted); font-size: 0.75rem; }
+
+    .car-dot-inline {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 0.4rem;
+      vertical-align: middle;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .badge-blue    { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+    .badge-green   { background: rgba(16,185,129,0.15);  color: #34D399; }
+    .badge-yellow  { background: rgba(245,158,11,0.15);  color: #FCD34D; }
+    .badge-gray    { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+    .badge-red     { background: rgba(239,68,68,0.15);   color: #F87171; }
+    .source-badge {
+      font-size: 0.68rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .source-manual  { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+    .source-admin   { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+    .source-turo    { background: rgba(249,115,22,0.15);  color: #FB923C; }
+    .source-ical    { background: rgba(99,102,241,0.15);  color: #818CF8; }
+    .source-web     { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+    .source-website { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+    .source-gcal    { background: rgba(66,133,244,0.15);  color: #4285F4; }
+
+    .actions { display: flex; gap: 0.4rem; }
+    .btn-icon {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.3rem 0.5rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: background 0.15s;
+    }
+    .btn-icon:hover { background: var(--surface-2); }
+    .btn-icon.danger:hover { background: rgba(239,68,68,0.12); border-color: var(--red); }
+
+    /* ---- BUTTONS ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1.1rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+      text-decoration: none;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--accent); color: var(--btn-text); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted-2); }
+    .btn-outline:hover { color: var(--text); border-color: rgba(255,255,255,0.2); opacity: 1; }
+    .btn-danger  { background: rgba(239,68,68,0.15); color: var(--red); }
+
+    /* ---- MODALS ---- */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-box.wide { max-width: 640px; }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .modal-header h3 { font-size: 1rem; font-weight: 600; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    /* ROI Calculator */
+    .roi-fleet-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem; }
+    .roi-fleet-card .rfc-header { display:flex;align-items:center;gap:0.6rem;margin-bottom:1rem; }
+    .roi-fleet-card .rfc-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+    .roi-fleet-card .rfc-name { font-size:0.9rem;font-weight:600; }
+    .roi-fleet-card .rfc-grid { display:grid;grid-template-columns:1fr 1fr;gap:0.5rem; }
+    .roi-fleet-card .rfc-stat { background:var(--surface-2);border-radius:8px;padding:0.6rem 0.75rem; }
+    .roi-fleet-card .rfc-stat-label { font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:2px; }
+    .roi-fleet-card .rfc-stat-val { font-size:0.95rem;font-weight:700; }
+    .roi-fleet-card .rfc-stat-val.pos { color:#10b981; }
+    .roi-fleet-card .rfc-stat-val.neg { color:var(--red,#ef4444); }
+    .roi-result-card { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.85rem 1rem;display:flex;flex-direction:column;gap:4px; }
+    .roi-result-card.roi-result-highlight { background:var(--surface-2);border-color:var(--accent);border-width:2px; }
+    .rrc-label { font-size:0.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted); }
+    .rrc-val { font-size:1.15rem;font-weight:700; }
+    .rrc-val.rrc-neg { color:var(--red,#ef4444); }
+    .rrc-val.rrc-pos { color:#10b981; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 0; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.4rem;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--accent); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
+
+    /* ---- DETAIL MODAL ---- */
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row span:first-child { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em; }
+    .detail-row a { color: var(--accent); text-decoration: none; }
+
+    /* ---- TURO SYNC ---- */
+    .turo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .turo-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    .turo-card .car-name { font-size: 0.82rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+    .turo-card input { font-size: 0.8rem; padding: 0.45rem 0.7rem; }
+    .turo-card .last-sync { font-size: 0.7rem; color: var(--muted); margin-top: 0.35rem; }
+
+    /* ---- TAB CONTENT ---- */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ---- EMPTY STATE ---- */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+    }
+    .empty-state svg { opacity: 0.3; margin-bottom: 1rem; }
+    .empty-state p { font-size: 0.88rem; }
+
+    /* ---- CONSIGNMENTS ---- */
+    .consignment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .consignment-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+    .consignment-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .consignment-car {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .split-pill {
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .split-owner { background: rgba(16,185,129,0.15); color: #34D399; }
+    .split-epure { background: rgba(0,210,255,0.12); color: var(--accent); }
+    .consignment-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .c-stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 0.2rem; }
+    .c-stat-value { font-size: 1.05rem; font-weight: 700; }
+
+    /* ---- CARS ---- */
+    .cars-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .car-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+    .car-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .car-card-name {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .car-card-name small { font-weight: 400; font-size: 0.78rem; color: var(--muted); display: block; margin-top: 0.1rem; }
+    .car-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .car-info-item { font-size: 0.8rem; }
+    .car-info-item span { display: block; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 0.15rem; }
+    .expiry-ok     { color: #34D399; }
+    .expiry-warn   { color: #FCD34D; }
+    .expiry-danger { color: #F87171; }
+    .service-type-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      font-weight: 600;
+    }
+    .svc-oil        { background: rgba(245,158,11,0.15);  color: #FCD34D; }
+    .svc-tire       { background: rgba(59,130,246,0.15);  color: #60A5FA; }
+    .svc-brake      { background: rgba(239,68,68,0.15);   color: #F87171; }
+    .svc-detail     { background: rgba(16,185,129,0.15);  color: #34D399; }
+    .svc-inspection { background: rgba(139,92,246,0.15);  color: #A78BFA; }
+    .svc-repair     { background: rgba(249,115,22,0.15);  color: #FB923C; }
+    .svc-other      { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+
+    /* ---- SCROLLBAR ---- */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <!-- SIDEBAR -->
+  <aside id="main-sidebar" class="w-64 fixed left-0 top-0 h-screen bg-[#111c2d] shadow-xl shadow-blue-900/10 flex flex-col p-4 overflow-y-auto z-50" style="transform:translateX(-100%);transition:transform 0.25s ease;">
+    <div class="mb-10 px-2 mt-2">
+      <div class="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80" onclick="switchTab('main')" style="margin:0;">
+        <h1 class="text-2xl font-black tracking-widest text-white uppercase m-0" style="font-family:'Manrope',sans-serif;">
+          éPure <span class="text-slate-400 font-light">Drive</span>
+        </h1>
+      </div>
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1" id="app-subtitle" style="font-family:'Inter',sans-serif;margin:0;">Management Suite</p>
+    </div>
+    <nav class="flex-1 space-y-1">
+      <button class="nav-item active flex w-full items-center gap-3 px-4 py-3 bg-white/10 text-white rounded-lg transition-all border-0 cursor-pointer text-left" data-tab="main" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined text-white" style="font-size:20px;">dashboard</span> <span class="text-sm font-medium">Dashboard</span>
+      </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="bookings" style="position:relative;font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">calendar_today</span> <span class="text-sm font-medium">Bookings</span>
+        <span id="new-booking-badge" class="absolute right-4 text-[10px] font-bold bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full" style="display:none;"></span>
+      </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="cars" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">directions_car</span> <span class="text-sm font-medium">Fleet</span>
+      </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="maintenance" style="position:relative;font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">build</span> <span class="text-sm font-medium">Maintenance</span>
+        <span id="maintenance-badge" class="absolute right-4 text-[10px] font-bold bg-red-500 text-white px-2 py-0.5 rounded-full" style="display:none;"></span>
+      </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="customers" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">group</span> <span class="text-sm font-medium">Customers</span>
+      </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="consignments" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">handshake</span> <span class="text-sm font-medium">Consignments</span>
+      </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="expenses" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">receipt_long</span> <span class="text-sm font-medium">Expenses</span>
+      </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="reports" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">payments</span> <span class="text-sm font-medium">Financials</span>
+      </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="turo" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">sync</span> <span class="text-sm font-medium">Sync Channels</span>
+      </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="users" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">admin_panel_settings</span> <span class="text-sm font-medium">Staff & Users</span>
+      </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" data-tab="roi" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">calculate</span> <span class="text-sm font-medium">ROI Calculator</span>
+      </button>
+      <button class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left" onclick="openModal('brand-settings-modal')" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined" style="font-size:20px;">palette</span> <span class="text-sm font-medium">Brand Settings</span>
+      </button>
+      <!-- Super Admin link — hidden until is_super_admin confirmed -->
+      <a id="super-admin-nav" href="superadmin.html" style="display:none;text-decoration:none;" class="nav-item flex w-full items-center gap-3 px-4 py-3 bg-transparent text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg border-0 cursor-pointer text-left">
+        <span class="material-symbols-outlined" style="font-size:20px;color:#818CF8;">shield_person</span> <span class="text-sm font-medium" style="color:#818CF8;">Super Admin</span>
+      </a>
+    </nav>
+    <div class="mt-auto pt-6 border-t border-white/5 space-y-3">
+      <div class="flex items-center gap-3 pl-2">
+        <div class="w-8 h-8 rounded-full bg-white text-slate-900 flex items-center justify-center font-bold text-xs uppercase" id="user-avatar">—</div>
+        <div class="text-left" style="font-family:'Inter',sans-serif">
+          <p class="text-sm font-bold text-white leading-tight m-0" id="user-display-name">Loading...</p>
+          <p class="text-[10px] uppercase tracking-wider text-slate-400 font-medium m-0" id="user-display-role">admin</p>
+        </div>
+      </div>
+      <button id="logout-btn" class="w-full flex items-center gap-3 px-2 py-2 bg-transparent border-0 cursor-pointer text-slate-400 hover:text-red-400 transition-colors" style="font-family:'Inter',sans-serif;outline:none;">
+        <span class="material-symbols-outlined text-sm">logout</span> <span class="text-sm font-medium">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="ml-64 min-h-screen flex-1 flex flex-col" style="background:#f7f9fb;box-sizing:border-box;">
+
+    <!-- TOPBAR -->
+    <header class="sticky top-0 w-full z-40 bg-surface-container-lowest/80 backdrop-blur-md flex justify-between items-center h-16 px-8 border-b border-outline-variant/30" style="background:rgba(255,255,255,0.8);box-sizing:border-box;">
+      <div class="flex items-center gap-3">
+        <button id="mobile-menu-btn" style="display:none;background:none;border:none;cursor:pointer;padding:4px;color:#191c1e;" onclick="toggleSidebar()" aria-label="Open menu">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <h2 class="text-xl font-bold text-on-surface m-0" id="topbar-title" style="font-family:'Manrope',sans-serif;color:#191c1e;">Dashboard Overview</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <button class="bg-surface-container-high border-0 cursor-pointer text-on-surface px-4 py-2 rounded-lg text-sm font-semibold hover:bg-surface-variant transition-all flex items-center gap-2 write-action" id="block-btn" style="background:#e6e8ea;color:#191c1e;">
+          <span class="material-symbols-outlined text-sm">block</span> <span class="btn-label">Block Dates</span>
+        </button>
+        <button class="bg-primary-container border-0 cursor-pointer text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all flex items-center gap-2 write-action" id="add-res-btn" style="background:#111c2d;color:#fff;">
+          <span class="material-symbols-outlined text-sm">add</span> <span class="btn-label">New Booking</span>
+        </button>
+      </div>
+    </header>
+    <div id="trial-banner" class="hidden items-center justify-between gap-4 px-8 py-3 bg-tertiary-fixed text-on-tertiary-container flex-wrap text-sm font-medium"></div>
+    <div class="content p-8 flex-1" style="box-sizing:border-box;padding:2rem;">
+
+      <!-- STATS (dashboard tab only) -->
+      <span id="stat-total" style="display:none"></span>
+      <div id="stats-bar" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" style="box-sizing:border-box;">
+        <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm relative group border border-outline-variant/30" style="background:#fff;border:1px solid #c6c6cd;box-sizing:border-box;">
+          <div class="flex justify-between items-start mb-4"><p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest m-0" style="color:#4b5563;">Total Cars</p><span class="material-symbols-outlined text-secondary" style="color:#006c49;">directions_car</span></div>
+          <div class="flex items-baseline justify-between"><h3 class="text-3xl font-extrabold text-on-surface m-0" id="stat-total-cars" style="font-family:'Manrope',sans-serif;color:#191c1e;">—</h3></div>
+        </div>
+        <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm relative group border border-outline-variant/30" style="background:#fff;border:1px solid #c6c6cd;box-sizing:border-box;">
+          <div class="flex justify-between items-start mb-4"><p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest m-0" style="color:#4b5563;">Active Bookings</p><span class="material-symbols-outlined text-primary-container" style="color:#111c2d;">calendar_today</span></div>
+          <div class="flex items-baseline justify-between"><h3 class="text-3xl font-extrabold text-on-surface m-0" id="stat-active" style="font-family:'Manrope',sans-serif;color:#191c1e;">—</h3></div>
+        </div>
+        <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm relative group border border-outline-variant/30" style="background:#fff;border:1px solid #c6c6cd;box-sizing:border-box;">
+          <div class="flex justify-between items-start mb-4"><p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest m-0" style="color:#4b5563;">Upcoming Bookings</p><span class="material-symbols-outlined text-on-tertiary-container" style="color:#4a4458;">event</span></div>
+          <div class="flex items-baseline justify-between"><h3 class="text-3xl font-extrabold text-on-surface m-0" id="stat-upcoming" style="font-family:'Manrope',sans-serif;color:#191c1e;">—</h3></div>
+        </div>
+        <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm relative group border border-outline-variant/30" style="background:#fff;border:1px solid #c6c6cd;box-sizing:border-box;">
+          <div class="flex justify-between items-start mb-4"><p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest m-0" style="color:#4b5563;">Monthly Revenue</p><span class="material-symbols-outlined text-primary-fixed-dim" style="color:#a8c0f7;">payments</span></div>
+          <div class="flex items-baseline justify-between"><h3 class="text-3xl font-extrabold text-on-surface m-0" id="stat-revenue" style="font-family:'Manrope',sans-serif;color:#191c1e;">—</h3></div>
+        </div>
+      </div>
+
+
+      <!-- DASHBOARD TAB -->
+      <div class="tab-content active" id="tab-main">
+
+        <!-- Public Fleet Page Card — hidden until slug is loaded -->
+        <div id="public-page-card" style="display:none;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.5rem;background:#fff;border:1px solid #c6c6cd;border-radius:16px;padding:1rem 1.5rem;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:0.75rem;min-width:0;">
+            <span style="font-size:1.3rem;">🌐</span>
+            <div style="min-width:0;">
+              <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#6b7280;margin-bottom:0.15rem;">Your Public Fleet Page</div>
+              <a id="public-page-link" href="#" target="_blank" rel="noopener noreferrer" style="font-size:0.85rem;font-weight:600;color:#111c2d;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:520px;">—</a>
+            </div>
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-shrink:0;">
+            <button onclick="copyPublicUrl()" style="padding:0.45rem 1rem;background:#111c2d;color:#fff;border:none;border-radius:8px;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">Copy Link</button>
+            <a id="public-page-open" href="#" target="_blank" rel="noopener noreferrer" style="padding:0.45rem 1rem;background:transparent;color:#111c2d;border:1px solid #c6c6cd;border-radius:8px;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;">Open ↗</a>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
+          
+          <!-- REVENUE CHART -->
+          <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/30" style="background:#fff;border:1px solid #c6c6cd;display:flex;flex-direction:column;">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h3 class="text-[1.05rem] font-bold text-on-surface m-0" style="font-family:'Manrope',sans-serif;color:#191c1e;">Revenue & Analytics</h3>
+                <p class="text-xs text-on-surface-variant mt-1 mb-0" style="font-family:'Inter',sans-serif;color:#4b5563;">Last 6 months performance</p>
+              </div>
+              <span class="material-symbols-outlined text-outline" style="color:#c6c6cd;">monitoring</span>
+            </div>
+            <div class="relative flex-1 w-full" style="min-height: 250px;">
+              <canvas id="revenueChart"></canvas>
+            </div>
+          </div>
+
+          <!-- RECENT BOOKINGS -->
+          <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/30" style="background:#fff;border:1px solid #c6c6cd;">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h3 class="text-[1.05rem] font-bold text-on-surface m-0" style="font-family:'Manrope',sans-serif;color:#191c1e;">Recent Operations</h3>
+                <p class="text-xs text-on-surface-variant mt-1 mb-0" style="font-family:'Inter',sans-serif;color:#4b5563;">Latest activity across your fleet</p>
+              </div>
+              <button class="bg-transparent border-0 cursor-pointer text-primary text-xs font-bold uppercase tracking-wider hover:underline" onclick="switchTab('bookings')">View All</button>
+            </div>
+            <div id="recent-bookings-list" class="space-y-4">
+              <div style="text-align:center;color:var(--muted);padding:2rem;font-size:0.85rem;">Loading…</div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
+      <!-- BOOKINGS TAB (calendar + list) -->
+      <div class="tab-content" id="tab-bookings">
+
+        <!-- Car filter -->
+        <div class="car-filters" id="car-filter-bar">
+          <span>Filter:</span>
+          <button class="car-btn active" data-car-filter="all" onclick="setCarFilter('all')">All Cars</button>
+          <!-- dynamic car filter buttons injected by JS -->
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+          <span id="legend-cars"></span><!-- dynamic car legend items injected by JS -->
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Blocked</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>Turo</div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="calendar-wrap">
+          <div id="calendar"></div>
+        </div>
+
+        <!-- Bookings list -->
+        <div class="table-section" style="margin-top:2rem;">
+          <div class="table-header">
+            <h3>All Bookings</h3>
+            <div class="table-filters">
+              <input type="text" class="search-input" id="search-input" placeholder="Search customer…" />
+              <select class="filter-select" id="status-filter">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <select class="filter-select" id="car-filter">
+                <option value="">All Cars</option>
+              </select>
+            </div>
+          </div>
+          <div id="bulk-action-bar" style="display:none;align-items:center;gap:0.75rem;padding:0.6rem 1rem;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:0.75rem;font-size:0.83rem;">
+            <span id="bulk-count" style="color:var(--muted);font-weight:500;"></span>
+            <button class="btn btn-outline write-action" style="padding:0.3rem 0.8rem;font-size:0.8rem;" onclick="bulkMarkCompleted()">Mark Completed</button>
+            <button class="btn btn-outline" style="padding:0.3rem 0.8rem;font-size:0.8rem;" onclick="bulkExportSelected()">Export Selected</button>
+            <button style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;" onclick="clearBulkSelection()" title="Clear selection">✕</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:36px;"><input type="checkbox" id="bulk-select-all" title="Select all" style="cursor:pointer;" /></th>
+                  <th>Customer</th>
+                  <th>Vehicle</th>
+                  <th>Dates</th>
+                  <th>Days</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Source</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="res-tbody">
+                <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALENDAR SYNC TAB -->
+      <div class="tab-content" id="tab-turo">
+
+        <!-- Email Sync -->
+        <div class="table-section" style="padding:1.5rem;margin-bottom:1rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+            <h3 style="font-size:0.95rem;font-weight:600;">Auto-Sync from Email</h3>
+          </div>
+          <p style="font-size:0.78rem;color:var(--muted);line-height:1.5;margin-bottom:1rem;">
+            Connect the email account that receives your Turo booking notifications. Bookings will sync automatically every 15 minutes.
+          </p>
+          <div id="gmail-sync-status"><!-- rendered by JS --></div>
+        </div>
+
+
+      </div>
+
+      <!-- CONSIGNMENTS TAB -->
+      <div class="tab-content" id="tab-consignments">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <div>
+            <h3 style="font-size:1rem;font-weight:600;">Consignment Contracts</h3>
+            <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Manage vehicle owners, revenue splits and expenses</p>
+          </div>
+          <button class="btn btn-primary write-action" id="add-consignment-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Consignment
+          </button>
+        </div>
+        <!-- Revenue date filter -->
+        <div style="display:flex;gap:0.75rem;align-items:flex-end;margin-bottom:1.5rem;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.85rem 1rem;">
+          <div class="form-group" style="margin:0;"><label>Revenue From</label><input type="date" id="con-from" /></div>
+          <div class="form-group" style="margin:0;"><label>Revenue To</label><input type="date" id="con-to" /></div>
+          <button class="btn btn-primary" id="apply-con-btn">Apply</button>
+          <button class="btn btn-outline" id="clear-con-btn">Clear</button>
+          <div id="con-period-label" style="margin-left:auto;font-size:0.82rem;color:var(--muted);align-self:flex-end;"></div>
+        </div>
+
+        <div class="consignment-grid" id="consignment-grid">
+          <div class="empty-state"><p>Loading…</p></div>
+        </div>
+
+      </div>
+
+      <!-- EXPENSES TAB -->
+      <div class="tab-content" id="tab-expenses">
+        <div class="table-section">
+          <div class="table-header">
+            <div>
+              <h3 style="font-size:1rem;font-weight:600;">Expenses</h3>
+              <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Track vehicle costs and company expenses — maintenance, fuel, software, marketing and more</p>
+            </div>
+            <div class="table-filters">
+              <select class="filter-select" id="expense-car-filter">
+                <option value="">All</option>
+                <option value="company">Company / General</option>
+              </select>
+              <select class="filter-select" id="expense-cat-filter">
+                <option value="">All Categories</option>
+                <optgroup label="Vehicle">
+                  <option>Maintenance</option>
+                  <option>Cleaning</option>
+                  <option>Fuel</option>
+                  <option>Insurance</option>
+                  <option>Toll Reimbursement</option>
+                  <option>Repair</option>
+                </optgroup>
+                <optgroup label="Company">
+                  <option>Software / Subscriptions</option>
+                  <option>Marketing</option>
+                  <option>Office &amp; Admin</option>
+                  <option>Banking &amp; Fees</option>
+                  <option>Tax &amp; Accounting</option>
+                  <option>Other</option>
+                </optgroup>
+              </select>
+              <button class="btn btn-outline write-action" id="import-expenses-btn" title="Import expenses from CSV">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Import CSV
+              </button>
+              <input type="file" id="expenses-csv-file" accept=".csv" style="display:none;" />
+              <button class="btn btn-primary write-action" id="add-expense-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Expense
+              </button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Vehicle</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="expenses-tbody">
+                <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARS TAB -->
+      <div class="tab-content" id="tab-cars">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+          <div>
+            <h3 style="font-size:1rem;font-weight:600;">Fleet Vehicles</h3>
+            <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Vehicle details, documents and expiry status</p>
+          </div>
+          <button class="btn btn-primary write-action" onclick="openAddCar()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Vehicle
+          </button>
+        </div>
+        <div class="table-section">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Vehicle</th>
+                  <th>Year</th>
+                  <th>Color</th>
+                  <th>Plate</th>
+                  <th>VIN</th>
+                  <th>Mileage</th>
+                  <th>Insurance</th>
+                  <th>Registration</th>
+                  <th>Rate</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="cars-tbody">
+                <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAINTENANCE TAB -->
+      <div class="tab-content" id="tab-maintenance">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+          <div>
+            <h3 style="font-size:1rem;font-weight:600;">Maintenance & Service</h3>
+            <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Service records and upcoming maintenance for all vehicles</p>
+          </div>
+          <button class="btn btn-primary write-action" id="add-service-btn-top">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Service Record
+          </button>
+        </div>
+
+        <!-- Fleet status overview -->
+        <div class="table-section" style="margin-bottom:1.5rem;">
+          <div class="table-header"><h3>Fleet Overview</h3></div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Vehicle</th>
+                  <th>Last Service</th>
+                  <th>Mileage Now</th>
+                  <th>Next Oil Change</th>
+                  <th>Next Service Due</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="fleet-status-tbody">
+                <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Upcoming alerts -->
+        <div id="maintenance-alerts" style="margin-bottom:1.25rem;"></div>
+
+        <div class="table-section">
+          <div class="table-header">
+            <h3>Service History</h3>
+            <div class="table-filters">
+              <select class="filter-select" id="service-car-filter">
+                <option value="">All Vehicles</option>
+              </select>
+              <select class="filter-select" id="service-type-filter">
+                <option value="">All Types</option>
+                <option>Oil Change</option>
+                <option>Tire Rotation</option>
+                <option>Brake Service</option>
+                <option>Detailing</option>
+                <option>Inspection</option>
+                <option>Repair</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Vehicle</th>
+                  <th>Type</th>
+                  <th>Mileage</th>
+                  <th>Provider</th>
+                  <th>Cost</th>
+                  <th>Next Due</th>
+                  <th>Next Mi</th>
+                  <th>Notes</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="services-tbody">
+                <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTOMERS TAB -->
+      <div class="tab-content" id="tab-customers">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+          <div>
+            <h3 style="font-size:1rem;font-weight:600;">Customers</h3>
+            <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Customer database and rental history</p>
+          </div>
+          <div style="display:flex;gap:0.5rem;">
+            <button class="btn btn-outline write-action" id="sync-customers-btn" onclick="syncCustomersFromReservations(this, true)" title="Import all unique customers from existing reservations">
+              <span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;">sync</span> Sync from Bookings
+            </button>
+            <button class="btn btn-primary write-action" id="add-customer-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Customer
+            </button>
+          </div>
+        </div>
+        <div class="table-section">
+          <div class="table-header">
+            <h3>All Customers</h3>
+            <div class="table-filters">
+              <input type="text" class="search-input" id="customer-search" placeholder="Search name, email…" />
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Address</th>
+                  <th>Total Bookings</th>
+                  <th>Total Spent</th>
+                  <th>Notes</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="customers-tbody">
+                <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- FINANCIALS TAB -->
+      <div class="tab-content" id="tab-reports">
+
+        <!-- Turo Earnings CSV Import -->
+        <div class="table-section" style="padding:1.5rem;margin-bottom:1.25rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.6rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <h3 style="font-size:0.95rem;font-weight:600;">Import Turo Earnings CSV</h3>
+          </div>
+          <p style="font-size:0.78rem;color:var(--muted);line-height:1.5;margin-bottom:1rem;">
+            Upload the <strong>earnings_export_*.csv</strong> from Turo → Earnings → Export. Updates guest names, totals and vehicle assignments on existing reservations.
+            <br>Descárgalo en: <em>turo.com → Earnings → Export earnings</em>
+          </p>
+          <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+            <input type="file" id="turo-csv-file" accept=".csv,text/csv" style="flex:1;min-width:220px;padding:0.4rem;font-size:0.82rem;" />
+            <button class="btn btn-primary write-action" id="turo-csv-btn" onclick="importTuroCsv()">Import CSV</button>
+          </div>
+          <div id="turo-csv-result" style="margin-top:0.85rem;font-size:0.82rem;"></div>
+        </div>
+        <!-- Header + actions -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem;">
+          <div>
+            <h3 style="font-size:1rem;font-weight:600;">Financials — P&amp;L</h3>
+            <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Earnings, expenses, and net profit across all sources</p>
+          </div>
+          <div style="display:flex;gap:0.5rem;">
+            <button class="btn btn-outline write-action" id="add-income-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Income
+            </button>
+            <button class="btn btn-outline write-action" id="add-expense-fin-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Expense
+            </button>
+            <button class="btn btn-outline" id="export-csv-btn" onclick="exportReservationsCSV()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter row -->
+        <div style="display:flex;gap:0.75rem;align-items:flex-end;margin-bottom:1.5rem;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem;">
+          <div class="form-group" style="margin:0;"><label>From</label><input type="date" id="report-from" /></div>
+          <div class="form-group" style="margin:0;"><label>To</label><input type="date" id="report-to" /></div>
+          <div class="form-group" style="margin:0;">
+            <label>Vehicle</label>
+            <select class="filter-select" id="report-car"><option value="">All Vehicles</option></select>
+          </div>
+          <button class="btn btn-primary" id="apply-report-btn">Apply</button>
+          <button class="btn btn-outline" id="clear-report-btn">Clear</button>
+          <div id="report-summary" style="margin-left:auto;font-size:0.82rem;color:var(--muted);align-self:flex-end;"></div>
+        </div>
+
+        <!-- P&L Summary cards -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;" class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-value" id="fin-revenue" style="font-size:1.6rem;color:#34D399;">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Expenses</div>
+            <div class="stat-value" id="fin-expenses" style="font-size:1.6rem;color:#F87171;">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Net Profit</div>
+            <div class="stat-value" id="fin-profit" style="font-size:1.6rem;">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Margin</div>
+            <div class="stat-value" id="fin-margin" style="font-size:1.6rem;">—</div>
+          </div>
+        </div>
+
+        <!-- P&L Chart -->
+        <div class="dash-card" style="margin-bottom:1.5rem;">
+          <h3>Revenue vs Expenses</h3>
+          <p>Monthly earnings (green), expenses (red), and net profit (purple) — sources: bookings, logged expenses, maintenance costs, and manual cash entries</p>
+          <div style="position:relative;height:280px;"><canvas id="pl-chart"></canvas></div>
+        </div>
+
+        <!-- Revenue by vehicle -->
+        <div class="table-section" style="margin-bottom:1.5rem;">
+          <div class="table-header"><h3>Revenue by Vehicle</h3></div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr><th>Vehicle</th><th>Bookings</th><th>Total Revenue</th><th>Avg per Booking</th><th>% of Total</th></tr>
+              </thead>
+              <tbody id="revenue-tbody">
+                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Manual Transactions -->
+        <div class="table-section">
+          <div class="table-header">
+            <div>
+              <h3>Cash &amp; Manual Transactions</h3>
+              <p style="font-size:0.78rem;color:var(--muted);margin-top:2px;">Manually logged income and expenses not captured by bookings or the expense tracker</p>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>Vehicle</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="transactions-tbody">
+                <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Hidden canvases kept for Dashboard tab chart compatibility -->
+        <canvas id="trendChart" style="display:none;"></canvas>
+        <canvas id="distChart"  style="display:none;"></canvas>
+      </div>
+
+      <!-- TAB: Users -->
+      <div class="tab-content" id="tab-users">
+        <div class="table-header">
+          <div>
+            <h3>Team Members</h3>
+            <p style="font-size:0.78rem;color:var(--muted);margin-top:2px;">Manage who has access to this dashboard.</p>
+          </div>
+          <button class="btn btn-primary write-action" id="invite-user-btn" onclick="openInviteModal()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Invite User
+          </button>
+        </div>
+        <div id="users-list" class="users-grid"></div>
+      </div>
+
+      <!-- TAB: ROI Calculator -->
+      <div class="tab-content" id="tab-roi">
+        <div style="margin-bottom:1.5rem;">
+          <h3 style="font-size:1rem;font-weight:600;">ROI Calculator</h3>
+          <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">Fleet performance from your real data + evaluate new vehicle purchases</p>
+        </div>
+
+        <!-- Fleet Performance -->
+        <div style="margin-bottom:2rem;">
+          <h4 style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:1rem;">Current Fleet — Actual Performance</h4>
+          <div id="roi-fleet-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1rem;">
+            <div style="color:var(--muted);font-size:0.85rem;padding:1rem;">Loading…</div>
+          </div>
+        </div>
+
+        <!-- Evaluator -->
+        <h4 style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:1rem;">New Vehicle Evaluator</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+
+          <!-- Left: Inputs -->
+          <div class="table-section" style="padding:1.5rem;">
+            <h4 style="font-size:0.9rem;font-weight:600;margin-bottom:1.25rem;">Vehicle Details</h4>
+
+            <div class="form-group">
+              <label>Vehicle Name (optional)</label>
+              <input type="text" id="roi-label" placeholder="e.g. 2023 Toyota Camry" oninput="recalcROI()" />
+            </div>
+
+            <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:1rem 0 0.5rem;">Financing</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label>Purchase Price ($)</label>
+                <input type="number" id="roi-price" placeholder="35000" min="0" oninput="recalcROI()" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Down Payment ($)</label>
+                <input type="number" id="roi-down" placeholder="3500" min="0" oninput="recalcROI()" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>APR (%)</label>
+                <input type="number" id="roi-apr" placeholder="8.5" min="0" step="0.1" oninput="recalcROI()" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Loan Term</label>
+                <select id="roi-term" onchange="recalcROI()">
+                  <option value="24">24 months</option>
+                  <option value="36">36 months</option>
+                  <option value="48">48 months</option>
+                  <option value="60" selected>60 months</option>
+                  <option value="72">72 months</option>
+                </select>
+              </div>
+            </div>
+
+            <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:1.25rem 0 0.5rem;">Revenue Assumptions</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label>Daily Rate ($)</label>
+                <input type="number" id="roi-rate" placeholder="120" min="0" oninput="recalcROI()" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Turo Commission</label>
+                <select id="roi-commission" onchange="recalcROI()">
+                  <option value="15">15% (own insurance)</option>
+                  <option value="20">20% (Turo plan)</option>
+                  <option value="25" selected>25% (Turo protection)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:0.75rem;">
+              <label>Utilization Rate — <span id="roi-util-label">60%</span></label>
+              <input type="range" id="roi-util" min="10" max="95" value="60" step="5"
+                oninput="document.getElementById('roi-util-label').textContent=this.value+'%'; recalcROI()"
+                style="width:100%;accent-color:var(--accent);" />
+              <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--muted);margin-top:2px;">
+                <span>10%</span><span>Low (30–50%) / Med (50–70%) / High (70–90%)</span><span>95%</span>
+              </div>
+            </div>
+
+            <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:1.25rem 0 0.5rem;">Monthly Expenses</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label>Maintenance ($)</label>
+                <input type="number" id="roi-maint" placeholder="150" min="0" oninput="recalcROI()" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Insurance ($)</label>
+                <input type="number" id="roi-insur" placeholder="200" min="0" oninput="recalcROI()" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Other ($)</label>
+                <input type="number" id="roi-other" placeholder="50" min="0" oninput="recalcROI()" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Results -->
+          <div class="table-section" style="padding:1.5rem;display:flex;flex-direction:column;gap:0;">
+            <h4 style="font-size:0.9rem;font-weight:600;margin-bottom:1.25rem;">Projected Returns</h4>
+
+            <div id="roi-results" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.5rem;">
+              <div class="roi-result-card" id="rrc-loan"><span class="rrc-label">Monthly Loan</span><span class="rrc-val">—</span></div>
+              <div class="roi-result-card" id="rrc-gross"><span class="rrc-label">Gross Revenue</span><span class="rrc-val">—</span></div>
+              <div class="roi-result-card" id="rrc-commission"><span class="rrc-label">Turo Commission</span><span class="rrc-val rrc-neg">—</span></div>
+              <div class="roi-result-card" id="rrc-expenses"><span class="rrc-label">Total Expenses</span><span class="rrc-val rrc-neg">—</span></div>
+              <div class="roi-result-card roi-result-highlight" id="rrc-profit" style="grid-column:span 2;">
+                <span class="rrc-label" style="font-size:0.8rem;">Monthly Net Profit</span>
+                <span class="rrc-val" id="rrc-profit-val" style="font-size:1.6rem;">—</span>
+              </div>
+              <div class="roi-result-card" id="rrc-breakeven"><span class="rrc-label">Break-even</span><span class="rrc-val">—</span></div>
+              <div class="roi-result-card" id="rrc-roi"><span class="rrc-label">Annual ROI</span><span class="rrc-val">—</span></div>
+            </div>
+
+            <!-- Projection chart -->
+            <div style="flex:1;min-height:200px;">
+              <p style="font-size:0.75rem;font-weight:600;color:var(--muted);margin-bottom:0.5rem;">24-Month Cumulative P&L</p>
+              <div style="position:relative;height:200px;"><canvas id="roi-chart"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+
+  <!-- MODAL: Upgrade Plan -->
+  <div class="modal" id="upgrade-modal">
+    <div class="modal-box" style="max-width:820px;">
+      <div class="modal-header">
+        <h3>Upgrade Your Plan</h3>
+        <button class="modal-close" onclick="closeModal('upgrade-modal')" aria-label="Close">&times;</button>
+      </div>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.5rem;">Choose the plan that fits your fleet. Cancel anytime.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+        <!-- Starter -->
+        <div class="upgrade-card" onclick="startCheckout(STARTER_PRICE_ID)">
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;">Starter</div>
+          <div class="plan-price">$49<span style="font-size:1rem;font-weight:400;color:var(--muted)">/mo</span></div>
+          <button class="btn btn-outline" style="width:100%;margin-top:0.5rem;">Choose Starter</button>
+          <div class="plan-features">
+            <span style="color:#10B981">&#10003;</span> Up to 10 cars<br>
+            <span style="color:#10B981">&#10003;</span> Unlimited reservations<br>
+            <span style="color:#10B981">&#10003;</span> Customer management<br>
+            <span style="color:#10B981">&#10003;</span> Maintenance tracking<br>
+            <span style="color:var(--muted)">&#10007;</span> Calendar Sync (Turo)<br>
+            <span style="color:var(--muted)">&#10007;</span> Reports &amp; Analytics<br>
+            <span style="color:var(--muted)">&#10007;</span> Consignments<br>
+            <span style="color:var(--muted)">&#10007;</span> White-label branding<br>
+            <span style="color:var(--muted)">&#10007;</span> Team roles
+          </div>
+        </div>
+        <!-- Pro -->
+        <div class="upgrade-card featured" onclick="startCheckout(PRO_PRICE_ID)">
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:.06em;color:#818CF8;text-transform:uppercase;">Pro — Most Popular</div>
+          <div class="plan-price" style="color:#818CF8;">$149<span style="font-size:1rem;font-weight:400;color:var(--muted)">/mo</span></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:0.5rem;background:#818CF8;border-color:#818CF8;">Choose Pro</button>
+          <div class="plan-features">
+            <span style="color:#10B981">&#10003;</span> Up to 30 cars<br>
+            <span style="color:#10B981">&#10003;</span> Unlimited reservations<br>
+            <span style="color:#10B981">&#10003;</span> Customer management<br>
+            <span style="color:#10B981">&#10003;</span> Maintenance tracking<br>
+            <span style="color:#10B981">&#10003;</span> Calendar Sync (Turo)<br>
+            <span style="color:#10B981">&#10003;</span> Reports &amp; Analytics<br>
+            <span style="color:#10B981">&#10003;</span> Consignments<br>
+            <span style="color:#10B981">&#10003;</span> White-label branding<br>
+            <span style="color:#10B981">&#10003;</span> Team roles &amp; users
+          </div>
+        </div>
+        <!-- Enterprise -->
+        <div class="upgrade-card">
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;">Enterprise</div>
+          <div class="plan-price">Custom</div>
+          <a href="mailto:info@epuredrive.com?subject=Enterprise%20Plan%20Inquiry" class="btn btn-outline" style="width:100%;margin-top:0.5rem;text-decoration:none;text-align:center;display:block;">Contact Sales</a>
+          <div class="plan-features">
+            <span style="color:#10B981">&#10003;</span> Unlimited cars<br>
+            <span style="color:#10B981">&#10003;</span> Everything in Pro<br>
+            <span style="color:#10B981">&#10003;</span> Custom domain<br>
+            <span style="color:#10B981">&#10003;</span> API access<br>
+            <span style="color:#10B981">&#10003;</span> Dedicated support<br>
+            <span style="color:#10B981">&#10003;</span> Priority onboarding
+          </div>
+        </div>
+      </div>
+      <p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:1rem;">Secure payment via Stripe &middot; Cancel anytime &middot; No hidden fees</p>
+    </div>
+  </div>
+
+  <!-- MODAL: Brand Settings -->
+  <div class="modal" id="brand-settings-modal">
+    <div class="modal-box" style="max-width:520px;">
+      <div class="modal-header">
+        <h3>Brand Settings</h3>
+        <button class="modal-close" onclick="closeModal('brand-settings-modal')" aria-label="Close">&times;</button>
+      </div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1.25rem;">Customize how your fleet page looks to customers.</p>
+      <form id="brand-settings-form" style="display:flex;flex-direction:column;gap:1rem;">
+        <div class="form-group">
+          <label style="font-size:0.78rem;font-weight:600;">Brand Name</label>
+          <input type="text" id="brand-name-input" placeholder="Your Company Name" style="width:100%;padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;" />
+        </div>
+        <div class="form-group">
+          <label style="font-size:0.78rem;font-weight:600;">Logo</label>
+          <div style="display:flex;align-items:center;gap:1rem;">
+            <img id="brand-logo-preview" src="" alt="" style="height:36px;max-width:120px;display:none;border-radius:4px;object-fit:contain;" />
+            <input type="file" id="brand-logo-input" accept="image/*" style="font-size:0.78rem;" />
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label style="font-size:0.78rem;font-weight:600;">Primary Color</label>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <input type="color" id="brand-primary-color" value="#000000" style="width:40px;height:34px;border:1px solid var(--border);border-radius:6px;cursor:pointer;" />
+              <span id="brand-primary-hex" style="font-size:0.75rem;color:var(--muted);">#000000</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="font-size:0.78rem;font-weight:600;">Accent Color</label>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <input type="color" id="brand-accent-color" value="#3B82F6" style="width:40px;height:34px;border:1px solid var(--border);border-radius:6px;cursor:pointer;" />
+              <span id="brand-accent-hex" style="font-size:0.75rem;color:var(--muted);">#3B82F6</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:var(--surface-2);border-radius:10px;margin-top:0.25rem;">
+          <div style="width:32px;height:32px;border-radius:6px;flex-shrink:0;" id="brand-preview-swatch"></div>
+          <div>
+            <div style="font-size:0.8rem;font-weight:700;" id="brand-preview-name">Preview</div>
+            <div style="font-size:0.7rem;color:var(--muted);">How your brand will look</div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.6rem;font-size:0.85rem;" id="brand-save-btn">Save Brand Settings</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Add Transaction (manual cash income / expense) -->
+  <div class="modal" id="transaction-modal">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 id="tx-modal-title">Add Transaction</h3>
+        <button class="modal-close" onclick="closeModal('transaction-modal')" aria-label="Close">✕</button>
+      </div>
+      <form id="transaction-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Date *</label>
+            <input type="date" id="tx-date" required />
+          </div>
+          <div class="form-group">
+            <label>Type *</label>
+            <select id="tx-type" required>
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="tx-category" required>
+              <optgroup label="Income">
+                <option value="Cash Rental">Cash Rental</option>
+                <option value="Deposit Return">Deposit Return</option>
+                <option value="Other Income">Other Income</option>
+              </optgroup>
+              <optgroup label="Expense — Vehicle">
+                <option value="Maintenance">Maintenance</option>
+                <option value="Fuel">Fuel</option>
+                <option value="Insurance">Insurance</option>
+                <option value="Repair">Repair</option>
+                <option value="Cleaning">Cleaning</option>
+                <option value="Toll Reimbursement">Toll Reimbursement</option>
+              </optgroup>
+              <optgroup label="Expense — Company">
+                <option value="Software / Subscriptions">Software / Subscriptions</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Office &amp; Admin">Office &amp; Admin</option>
+                <option value="Banking &amp; Fees">Banking &amp; Fees</option>
+                <option value="Tax &amp; Accounting">Tax &amp; Accounting</option>
+                <option value="Other">Other</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Payment Method</label>
+            <select id="tx-method">
+              <option value="cash">Cash</option>
+              <option value="stripe">Card (Stripe)</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Amount ($) *</label>
+            <input type="number" id="tx-amount" placeholder="0.00" step="0.01" min="0.01" required />
+          </div>
+          <div class="form-group">
+            <label>Vehicle (optional)</label>
+            <select id="tx-car">
+              <option value="">Company / General</option>
+              <!-- populated by JS -->
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Description</label>
+            <input type="text" id="tx-description" placeholder="e.g. Cash payment from John, fuel receipt…" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('transaction-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Invite User -->
+  <div class="modal" id="invite-modal">
+    <div class="modal-box" style="max-width:440px;">
+      <div class="modal-header">
+        <h3>Invite Team Member</h3>
+        <button class="modal-close" onclick="closeModal('invite-modal')" aria-label="Close">✕</button>
+      </div>
+      <form id="invite-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Full Name</label>
+            <input type="text" id="inv-name" placeholder="e.g. Maria Garcia" />
+          </div>
+          <div class="form-group full">
+            <label>Email Address *</label>
+            <input type="email" id="inv-email" required placeholder="staff@epuredrive.com" />
+          </div>
+          <div class="form-group full">
+            <label>Role *</label>
+            <select id="inv-role" class="form-control" required>
+              <option value="staff">Staff — Manage cars &amp; reservations</option>
+              <option value="finance">Finance — Reports &amp; financials (read-only)</option>
+              <option value="admin">Admin — Full access</option>
+            </select>
+          </div>
+        </div>
+        <p style="font-size:0.75rem;color:var(--muted);margin-top:0.75rem;">
+          An invitation email will be sent. The user will click the link to set their own password.
+        </p>
+        <div class="msg error" id="invite-error" style="display:none;margin-top:0.75rem;"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('invite-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="invite-submit-btn">Send Invitation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Add / Edit Reservation -->
+  <div class="modal" id="reservation-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-title">New Reservation</h3>
+        <button class="modal-close" onclick="closeModal('reservation-modal')" aria-label="Close">✕</button>
+      </div>
+      <form id="reservation-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Vehicle</label>
+            <select id="f-car" required>
+              <option value="">Select vehicle…</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Customer Name</label>
+            <input type="text" id="f-name" placeholder="John Smith" required />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="f-email" placeholder="john@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" id="f-phone" placeholder="(305) 555-0000" />
+          </div>
+          <div class="form-group">
+            <label>Pickup Date</label>
+            <input type="date" id="f-pickup" required />
+          </div>
+          <div class="form-group">
+            <label>Pickup Time</label>
+            <input type="time" id="f-pickup-time" value="10:00" required />
+          </div>
+          <div class="form-group">
+            <label>Return Date</label>
+            <input type="date" id="f-return" required />
+          </div>
+          <div class="form-group">
+            <label>Return Time</label>
+            <input type="time" id="f-return-time" value="10:00" required />
+          </div>
+          <div class="form-group">
+            <label>Pickup Location</label>
+            <select id="f-location">
+              <option value="Aventura">Aventura</option>
+              <option value="MIA Airport">MIA Airport</option>
+              <option value="FLL Airport">FLL Airport</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Total Amount ($)</label>
+            <input type="number" id="f-amount" placeholder="Auto-calculated" step="0.01" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="f-status">
+              <option value="pending">Pending</option>
+              <option value="confirmed" selected>Confirmed</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Source</label>
+            <select id="f-source">
+              <option value="manual">Manual</option>
+              <option value="admin">Admin</option>
+              <option value="turo">Turo</option>
+              <option value="web">Web</option>
+              <option value="ical">iCal</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Notes</label>
+            <textarea id="f-notes" placeholder="Any additional notes…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('reservation-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Reservation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Block Dates -->
+  <div class="modal" id="block-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Block Dates</h3>
+        <button class="modal-close" onclick="closeModal('block-modal')" aria-label="Close">✕</button>
+      </div>
+      <form id="block-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Vehicle</label>
+            <select id="b-car" required>
+              <option value="all">All Vehicles</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" id="b-start" required />
+          </div>
+          <div class="form-group">
+            <label>End Date</label>
+            <input type="date" id="b-end" required />
+          </div>
+          <div class="form-group full">
+            <label>Reason</label>
+            <select id="b-reason">
+              <option value="Maintenance">Maintenance</option>
+              <option value="Personal Use">Personal Use</option>
+              <option value="Cleaning">Cleaning</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('block-modal')">Cancel</button>
+          <button type="submit" class="btn btn-danger">Block These Dates</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Reservation Detail -->
+  <div class="modal" id="detail-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Reservation Details</h3>
+        <button class="modal-close" onclick="closeModal('detail-modal')" aria-label="Close">✕</button>
+      </div>
+      <div id="detail-content"></div>
+      <div class="modal-footer" id="detail-actions"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: Customer -->
+  <div class="modal" id="customer-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="customer-modal-title">New Customer</h3>
+        <button class="modal-close" onclick="closeModal('customer-modal')" aria-label="Close">✕</button>
+      </div>
+      <form id="customer-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Full Name</label>
+            <input type="text" id="cust-name" placeholder="John Smith" required />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="cust-email" placeholder="john@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" id="cust-phone" placeholder="(305) 555-0000" />
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <input type="text" id="cust-address" placeholder="123 Main St, Miami FL" />
+          </div>
+          <div class="form-group full">
+            <label>Notes</label>
+            <textarea id="cust-notes" placeholder="Any relevant notes…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('customer-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Customer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Edit Car Details -->
+  <div class="modal" id="car-modal">
+    <div class="modal-box wide">
+      <div class="modal-header">
+        <h3 id="car-modal-title">Edit Vehicle Details</h3>
+        <button class="modal-close" onclick="closeModal('car-modal')" aria-label="Close">✕</button>
+      </div>
+      <form id="car-form">
+
+        <!-- ── INTERNAL DETAILS ── -->
+        <p style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;color:var(--muted);text-transform:uppercase;margin-bottom:0.75rem;">Internal Details</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Make</label>
+            <input type="text" id="car-make" placeholder="Audi" />
+          </div>
+          <div class="form-group">
+            <label>Model</label>
+            <input type="text" id="car-model" placeholder="Q3" />
+          </div>
+          <div class="form-group">
+            <label>Year</label>
+            <input type="number" id="car-year" placeholder="2023" min="2000" max="2030" />
+          </div>
+          <div class="form-group">
+            <label>Color</label>
+            <input type="text" id="car-color" placeholder="Glacier White" />
+          </div>
+          <div class="form-group">
+            <label>License Plate</label>
+            <input type="text" id="car-plate" placeholder="ABC 1234" />
+          </div>
+          <div class="form-group full">
+            <label>VIN</label>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <input type="text" id="car-vin" placeholder="1HGBH41JXMN109186" style="flex:1;" />
+              <button type="button" id="decode-vin-btn" class="btn btn-outline" style="white-space:nowrap;font-size:0.8rem;padding:7px 14px;" onclick="decodeVin()">🔍 Decode VIN</button>
+            </div>
+            <p style="font-size:0.72rem;color:var(--muted);margin-top:4px;">Auto-fills Make, Model, Year, Transmission, Seats, HP</p>
+          </div>
+          <div class="form-group">
+            <label>Current Mileage</label>
+            <input type="number" id="car-mileage" placeholder="15000" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Daily Rate ($)</label>
+            <input type="number" id="car-rate" placeholder="120" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Insurance Expiry</label>
+            <input type="date" id="car-insurance" />
+          </div>
+          <div class="form-group">
+            <label>Registration Expiry</label>
+            <input type="date" id="car-registration" />
+          </div>
+          <div class="form-group full">
+            <label>Notes</label>
+            <textarea id="car-notes" placeholder="Any notes about the vehicle…"></textarea>
+          </div>
+        </div>
+
+        <!-- ── PUBLIC DISPLAY ── -->
+        <p style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;color:var(--muted);text-transform:uppercase;margin:1.5rem 0 0.75rem;padding-top:1.25rem;border-top:1px solid var(--border);">Public Display (shown to customers)</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Display Model Name</label>
+            <input type="text" id="car-model-full" placeholder="Q3 2.0 FWD" />
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="car-category">
+              <option value="suv">SUV</option>
+              <option value="sedan">Sedan</option>
+              <option value="sports">Sports</option>
+              <option value="convertible">Convertible</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Badge (optional)</label>
+            <input type="text" id="car-badge" placeholder="Popular, Premium, New…" />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="car-status">
+              <option value="available">Available</option>
+              <option value="unavailable">Hidden / Unavailable</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Seats</label>
+            <input type="number" id="car-seats" placeholder="5" min="1" max="12" />
+          </div>
+          <div class="form-group">
+            <label>Transmission</label>
+            <input type="text" id="car-transmission" placeholder="Auto, 8-Speed, Tiptronic…" />
+          </div>
+          <div class="form-group">
+            <label>Horsepower</label>
+            <input type="text" id="car-hp" placeholder="200 HP" />
+          </div>
+          <div class="form-group full">
+            <label>Description (shown to customers)</label>
+            <textarea id="car-description" rows="3" placeholder="Describe the car for your customers…"></textarea>
+          </div>
+          <div class="form-group full">
+            <label>Features (one per line)</label>
+            <textarea id="car-features" rows="4" placeholder="Leather Interior&#10;Panoramic Sunroof&#10;Apple CarPlay&#10;Bluetooth Audio"></textarea>
+          </div>
+
+          <!-- Main photo -->
+          <div class="form-group full">
+            <label>Main Photo</label>
+            <div id="car-img-preview" style="margin-bottom:0.5rem;"></div>
+            <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+              <input type="file" id="car-img-file" accept="image/*" style="display:none" onchange="uploadCarMainImage(this)" />
+              <button type="button" class="btn btn-outline" style="font-size:0.8rem;padding:6px 14px;" onclick="document.getElementById('car-img-file').click()">
+                ⬆ Upload Photo
+              </button>
+              <span style="color:var(--muted);font-size:0.8rem;">or paste URL:</span>
+              <input type="text" id="car-image-url" placeholder="https://… or assets/images/…" style="flex:1;min-width:200px;" oninput="previewMainImage(this.value)" />
+            </div>
+          </div>
+
+          <!-- Gallery -->
+          <div class="form-group full">
+            <label>Gallery Photos (one URL per line)</label>
+            <textarea id="car-gallery" rows="4" placeholder="https://…&#10;assets/images/…&#10;https://…" oninput="renderGalleryPreview(this.value.split('\n').filter(Boolean))"></textarea>
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem;">
+              <input type="file" id="car-gallery-files" accept="image/*" multiple style="display:none" onchange="uploadCarGalleryImages(this)" />
+              <button type="button" class="btn btn-outline" style="font-size:0.8rem;padding:6px 14px;" onclick="document.getElementById('car-gallery-files').click()">
+                ⬆ Upload Gallery Photos
+              </button>
+              <span id="gallery-upload-status" style="font-size:0.78rem;color:var(--muted);"></span>
+            </div>
+            <div id="car-gallery-preview" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('car-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Vehicle</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Add / Edit Service -->
+  <div class="modal" id="service-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="service-modal-title">Add Service Record</h3>
+        <button class="modal-close" onclick="closeModal('service-modal')" aria-label="Close">✕</button>
+      </div>
+      <form id="service-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Vehicle</label>
+            <select id="svc-car" required>
+              <option value="">Select vehicle…</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="svc-date" required />
+          </div>
+          <div class="form-group">
+            <label>Service Type</label>
+            <select id="svc-type">
+              <option>Oil Change</option>
+              <option>Tire Rotation</option>
+              <option>Brake Service</option>
+              <option>Detailing</option>
+              <option>Inspection</option>
+              <option>Repair</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Mileage at Service</label>
+            <input type="number" id="svc-mileage" placeholder="95000" min="0" oninput="calcNextMileage()" />
+          </div>
+          <div class="form-group">
+            <label>Cost ($)</label>
+            <input type="number" id="svc-cost" placeholder="0.00" step="0.01" min="0" />
+          </div>
+          <div class="form-group" id="svc-interval-group">
+            <label>Interval (mi) <span style="font-size:0.7rem;color:var(--muted);font-weight:400;">— miles until next service</span></label>
+            <input type="number" id="svc-interval" placeholder="e.g. 5000" min="0" step="500" oninput="calcNextMileage()" />
+          </div>
+          <div class="form-group" id="svc-next-mileage-group">
+            <label>Next Service at (mi) <span style="font-size:0.7rem;color:var(--muted);font-weight:400;">— auto-calculated</span></label>
+            <input type="number" id="svc-next-mileage" placeholder="100000" min="0" />
+          </div>
+          <div class="form-group full">
+            <label>Provider / Shop</label>
+            <input type="text" id="svc-provider" placeholder="AutoNation, Jiffy Lube…" />
+          </div>
+          <div class="form-group">
+            <label>Next Service Due <span style="font-size:0.7rem;color:var(--muted);font-weight:400;">— by date (optional)</span></label>
+            <input type="date" id="svc-next" />
+          </div>
+          <div class="form-group full">
+            <label>Notes</label>
+            <textarea id="svc-notes" placeholder="Details about the service…" style="min-height:60px;"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('service-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Consignment -->
+  <div class="modal" id="consignment-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="consignment-modal-title">New Consignment</h3>
+        <button class="modal-close" onclick="closeModal('consignment-modal')" aria-label="Close">✕</button>
+      </div>
+      <form id="consignment-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Vehicle</label>
+            <select id="con-car" required>
+              <option value="">Select vehicle…</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Owner Name</label>
+            <input type="text" id="con-owner" placeholder="John Smith" required />
+          </div>
+          <div class="form-group">
+            <label>Owner Email</label>
+            <input type="email" id="con-email" placeholder="john@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Owner Phone</label>
+            <input type="tel" id="con-phone" placeholder="(305) 555-0000" />
+          </div>
+          <div class="form-group">
+            <label>Owner Revenue % (owner keeps)</label>
+            <input type="number" id="con-pct" value="70" min="0" max="100" step="0.5" required />
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;">
+            <div style="width:100%;padding:0.65rem 0.9rem;background:var(--surface-3);border-radius:8px;font-size:0.85rem;color:var(--muted);">
+              éPure keeps: <strong id="con-epure-pct" style="color:var(--accent);">30%</strong>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Contract Start</label>
+            <input type="date" id="con-start" />
+          </div>
+          <div class="form-group">
+            <label>Contract End</label>
+            <input type="date" id="con-end" />
+          </div>
+          <div class="form-group full">
+            <label>Notes</label>
+            <textarea id="con-notes" placeholder="Contract terms, special conditions…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('consignment-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Consignment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Expense -->
+  <div class="modal" id="expense-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="expense-modal-title">Add Expense</h3>
+        <button class="modal-close" onclick="closeModal('expense-modal')" aria-label="Close">✕</button>
+      </div>
+      <form id="expense-form">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Vehicle <span style="color:var(--muted);font-weight:400;">(leave blank for company expenses)</span></label>
+            <select id="exp-car">
+              <option value="">— Company / General —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="exp-date" required />
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="exp-cat">
+              <optgroup label="Vehicle">
+                <option>Maintenance</option>
+                <option>Cleaning</option>
+                <option>Fuel</option>
+                <option>Insurance</option>
+                <option>Toll Reimbursement</option>
+                <option>Repair</option>
+              </optgroup>
+              <optgroup label="Company">
+                <option>Software / Subscriptions</option>
+                <option>Marketing</option>
+                <option>Office &amp; Admin</option>
+                <option>Banking &amp; Fees</option>
+                <option>Tax &amp; Accounting</option>
+                <option>Other</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Amount ($)</label>
+            <input type="number" id="exp-amount" placeholder="0.00" step="0.01" min="0" required />
+          </div>
+          <div class="form-group full">
+            <label>Description</label>
+            <textarea id="exp-desc" placeholder="Oil change, tire rotation…" style="min-height:60px;"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('expense-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="js/dashboard.js?v=20260324f"></script>
+  <script>
+    // Theme toggle Logic
+    const themeBtn = document.getElementById('theme-btn');
+    if (localStorage.getItem('adminTheme') === 'dark') {
+      document.body.classList.add('dark-mode');
+    }
+    
+    let trendChart, distChart;
+
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      localStorage.setItem('adminTheme', isDark ? 'dark' : 'light');
+      const newColor = isDark ? '#f0f0f0' : '#111827';
+      Chart.defaults.color = newColor;
+      if (window._trendChart) {
+        window._trendChart.options.scales.x.ticks.color = newColor;
+        window._trendChart.options.scales.y.ticks.color = newColor;
+        window._trendChart.update();
+      }
+      if (window._distChart) window._distChart.update();
+    });
+
+    // Init charts (canvases are in tab-reports, hidden but in DOM)
+    document.addEventListener("DOMContentLoaded", () => {
+      Chart.defaults.color = document.body.classList.contains('dark-mode') ? '#f0f0f0' : '#111827';
+      Chart.defaults.font.family = 'Outfit';
+
+      window._trendChart = new Chart(document.getElementById('trendChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: ['—', '—', '—', '—', '—', '—'],
+          datasets: [{ label: 'Revenue', data: [0,0,0,0,0,0], backgroundColor: '#111111', borderRadius: 6 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,0.1)' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+
+      window._distChart = new Chart(document.getElementById('distChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: [],
+          datasets: [{ data: [], backgroundColor: [], borderWidth: 0, cutout: '75%' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    });
+  </script>
+
+  <!-- Onboarding Modal — shown on first login when no tenant profile exists -->
+  <div id="onboarding-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;overflow-y:auto;padding:1.5rem;">
+
+    <!-- Step 1: Company Setup -->
+    <div id="onboard-step-1" style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem;width:100%;max-width:420px;text-align:center;margin:auto;">
+      <div style="font-size:2rem;margin-bottom:0.75rem;">🚗</div>
+      <h2 style="font-size:1.3rem;font-weight:600;margin-bottom:0.5rem;">Welcome to éPure Drive</h2>
+      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:1.75rem;">Let's set up your fleet. Enter your company or fleet name to get started.</p>
+      <div style="text-align:left;margin-bottom:1.25rem;">
+        <label style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:0.4rem;">Fleet / Company Name</label>
+        <input id="onboard-company" type="text" placeholder="e.g. Sunset Rentals" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;color:var(--text);font-family:inherit;font-size:0.95rem;outline:none;" />
+      </div>
+      <div style="text-align:left;margin-bottom:1.75rem;">
+        <label style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:0.4rem;">Your Name</label>
+        <input id="onboard-name" type="text" placeholder="Your full name" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;color:var(--text);font-family:inherit;font-size:0.95rem;outline:none;" />
+      </div>
+      <button id="onboard-btn" style="width:100%;padding:0.875rem;background:var(--accent);color:var(--btn-text);border:none;border-radius:10px;font-family:inherit;font-size:0.95rem;font-weight:600;cursor:pointer;">Get Started →</button>
+      <div id="onboard-error" style="color:#f87171;font-size:0.82rem;margin-top:0.75rem;display:none;"></div>
+    </div>
+
+    <!-- Step 2: Brand Setup (new) -->
+    <div id="onboard-step-brand" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem;width:100%;max-width:420px;text-align:center;margin:auto;">
+      <div style="font-size:2rem;margin-bottom:0.75rem;">🎨</div>
+      <h2 style="font-size:1.2rem;font-weight:600;margin-bottom:0.5rem;">Brand Your Fleet</h2>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem;">Customize how customers see your fleet page. You can change these later in Brand Settings.</p>
+      <div style="text-align:left;margin-bottom:1rem;">
+        <label style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:0.4rem;">Logo (optional)</label>
+        <input id="onboard-logo" type="file" accept="image/*" style="font-size:0.82rem;" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;text-align:left;margin-bottom:1.5rem;">
+        <div>
+          <label style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:0.4rem;">Primary Color</label>
+          <input id="onboard-primary-color" type="color" value="#000000" style="width:100%;height:38px;border:1px solid var(--border);border-radius:8px;cursor:pointer;" />
+        </div>
+        <div>
+          <label style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:0.4rem;">Accent Color</label>
+          <input id="onboard-accent-color" type="color" value="#3B82F6" style="width:100%;height:38px;border:1px solid var(--border);border-radius:8px;cursor:pointer;" />
+        </div>
+      </div>
+      <button id="onboard-brand-btn" style="width:100%;padding:0.875rem;background:var(--accent);color:var(--btn-text);border:none;border-radius:10px;font-family:inherit;font-size:0.95rem;font-weight:600;cursor:pointer;">Save & Continue →</button>
+      <button onclick="skipOnboardBrand()" style="width:100%;padding:0.6rem;background:none;border:none;color:var(--muted);font-family:inherit;font-size:0.82rem;cursor:pointer;margin-top:0.5rem;">Skip for now</button>
+    </div>
+
+    <!-- Step 3: Workflow Guide (shown after brand setup) -->
+    <div id="onboard-step-2" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem 2.5rem;width:100%;max-width:540px;margin:auto;">
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">✅</div>
+        <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:0.25rem;">Your fleet is ready!</h2>
+        <p style="font-size:0.85rem;color:var(--muted);">Here's how the platform works for you and your customers.</p>
+      </div>
+
+      <!-- Your Public Page -->
+      <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;">
+        <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--muted);margin-bottom:0.4rem;">🌐 Your Public Fleet Page</div>
+        <a id="onboard-public-link" href="#" target="_blank" style="font-size:0.82rem;font-weight:600;color:var(--accent);word-break:break-all;text-decoration:none;">—</a>
+        <div style="margin-top:0.6rem;display:flex;gap:0.5rem;">
+          <button onclick="copyOnboardUrl()" style="padding:0.35rem 0.9rem;background:var(--accent);color:var(--btn-text);border:none;border-radius:7px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;">Copy Link</button>
+          <span style="font-size:0.75rem;color:var(--muted);align-self:center;">Share this with your customers to browse your cars.</span>
+        </div>
+      </div>
+
+      <!-- Operator Workflow -->
+      <div style="margin-bottom:1rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.6rem;">👤 Operator Workflow</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+          <div style="display:flex;align-items:flex-start;gap:0.75rem;font-size:0.82rem;">
+            <span style="background:#111c2d;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">1</span>
+            <span><strong>Add your cars</strong> — Go to <em>Fleet</em> tab, click "Add Car" and fill in the details.</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:0.75rem;font-size:0.82rem;">
+            <span style="background:#111c2d;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">2</span>
+            <span><strong>Share your public page</strong> — Copy the link above and send it to customers.</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:0.75rem;font-size:0.82rem;">
+            <span style="background:#111c2d;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">3</span>
+            <span><strong>Manage bookings</strong> — Confirm, track, and complete rentals from the <em>Bookings</em> tab.</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:0.75rem;font-size:0.82rem;">
+            <span style="background:#111c2d;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">4</span>
+            <span><strong>Invite your team</strong> — Add staff or finance members from <em>Staff & Users</em> (Pro).</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Workflow -->
+      <div style="margin-bottom:1.5rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.6rem;">🧑 Customer Workflow</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+          <div style="display:flex;align-items:flex-start;gap:0.75rem;font-size:0.82rem;">
+            <span style="background:#006c49;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">1</span>
+            <span><strong>Browse your fleet</strong> — Customer visits your public link and sees your available cars.</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:0.75rem;font-size:0.82rem;">
+            <span style="background:#006c49;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">2</span>
+            <span><strong>Select a car</strong> — They pick dates, pickup location, and add-ons.</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:0.75rem;font-size:0.82rem;">
+            <span style="background:#006c49;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">3</span>
+            <span><strong>Book & pay</strong> — Checkout via Stripe; booking is confirmed automatically.</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:0.75rem;font-size:0.82rem;">
+            <span style="background:#006c49;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">4</span>
+            <span><strong>Sign rental agreement</strong> — Customer receives and signs the agreement before pickup.</span>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="closeOnboarding()" style="width:100%;padding:0.875rem;background:var(--accent);color:var(--btn-text);border:none;border-radius:10px;font-family:inherit;font-size:0.95rem;font-weight:600;cursor:pointer;">Go to Dashboard →</button>
+    </div>
+
+  </div>
+<script src="js/lang.js"></script>
+</body>
+</html>
