@@ -5,6 +5,7 @@
 
 const SUPABASE_URL = "https://brwzjwbpguiignrxvjdc.supabase.co";
 const SUPABASE_ANON = "sb_publishable_krEuIpNhJVcADIUyBXYy9g_fiXrXzV9";
+const DEFAULT_TENANT_ID = "8be5b928-ca59-4b29-a34b-75b18c9273db";
 
 const CARS = [
   {
@@ -355,6 +356,11 @@ async function syncDatabase() {
       const _host = window.location.hostname;
       const _match = _host.match(/^([a-z0-9][a-z0-9-]*[a-z0-9])\.epuredrive\.com$/);
       if (_match && !['www', 'admin', 'app', 'api'].includes(_match[1])) tenantSlug = _match[1];
+    }
+
+    if (!tenantSlug) {
+      // No subdomain/slug — default to the main tenant so we never show cross-tenant cars
+      carsEndpoint += `&tenant_id=eq.${DEFAULT_TENANT_ID}`;
     }
 
     if (tenantSlug) {
