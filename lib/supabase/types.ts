@@ -28,3 +28,71 @@ export interface Car {
   tenant_id: string | null
   status: string | null
 }
+
+export interface Reservation {
+  id: number
+  car_id: number | null
+  customer_name: string | null
+  customer_email: string | null
+  customer_phone: string | null
+  pickup_date: string | null
+  pickup_time: string | null
+  return_date: string | null
+  return_time: string | null
+  pickup_location: string | null
+  total_amount: number | null
+  status: string | null
+  source: string | null
+  notes: string | null
+  tenant_id: string | null
+  created_at?: string
+}
+
+export interface Customer {
+  id: number
+  name: string
+  email: string | null
+  phone: string | null
+  tenant_id: string | null
+  created_at?: string
+}
+
+export interface Consignment {
+  id: number
+  car_id: number | null
+  owner_name: string | null
+  owner_email: string | null
+  owner_phone: string | null
+  owner_percentage: number | null
+  contract_start: string | null
+  contract_end: string | null
+  notes: string | null
+  tenant_id: string | null
+}
+
+export interface Transaction {
+  id: number
+  transaction_date: string | null
+  category: string | null
+  amount: number | null
+  description: string | null
+  car_id: number | null
+  tenant_id: string | null
+}
+
+export interface CarService {
+  id: number
+  car_id: number | null
+  service_date: string | null
+  description: string | null
+  amount: number | null
+  tenant_id: string | null
+}
+
+export interface Profile {
+  id: string
+  full_name: string | null
+  role: string | null
+  tenant_id: string | null
+  created_at?: string
+}
