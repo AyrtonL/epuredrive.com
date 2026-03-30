@@ -1,11 +1,12 @@
 [build]
-  publish = "."
-  functions = "netlify/functions"
-  edge_functions = "netlify/edge-functions"
+  command = "npm run build"
+  publish = ".next"
 
-[[edge_functions]]
-  path = "/*"
-  function = "subdomain-rewrite"
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  directory = "netlify/functions"
 
 [[headers]]
   for = "/*"
