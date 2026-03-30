@@ -22,6 +22,7 @@ Thumbs.db
 # Next.js
 .next/
 out/
+*.tsbuildinfo
 
 # Superpowers
 .superpowers/
