@@ -18,3 +18,10 @@ Thumbs.db
 # Netlify build cache
 .netlify/
 .worktrees/
+
+# Next.js
+.next/
+out/
+
+# Superpowers
+.superpowers/
