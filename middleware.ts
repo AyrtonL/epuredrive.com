@@ -9,8 +9,8 @@ export function middleware(request: NextRequest) {
 
   if (slug) {
     const url = request.nextUrl.clone()
-    // Rewrite /{anything} on subdomain → /_sites/{slug}/{anything}
-    url.pathname = `/_sites/${slug}${url.pathname === '/' ? '' : url.pathname}`
+    // Rewrite /{anything} on subdomain → /sites/{slug}/{anything}
+    url.pathname = `/sites/${slug}${url.pathname === '/' ? '' : url.pathname}`
     return NextResponse.rewrite(url)
   }
 

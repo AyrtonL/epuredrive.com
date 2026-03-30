@@ -1,4 +1,4 @@
-// app/_sites/[slug]/page.tsx
+// app/sites/[slug]/page.tsx
 import { createClient } from '@/lib/supabase/server'
 import CarCard from '@/components/CarCard'
 import type { Car, Tenant } from '@/lib/supabase/types'

@@ -1,4 +1,4 @@
-// app/_sites/[slug]/[carId]/page.tsx
+// app/sites/[slug]/[carId]/page.tsx
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Car, Tenant } from '@/lib/supabase/types'

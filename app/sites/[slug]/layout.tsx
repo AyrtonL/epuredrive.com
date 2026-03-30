@@ -1,4 +1,4 @@
-// app/_sites/[slug]/layout.tsx
+// app/sites/[slug]/layout.tsx
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Tenant } from '@/lib/supabase/types'
