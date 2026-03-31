@@ -1,0 +1,299 @@
+============================================================
+  ePure Drive - REPORTE DIARIO DE PROYECTO
+  Fecha: 30 de marzo de 2026
+  Dias para go-live: 17 (objetivo: 16 abril)
+  Generado automaticamente por Claude PM Agent
+============================================================
+
+
+1. RESUMEN DEL ESTADO
+---------------------
+
+PROGRESO REAL VS OBJETIVO:
+La aplicacion sigue viva en https://epuredrive.com. Supabase: ACTIVE_HEALTHY.
+
+El hallazgo mas importante de hoy: el Turo email poller esta funcionando en
+produccion. Se importaron 9 reservas nuevas y 8 clientes nuevos en las ultimas
+24 horas, todas con source="turo". Esto confirma que la integracion Gmail/Turo
+es funcional y esta corriendo automaticamente. Es el avance tecnico mas
+relevante desde el inicio del proyecto.
+
+Estado en numeros (vs ayer):
+  Tenants:           2 | 0 pagadores (sin cambio)
+  Autos:             4 (-1 vs ayer — Toyota Camry del tenant "test" fue eliminado)
+  Reservas:          24 (+5 vs ayer | 9 nuevas en ultimas 24h)
+  Clientes:          27 (+8 vs ayer | 8 nuevos en ultimas 24h)
+  Reservas por fuente: turo: 12 | admin: 12 | direct: 0
+  Transacciones:     0 (sin cambio)
+  Stripe pagos:      0 reservas con stripe_payment_id (sin cambio)
+
+Ultimas reservas recientes (todas Turo, todas reales):
+  Gil         | VW Atlas     | $549  | 03 al 11 abril
+  Tia-soa     | Porsche Cayenne | $536 | 29 mar al 01 abr
+  Olivia      | Audi Q3      | $145.80 | 03 al 06 abril
+  Danez       | VW Atlas     | $170  | completada
+  Fede Duro   | Audi Q3      | $80   | admin (manual)
+
+Total en reservas confirmadas activas: aproximadamente $1,400+ en valor de flota.
+
+Progreso estimado hacia go-live: 75-80%.
+El backend de sincronizacion esta probado. El bloqueo restante es 100% comercial:
+Stripe, DNS y email transaccional. No hay excusas tecnicas para no avanzar en estos.
+
+CAMBIOS DETECTADOS DESDE EL REPORTE ANTERIOR (29 marzo):
++ 9 reservas nuevas importadas automaticamente desde Turo (poll-turo-emails confirmado)
++ 8 clientes nuevos creados automaticamente
++ Turo email poller (poll-turo-emails.js) verificado como activo en produccion
++ 1 reserva manual creada desde admin (Fede Duro, Audi Q3, $80)
+- Toyota Camry del tenant "test" eliminado (limpieza de datos de prueba)
+
+RIESGOS ACTUALES:
+- CRITICO: Stripe sigue en 0. Dia 11 del proyecto. Sin cobro = sin negocio.
+- CRITICO: DNS wildcard no configurado. Sin subdominios, el multi-tenancy
+  no funciona para ningun cliente real que se registre.
+- CRITICO: 0 reservas directas (source="direct"). El widget publico de
+  reservas no esta siendo usado o no funciona end-to-end para clientes finales.
+- ALTO: 17 dias para go-live. Si Stripe y DNS no se resuelven esta semana,
+  el 16 abril sera un beta gratuito, no un lanzamiento comercial.
+- MEDIO: Todas las reservas activas son de Turo — no hay validacion del
+  flujo directo cliente → reserva → pago en epuredrive.com.
+- MEDIO: Sin email transaccional. Los clientes de Turo que se importan
+  automaticamente no reciben ninguna comunicacion desde la plataforma.
+
+
+2. TAREAS PRIORITARIAS PARA HOY
+---------------------------------
+(Ordenadas por impacto — alta a baja. Maximo 8.)
+
+1. Crear el precio Pro a $149/mes en stripe.com/dashboard, copiar el price_id
+   y actualizar admin/js/dashboard.js (linea ~46) y
+   netlify/functions/stripe-webhook.js (linea 11).
+   Sin esto, el SaaS no puede cobrar. Tiempo estimado: 45 minutos.
+
+2. Ejecutar checkout de prueba completo con tarjeta Stripe test 4242 4242 4242 4242.
+   Verificar que el webhook actualiza stripe_customer_id en la tabla tenants.
+   Este es el test comercial mas importante del proyecto.
+   Tiempo estimado: 2 horas.
+
+3. Configurar DNS wildcard: agregar registro CNAME *.epuredrive.com apuntando
+   a epuredrivecom.netlify.app en tu proveedor de DNS.
+   Luego agregar *.epuredrive.com en Netlify Domain Management.
+   Sin esto ningun tenant real puede tener su URL propia.
+   Tiempo estimado: 1 hora.
+
+4. Probar el flujo directo de reserva publica: abrir
+   ayrtonn-lg-1774229361678.epuredrive.com (o test equivalente), elegir
+   un auto, completar el formulario de reserva. Verificar que crea registro
+   con source="direct" en la tabla reservations.
+   Es el flujo que los clientes finales van a usar. Tiempo estimado: 30 minutos.
+
+5. Integrar Resend para email transaccional: crear cuenta en resend.com,
+   agregar RESEND_API_KEY en Netlify env vars, y conectar al menos el
+   evento "nueva reserva" para enviar confirmacion al cliente.
+   Free tier: 3,000 emails/mes. Tiempo estimado: 3-4 horas.
+
+6. Verificar que STRIPE_WEBHOOK_SECRET esta configurada en Netlify → Site
+   Configuration → Environment Variables. Sin esta variable el webhook no
+   valida ningun evento y silenciosamente descarta todos los pagos.
+
+7. Revisar Netlify → Functions → Logs para poll-turo-emails y sync-ical-cron.
+   Confirmar que no generan errores 500 ni timeouts. Ya importaron datos — ahora
+   hay que asegurar que sigan corriendo sin fallar.
+
+8. Contactar a 1 owner de rental conocido (WhatsApp o llamada directa) para
+   invitarle a un acceso beta. Un usuario real en produccion vale mas que
+   cualquier test interno.
+
+
+3. MEJORAS IDENTIFICADAS
+--------------------------
+
+PRODUCTO:
+- El Turo email poller esta probado y funcional en produccion. Esta es la
+  diferenciacion clave del producto frente a soluciones genericas. Comunicarlo
+  como feature principal en la landing page: "Sincroniza tus reservas de Turo
+  automaticamente sin hacer nada."
+- Hay 0 reservas con source="direct". El flujo de reserva publica para clientes
+  finales debe ser testeado hoy. Si no funciona, es un bug critico pre go-live.
+- El tenant "ePure Drive" tiene 4 autos con 24 reservas — hay datos reales
+  suficientes para construir una captura de pantalla del dashboard como material
+  de marketing autentico.
+- Implementar contador de reservas Turo vs directas en el dashboard como
+  metrica de conversion — muestra al owner cuanto negocio viene de cada canal.
+
+MARKETING:
+- Reservas en la DB prueban precios de mercado reales: $549 por 8 dias (VW Atlas),
+  $536 por 3 dias (Porsche Cayenne), $170 por 1 dia (VW Atlas). Usar estos numeros
+  reales en la propuesta de valor: "Gestionamos flotas que generan $X/mes."
+- Crear una pagina de early access simple en epuredrive.com antes del 16 abril.
+  Capturar emails de owners interesados. El go-live con una lista de espera es
+  mejor que lanzar en frio.
+- La combinacion Turo sync + dashboard propio es un angulo de marketing potente:
+  "Deja de revisar la app de Turo — todo llega automaticamente a tu panel."
+
+OPERACION:
+- Definir SLA de respuesta para el go-live: si un owner reporta un bug,
+  comprometerse a resolver en menos de 24 horas. Comunicarlo en el onboarding.
+- Crear un canal de soporte antes del 16 abril: minimo un WhatsApp Business
+  o un email info@epuredrive.com activo.
+- El checklist SAAS_ACTION_ITEMS.txt sigue siendo la guia mas clara de lo que
+  falta. Revisarlo cada mañana hasta el go-live.
+
+
+4. BLOQUEOS Y SOLUCIONES
+--------------------------
+
+BLOQUEO 1: Stripe sin configurar (dia 11, sin cambios)
+- Impacto: El producto no puede generar revenue. Cada dia que pasa es un dia
+  mas de trabajo sin monetizacion posible.
+- Causa probable de la demora: Se priorizaron las integraciones tecnicas
+  (Turo poller, Gmail OAuth) sobre la infraestructura comercial.
+- Solucion: Abrir stripe.com/dashboard ahora. Crear precio recurrente $149/mes.
+  Copiar price_id. Editar los dos archivos. Push a main. Toma menos de 1 hora.
+  No requiere ayuda de ninguna IA — es una accion manual directa.
+- Tiempo maximo aceptable para resolver: HOY.
+
+BLOQUEO 2: DNS wildcard no configurado
+- Impacto: Ninguno de los tenants que se registren tendra URL propia.
+  El multi-tenancy — la feature core del producto — no funciona en produccion.
+- Solucion: Acceder al panel DNS del registrar de epuredrive.com.
+  Agregar: Tipo CNAME | Host: * | Valor: epuredrivecom.netlify.app | TTL: auto.
+  Luego en Netlify → Domain Management → Add domain: *.epuredrive.com.
+  Si SSL wildcard requiere plan pago en Netlify, usar Cloudflare como proxy
+  gratuito con SSL wildcard incluido.
+- Tiempo maximo aceptable para resolver: manana 31 marzo.
+
+BLOQUEO 3: Flujo directo de reserva sin validar (0 registros con source=direct)
+- Impacto: No se sabe si el widget publico de reservas funciona end-to-end.
+  Si un cliente real intenta reservar y falla, se pierde el negocio sin aviso.
+- Solucion: Probar el flujo manualmente hoy. Abrir la fleet page del tenant,
+  seleccionar un auto, completar el formulario, verificar en DB que aparece
+  una reserva nueva con source="direct". Si falla, el bug es critico y bloquea
+  el go-live.
+- Tiempo estimado para probar: 30 minutos.
+
+BLOQUEO 4: Sin email transaccional
+- Impacto: Los 9 clientes importados de Turo no recibieron nada desde la plataforma.
+  Los futuros clientes directos tampoco. Genera desconfianza inmediata.
+- Solucion: Resend.com — setup en menos de 1 hora, free tier 3,000 emails/mes.
+  Priorizar el email de "nueva reserva confirmada" primero.
+  Segundo: email al owner cuando llega una reserva nueva.
+- Tiempo maximo aceptable para resolver: 1 abril.
+
+
+5. CHECKLIST GO-LIVE
+----------------------
+
+CRITICO (sin esto no se puede lanzar):
+[ ] Stripe: Crear precio Pro $149/mes y actualizar price_id en codigo
+[ ] Stripe: Checkout de prueba end-to-end exitoso con stripe_customer_id en DB
+[ ] Stripe: STRIPE_WEBHOOK_SECRET configurada en Netlify env vars
+[ ] Stripe: Webhook procesa checkout.session.completed, subscription.updated, deleted
+[ ] DNS: Registro wildcard *.epuredrive.com CNAME hacia epuredrivecom.netlify.app
+[ ] Netlify: SSL wildcard habilitado para subdominios de tenants
+[ ] Testing: Flujo directo cliente → reserva → DB confirmado (source=direct)
+[ ] Testing: Flujo completo verificado (registro tenant → pago → fleet page → reserva)
+
+IMPORTANTE:
+[ ] Email transaccional (Resend): confirmacion de reserva al cliente
+[ ] Email transaccional: alerta al owner cuando llega reserva nueva
+[ ] Turo email poller: verificar logs en Netlify — sin errores 500
+[ ] iCal sync: verificar que sync-ical-cron no genera errores en produccion
+[ ] Homepage epuredrive.com con pricing visible y CTA de signup claro
+[ ] Supabase Storage: Bucket "tenant-logos" publico creado (verificar si existe)
+[ ] Tabla transactions registrando pagos automaticamente post-Stripe
+[ ] Onboarding de nuevo tenant funcional y testeado
+
+OPCIONAL:
+[ ] Video demo del producto (60-90 segundos) para usar en go-live
+[ ] Pagina de early access / lista de espera en epuredrive.com
+[ ] Al menos 1 cliente beta real con acceso antes del 16 abril
+[ ] Email info@epuredrive.com activo como canal de soporte
+[ ] Analytics basico (Plausible o Google Analytics) desde dia 1
+[ ] Documentacion minima de onboarding para nuevos owners
+
+
+6. FOCO DEL DIA
+-----------------
+
+Hoy Stripe o nada: crear el precio Pro, actualizar los dos archivos, ejecutar
+el primer checkout exitoso — mientras eso no este hecho, todo lo demas es
+construccion sin techo.
+
+
+============================================================
+  DATOS EN VIVO AL MOMENTO DEL REPORTE
+  Fuente: Supabase brwzjwbpguiignrxvjdc | Netlify epuredrivecom
+============================================================
+  DB Status:              ACTIVE_HEALTHY
+  Netlify Deploy:         READY (live en https://epuredrive.com)
+  Dias hasta go-live:     17 (16 abril 2026)
+
+  TENANTS (2 total | 0 pagadores):
+    ePure Drive   | 4 autos | plan: pro | stripe: null | slug: ayrtonn-lg-1774229361678
+    test          | 0 autos | plan: pro | stripe: null | slug: test-1774396633453
+
+  FLOTA Y ACTIVIDAD:
+    Autos totales:          4 (-1 vs ayer — Toyota Camry test eliminado)
+    Reservas totales:       24 (+5 vs ayer)
+    Reservas ultimas 24h:   9 (TODAS via Turo poller — confirmado funcional)
+      - confirmed:          12
+      - completed:          11
+      - otras:              1
+    Por fuente:             turo: 12 | admin: 12 | direct: 0
+    Clientes:               27 (+8 vs ayer | 8 nuevos ultimas 24h)
+    Transacciones:          0
+    Reservas con Stripe:    0
+
+  ULTIMAS RESERVAS (TOP 5):
+    Fede Duro    | Audi Q3         | $80    | admin  | 29 mar (confirmed)
+    Gil          | VW Atlas        | $549   | turo   | 03-11 abr (confirmed)
+    Olivia       | Audi Q3         | $145.80| turo   | 03-06 abr (confirmed)
+    Tia-soa      | Porsche Cayenne | $536   | turo   | 29 mar-01 abr (confirmed)
+    Danez        | VW Atlas        | $170   | turo   | completada
+
+  INTEGRACIONES:
+    Turo email poller:      CONFIRMADO ACTIVO en produccion (9 imports en 24h)
+    Turo iCal feeds:        1 activo
+    Gmail/Turo syncs:       1 configurado
+    iCloud connect:         implementado (sin verificar en produccion)
+    Stripe conectado:       NO (stripe_customer_id null en ambos tenants)
+    Email transaccional:    NO
+
+  FUNCIONES NETLIFY (ultimas modificaciones):
+    poll-turo-emails.js     29 mar 14:42 — ACTIVO, importando reservas Turo
+    sync-ical-cron.js       28 mar 16:59 — activo (verificar logs)
+    gmail-oauth-callback.js 28 mar 18:35 — deployado
+    icloud-connect.js       28 mar 22:03 — deployado
+    stripe-webhook.js       25 mar 21:14 — SIN ACTUALIZAR (price_id pendiente)
+
+  ITEMS CRITICOS GO-LIVE: 8 sin completar (mismos que ayer)
+============================================================
+
+
+NOTA SOBRE AGENTES AI:
+Actualmente usas Claude + Gemini + Codex.
+
+ALTA PRIORIDAD (esta semana):
+- Playwright: Testing automatizado end-to-end del flujo de reservas y pagos.
+  Con 17 dias para go-live y un codebase activo, cada deploy sin tests es
+  riesgo. Setup: npm init playwright@latest | Tiempo: 2-3 horas.
+  Integra nativamente con Claude Code para generar los scripts.
+- Resend (resend.com): No es un agente AI pero es el desbloqueador mas
+  critico despues de Stripe. Free tier = 3,000 emails/mes. Setup: 1 hora.
+
+MEDIA PRIORIDAD (semana 2, post-Stripe):
+- Cursor IDE: Contexto de codebase completo para iterar rapido en funciones
+  de Netlify y el dashboard. Especialmente util con archivos grandes como
+  poll-turo-emails.js (18KB).
+- v0 by Vercel (v0.dev): Para iterar la landing page y la homepage de
+  epuredrive.com rapido, sin escribir CSS manualmente.
+- Sentry (free tier): Monitoreo de errores en produccion. Cuando lleguen
+  tenants reales, necesitas saber si algo falla sin esperar que te avisen.
+
+BAJA PRIORIDAD (post go-live):
+- PostHog (free tier): Analytics de producto desde dia 1. Fundamental para
+  entender donde se pierde el funnel de signup post-lanzamiento.
+- Loops.so o Resend sequences: Onboarding automatizado por email para
+  nuevos tenants. No urgente hasta tener los primeros 3-5 clientes reales.
+============================================================
