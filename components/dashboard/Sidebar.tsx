@@ -3,7 +3,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface NavItem {
   label: string
@@ -65,14 +65,18 @@ function isActive(pathname: string, href: string): boolean {
 
 export default function Sidebar({ email, role }: Props) {
   const pathname = usePathname()
-  const initialOpen = NAV.filter(isGroup).reduce<Record<string, boolean>>(
-    (acc, group) => {
-      acc[group.label] = group.children.some((c) => isActive(pathname, c.href))
-      return acc
-    },
-    {}
-  )
-  const [open, setOpen] = useState<Record<string, boolean>>(initialOpen)
+  const [open, setOpen] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    const initialOpen = NAV.filter(isGroup).reduce<Record<string, boolean>>(
+      (acc, group) => {
+        acc[group.label] = group.children.some((c) => isActive(pathname, c.href))
+        return acc
+      },
+      {}
+    )
+    setOpen(initialOpen)
+  }, [pathname])
 
   const toggle = (label: string) =>
     setOpen((prev) => ({ ...prev, [label]: !prev[label] }))
@@ -82,65 +86,79 @@ export default function Sidebar({ email, role }: Props) {
   if (role === 'finance') hidden.push('Maintenance', 'Integrations', 'Team')
 
   return (
-    <aside className="w-56 bg-[#111] border-r border-white/10 flex flex-col shrink-0 h-full">
-      <div className="h-16 flex items-center px-5 border-b border-white/10">
-        <img src="/assets/logo.png" alt="éPure Drive" className="h-7" />
+    <aside className="w-64 glass z-20 flex flex-col shrink-0 h-full shadow-[4px_0_24px_rgba(0,0,0,0.5)] relative">
+      <div className="h-20 flex items-center justify-center border-b border-surfaceBorder px-6 relative overflow-hidden">
+        {/* Subtle glow behind logo */}
+        <div className="absolute inset-0 bg-hero-glow opacity-40 mix-blend-screen pointer-events-none" />
+        <img src="/assets/logo.png" alt="éPure Drive" className="h-8 relative z-10 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]" />
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto custom-scrollbar">
         {NAV.map((entry) => {
           if (isGroup(entry)) {
             if (hidden.includes(entry.label)) return null
             const isOpen = open[entry.label] ?? false
             return (
-              <div key={entry.label}>
+              <div key={entry.label} className="mb-2">
                 <button
                   onClick={() => toggle(entry.label)}
-                  className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+                  className="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-[13px] font-semibold tracking-wider text-white/50 hover:text-white hover:bg-white/5 transition-all duration-300 uppercase"
                 >
                   <span>{entry.label}</span>
-                  <span className="text-xs">{isOpen ? '▾' : '▸'}</span>
+                  <span className="text-xs transition-transform duration-300" style={{ transform: isOpen ? 'rotate(90deg)' : 'none' }}>▸</span>
                 </button>
-                {isOpen && (
-                  <div className="ml-3 mt-0.5 space-y-0.5">
-                    {entry.children.map((child) => (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
-                          isActive(pathname, child.href)
-                            ? 'bg-white/10 text-white font-medium'
-                            : 'text-white/50 hover:text-white hover:bg-white/5'
-                        }`}
-                      >
-                        {child.label}
-                      </Link>
-                    ))}
+                <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-48 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                  <div className="ml-2 pl-3 border-l-2 border-surfaceBorder space-y-1">
+                    {entry.children.map((child) => {
+                      const active = isActive(pathname, child.href)
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className={`block px-4 py-2 rounded-lg text-sm transition-all duration-300 ${
+                            active
+                              ? 'bg-white/10 text-white font-medium shadow-[inset_3px_0_0_0_#fff]'
+                              : 'text-white/60 hover:text-white hover:bg-white/5 hover:translate-x-1'
+                          }`}
+                        >
+                          {child.label}
+                        </Link>
+                      )
+                    })}
                   </div>
-                )}
+                </div>
               </div>
             )
           }
 
+          const active = isActive(pathname, entry.href)
           return (
             <Link
               key={entry.href}
               href={entry.href}
-              className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
-                isActive(pathname, entry.href)
-                  ? 'bg-white/10 text-white font-medium'
-                  : 'text-white/50 hover:text-white hover:bg-white/5'
+              className={`flex items-center px-4 py-3 rounded-xl text-sm transition-all duration-300 mb-1 ${
+                active
+                  ? 'bg-white/10 text-white font-medium shadow-[inset_3px_0_0_0_#fff]'
+                  : 'text-white/60 hover:text-white hover:bg-white/5 hover:translate-x-1'
               }`}
             >
-              {entry.label}
+              <span className="font-semibold tracking-wide">{entry.label}</span>
             </Link>
           )
         })}
       </nav>
 
-      <div className="px-5 py-4 border-t border-white/10">
-        <p className="text-xs text-white/30 truncate">{email}</p>
-        {role && <p className="text-xs text-white/20 mt-0.5 capitalize">{role}</p>}
+      <div className="p-6 border-t border-surfaceBorder backdrop-blur-md bg-white/[0.02]">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-white/80 font-medium truncate">{email}</p>
+          {role && (
+            <div className="mt-1">
+              <span className="inline-block px-2.5 py-1 text-[10px] font-bold tracking-widest text-primary bg-primary/10 border border-primary/20 rounded-full uppercase">
+                {role}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </aside>
   )
