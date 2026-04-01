@@ -14,6 +14,8 @@ export async function updateTenantBranding(data: {
   brand_name?: string | null
   primary_color?: string | null
   accent_color?: string | null
+  logo_url?: string | null
+  slug?: string | null
 }): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()

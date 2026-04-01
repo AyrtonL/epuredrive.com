@@ -133,6 +133,29 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
     return { status: 'Stable', color: 'text-white/60', advice: 'Performance is sideways. Optimize operations to improve net margins.' }
   }, [byMonth])
 
+  // Parity Ledger: Combine recent reservations and expenses into a single audit trail
+  const recentLedger = useMemo(() => {
+    const combined = [
+      ...filteredAllRes.map(r => ({
+        type: 'BOOKING',
+        date: r.pickup_date,
+        label: `${r.customer_name} — ${cars.find(c => c.id === r.car_id)?.model || 'Car'}`,
+        amount: Number(r.total_amount) || 0,
+        status: r.status,
+        color: 'text-emerald-400'
+      })),
+      ...filteredExp.map(e => ({
+        type: 'EXPENSE',
+        date: e.transaction_date,
+        label: e.description || e.category || 'General Expense',
+        amount: -(Number(e.amount) || 0),
+        status: 'PAID',
+        color: 'text-red-400'
+      }))
+    ]
+    return combined.sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 15)
+  }, [filteredAllRes, filteredExp, cars])
+
   // CSV Export
   function exportCSV() {
     const header = ['Date', 'Customer', 'Email', 'Phone', 'Total', 'Status']
@@ -224,6 +247,64 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
           <div className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-3">Growth Outlook</div>
           <div className={`text-xl font-black tracking-tighter mb-2 ${growthAssessment.color}`}>{growthAssessment.status}</div>
           <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase tracking-tight">{growthAssessment.advice}</p>
+        </div>
+      </div>
+
+      {/* Parity Ledger: Audit Trail */}
+      <div className="glass border border-white/10 rounded-[2.5rem] p-10 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] -mr-32 -mt-32" />
+        <div className="flex items-center justify-between mb-10 relative z-10">
+          <div>
+            <h3 className="text-white font-black italic tracking-tight text-xl uppercase">Daily Ledger Audit</h3>
+            <p className="text-[10px] text-white/20 uppercase tracking-[.3em] font-black mt-1">100% Legacy Parity Mode</p>
+          </div>
+          <div className="flex gap-4">
+             <div className="px-5 py-2.5 rounded-xl border border-white/5 bg-white/5 flex flex-col items-end">
+               <span className="text-[8px] font-black uppercase tracking-widest text-white/20">Operational Margin</span>
+               <span className="text-xs font-black text-white italic">{((netProfit / (totalRevenue || 1)) * 100).toFixed(1)}%</span>
+             </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto relative z-10">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="text-[10px] font-black uppercase tracking-widest text-white/20 border-b border-white/5">
+                <th className="pb-4 px-4">Registry Date</th>
+                <th className="pb-4 px-4">Entity / Transaction</th>
+                <th className="pb-4 px-4">Status / Event</th>
+                <th className="pb-4 px-4 text-right">Credit / Debit</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 font-outfit">
+              {recentLedger.map((item, idx) => (
+                <tr key={idx} className="group hover:bg-white/5 transition-all duration-300">
+                  <td className="py-5 px-4">
+                    <span className="text-[11px] font-black text-white/40 group-hover:text-white/60 transition-colors">{item.date}</span>
+                  </td>
+                  <td className="py-5 px-4">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-primary/50 mb-0.5">{item.type}</span>
+                      <span className="text-xs font-black text-white/80 group-hover:text-white transition-colors uppercase tracking-tight">{item.label}</span>
+                    </div>
+                  </td>
+                  <td className="py-5 px-4">
+                     <span className="px-3 py-1 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black uppercase tracking-widest text-white/40">
+                       {item.status}
+                     </span>
+                  </td>
+                  <td className={`py-5 px-4 text-right font-black italic text-sm ${item.color}`}>
+                     {item.amount >= 0 ? '+' : ''}{fmt(item.amount)}
+                  </td>
+                </tr>
+              ))}
+              {recentLedger.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-20 text-center italic text-white/20 text-sm font-black uppercase tracking-widest">Zero activity detected in current temporal window</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
