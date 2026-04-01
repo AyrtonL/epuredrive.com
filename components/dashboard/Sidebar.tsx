@@ -22,6 +22,7 @@ const NAV: NavEntry[] = [
   {
     label: 'Operations',
     children: [
+      { label: 'Calendar', href: '/dashboard/calendar' },
       { label: 'Bookings', href: '/dashboard/bookings' },
       { label: 'Fleet', href: '/dashboard/fleet' },
       { label: 'Maintenance', href: '/dashboard/maintenance' },
