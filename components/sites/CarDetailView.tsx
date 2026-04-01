@@ -104,19 +104,6 @@ export default function CarDetailView({ car }: Props) {
           <p className="text-white/60 text-sm leading-relaxed mb-6">{car.description}</p>
         )}
 
-        <div className="flex items-baseline gap-2 mb-6">
-          <span className="text-4xl font-bold text-white">
-            ${car.daily_rate ? Number(car.daily_rate).toFixed(0) : '—'}
-          </span>
-          <span className="text-white/40">/ day</span>
-        </div>
-
-        <a
-          href={`/reservation.html?car=${car.id}`}
-          className="block w-full text-center bg-white text-black font-semibold py-4 rounded-xl hover:bg-white/90 transition-colors"
-        >
-          Book this car →
-        </a>
       </div>
     </div>
   )

@@ -2,6 +2,8 @@
 import { useState, useMemo } from 'react'
 import type { Car } from '@/lib/supabase/types'
 import CarCard from '@/components/CarCard'
+import CarDetailView from './CarDetailView'
+import BookingWidget from './BookingWidget'
 
 interface Props {
   cars: Car[]
@@ -77,9 +79,16 @@ export default function FleetGrid({ cars, slug }: Props) {
       {filtered.length === 0 ? (
         <p className="text-white/40 text-center py-16">No vehicles match your search.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="flex flex-col gap-24">
           {filtered.map((car) => (
-            <CarCard key={car.id} car={car} slug={slug} />
+            <div key={car.id} className="grid lg:grid-cols-3 gap-10 lg:gap-16 pt-16 border-t border-white/10 first:border-0 first:pt-0">
+              <div className="lg:col-span-2">
+                <CarDetailView car={car} />
+              </div>
+              <div className="lg:col-span-1">
+                <BookingWidget car={car} />
+              </div>
+            </div>
           ))}
         </div>
       )}
