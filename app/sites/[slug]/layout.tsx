@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Tenant } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
+import '@/app/globals.css'
 
 interface Props {
   children: React.ReactNode
