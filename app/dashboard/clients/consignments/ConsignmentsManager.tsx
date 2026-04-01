@@ -48,7 +48,7 @@ export default function ConsignmentsManager({ consignments, cars, reservations }
 
       {consignments.length === 0 ? (
         <div className="text-white/30 text-sm py-12 text-center bg-white/5 rounded-2xl border border-white/5">
-          No consignments yet. Click "New Consignment" to add a vehicle owner split.
+          No consignments yet. Click &quot;New Consignment&quot; to add a vehicle owner split.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
