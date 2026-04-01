@@ -1,7 +1,7 @@
 // app/(marketing)/layout.tsx
 import type { Metadata } from 'next'
 import { Outfit } from 'next/font/google'
-import '../globals.css'
+import '@/app/globals.css'
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['400', '600', '700'] })
 
