@@ -97,6 +97,411 @@ const CARS = [
 ];
 
 // ---- Render Cars ----
+
+// ---- Render Cars (Landing Page Style for Tenants) ----
+function renderCarsAsLanding(cars, containerId = 'cars-grid') {
+  const grid = document.getElementById(containerId);
+  if (!grid) return;
+
+  if (cars.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem 0;color:var(--text-muted);">No cars match your filter.</div>`;
+    return;
+  }
+
+  // Set the container to block/flex column layout instead of a grid (overriding the `.cars-grid` default display)
+  grid.style.display = 'flex';
+  grid.style.flexDirection = 'column';
+  grid.style.gap = '6rem'; // Large gap between cars
+  
+  // Carry date/location params
+  const _up = new URLSearchParams(window.location.search);
+  const _start = _up.get('start') || '';
+  const _end = _up.get('end') || '';
+  const _loc = _up.get('loc') || '';
+
+  const timeOptions = `
+    <option value="08:00">8:00 AM</option>
+    <option value="08:30">8:30 AM</option>
+    <option value="09:00">9:00 AM</option>
+    <option value="09:30">9:30 AM</option>
+    <option value="10:00" selected>10:00 AM</option>
+    <option value="10:30">10:30 AM</option>
+    <option value="11:00">11:00 AM</option>
+    <option value="11:30">11:30 AM</option>
+    <option value="12:00">12:00 PM</option>
+    <option value="12:30">12:30 PM</option>
+    <option value="13:00">1:00 PM</option>
+    <option value="13:30">1:30 PM</option>
+    <option value="14:00">2:00 PM</option>
+    <option value="14:30">2:30 PM</option>
+    <option value="15:00">3:00 PM</option>
+    <option value="15:30">3:30 PM</option>
+    <option value="16:00">4:00 PM</option>
+    <option value="16:30">4:30 PM</option>
+    <option value="17:00">5:00 PM</option>
+    <option value="17:30">5:30 PM</option>
+    <option value="18:00">6:00 PM</option>
+    <option value="18:30">6:30 PM</option>
+    <option value="19:00">7:00 PM</option>
+    <option value="19:30">7:30 PM</option>
+    <option value="20:00">8:00 PM</option>
+  `;
+
+  grid.innerHTML = cars.map((car, i) => `
+    <div class="tenant-landing-car fade-in" data-id="${car.id}" style="${i > 0 ? `transition-delay:0.1s` : ''}">
+      <div class="detail-gallery" style="display:flex; flex-direction:column; align-items:center;">
+        <img id="detail-img-${car.id}" src="${car.image}" alt="${car.make} ${car.model}" onerror="this.src='https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200&q=80'" style="width:100%; max-height:600px; object-fit:cover; border-radius:12px;" ${i > 1 ? 'loading="lazy"' : ''} />
+        <div id="detail-thumbnails-${car.id}" class="detail-thumbnails" style="width:100%; max-width:800px; margin-top:1rem;">
+          ${(car.gallery || []).map((src, j) => `
+            <img src="${src}" class="thumb-img thumb-${car.id} ${j === 0 ? 'active' : ''}" loading="lazy" onclick="
+              document.getElementById('detail-img-${car.id}').src='${src}';
+              document.querySelectorAll('.thumb-${car.id}').forEach(el=>el.classList.remove('active'));
+              this.classList.add('active');
+            ">
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="detail-content" style="margin-top:2rem;">
+        <!-- Left: Car Info -->
+        <div class="detail-info fade-in">
+          <div class="detail-badge-row">
+            <span class="detail-badge available">● Available Now</span>
+            <span class="detail-badge category" id="detail-category-${car.id}">${car.category.charAt(0).toUpperCase() + car.category.slice(1)}</span>
+          </div>
+
+          <h2 class="detail-title" id="detail-title-${car.id}">${car.model}</h2>
+          <p class="detail-make" id="detail-make-${car.id}">${car.make} · ${car.year}</p>
+
+          <!-- Specs Grid -->
+          <div class="detail-specs">
+            <div class="detail-spec">
+              <div class="detail-spec-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
+              <div class="detail-spec-val" id="spec-hp-${car.id}">${car.specs.hp}</div>
+              <div class="detail-spec-label">Horsepower</div>
+            </div>
+            <div class="detail-spec">
+              <div class="detail-spec-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div class="detail-spec-val" id="spec-seats-${car.id}">${car.specs.seats}</div>
+              <div class="detail-spec-label">Passengers</div>
+            </div>
+            <div class="detail-spec">
+              <div class="detail-spec-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </div>
+              <div class="detail-spec-val" id="spec-trans-${car.id}">${car.specs.trans}</div>
+              <div class="detail-spec-label">Transmission</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <p class="detail-desc" id="detail-desc-${car.id}">${(car.description || '').replace(/\s*\(VIN:[^)]*\)/g, '')}</p>
+
+          <!-- Features -->
+          <div class="detail-features">
+            <h3>Included Features</h3>
+            <ul id="detail-features-${car.id}">
+              ${(car.features || []).map(f => `<li>${f}</li>`).join('')}
+            </ul>
+          </div>
+
+          <!-- Policies Info -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:1rem;margin-top:2rem;">
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;">
+              <div style="color:var(--accent-primary);margin-bottom:0.4rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary)">Fully Insured</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">Comprehensive coverage</div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;">
+              <div style="color:var(--accent-primary);margin-bottom:0.4rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              </div>
+              <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary)">Free Delivery</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">To your location</div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;">
+              <div style="color:var(--accent-primary);margin-bottom:0.4rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              </div>
+              <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary)">Free Cancel</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">48h before pickup</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Booking Widget -->
+        <aside class="booking-widget fade-in" style="height: fit-content; position: sticky; top: 120px;">
+          <div class="booking-widget-price">
+            <div style="display:flex;align-items:baseline;gap:0.4rem;">
+              <div class="price-big" id="detail-price-${car.id}">$${car.price}</div>
+              <div class="price-period">/ day</div>
+            </div>
+            <div class="price-week" id="detail-price-week-${car.id}">$${car.price * 6} / week</div>
+          </div>
+
+          <h3>Reserve This Vehicle</h3>
+
+          <form id="booking-form-${car.id}" class="booking-form landing-booking-form" data-car-id="${car.id}" action="checkout.html" method="GET">
+            <input type="hidden" name="id" id="car-id-input-${car.id}" value="${car.id}">
+            <input type="hidden" name="protection" id="val-protection-${car.id}" value="0">
+            <input type="hidden" name="toll" id="val-toll-${car.id}" value="0">
+            <input type="hidden" name="fuel" id="val-fuel-${car.id}" value="0">
+
+            <div class="form-group">
+              <label>Pickup Date</label>
+              <input type="text" class="form-control pickup-date-input" name="start" id="pickup-date-${car.id}" value="${_start}" data-car-id="${car.id}" placeholder="Select date…" required readonly />
+            </div>
+            <div class="form-group">
+              <label>Pickup Time</label>
+              <select class="form-control pickup-time-input" name="start_time" id="pickup-time-${car.id}">
+                ${timeOptions}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Return Date</label>
+              <input type="text" class="form-control return-date-input" name="end" id="return-date-${car.id}" value="${_end}" data-car-id="${car.id}" placeholder="Select date…" required readonly />
+            </div>
+            <div class="form-group">
+              <label>Return Time</label>
+              <select class="form-control return-time-input" name="end_time" id="return-time-${car.id}">
+                ${timeOptions}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Pickup Location</label>
+              <select class="form-control loc-input" name="loc" id="loc-${car.id}" required>
+                <option value="aventura" ${_loc === 'aventura' ? 'selected' : ''}>Pick-up in Aventura (Free)</option>
+                <option value="mia" ${_loc === 'mia' ? 'selected' : ''}>Delivery to MIA ($120)</option>
+                <option value="fll" ${_loc === 'fll' ? 'selected' : ''}>Delivery to FLL ($120)</option>
+              </select>
+            </div>
+
+            <!-- Add-ons -->
+            <div class="addon-section">
+              <div class="addon-section-label">Optional Add-ons</div>
+              <label class="addon-item">
+                <input type="checkbox" id="opt-protection-${car.id}" class="addon-opt" data-car-id="${car.id}">
+                <div class="addon-item-info">
+                  <div class="addon-item-name">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Standard Protection
+                  </div>
+                  <div class="addon-item-desc">Collision coverage, $1,000 deductible</div>
+                </div>
+                <span class="addon-item-price">+$30/day</span>
+              </label>
+              <label class="addon-item">
+                <input type="checkbox" id="opt-toll-${car.id}" class="addon-opt" data-car-id="${car.id}">
+                <div class="addon-item-info">
+                  <div class="addon-item-name">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Toll Package
+                  </div>
+                  <div class="addon-item-desc">All Florida tolls covered, no invoices</div>
+                </div>
+                <span class="addon-item-price">+$10/day</span>
+              </label>
+              <label class="addon-item">
+                <input type="checkbox" id="opt-fuel-${car.id}" class="addon-opt" data-car-id="${car.id}">
+                <div class="addon-item-info">
+                  <div class="addon-item-name">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 22V6l5-4 5 4v16"/><path d="M13 22V12h4l2 3v7"/><line x1="3" y1="12" x2="13" y2="12"/></svg>
+                    Prepaid Fuel
+                  </div>
+                  <div class="addon-item-desc">Return at any fuel level, no charge</div>
+                </div>
+                <span class="addon-item-price">$80 flat</span>
+              </label>
+            </div>
+
+            <div class="booking-total">
+              <span>Estimated Total</span>
+              <strong id="booking-total-amount-${car.id}">Select dates</strong>
+            </div>
+
+            <div class="dual-booking-buttons">
+              <button type="submit" id="btn-pay-online-${car.id}" class="btn btn-primary" style="width:100%;justify-content:center;padding:1rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Pay & Reserve Online
+              </button>
+              <button type="button" id="btn-whatsapp-${car.id}" class="btn btn-outline-whatsapp landing-wa-btn" data-car-id="${car.id}" style="width:100%;justify-content:center;padding:1rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                Reserve via WhatsApp
+              </button>
+            </div>
+          </form>
+
+          <p style="font-size:0.75rem;color:var(--text-muted);text-align:center;margin-top:1rem;line-height:1.5;">
+            Instant confirmation · Free cancellation · Real-time availability
+          </p>
+        </aside>
+      </div>
+    </div>
+  `).join('<hr style="border:0; border-top:1px solid var(--border); margin: 3rem 0; width: 100%;">');
+
+  // Re-observe new cars and trigger init script for forms
+  setTimeout(() => {
+    grid.querySelectorAll('.fade-in').forEach(el => {
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+      }, { threshold: 0.05 });
+      obs.observe(el);
+    });
+
+    if (typeof initMultiBookingForms === 'function') {
+      initMultiBookingForms(cars);
+    }
+  }, 100);
+}
+
+// ---- Multi Booking Forms Initialization (For Landing) ----
+function initMultiBookingForms(cars) {
+  const today = new Date().toISOString().split('T')[0];
+
+  function validateForm(form) {
+    let valid = true;
+    form.querySelectorAll('[required]').forEach(field => {
+      if (!field.value.trim()) {
+        field.style.borderColor = '#ef4444';
+        valid = false;
+        field.addEventListener('input', () => { field.style.borderColor = ''; }, { once: true });
+      }
+    });
+    return valid;
+  }
+
+  function getBookingData(carId, car) {
+    const pDate = document.getElementById(`pickup-date-${carId}`).value;
+    const rDate = document.getElementById(`return-date-${carId}`).value;
+    const pTime = document.getElementById(`pickup-time-${carId}`).value;
+    const rTime = document.getElementById(`return-time-${carId}`).value;
+    const loc = document.getElementById(`loc-${carId}`).value;
+    const protection = document.getElementById(`opt-protection-${carId}`).checked ? '1' : '0';
+    const toll = document.getElementById(`opt-toll-${carId}`).checked ? '1' : '0';
+    const fuel = document.getElementById(`opt-fuel-${carId}`).checked ? '1' : '0';
+    const days = Math.max(1, Math.round((new Date(rDate) - new Date(pDate)) / 86400000));
+    
+    let totalCost = days * car.price;
+    const locFee = (loc === 'mia' || loc === 'fll') ? 120 : 0;
+    totalCost += locFee;
+    if (protection === '1') totalCost += days * 30;
+    if (toll === '1') totalCost += days * 10;
+    if (fuel === '1') totalCost += 80;
+    
+    return { car, carId, pDate, rDate, pTime, rTime, loc, protection, toll, fuel, days, totalCost };
+  }
+
+  function formatTime12(t) {
+    const [h, m] = t.split(':');
+    const hr = parseInt(h);
+    const ampm = hr >= 12 ? 'PM' : 'AM';
+    return `${hr > 12 ? hr - 12 : hr}:${m} ${ampm}`;
+  }
+
+  cars.forEach(car => {
+    // 1. Calculate price
+    const calcBookingTotal = () => {
+      const pickup = document.getElementById(`pickup-date-${car.id}`).value;
+      const ret    = document.getElementById(`return-date-${car.id}`).value;
+      const totalEl = document.getElementById(`booking-total-amount-${car.id}`);
+      if (!pickup || !ret) { totalEl.textContent = 'Select dates'; return; }
+
+      const days = Math.max(1, Math.round((new Date(ret) - new Date(pickup)) / 86400000));
+      const protection = document.getElementById(`opt-protection-${car.id}`).checked ? days * 30 : 0;
+      const toll       = document.getElementById(`opt-toll-${car.id}`).checked       ? days * 10 : 0;
+      const fuel       = document.getElementById(`opt-fuel-${car.id}`).checked       ? 80         : 0;
+      const total      = (days * car.price) + protection + toll + fuel;
+
+      totalEl.textContent = `\$${total.toLocaleString()} · ${days} day${days !== 1 ? 's' : ''}`;
+    };
+
+    // 2. Add event listeners
+    ['protection', 'toll', 'fuel'].forEach(addon => {
+      const el = document.getElementById(`opt-${addon}-${car.id}`);
+      if(el) {
+        el.addEventListener('change', () => {
+          document.getElementById(`val-${addon}-${car.id}`).value = el.checked ? '1' : '0';
+          calcBookingTotal();
+        });
+      }
+    });
+
+    const pickupInput = document.getElementById(`pickup-date-${car.id}`);
+    const returnInput = document.getElementById(`return-date-${car.id}`);
+
+    if (typeof flatpickr !== 'undefined') {
+      const fpReturn = flatpickr(returnInput, {
+        minDate: 'today',
+        dateFormat: 'Y-m-d',
+        disableMobile: true,
+        onChange: () => calcBookingTotal()
+      });
+      const fpPickup = flatpickr(pickupInput, {
+        minDate: 'today',
+        dateFormat: 'Y-m-d',
+        disableMobile: true,
+        onChange: ([date]) => {
+          fpReturn.set('minDate', date);
+          calcBookingTotal();
+        }
+      });
+      
+      // Calculate initial if values exist
+      if(pickupInput.value && returnInput.value) {
+         calcBookingTotal();
+      }
+    }
+
+    if(pickupInput) pickupInput.addEventListener('change', calcBookingTotal);
+    if(returnInput) returnInput.addEventListener('change', calcBookingTotal);
+
+    // Form submission
+    const form = document.getElementById(`booking-form-${car.id}`);
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!validateForm(form)) return;
+        const d = getBookingData(car.id, car);
+        const params = new URLSearchParams({
+          id: d.carId, start: d.pDate, end: d.rDate,
+          start_time: d.pTime, end_time: d.rTime,
+          loc: d.loc, protection: d.protection, toll: d.toll, fuel: d.fuel
+        });
+        window.location.href = `checkout.html?${params.toString()}`;
+      });
+    }
+
+    // Reserve via WhatsApp
+    const waBtn = document.getElementById(`btn-whatsapp-${car.id}`);
+    if (waBtn) {
+      waBtn.addEventListener('click', () => {
+        if (!validateForm(form)) return;
+        const d = getBookingData(car.id, car);
+        const phone = '17862096770';
+        const locLabels = { aventura: 'Aventura (Free)', mia: 'MIA Airport (\$120)', fll: 'FLL Airport (\$120)' };
+        const addons = [];
+        if (d.protection === '1') addons.push('Standard Protection');
+        if (d.toll === '1') addons.push('Toll Package');
+        if (d.fuel === '1') addons.push('Prepaid Fuel');
+        const msg = `Hello! I'd like to reserve the *${d.car.make} ${d.car.model}*.\n\n`
+          + `Pickup: ${d.pDate} at ${formatTime12(d.pTime)}\n`
+          + `Return: ${d.rDate} at ${formatTime12(d.rTime)}\n`
+          + `Location: ${locLabels[d.loc] || d.loc}\n`
+          + (addons.length ? `Add-ons: ${addons.join(', ')}\n` : '')
+          + `Estimated Total: \$${d.totalCost}`;
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+      });
+    }
+  });
+}
+
+// ---- Render Cars ----
 function renderCars(cars, containerId = 'cars-grid') {
   const grid = document.getElementById(containerId);
   if (!grid) return;
@@ -173,7 +578,11 @@ function initFilters() {
       document.querySelectorAll('[data-filter-brand]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeFilters.brand = btn.dataset.filterBrand;
-      renderCars(applyFilters());
+      if (!!window._tenantPlan && document.body.dataset.page === 'fleet') {
+         renderCarsAsLanding(applyFilters());
+      } else {
+         renderCars(applyFilters());
+      }
     });
   });
 
@@ -182,7 +591,11 @@ function initFilters() {
       document.querySelectorAll('[data-filter-category]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeFilters.category = btn.dataset.filterCategory;
-      renderCars(applyFilters());
+      if (!!window._tenantPlan && document.body.dataset.page === 'fleet') {
+         renderCarsAsLanding(applyFilters());
+      } else {
+         renderCars(applyFilters());
+      }
     });
   });
 }
@@ -477,13 +890,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   _addPoweredByFooter();
 
   // Grid pages render once with DB data (avoids wrong-price flash from static)
+
+  // Determine standard vs landing grid (for tenants)
+  const isTenantLanding = !!window._tenantPlan;
+
   if (page === 'home') {
     renderCars(hasSearch ? CARS : CARS.slice(0, 5));
     initFilters();
   } else if (page === 'fleet') {
-    renderCars(CARS);
+    if (isTenantLanding) {
+      renderCarsAsLanding(CARS);
+    } else {
+      renderCars(CARS);
+    }
     initFilters();
-  } else if (page === 'detail') {
+  }
+ else if (page === 'detail') {
     loadCarDetail(); // Re-render with DB prices, specs, features
   }
 });
