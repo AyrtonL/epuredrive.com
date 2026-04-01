@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import listPlugin from '@fullcalendar/list'
@@ -32,6 +33,7 @@ export default function CalendarClient({
   cars: Car[]
   blockedDates: any[]
 }) {
+  const router = useRouter()
   const [, startTransition] = useTransition()
   const [activeCarFilter, setActiveCarFilter] = useState('all')
   const [blockModalOpen, setBlockModalOpen] = useState(false)
@@ -90,6 +92,7 @@ export default function CalendarClient({
       if (confirm(`Remove block "${data.reason || 'Blocked'}" for ${carName}?`)) {
         startTransition(async () => {
           await deleteBlockedDate(blockId)
+          router.refresh()
         })
       }
     }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Customer } from '@/lib/supabase/types'
 import { syncCustomersFromReservations, deleteCustomer } from './actions'
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function CustomersTable({ customers }: Props) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [syncMsg, setSyncMsg] = useState('')
   const [filter, setFilter] = useState('')
@@ -28,13 +30,16 @@ export default function CustomersTable({ customers }: Props) {
     startTransition(async () => {
       const result = await syncCustomersFromReservations()
       if (result.error) setSyncMsg('Error: ' + result.error)
-      else setSyncMsg(`✓ ${result.created} new customer${result.created !== 1 ? 's' : ''} added.`)
+      else {
+        setSyncMsg(`✓ ${result.created} new customer${result.created !== 1 ? 's' : ''} added.`)
+        router.refresh()
+      }
     })
   }
 
   function handleDelete(id: number) {
     if (!confirm('Delete this customer record?')) return
-    startTransition(async () => { await deleteCustomer(id) })
+    startTransition(async () => { await deleteCustomer(id); router.refresh() })
   }
 
   return (

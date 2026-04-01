@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Transaction, Car } from '@/lib/supabase/types'
 import { createTransaction, updateTransaction } from './actions'
 
@@ -14,6 +15,7 @@ interface Props {
 export default function ExpenseModal({ isOpen, onClose, expense, cars }: Props) {
   const [isPending, startTransition] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
+  const router = useRouter()
   
   const [formData, setFormData] = useState<Partial<Transaction>>({})
 
@@ -62,6 +64,7 @@ export default function ExpenseModal({ isOpen, onClose, expense, cars }: Props) 
       if (result.error) {
         setErrorStr(result.error)
       } else {
+        router.refresh()
         onClose()
       }
     })
@@ -122,11 +125,17 @@ export default function ExpenseModal({ isOpen, onClose, expense, cars }: Props) 
                   onChange={e => setFormData({...formData, category: e.target.value})}
                   className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
                 >
-                  <option value="maintenance" className="bg-[#0d0d0d]">Maintenance</option>
-                  <option value="software" className="bg-[#0d0d0d]">Software</option>
-                  <option value="marketing" className="bg-[#0d0d0d]">Marketing</option>
-                  <option value="insurance" className="bg-[#0d0d0d]">Insurance</option>
-                  <option value="other" className="bg-[#0d0d0d]">Other</option>
+                  <option value="maintenance" className="bg-[#0d0d0d]">🔧 Maintenance</option>
+                  <option value="fuel" className="bg-[#0d0d0d]">⛽ Fuel</option>
+                  <option value="insurance" className="bg-[#0d0d0d]">🛡️ Insurance</option>
+                  <option value="registration" className="bg-[#0d0d0d]">📋 Registration / Tags</option>
+                  <option value="cleaning" className="bg-[#0d0d0d]">🧹 Cleaning / Detailing</option>
+                  <option value="parking" className="bg-[#0d0d0d]">🅿️ Parking</option>
+                  <option value="toll" className="bg-[#0d0d0d]">🛣️ Toll / Sunpass</option>
+                  <option value="software" className="bg-[#0d0d0d]">💻 Software / Subscriptions</option>
+                  <option value="marketing" className="bg-[#0d0d0d]">📣 Marketing</option>
+                  <option value="salary" className="bg-[#0d0d0d]">👤 Salary / Labor</option>
+                  <option value="other" className="bg-[#0d0d0d]">📦 Other</option>
                 </select>
               </div>
               

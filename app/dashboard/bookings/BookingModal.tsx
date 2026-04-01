@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Reservation, Car } from '@/lib/supabase/types'
 import { createReservation, updateReservation } from './actions'
 
@@ -14,6 +15,7 @@ interface Props {
 export default function BookingModal({ isOpen, onClose, reservation, cars }: Props) {
   const [isPending, startTransition] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
+  const router = useRouter()
   
   const [formData, setFormData] = useState<Partial<Reservation>>({})
 
@@ -65,6 +67,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
       if (result.error) {
         setErrorStr(result.error)
       } else {
+        router.refresh()
         onClose()
       }
     })

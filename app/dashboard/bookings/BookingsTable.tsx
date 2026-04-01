@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Reservation, Car } from '@/lib/supabase/types'
 import { updateReservation, deleteReservation } from './actions'
 import BookingModal from './BookingModal'
@@ -8,6 +9,7 @@ import BookingModal from './BookingModal'
 const STATUS_COLORS: Record<string, string> = {
   confirmed: 'bg-green-500/20 text-green-400',
   pending: 'bg-yellow-500/20 text-yellow-400',
+  active: 'bg-blue-500/20 text-blue-400',
   completed: 'bg-white/10 text-white/40',
   cancelled: 'bg-red-500/20 text-red-400',
 }
@@ -20,6 +22,7 @@ interface Props {
 }
 
 export default function BookingsTable({ reservations, cars }: Props) {
+  const router = useRouter()
   const [filter, setFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [carFilter, setCarFilter] = useState('')
@@ -78,6 +81,7 @@ export default function BookingsTable({ reservations, cars }: Props) {
         await updateReservation(id, { status: 'completed' })
       }
       setSelectedIds(new Set())
+      router.refresh()
     })
   }
   
@@ -114,6 +118,7 @@ export default function BookingsTable({ reservations, cars }: Props) {
     if (!confirm('Delete this reservation?')) return
     startTransition(async () => {
       await deleteReservation(id)
+      router.refresh()
     })
   }
 

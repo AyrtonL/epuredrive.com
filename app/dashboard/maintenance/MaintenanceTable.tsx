@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import type { CarService, Car } from '@/lib/supabase/types'
 import { deleteService } from './actions'
 import ServiceModal from './ServiceModal'
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function MaintenanceTable({ services, cars }: Props) {
+  const router = useRouter()
   const [filter, setFilter] = useState('')
   const [isPending, startTransition] = useTransition()
   
@@ -45,6 +47,7 @@ export default function MaintenanceTable({ services, cars }: Props) {
     if (!confirm('Delete this maintenance record?')) return
     startTransition(async () => {
       await deleteService(id)
+      router.refresh()
     })
   }
 

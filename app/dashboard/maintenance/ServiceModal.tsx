@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import type { CarService, Car } from '@/lib/supabase/types'
 import { createService, updateService } from './actions'
 
@@ -14,6 +15,7 @@ interface Props {
 export default function ServiceModal({ isOpen, onClose, service, cars }: Props) {
   const [isPending, startTransition] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
+  const router = useRouter()
   
   const [formData, setFormData] = useState<Partial<CarService>>({})
 
@@ -59,6 +61,7 @@ export default function ServiceModal({ isOpen, onClose, service, cars }: Props) 
       if (result.error) {
         setErrorStr(result.error)
       } else {
+        router.refresh()
         onClose()
       }
     })

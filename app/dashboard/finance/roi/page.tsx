@@ -1,7 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import PageHeader from '@/components/dashboard/PageHeader'
-import StatCard from '@/components/dashboard/StatCard'
-import type { Reservation, Car, CarService, Consignment } from '@/lib/supabase/types'
+import type { Reservation, Car, CarService, Consignment, Transaction } from '@/lib/supabase/types'
+
+function fmt(n: number) {
+  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
 
 export default async function ROIPage() {
   const supabase = createClient()
@@ -9,17 +12,25 @@ export default async function ROIPage() {
   const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user!.id).single()
   const tenantId = profile!.tenant_id
 
-  const [{ data: reservations }, { data: cars }, { data: services }, { data: consignments }] = await Promise.all([
+  const [
+    { data: reservations },
+    { data: cars },
+    { data: services },
+    { data: consignments },
+    { data: transactions },
+  ] = await Promise.all([
     supabase.from('reservations').select('car_id, total_amount, status').eq('tenant_id', tenantId).eq('status', 'completed'),
     supabase.from('cars').select('id, make, model, model_full, daily_rate').eq('tenant_id', tenantId),
     supabase.from('car_services').select('car_id, amount').eq('tenant_id', tenantId),
-    supabase.from('consignments').select('car_id, owner_percentage, owner_name').eq('tenant_id', tenantId)
+    supabase.from('consignments').select('car_id, owner_percentage, owner_name').eq('tenant_id', tenantId),
+    supabase.from('transactions').select('amount, category').eq('tenant_id', tenantId),
   ])
 
   const rows = (reservations as Reservation[]) ?? []
   const carRows = (cars as Car[]) ?? []
   const serviceRows = (services as CarService[]) ?? []
   const consignmentRows = (consignments as Consignment[]) ?? []
+  const txRows = (transactions as Transaction[]) ?? []
 
   const revenueMap: Record<number, number> = {}
   const maintenanceMap: Record<number, number> = {}
@@ -42,10 +53,37 @@ export default async function ROIPage() {
     return bRev - aRev
   })
 
+  // Fleet-wide totals
+  const fleetGross = Object.values(revenueMap).reduce((s, v) => s + v, 0)
+  const fleetMaint = Object.values(maintenanceMap).reduce((s, v) => s + v, 0)
+  const fleetOwnerPayouts = sorted.reduce((s, c) => {
+    const gross = revenueMap[c.id] ?? 0
+    const consignment = consignmentRows.find((con) => con.car_id === c.id)
+    return s + (consignment?.owner_percentage ? gross * (consignment.owner_percentage / 100) : 0)
+  }, 0)
+  const generalExpenses = txRows.reduce((s, t) => s + (Number(t.amount) || 0), 0)
+  const fleetNet = fleetGross - fleetMaint - fleetOwnerPayouts - generalExpenses
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <PageHeader title="Return on Investment" description="Revenue vs Maintenance & Owner Splits per vehicle." />
-      
+
+      {/* Fleet Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {[
+          { label: 'Gross Revenue', value: fmt(fleetGross), color: 'text-white' },
+          { label: 'Maintenance Cost', value: fmt(fleetMaint), color: 'text-red-400' },
+          { label: 'Owner Payouts', value: fmt(fleetOwnerPayouts), color: 'text-orange-400' },
+          { label: 'Business Expenses', value: fmt(generalExpenses), color: 'text-red-400/80' },
+          { label: 'Fleet Net Profit', value: fmt(fleetNet), color: fleetNet >= 0 ? 'text-emerald-400' : 'text-red-400' },
+        ].map((s) => (
+          <div key={s.label} className="glass border border-white/10 rounded-2xl p-4">
+            <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">{s.label}</div>
+            <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+
       {sorted.length === 0 ? (
         <div className="text-white/30 text-sm py-12 text-center bg-white/5 rounded-2xl border border-white/5">
           No fleet data or completed bookings found.
@@ -68,10 +106,10 @@ export default async function ROIPage() {
                 const bookings = rows.filter((r) => r.car_id === c.id).length
                 const gross = revenueMap[c.id] ?? 0
                 const maint = maintenanceMap[c.id] ?? 0
-                
-                const consignment = consignmentRows.find(con => con.car_id === c.id)
+
+                const consignment = consignmentRows.find((con) => con.car_id === c.id)
                 let ownerPayout = 0
-                
+
                 if (consignment?.owner_percentage) {
                   ownerPayout = gross * (consignment.owner_percentage / 100)
                 }
@@ -89,21 +127,31 @@ export default async function ROIPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-white/50">{bookings} bookings</td>
-                    <td className="px-6 py-4 text-white font-medium">${gross.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="px-6 py-4 text-white font-medium">{fmt(gross)}</td>
                     <td className="px-6 py-4 text-red-400/80">
-                      {maint > 0 ? `-$${maint.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                      {maint > 0 ? `-${fmt(maint)}` : '—'}
                     </td>
                     <td className="px-6 py-4 text-orange-400/80">
-                      {ownerPayout > 0 ? `-$${ownerPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${consignment?.owner_percentage}%)` : '—'}
+                      {ownerPayout > 0 ? `-${fmt(ownerPayout)} (${consignment?.owner_percentage}%)` : '—'}
                     </td>
-                    <td className="px-6 py-4 text-emerald-400 font-bold bg-white/[0.02] group-hover:bg-transparent transition-colors">
-                      ${netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <td className={`px-6 py-4 font-bold bg-white/[0.02] group-hover:bg-transparent transition-colors ${netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {fmt(netProfit)}
                     </td>
                   </tr>
                 )
               })}
             </tbody>
           </table>
+
+          {/* General expenses footer note */}
+          {generalExpenses > 0 && (
+            <div className="px-6 py-4 border-t border-white/10 bg-black/20 flex items-center justify-between">
+              <span className="text-[11px] text-white/40 uppercase tracking-widest font-bold">
+                General Business Expenses (not per-vehicle — deducted from fleet net)
+              </span>
+              <span className="text-red-400/80 font-medium text-sm">-{fmt(generalExpenses)}</span>
+            </div>
+          )}
         </div>
       )}
     </div>

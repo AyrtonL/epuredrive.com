@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Car } from '@/lib/supabase/types'
 import { deleteCar } from './actions'
 import CarModal from './CarModal'
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function FleetManager({ initialCars }: Props) {
+  const router = useRouter()
   const [filter, setFilter] = useState('')
   const [, startTransition] = useTransition()
   
@@ -30,6 +32,7 @@ export default function FleetManager({ initialCars }: Props) {
     if (!confirm('Decommission this car? This cannot be undone.')) return
     startTransition(async () => {
       await deleteCar(id)
+      router.refresh()
     })
   }
 

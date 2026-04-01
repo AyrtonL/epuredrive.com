@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Consignment, Car } from '@/lib/supabase/types'
 import { createConsignment, updateConsignment } from './actions'
 
@@ -14,6 +15,7 @@ interface Props {
 export default function ConsignmentModal({ isOpen, onClose, consignment, cars }: Props) {
   const [isPending, startTransition] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
+  const router = useRouter()
   const [formData, setFormData] = useState<Partial<Consignment>>({})
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function ConsignmentModal({ isOpen, onClose, consignment, cars }:
         ? await updateConsignment(consignment.id, data)
         : await createConsignment(data as any)
       if (result.error) setErrorStr(result.error)
-      else onClose()
+      else { router.refresh(); onClose() }
     })
   }
 

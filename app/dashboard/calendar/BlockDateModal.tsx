@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Car } from '@/lib/supabase/types'
 import { createBlockedDate, createBlockedDateForAllCars } from './actions'
 
@@ -14,6 +15,7 @@ interface Props {
 export default function BlockDateModal({ isOpen, onClose, cars, defaultStartDate }: Props) {
   const [isPending, startTransition] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
+  const router = useRouter()
   const [carTarget, setCarTarget] = useState<string>('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -46,7 +48,7 @@ export default function BlockDateModal({ isOpen, onClose, cars, defaultStartDate
         result = await createBlockedDate({ car_id: Number(carTarget), start_date: startDate, end_date: endDate, reason: reason || undefined })
       }
       if (result.error) setErrorStr(result.error)
-      else onClose()
+      else { router.refresh(); onClose() }
     })
   }
 

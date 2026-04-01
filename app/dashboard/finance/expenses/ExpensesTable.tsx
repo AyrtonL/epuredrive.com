@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Transaction, Car } from '@/lib/supabase/types'
 import { deleteTransaction } from './actions'
 import ExpenseModal from './ExpenseModal'
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function ExpensesTable({ expenses, cars }: Props) {
+  const router = useRouter()
   const [filter, setFilter] = useState('')
   const [isPending, startTransition] = useTransition()
   
@@ -45,6 +47,7 @@ export default function ExpensesTable({ expenses, cars }: Props) {
     if (!confirm('Delete this expense record?')) return
     startTransition(async () => {
       await deleteTransaction(id)
+      router.refresh()
     })
   }
 
