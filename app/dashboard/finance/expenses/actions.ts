@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import type { CarService } from '@/lib/supabase/types'
+import type { Transaction } from '@/lib/supabase/types'
 
 async function getTenantId(): Promise<string> {
   const supabase = createClient()
@@ -12,29 +12,29 @@ async function getTenantId(): Promise<string> {
   return profile!.tenant_id
 }
 
-export async function createService(
-  data: Omit<CarService, 'id' | 'tenant_id'>
+export async function createTransaction(
+  data: Omit<Transaction, 'id' | 'tenant_id'>
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
-  const { error } = await supabase.from('car_services').insert({ ...data, tenant_id: tenantId })
-  revalidatePath('/dashboard/maintenance')
+  const { error } = await supabase.from('transactions').insert({ ...data, tenant_id: tenantId })
+  revalidatePath('/dashboard/finance/expenses')
   return { error: error?.message ?? null }
 }
 
-export async function updateService(
+export async function updateTransaction(
   id: number,
-  data: Partial<Omit<CarService, 'id' | 'tenant_id'>>
+  data: Partial<Omit<Transaction, 'id' | 'tenant_id'>>
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
-  const { error } = await supabase.from('car_services').update(data).eq('id', id)
-  revalidatePath('/dashboard/maintenance')
+  const { error } = await supabase.from('transactions').update(data).eq('id', id)
+  revalidatePath('/dashboard/finance/expenses')
   return { error: error?.message ?? null }
 }
 
-export async function deleteService(id: number): Promise<{ error: string | null }> {
+export async function deleteTransaction(id: number): Promise<{ error: string | null }> {
   const supabase = createClient()
-  const { error } = await supabase.from('car_services').delete().eq('id', id)
-  revalidatePath('/dashboard/maintenance')
+  const { error } = await supabase.from('transactions').delete().eq('id', id)
+  revalidatePath('/dashboard/finance/expenses')
   return { error: error?.message ?? null }
 }

@@ -1,38 +1,38 @@
 'use client'
 
 import { useState, useTransition, useMemo } from 'react'
-import type { CarService, Car } from '@/lib/supabase/types'
-import { deleteService } from './actions'
-import ServiceModal from './ServiceModal'
+import type { Transaction, Car } from '@/lib/supabase/types'
+import { deleteTransaction } from './actions'
+import ExpenseModal from './ExpenseModal'
 
 const PAGE_SIZE = 15
 
 interface Props {
-  services: CarService[]
+  expenses: Transaction[]
   cars: Car[]
 }
 
-export default function MaintenanceTable({ services, cars }: Props) {
+export default function ExpensesTable({ expenses, cars }: Props) {
   const [filter, setFilter] = useState('')
   const [isPending, startTransition] = useTransition()
   
   const [page, setPage] = useState(1)
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingService, setEditingService] = useState<CarService | null>(null)
+  const [editingExpense, setEditingExpense] = useState<Transaction | null>(null)
 
   const carMap = useMemo(() => {
     return Object.fromEntries(cars.map((c) => [c.id, `${c.make} ${c.model_full || c.model}`]))
   }, [cars])
 
   const filtered = useMemo(() => {
-    return services.filter((s) => {
+    return expenses.filter((e) => {
       const q = filter.toLowerCase()
       return !q || 
-             (s.description ?? '').toLowerCase().includes(q) || 
-             carMap[s.car_id ?? -1]?.toLowerCase().includes(q) ||
-             (s.service_date ?? '').includes(q)
+             (e.description ?? '').toLowerCase().includes(q) || 
+             (e.category ?? '').toLowerCase().includes(q) || 
+             carMap[e.car_id ?? -1]?.toLowerCase().includes(q)
     })
-  }, [services, filter, carMap])
+  }, [expenses, filter, carMap])
 
   const paginated = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE
@@ -42,19 +42,19 @@ export default function MaintenanceTable({ services, cars }: Props) {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
 
   function handleDelete(id: number) {
-    if (!confirm('Delete this maintenance record?')) return
+    if (!confirm('Delete this expense record?')) return
     startTransition(async () => {
-      await deleteService(id)
+      await deleteTransaction(id)
     })
   }
 
   function openNew() {
-    setEditingService(null)
+    setEditingExpense(null)
     setModalOpen(true)
   }
 
-  function openEdit(s: CarService) {
-    setEditingService(s)
+  function openEdit(e: Transaction) {
+    setEditingExpense(e)
     setModalOpen(true)
   }
 
@@ -64,7 +64,7 @@ export default function MaintenanceTable({ services, cars }: Props) {
       <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start md:items-center">
         <input
           type="text"
-          placeholder="Search logs by car, date, description…"
+          placeholder="Search expenses…"
           value={filter}
           onChange={(e) => {
             setFilter(e.target.value)
@@ -76,13 +76,13 @@ export default function MaintenanceTable({ services, cars }: Props) {
           onClick={openNew}
           className="bg-white text-black hover:bg-white/90 px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-lg shadow-white/10"
         >
-          + Log Maintenance
+          + Log Expense
         </button>
       </div>
 
       {filtered.length === 0 ? (
         <p className="text-white/30 text-sm py-12 text-center bg-white/5 rounded-2xl border border-white/5">
-          {filter ? 'No records match your search.' : 'No maintenance records found.'}
+          {filter ? 'No records match your search.' : 'No expenses found.'}
         </p>
       ) : (
         <>
@@ -90,39 +90,43 @@ export default function MaintenanceTable({ services, cars }: Props) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/40 border-b border-white/10 bg-black/20">
-                  <th className="py-4 pl-6 pr-4">Vehicle</th>
-                  <th className="py-4 pr-4">Date</th>
+                  <th className="py-4 pl-6 pr-4">Date</th>
+                  <th className="py-4 pr-4">Category</th>
                   <th className="py-4 pr-4">Description</th>
-                  <th className="py-4 pr-4">Cost</th>
+                  <th className="py-4 pr-4">Associated Car</th>
+                  <th className="py-4 pr-4">Amount</th>
                   <th className="py-4 pr-6 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {paginated.map((s) => (
-                  <tr key={s.id} className="hover:bg-white/5 transition-colors">
-                    <td className="py-4 pl-6 pr-4 font-semibold text-white tracking-wide">
-                      {s.car_id ? carMap[s.car_id] ?? `Car #${s.car_id}` : '—'}
+                {paginated.map((e) => (
+                  <tr key={e.id} className="hover:bg-white/5 transition-colors">
+                    <td className="py-4 pl-6 pr-4 text-white/80 font-medium whitespace-nowrap">
+                      {e.transaction_date || '—'}
                     </td>
-                    <td className="py-4 pr-4 text-white/80 font-medium whitespace-nowrap">
-                      {s.service_date || '—'}
+                    <td className="py-4 pr-4">
+                      <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded bg-white/5 text-white/60">
+                        {e.category || 'General'}
+                      </span>
                     </td>
-                    <td className="py-4 pr-4 text-white/60">
-                      <div className="line-clamp-2 max-w-md">
-                        {s.description || '—'}
-                      </div>
+                    <td className="py-4 pr-4 text-white/80">
+                      {e.description || '—'}
+                    </td>
+                    <td className="py-4 pr-4 text-white/60 text-xs">
+                      {e.car_id ? carMap[e.car_id] ?? `Car #${e.car_id}` : '—'}
                     </td>
                     <td className="py-4 pr-4 text-white font-medium">
-                      {s.amount != null ? `$${Number(s.amount).toLocaleString()}` : '—'}
+                      {e.amount != null ? `$${Number(e.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
                     </td>
                     <td className="py-4 pr-6 text-right space-x-3">
                       <button
-                        onClick={() => openEdit(s)}
+                        onClick={() => openEdit(e)}
                         className="text-white/50 hover:text-white transition-colors text-xs font-semibold"
                       >
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(s.id)}
+                        onClick={() => handleDelete(e.id)}
                         disabled={isPending}
                         className="text-white/30 hover:text-red-400 transition-colors text-xs font-semibold disabled:opacity-50"
                       >
@@ -165,10 +169,10 @@ export default function MaintenanceTable({ services, cars }: Props) {
         </>
       )}
 
-      <ServiceModal 
+      <ExpenseModal 
         isOpen={modalOpen} 
         onClose={() => setModalOpen(false)} 
-        service={editingService}
+        expense={editingExpense}
         cars={cars}
       />
     </div>

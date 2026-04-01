@@ -27,6 +27,7 @@ export interface Car {
   description: string | null
   tenant_id: string | null
   status: string | null
+  turo_vehicle_id: string | null
 }
 
 export interface Reservation {

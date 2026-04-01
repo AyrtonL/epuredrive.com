@@ -44,12 +44,14 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
       customer_email: formData.customer_email || null,
       customer_phone: formData.customer_phone || null,
       pickup_date: formData.pickup_date || null,
-      pickup_time: formData.pickup_time || null,
+      pickup_time: formData.pickup_time || '10:00',
       return_date: formData.return_date || null,
-      return_time: formData.return_time || null,
+      return_time: formData.return_time || '10:00',
+      pickup_location: formData.pickup_location || 'Aventura',
       total_amount: Number(formData.total_amount) || null,
       status: formData.status || 'pending',
-      source: formData.source || 'admin'
+      source: formData.source || 'admin',
+      notes: formData.notes || null,
     }
 
     startTransition(async () => {
@@ -150,6 +152,15 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
               />
             </div>
             <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Pickup Time</label>
+              <input 
+                type="time"
+                value={formData.pickup_time || '10:00'} 
+                onChange={e => setFormData({...formData, pickup_time: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white [color-scheme:dark]" 
+              />
+            </div>
+            <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Return Date</label>
               <input 
                 type="date" required
@@ -158,8 +169,27 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
                 className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white [color-scheme:dark]" 
               />
             </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Return Time</label>
+              <input 
+                type="time"
+                value={formData.return_time || '10:00'} 
+                onChange={e => setFormData({...formData, return_time: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white [color-scheme:dark]" 
+              />
+            </div>
 
-            {/* Financials & Status */}
+            {/* Location & Financials */}
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Pickup Location</label>
+              <input 
+                type="text" placeholder="e.g. Aventura, Miami Airport..."
+                value={formData.pickup_location || ''} 
+                onChange={e => setFormData({...formData, pickup_location: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white" 
+              />
+            </div>
+
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Total Amount ($)</label>
               <input 
@@ -178,9 +208,34 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
               >
                 <option value="pending" className="bg-[#0d0d0d]">Pending</option>
                 <option value="confirmed" className="bg-[#0d0d0d]">Confirmed</option>
+                <option value="active" className="bg-[#0d0d0d]">Active</option>
                 <option value="completed" className="bg-[#0d0d0d]">Completed</option>
                 <option value="cancelled" className="bg-[#0d0d0d]">Cancelled</option>
               </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Source</label>
+              <select 
+                value={formData.source || 'admin'} 
+                onChange={e => setFormData({...formData, source: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              >
+                <option value="admin" className="bg-[#0d0d0d]">Admin</option>
+                <option value="turo" className="bg-[#0d0d0d]">Turo</option>
+                <option value="ical" className="bg-[#0d0d0d]">iCal</option>
+                <option value="direct" className="bg-[#0d0d0d]">Direct</option>
+              </select>
+            </div>
+
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Notes (internal)</label>
+              <textarea 
+                rows={2} placeholder="Internal notes, special requests..."
+                value={formData.notes || ''} 
+                onChange={e => setFormData({...formData, notes: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white resize-none" 
+              />
             </div>
           </div>
 

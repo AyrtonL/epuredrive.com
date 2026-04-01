@@ -21,6 +21,8 @@ interface Props {
 
 export default function BookingsTable({ reservations, cars }: Props) {
   const [filter, setFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [carFilter, setCarFilter] = useState('')
   const [isPending, startTransition] = useTransition()
   
   const [page, setPage] = useState(1)
@@ -36,14 +38,15 @@ export default function BookingsTable({ reservations, cars }: Props) {
   const filtered = useMemo(() => {
     return reservations.filter((r) => {
       const q = filter.toLowerCase()
-      return (
-        !q ||
+      const textMatch = !q ||
         r.customer_name?.toLowerCase().includes(q) ||
         r.customer_email?.toLowerCase().includes(q) ||
         carMap[r.car_id ?? -1]?.toLowerCase().includes(q)
-      )
+      const statusMatch = !statusFilter || r.status === statusFilter
+      const carMatch = !carFilter || String(r.car_id) === carFilter
+      return textMatch && statusMatch && carMatch
     })
-  }, [reservations, filter, carMap])
+  }, [reservations, filter, statusFilter, carFilter, carMap])
 
   const paginated = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE
@@ -116,21 +119,47 @@ export default function BookingsTable({ reservations, cars }: Props) {
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start md:items-center">
-        <input
-          type="text"
-          placeholder="Search by name, email, or car…"
-          value={filter}
-          onChange={(e) => {
-            setFilter(e.target.value)
-            setPage(1)
-            setSelectedIds(new Set())
-          }}
-          className="w-full max-w-sm bg-white/5 border border-white/10 text-white placeholder:text-white/40 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-        />
+      <div className="flex flex-col md:flex-row gap-3 mb-6 justify-between items-start md:items-center flex-wrap">
+        <div className="flex flex-wrap gap-3 flex-1">
+          <input
+            type="text"
+            placeholder="Search by name, email, or car…"
+            value={filter}
+            onChange={(e) => {
+              setFilter(e.target.value)
+              setPage(1)
+              setSelectedIds(new Set())
+            }}
+            className="w-full max-w-xs bg-white/5 border border-white/10 text-white placeholder:text-white/40 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+          />
+          <select
+            value={statusFilter}
+            onChange={e => { setStatusFilter(e.target.value); setPage(1); setSelectedIds(new Set()) }}
+            className="bg-white/5 border border-white/10 text-white/70 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+          >
+            <option value="" className="bg-[#0d0d0d]">All Statuses</option>
+            <option value="pending" className="bg-[#0d0d0d]">Pending</option>
+            <option value="confirmed" className="bg-[#0d0d0d]">Confirmed</option>
+            <option value="active" className="bg-[#0d0d0d]">Active</option>
+            <option value="completed" className="bg-[#0d0d0d]">Completed</option>
+            <option value="cancelled" className="bg-[#0d0d0d]">Cancelled</option>
+          </select>
+          <select
+            value={carFilter}
+            onChange={e => { setCarFilter(e.target.value); setPage(1); setSelectedIds(new Set()) }}
+            className="bg-white/5 border border-white/10 text-white/70 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+          >
+            <option value="" className="bg-[#0d0d0d]">All Vehicles</option>
+            {cars.map(c => (
+              <option key={c.id} value={c.id} className="bg-[#0d0d0d]">
+                {c.make} {c.model_full || c.model}
+              </option>
+            ))}
+          </select>
+        </div>
         <button
           onClick={openNew}
-          className="bg-white text-black hover:bg-white/90 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-white/10"
+          className="bg-white text-black hover:bg-white/90 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-white/10 flex-shrink-0"
         >
           + Add Booking
         </button>

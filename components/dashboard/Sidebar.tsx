@@ -46,8 +46,9 @@ const NAV: NavEntry[] = [
   { label: 'Team', href: '/dashboard/team' },
   {
     label: 'Integrations',
-    children: [{ label: 'Turo', href: '/dashboard/integrations/turo' }],
+    children: [{ label: 'Cal Sync', href: '/dashboard/integrations/turo' }],
   },
+  { label: 'Settings', href: '/dashboard/settings' },
 ]
 
 interface Props {
