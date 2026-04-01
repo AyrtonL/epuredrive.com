@@ -28,6 +28,7 @@ export interface Car {
   tenant_id: string | null
   status: string | null
   turo_vehicle_id: string | null
+  mileage: number | null
 }
 
 export interface Reservation {
@@ -85,10 +86,15 @@ export interface CarService {
   id: number
   car_id: number | null
   service_date: string | null
+  service_type: string | null
   description: string | null
   amount: number | null
+  provider: string | null
+  next_service_date: string | null
+  next_service_mileage: number | null
   tenant_id: string | null
 }
+
 
 export interface Profile {
   id: string

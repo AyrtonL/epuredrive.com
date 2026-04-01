@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import type { Car } from '@/lib/supabase/types'
 import { createFeed, deleteFeed, syncAllFeeds } from './actions'
 import { parseIcal } from '@/lib/ical-parser'
-import { createClient } from '@supabase/supabase-js'
+import { connectIcloud, disconnectEmailSync } from './email-actions'
 
 interface Feed {
   id: number
@@ -17,9 +17,11 @@ interface Feed {
 interface Props {
   feeds: Feed[]
   cars: Car[]
+  sync?: any
+  tenantId: string
 }
 
-export default function FeedManager({ feeds, cars }: Props) {
+export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
   const [isPending, startTransition] = useTransition()
   const [syncMsg, setSyncMsg] = useState('')
   const [csvMsg, setCsvMsg] = useState('')
@@ -31,6 +33,11 @@ export default function FeedManager({ feeds, cars }: Props) {
   const [newUrl, setNewUrl] = useState('')
   const [addMode, setAddMode] = useState<'url' | 'file'>('url')
   const [icsFile, setIcsFile] = useState<File | null>(null)
+
+  // Email sync state
+  const [showIcloud, setShowIcloud] = useState(false)
+  const [icloudEmail, setIcloudEmail] = useState('')
+  const [icloudPwd, setIcloudPwd] = useState('')
 
   const carMap = Object.fromEntries(cars.map(c => [c.id, `${c.make} ${c.model_full || c.model}`]))
 
@@ -45,6 +52,32 @@ export default function FeedManager({ feeds, cars }: Props) {
       const result = await syncAllFeeds()
       setSyncMsg(result.message)
     })
+  }
+
+  function handleGmailConnect() {
+    window.location.href = `/api/integrations/turo/gmail/start?tenant_id=${tenantId}`
+  }
+
+  async function handleIcloudConnect(e: React.FormEvent) {
+    e.preventDefault()
+    setSyncMsg('Connecting iCloud...')
+    try {
+      await connectIcloud({ email: icloudEmail, appSpecificPassword: icloudPwd, tenantId })
+      setShowIcloud(false)
+      setSyncMsg('iCloud connected successfully!')
+    } catch (err: any) {
+      setSyncMsg('Error: ' + err.message)
+    }
+  }
+
+  async function handleDisconnect() {
+    if (!confirm('Disconnect Turo email automation?')) return
+    try {
+      await disconnectEmailSync(tenantId)
+      setSyncMsg('Automation disconnected.')
+    } catch (err: any) {
+      setSyncMsg('Error: ' + err.message)
+    }
   }
 
   async function handleAddFeed(e: React.FormEvent) {
@@ -116,7 +149,77 @@ export default function FeedManager({ feeds, cars }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-12">
+      {/* Email Automation */}
+      <div className="glass border border-white/10 rounded-3xl p-8 relative overflow-hidden group">
+         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+         
+         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+           <div className="max-w-md">
+             <h3 className="text-white text-xl font-black italic tracking-tight mb-2">Turo Email Reader</h3>
+             <p className="text-white/40 text-sm leading-relaxed">
+               Automatically sync new bookings, modifications, and cancellations directly from your Turo emails.
+             </p>
+           </div>
+
+           {!sync ? (
+            <div className="flex flex-wrap gap-4">
+              <button onClick={handleGmailConnect}
+                className="bg-[#EA4335] text-white px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-red-500/20">
+                Connect Gmail
+              </button>
+              <button onClick={() => setShowIcloud(!showIcloud)}
+                className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest transition-all">
+                {showIcloud ? 'Cancel' : 'Connect iCloud'}
+              </button>
+            </div>
+           ) : (
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-black italic text-lg">
+                {sync.provider === 'gmail' ? 'G' : 'i'}
+              </div>
+              <div className="flex-1 pr-8">
+                <div className="text-white font-bold text-sm">{sync.gmail_address}</div>
+                <div className="text-[10px] text-primary font-black uppercase tracking-widest mt-0.5">
+                  Connected via {sync.provider || 'Gmail'}
+                </div>
+                {sync.last_checked && (
+                  <div className="text-[9px] text-white/30 uppercase font-bold tracking-widest mt-1">
+                    Last Polled: {new Date(sync.last_checked).toLocaleString()}
+                  </div>
+                )}
+              </div>
+              <button onClick={handleDisconnect} className="text-white/30 hover:text-red-400 p-2 transition-colors">
+                ✕
+              </button>
+            </div>
+           )}
+         </div>
+
+         {showIcloud && (
+           <form onSubmit={handleIcloudConnect} className="mt-8 pt-8 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+             <div className="space-y-1">
+                <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">iCloud Email</label>
+                <input type="email" required value={icloudEmail} onChange={e => setIcloudEmail(e.target.value)} placeholder="your@icloud.com"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
+             </div>
+             <div className="space-y-1">
+                <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">App-Specific Password</label>
+                <input type="password" required value={icloudPwd} onChange={e => setIcloudPwd(e.target.value)} placeholder="xxxx-xxxx-xxxx-xxxx"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
+             </div>
+             <div className="md:col-span-2">
+                <button type="submit" className="w-full bg-white text-black py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-white/90 transition-all shadow-xl shadow-white/5">
+                  Confirm iCloud Connection
+                </button>
+                <p className="text-[9px] text-white/30 text-center mt-3 italic">
+                  *We only read emails from noreply@mail.turo.com. You must use an App-Specific Password.
+                </p>
+             </div>
+           </form>
+         )}
+      </div>
+
       {/* Add Feed */}
       <div className="glass border border-white/10 rounded-3xl p-6">
         <h3 className="text-white font-bold mb-4">Add Calendar Feed</h3>

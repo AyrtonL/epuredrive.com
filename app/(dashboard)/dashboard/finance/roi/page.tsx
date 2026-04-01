@@ -23,7 +23,7 @@ export default async function ROIPage() {
     supabase.from('cars').select('id, make, model, model_full, daily_rate').eq('tenant_id', tenantId),
     supabase.from('car_services').select('car_id, amount').eq('tenant_id', tenantId),
     supabase.from('consignments').select('car_id, owner_percentage, owner_name').eq('tenant_id', tenantId),
-    supabase.from('transactions').select('amount, category').eq('tenant_id', tenantId),
+    supabase.from('transactions').select('amount, category, car_id').eq('tenant_id', tenantId),
   ])
 
   const rows = (reservations as Reservation[]) ?? []
@@ -34,6 +34,7 @@ export default async function ROIPage() {
 
   const revenueMap: Record<number, number> = {}
   const maintenanceMap: Record<number, number> = {}
+  const transactionExpenseMap: Record<number, number> = {}
 
   rows.forEach((r) => {
     if (r.car_id != null) {
@@ -47,9 +48,15 @@ export default async function ROIPage() {
     }
   })
 
+  txRows.forEach((t) => {
+    if (t.car_id != null) {
+      transactionExpenseMap[t.car_id] = (transactionExpenseMap[t.car_id] ?? 0) + (Number(t.amount) || 0)
+    }
+  })
+
   const sorted = [...carRows].sort((a, b) => {
-    const aRev = (revenueMap[a.id] ?? 0) - (maintenanceMap[a.id] ?? 0)
-    const bRev = (revenueMap[b.id] ?? 0) - (maintenanceMap[b.id] ?? 0)
+    const aRev = (revenueMap[a.id] ?? 0) - (maintenanceMap[a.id] ?? 0) - (transactionExpenseMap[a.id] ?? 0)
+    const bRev = (revenueMap[b.id] ?? 0) - (maintenanceMap[b.id] ?? 0) - (transactionExpenseMap[b.id] ?? 0)
     return bRev - aRev
   })
 
@@ -61,8 +68,8 @@ export default async function ROIPage() {
     const consignment = consignmentRows.find((con) => con.car_id === c.id)
     return s + (consignment?.owner_percentage ? gross * (consignment.owner_percentage / 100) : 0)
   }, 0)
-  const generalExpenses = txRows.reduce((s, t) => s + (Number(t.amount) || 0), 0)
-  const fleetNet = fleetGross - fleetMaint - fleetOwnerPayouts - generalExpenses
+  const generalExpenses = txRows.filter(t => t.car_id == null).reduce((s, t) => s + (Number(t.amount) || 0), 0)
+  const fleetNet = fleetGross - fleetMaint - fleetOwnerPayouts - generalExpenses - Object.values(transactionExpenseMap).reduce((s, v) => s + v, 0)
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -114,7 +121,8 @@ export default async function ROIPage() {
                   ownerPayout = gross * (consignment.owner_percentage / 100)
                 }
 
-                const netProfit = gross - maint - ownerPayout
+                const otherExp = transactionExpenseMap[c.id] ?? 0
+                const netProfit = gross - maint - ownerPayout - otherExp
 
                 return (
                   <tr key={c.id} className="hover:bg-white/5 transition-colors group">

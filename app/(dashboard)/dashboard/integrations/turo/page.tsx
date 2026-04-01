@@ -9,15 +9,16 @@ export default async function TuroSyncPage() {
   const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user!.id).single()
   const tenantId = profile!.tenant_id
 
-  const [{ data: feeds }, { data: cars }] = await Promise.all([
+  const [{ data: feeds }, { data: syncs }, { data: cars }] = await Promise.all([
     supabase.from('turo_feeds').select('*').eq('tenant_id', tenantId).order('created_at'),
+    supabase.from('turo_email_syncs').select('*').eq('tenant_id', tenantId).single(),
     supabase.from('cars').select('id, make, model, model_full').eq('tenant_id', tenantId),
   ])
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <PageHeader title="Calendar Sync" description="Sync external iCal calendars (Turo, Airbnb, etc.) and import CSV earnings." />
-      <FeedManager feeds={feeds ?? []} cars={(cars as Car[]) ?? []} />
+      <FeedManager feeds={feeds ?? []} sync={syncs} cars={(cars as Car[]) ?? []} tenantId={tenantId} />
     </div>
   )
 }

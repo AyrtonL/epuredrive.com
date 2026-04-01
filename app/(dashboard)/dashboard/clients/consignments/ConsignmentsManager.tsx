@@ -9,9 +9,10 @@ interface Props {
   consignments: Consignment[]
   cars: Car[]
   reservations: Reservation[]
+  expenses: any[]
 }
 
-export default function ConsignmentsManager({ consignments, cars, reservations }: Props) {
+export default function ConsignmentsManager({ consignments, cars, reservations, expenses }: Props) {
   const [, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Consignment | null>(null)
@@ -61,12 +62,22 @@ export default function ConsignmentsManager({ consignments, cars, reservations }
                 if (r.car_id !== con.car_id) return false
                 if (fromDate && (r.pickup_date ?? '') < fromDate) return false
                 if (toDate && (r.pickup_date ?? '') > toDate) return false
-                return true
+                return r.status !== 'cancelled'
               })
               .reduce((s, r) => s + (Number(r.total_amount) || 0), 0)
 
-            const ownerRevenue = carRevenue * ownerPct / 100
-            const epureRevenue = carRevenue * epurePct / 100
+            const carExpenses = expenses
+              .filter(e => {
+                if (e.car_id !== con.car_id) return false
+                if (fromDate && (e.transaction_date ?? '') < fromDate) return false
+                if (toDate && (e.transaction_date ?? '') > toDate) return false
+                return true
+              })
+              .reduce((s, e) => s + (Number(e.amount) || 0), 0)
+
+            const netRevenue = Math.max(0, carRevenue - carExpenses)
+            const ownerRevenue = netRevenue * ownerPct / 100
+            const epureRevenue = netRevenue * epurePct / 100
 
             const contractDates = con.contract_start && con.contract_end
               ? `${con.contract_start} → ${con.contract_end}`
@@ -110,15 +121,27 @@ export default function ConsignmentsManager({ consignments, cars, reservations }
                 </div>
 
                 {/* Revenue Stats */}
-                <div className="px-6 py-4 grid grid-cols-3 gap-3">
+                <div className="px-6 py-4 grid grid-cols-2 gap-4 border-b border-white/5">
                   {[
-                    ['Total Revenue', `$${carRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, 'text-white'],
+                    ['Gross Revenue', `$${carRevenue.toLocaleString()}`, 'text-white/60'],
+                    ['Direct Expenses', `-$${carExpenses.toLocaleString()}`, 'text-red-400/60'],
+                  ].map(([label, value, cls]) => (
+                    <div key={label as string}>
+                      <div className="text-[9px] text-white/30 uppercase tracking-widest mb-0.5">{label}</div>
+                      <div className={`text-sm font-bold ${cls}`}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Revenue Stats */}
+                <div className="px-6 py-4 grid grid-cols-2 gap-4">
+                  {[
                     ["Owner's Share", `$${ownerRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, 'text-emerald-400'],
                     ["éPure's Share", `$${epureRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, 'text-blue-400'],
                   ].map(([label, value, cls]) => (
                     <div key={label as string}>
                       <div className="text-[10px] text-white/30 uppercase tracking-widest mb-1">{label}</div>
-                      <div className={`text-base font-bold ${cls}`}>{value}</div>
+                      <div className={`text-lg font-black tracking-tighter ${cls}`}>{value}</div>
                     </div>
                   ))}
                 </div>

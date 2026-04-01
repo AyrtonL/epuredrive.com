@@ -125,17 +125,25 @@ export default function ExpenseModal({ isOpen, onClose, expense, cars }: Props) 
                   onChange={e => setFormData({...formData, category: e.target.value})}
                   className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
                 >
-                  <option value="maintenance" className="bg-[#0d0d0d]">🔧 Maintenance</option>
-                  <option value="fuel" className="bg-[#0d0d0d]">⛽ Fuel</option>
-                  <option value="insurance" className="bg-[#0d0d0d]">🛡️ Insurance</option>
-                  <option value="registration" className="bg-[#0d0d0d]">📋 Registration / Tags</option>
-                  <option value="cleaning" className="bg-[#0d0d0d]">🧹 Cleaning / Detailing</option>
-                  <option value="parking" className="bg-[#0d0d0d]">🅿️ Parking</option>
-                  <option value="toll" className="bg-[#0d0d0d]">🛣️ Toll / Sunpass</option>
-                  <option value="software" className="bg-[#0d0d0d]">💻 Software / Subscriptions</option>
-                  <option value="marketing" className="bg-[#0d0d0d]">📣 Marketing</option>
-                  <option value="salary" className="bg-[#0d0d0d]">👤 Salary / Labor</option>
-                  <option value="other" className="bg-[#0d0d0d]">📦 Other</option>
+                  <optgroup label="Vehicle" className="bg-[#0d0d0d]">
+                    <option value="maintenance" className="bg-[#0d0d0d]">🔧 Maintenance</option>
+                    <option value="cleaning" className="bg-[#0d0d0d]">🧹 Cleaning / Detailing</option>
+                    <option value="fuel" className="bg-[#0d0d0d]">⛽ Fuel</option>
+                    <option value="insurance" className="bg-[#0d0d0d]">🛡️ Insurance</option>
+                    <option value="registration" className="bg-[#0d0d0d]">📋 Registration / Tags</option>
+                    <option value="toll" className="bg-[#0d0d0d]">🛣️ Toll / Sunpass</option>
+                    <option value="repair" className="bg-[#0d0d0d]">👨‍🔧 Repair</option>
+                  </optgroup>
+                  <optgroup label="Company" className="bg-[#0d0d0d]">
+                    <option value="software" className="bg-[#0d0d0d]">💻 Software / Subscriptions</option>
+                    <option value="marketing" className="bg-[#0d0d0d]">📣 Marketing</option>
+                    <option value="office" className="bg-[#0d0d0d]">🏢 Office & Admin</option>
+                    <option value="banking" className="bg-[#0d0d0d]">💳 Banking & Fees</option>
+                    <option value="tax" className="bg-[#0d0d0d]">📁 Tax & Accounting</option>
+                    <option value="salary" className="bg-[#0d0d0d]">👤 Salary / Labor</option>
+                    <option value="parking" className="bg-[#0d0d0d]">🅿️ Parking</option>
+                    <option value="other" className="bg-[#0d0d0d]">📦 Other</option>
+                  </optgroup>
                 </select>
               </div>
               

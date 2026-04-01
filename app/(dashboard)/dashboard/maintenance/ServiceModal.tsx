@@ -46,8 +46,12 @@ export default function ServiceModal({ isOpen, onClose, service, cars }: Props) 
     const dataToSubmit: Omit<CarService, 'id' | 'tenant_id'> = {
       car_id: Number(formData.car_id),
       service_date: formData.service_date,
+      service_type: formData.service_type || null,
       description: formData.description || null,
-      amount: Number(formData.amount) || null
+      amount: Number(formData.amount) || null,
+      provider: formData.provider || null,
+      next_service_date: formData.next_service_date || null,
+      next_service_mileage: Number(formData.next_service_mileage) || null
     }
 
     startTransition(async () => {
@@ -112,6 +116,34 @@ export default function ServiceModal({ isOpen, onClose, service, cars }: Props) 
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
+                <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Service Type</label>
+                <select 
+                  value={formData.service_type || ''} 
+                  onChange={e => setFormData({...formData, service_type: e.target.value})}
+                  className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+                >
+                  <option value="" className="bg-[#0d0d0d]">General Maintenance</option>
+                  <option value="oil_change" className="bg-[#0d0d0d]">Oil Change</option>
+                  <option value="tires" className="bg-[#0d0d0d]">Tires / Rotation</option>
+                  <option value="brakes" className="bg-[#0d0d0d]">Brakes</option>
+                  <option value="inspection" className="bg-[#0d0d0d]">Inspection</option>
+                  <option value="repair" className="bg-[#0d0d0d]">Repair</option>
+                  <option value="cleaning" className="bg-[#0d0d0d]">Cleaning / Detail</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Provider</label>
+                <input 
+                  type="text" placeholder="e.g. Master Mechanic"
+                  value={formData.provider || ''} 
+                  onChange={e => setFormData({...formData, provider: e.target.value})}
+                  className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white" 
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
                 <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Date</label>
                 <input 
                   type="date" required
@@ -130,7 +162,6 @@ export default function ServiceModal({ isOpen, onClose, service, cars }: Props) 
                 />
               </div>
             </div>
-
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Description</label>
               <textarea 
@@ -139,6 +170,30 @@ export default function ServiceModal({ isOpen, onClose, service, cars }: Props) 
                 onChange={e => setFormData({...formData, description: e.target.value})}
                 className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white resize-none" 
               />
+            </div>
+
+            <div className="pt-4 border-t border-white/5">
+              <h4 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-4">Next Service Reminders</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Due Date</label>
+                  <input 
+                    type="date"
+                    value={formData.next_service_date || ''} 
+                    onChange={e => setFormData({...formData, next_service_date: e.target.value})}
+                    className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white [color-scheme:dark]" 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Due Mileage (mi)</label>
+                  <input 
+                    type="number"
+                    value={formData.next_service_mileage || ''} 
+                    onChange={e => setFormData({...formData, next_service_mileage: Number(e.target.value)})}
+                    className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white" 
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

@@ -94,8 +94,10 @@ export default function MaintenanceTable({ services, cars }: Props) {
               <thead>
                 <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/40 border-b border-white/10 bg-black/20">
                   <th className="py-4 pl-6 pr-4">Vehicle</th>
+                  <th className="py-4 pr-4">Type</th>
                   <th className="py-4 pr-4">Date</th>
                   <th className="py-4 pr-4">Description</th>
+                  <th className="py-4 pr-4 text-primary">Next Service</th>
                   <th className="py-4 pr-4">Cost</th>
                   <th className="py-4 pr-6 text-right">Actions</th>
                 </tr>
@@ -106,13 +108,27 @@ export default function MaintenanceTable({ services, cars }: Props) {
                     <td className="py-4 pl-6 pr-4 font-semibold text-white tracking-wide">
                       {s.car_id ? carMap[s.car_id] ?? `Car #${s.car_id}` : '—'}
                     </td>
+                    <td className="py-4 pr-4">
+                      <span className="px-2.5 py-1 bg-white/10 text-white/80 rounded-full text-[10px] font-bold uppercase border border-white/5 whitespace-nowrap">
+                        {(s.service_type || 'General').replace('_', ' ')}
+                      </span>
+                    </td>
                     <td className="py-4 pr-4 text-white/80 font-medium whitespace-nowrap">
                       {s.service_date || '—'}
                     </td>
                     <td className="py-4 pr-4 text-white/60">
-                      <div className="line-clamp-2 max-w-md">
+                      <div className="line-clamp-2 max-w-xs">
                         {s.description || '—'}
+                        {s.provider && <div className="text-[10px] text-white/30 italic mt-0.5">at {s.provider}</div>}
                       </div>
+                    </td>
+                    <td className="py-4 pr-4">
+                      {s.next_service_date || s.next_service_mileage ? (
+                        <div className="space-y-0.5">
+                          {s.next_service_date && <div className="text-xs text-primary font-medium">{s.next_service_date}</div>}
+                          {s.next_service_mileage && <div className="text-[10px] text-white/40 uppercase tracking-tighter">{s.next_service_mileage.toLocaleString()} mi</div>}
+                        </div>
+                      ) : '—'}
                     </td>
                     <td className="py-4 pr-4 text-white font-medium">
                       {s.amount != null ? `$${Number(s.amount).toLocaleString()}` : '—'}

@@ -3,7 +3,7 @@
 import { useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Transaction, Car } from '@/lib/supabase/types'
-import { deleteTransaction } from './actions'
+import { deleteTransaction, bulkCreateTransactions } from './actions'
 import ExpenseModal from './ExpenseModal'
 
 const PAGE_SIZE = 15
@@ -61,6 +61,62 @@ export default function ExpensesTable({ expenses, cars }: Props) {
     setModalOpen(true)
   }
 
+  async function handleImportCSV(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const text = await file.text()
+    const lines = text.split(/\r?\n/).filter(line => line.trim())
+    if (lines.length < 2) return
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z_]/g, ''))
+    const records: Omit<Transaction, 'id' | 'tenant_id'>[] = []
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i]
+      const fields: string[] = []
+      let cur = '', inQ = false
+      for (let j = 0; j < line.length; j++) {
+        const c = line[j]
+        if (c === '"') inQ = !inQ
+        else if (c === ',' && !inQ) { fields.push(cur.trim()); cur = '' }
+        else cur += c
+      }
+      fields.push(cur.trim())
+
+      const row: Record<string, string> = {}
+      headers.forEach((h, idx) => { row[h] = fields[idx] || '' })
+
+      const amount = parseFloat(row.amount || row.cost || row.total)
+      const date = row.date || row.expense_date || new Date().toISOString().split('T')[0]
+      const category = (row.category || row.type || 'other').toLowerCase()
+      const description = row.description || row.notes || ''
+
+      if (!isNaN(amount)) {
+        records.push({
+          transaction_date: date,
+          amount,
+          category,
+          description,
+          car_id: null
+        })
+      }
+    }
+
+    if (records.length > 0) {
+      startTransition(async () => {
+        const res = await bulkCreateTransactions(records)
+        if (res.error) alert(`Import failed: ${res.error}`)
+        else {
+          alert(`Successfully imported ${res.count} records!`)
+          router.refresh()
+        }
+      })
+    }
+    // Reset file input
+    e.target.value = ''
+  }
+
   return (
     <div>
       {/* Toolbar */}
@@ -75,12 +131,28 @@ export default function ExpensesTable({ expenses, cars }: Props) {
           }}
           className="w-full max-w-sm bg-white/5 border border-white/10 text-white placeholder:text-white/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
         />
-        <button
-          onClick={openNew}
-          className="bg-white text-black hover:bg-white/90 px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-lg shadow-white/10"
-        >
-          + Log Expense
-        </button>
+        <div className="flex gap-3 w-full md:w-auto">
+          <input
+            type="file"
+            id="csv-import"
+            accept=".csv"
+            onChange={handleImportCSV}
+            className="hidden"
+          />
+          <button
+            onClick={() => document.getElementById('csv-import')?.click()}
+            disabled={isPending}
+            className="flex-1 md:flex-none bg-white/5 text-white hover:bg-white/10 px-6 py-3 rounded-xl text-sm font-semibold border border-white/10 transition-all disabled:opacity-50"
+          >
+            {isPending ? 'Importing...' : 'Import CSV'}
+          </button>
+          <button
+            onClick={openNew}
+            className="flex-1 md:flex-none bg-white text-black hover:bg-white/90 px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-lg shadow-white/10"
+          >
+            + Log Expense
+          </button>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
