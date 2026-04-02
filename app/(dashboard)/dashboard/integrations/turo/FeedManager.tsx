@@ -3,7 +3,6 @@
 import { useState, useTransition } from 'react'
 import type { Car } from '@/lib/supabase/types'
 import { createFeed, deleteFeed, syncAllFeeds } from './actions'
-import { parseIcal } from '@/lib/ical-parser'
 import { connectIcloud, disconnectEmailSync } from './email-actions'
 
 interface Feed {
@@ -24,17 +23,13 @@ interface Props {
 export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
   const [isPending, startTransition] = useTransition()
   const [syncMsg, setSyncMsg] = useState('')
-  const [csvMsg, setCsvMsg] = useState('')
-  const [csvFile, setCsvFile] = useState<File | null>(null)
 
-  // Add form state
+  // Add feed form
   const [newSource, setNewSource] = useState('')
   const [newCarId, setNewCarId] = useState('')
   const [newUrl, setNewUrl] = useState('')
-  const [addMode, setAddMode] = useState<'url' | 'file'>('url')
-  const [icsFile, setIcsFile] = useState<File | null>(null)
 
-  // Email sync state
+  // iCloud connect form
   const [showIcloud, setShowIcloud] = useState(false)
   const [icloudEmail, setIcloudEmail] = useState('')
   const [icloudPwd, setIcloudPwd] = useState('')
@@ -82,87 +77,30 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
 
   async function handleAddFeed(e: React.FormEvent) {
     e.preventDefault()
-    if (!newSource || !newCarId) return
-
-    if (addMode === 'file' && icsFile) {
-      // Import .ics file directly
-      const text = await icsFile.text()
-      const events = parseIcal(text, Number(newCarId), newSource)
-      if (!events.length) {
-        setSyncMsg('No future events found in the .ics file.')
-        return
-      }
-      startTransition(async () => {
-        // They get inserted when we call a thin server action — for now notify user
-        setSyncMsg(`Found ${events.length} events. (Import via URL feed for automatic sync.)`)
-      })
-    } else if (addMode === 'url' && newUrl) {
-      startTransition(async () => {
-        const result = await createFeed({ car_id: Number(newCarId), ical_url: newUrl, source_name: newSource })
-        if (result.error) setSyncMsg('Error: ' + result.error)
-        else { setNewSource(''); setNewCarId(''); setNewUrl(''); }
-      })
-    }
-  }
-
-  async function handleCsvImport(e: React.FormEvent) {
-    e.preventDefault()
-    if (!csvFile) { setCsvMsg('Select a CSV file first.'); return }
-
-    const text = await csvFile.text()
-    const rows = text.split(/\r?\n/).map(line => {
-      const fields: string[] = []; let cur = '', inQ = false
-      for (let i = 0; i < line.length; i++) {
-        const c = line[i]
-        if (c === '"') { inQ = !inQ }
-        else if (c === ',' && !inQ) { fields.push(cur); cur = '' }
-        else cur += c
-      }
-      fields.push(cur)
-      return fields
+    if (!newSource || !newCarId || !newUrl) return
+    startTransition(async () => {
+      const result = await createFeed({ car_id: Number(newCarId), ical_url: newUrl, source_name: newSource })
+      if (result.error) setSyncMsg('Error: ' + result.error)
+      else { setNewSource(''); setNewCarId(''); setNewUrl('') }
     })
-
-    const turoVehicleMap: Record<string, number> = {}
-    cars.forEach(c => { if ((c as any).turo_vehicle_id) turoVehicleMap[(c as any).turo_vehicle_id] = c.id })
-
-    const reservations: Record<string, { guest: string; vid: string; total: number; car_id: number | null }> = {}
-    for (const r of rows) {
-      if (!r[0] || !r[0].includes('Viaje')) continue
-      const tipo = r[0].replace(/^"+|"+$/g, '')
-      const url = (r[1] || '').replace(/^"+|"+$/g, '')
-      const vid = (r[3] || '').trim()
-      const earnings = (r[5] || '').replace(/[$,"]/g, '').trim()
-      const guestM = tipo.match(/Viaje de (.+?)(?:\n|Con )/)
-      const resM = url.match(/\/reservation\/(\d+)/)
-      if (!guestM || !resM) continue
-      const resId = resM[1]
-      const amount = parseFloat(earnings) || 0
-      if (!reservations[resId]) reservations[resId] = { guest: guestM[1].trim(), vid, total: 0, car_id: turoVehicleMap[vid] || null }
-      reservations[resId].total += amount
-    }
-
-    const resIds = Object.keys(reservations)
-    if (!resIds.length) { setCsvMsg('No trip rows found. Make sure this is a Turo earnings CSV.'); return }
-
-    setCsvMsg(`Found ${resIds.length} trip(s). To update amounts, match them to reservations with Turo # in notes. (Full API update coming soon.)`)
-    setCsvFile(null)
   }
 
   return (
     <div className="space-y-12">
-      {/* Email Automation */}
-      <div className="glass border border-white/10 rounded-3xl p-8 relative overflow-hidden group">
-         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
-         
-         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-           <div className="max-w-md">
-             <h3 className="text-white text-xl font-black italic tracking-tight mb-2">Turo Email Reader</h3>
-             <p className="text-white/40 text-sm leading-relaxed">
-               Automatically sync new bookings, modifications, and cancellations directly from your Turo emails.
-             </p>
-           </div>
 
-           {!sync ? (
+      {/* ── Email Automation ── */}
+      <div className="glass border border-white/10 rounded-3xl p-8 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="max-w-md">
+            <h3 className="text-white text-xl font-black italic tracking-tight mb-2">Turo Email Reader</h3>
+            <p className="text-white/40 text-sm leading-relaxed">
+              Automatically sync new bookings, modifications, and cancellations directly from your Turo emails.
+            </p>
+          </div>
+
+          {!sync ? (
             <div className="flex flex-wrap gap-4">
               <button onClick={handleGmailConnect}
                 className="bg-[#EA4335] text-white px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-red-500/20">
@@ -173,7 +111,7 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
                 {showIcloud ? 'Cancel' : 'Connect iCloud'}
               </button>
             </div>
-           ) : (
+          ) : (
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-black italic text-lg">
                 {sync.provider === 'gmail' ? 'G' : 'i'}
@@ -193,46 +131,43 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
                 ✕
               </button>
             </div>
-           )}
-         </div>
+          )}
+        </div>
 
-         {showIcloud && (
-           <form onSubmit={handleIcloudConnect} className="mt-8 pt-8 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
-             <div className="space-y-1">
-                <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">iCloud Email</label>
-                <input type="email" required value={icloudEmail} onChange={e => setIcloudEmail(e.target.value)} placeholder="your@icloud.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
-             </div>
-             <div className="space-y-1">
-                <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">App-Specific Password</label>
-                <input type="password" required value={icloudPwd} onChange={e => setIcloudPwd(e.target.value)} placeholder="xxxx-xxxx-xxxx-xxxx"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
-             </div>
-             <div className="md:col-span-2">
-                <button type="submit" className="w-full bg-white text-black py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-white/90 transition-all shadow-xl shadow-white/5">
-                  Confirm iCloud Connection
-                </button>
-                <p className="text-[9px] text-white/30 text-center mt-3 italic">
-                  *We only read emails from noreply@mail.turo.com. You must use an App-Specific Password.
-                </p>
-             </div>
-           </form>
-         )}
+        {showIcloud && (
+          <form onSubmit={handleIcloudConnect} className="mt-8 pt-8 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">iCloud Email</label>
+              <input type="email" required value={icloudEmail} onChange={e => setIcloudEmail(e.target.value)} placeholder="your@icloud.com"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">App-Specific Password</label>
+              <input type="password" required value={icloudPwd} onChange={e => setIcloudPwd(e.target.value)} placeholder="xxxx-xxxx-xxxx-xxxx"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
+            </div>
+            <div className="md:col-span-2">
+              <button type="submit" className="w-full bg-white text-black py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-white/90 transition-all shadow-xl shadow-white/5">
+                Confirm iCloud Connection
+              </button>
+              <p className="text-[9px] text-white/30 text-center mt-3 italic">
+                *We only read emails from noreply@mail.turo.com. You must use an App-Specific Password.
+              </p>
+            </div>
+          </form>
+        )}
+
+        {syncMsg && (
+          <div className="mt-6 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl text-sm relative z-10">
+            {syncMsg}
+          </div>
+        )}
       </div>
 
-      {/* Add Feed */}
+      {/* ── Add Calendar Feed (URL only) ── */}
       <div className="glass border border-white/10 rounded-3xl p-6">
         <h3 className="text-white font-bold mb-4">Add Calendar Feed</h3>
         <form onSubmit={handleAddFeed} className="space-y-4">
-          <div className="flex gap-2 mb-2">
-            {['url', 'file'].map(mode => (
-              <button key={mode} type="button" onClick={() => setAddMode(mode as 'url' | 'file')}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${addMode === mode ? 'bg-white text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>
-                {mode === 'url' ? '🔗 URL' : '📁 .ics File'}
-              </button>
-            ))}
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Platform Name</label>
@@ -248,19 +183,9 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
               </select>
             </div>
             <div className="space-y-1">
-              {addMode === 'url' ? (
-                <>
-                  <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">iCal URL</label>
-                  <input type="url" placeholder="https://..." value={newUrl} onChange={e => setNewUrl(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20" />
-                </>
-              ) : (
-                <>
-                  <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">.ics File</label>
-                  <input type="file" accept=".ics" onChange={e => setIcsFile(e.target.files?.[0] ?? null)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-sm text-white/70 file:mr-3 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-white/10 file:text-white" />
-                </>
-              )}
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">iCal URL</label>
+              <input type="url" required placeholder="https://..." value={newUrl} onChange={e => setNewUrl(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20" />
             </div>
           </div>
           <button type="submit" disabled={isPending}
@@ -270,7 +195,7 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
         </form>
       </div>
 
-      {/* Feeds List */}
+      {/* ── Active Feeds ── */}
       <div className="glass border border-white/10 rounded-3xl p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-white font-bold">Active Feeds ({feeds.length})</h3>
@@ -281,7 +206,6 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
             </button>
           )}
         </div>
-        {syncMsg && <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl text-sm">{syncMsg}</div>}
 
         {feeds.length === 0 ? (
           <p className="text-white/30 text-sm py-8 text-center">No calendar feeds added yet.</p>
@@ -320,23 +244,6 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
         )}
       </div>
 
-      {/* Turo CSV Import */}
-      <div className="glass border border-white/10 rounded-3xl p-6">
-        <h3 className="text-white font-bold mb-2">Turo CSV Import</h3>
-        <p className="text-white/40 text-xs mb-4">Import a Turo earnings CSV to update total amounts on matched reservations.</p>
-        <form onSubmit={handleCsvImport} className="flex flex-col md:flex-row gap-4 items-start md:items-end">
-          <div className="space-y-1 flex-1">
-            <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Earnings CSV</label>
-            <input type="file" accept=".csv" onChange={e => setCsvFile(e.target.files?.[0] ?? null)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-sm text-white/70 file:mr-3 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-white/10 file:text-white" />
-          </div>
-          <button type="submit" disabled={isPending}
-            className="bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex-shrink-0">
-            Import CSV
-          </button>
-        </form>
-        {csvMsg && <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 text-blue-300 rounded-xl text-sm">{csvMsg}</div>}
-      </div>
     </div>
   )
 }
