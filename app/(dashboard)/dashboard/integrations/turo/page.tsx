@@ -17,7 +17,7 @@ export default async function TuroSyncPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <PageHeader title="Calendar Sync" description="Sync external iCal calendars (Turo, Airbnb, etc.) and import CSV earnings." />
+      <PageHeader title="Calendar Sync" description="Connect your email to auto-sync Turo bookings, or add iCal feed URLs from any platform." />
       <FeedManager feeds={feeds ?? []} sync={syncs} cars={(cars as Car[]) ?? []} tenantId={tenantId} />
     </div>
   )
