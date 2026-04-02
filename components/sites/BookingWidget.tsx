@@ -128,7 +128,7 @@ export default function BookingWidget({ car }: Props) {
           <select value={location} onChange={e => setLocation(e.target.value)}
             className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-4 text-xs text-white font-bold focus:ring-1 focus:ring-primary/40 outline-none appearance-none">
             <option value="aventura" className="text-black">Miami: Aventura Showroom (Free)</option>
-            <option value="mia" className="text-black">Miami Int'l Airport ($120 Fee)</option>
+            <option value="mia" className="text-black">Miami Int&apos;l Airport ($120 Fee)</option>
             <option value="fll" className="text-black">Ft. Lauderdale Airport ($120 Fee)</option>
           </select>
         </div>

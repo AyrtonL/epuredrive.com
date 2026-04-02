@@ -401,16 +401,17 @@ async function pollIcloud(sync: EmailSync): Promise<number> {
         ? new Date(sync.last_checked)
         : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
 
-      const allUids: number[] = await client.search(
+      const allUids: number[] = (await client.search(
         { from: 'noreply@mail.turo.com', since: checkedAt },
         { uid: true }
-      )
+      )) || []
 
       // Step 1: filter by subject (envelope only) to avoid downloading all bodies
       const relevantUids: number[] = []
       for (const uid of allUids) {
         try {
           const msg = await client.fetchOne(String(uid), { envelope: true }, { uid: true })
+          if (!msg) continue
           const subject: string = msg.envelope?.subject || ''
           if (/booked|cancel|modif|updated.*trip|trip.*updated/i.test(subject)) {
             relevantUids.push(uid)
@@ -423,6 +424,7 @@ async function pollIcloud(sync: EmailSync): Promise<number> {
       for (const uid of relevantUids) {
         try {
           const msg = await client.fetchOne(String(uid), { source: true }, { uid: true })
+          if (!msg || !msg.source) continue
           const raw: string = msg.source.toString('utf-8')
           const subject = raw.match(/^Subject:\s*(.+)$/mi)?.[1]?.trim() || ''
           const body = getImapBody(raw)
@@ -518,7 +520,7 @@ export async function GET(request: Request) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error(`[poll-turo-emails] Sync ${sync.id} failed:`, msg)
       if (/token refresh failed|403|access.?denied|insufficient.?permission|authenticationfailed/i.test(msg)) {
-        await supabase.from('turo_email_syncs').update({ active: false }).eq('id', sync.id).catch(() => {})
+        await supabase.from('turo_email_syncs').update({ active: false }).eq('id', sync.id)
       }
       errors++
     }

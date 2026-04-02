@@ -61,6 +61,7 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
       features: formData.features || null,
       description: formData.description || null,
       turo_vehicle_id: formData.turo_vehicle_id || null,
+      mileage: Number(formData.mileage) || null,
     }
 
     startTransition(async () => {
