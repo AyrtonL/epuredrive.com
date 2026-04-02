@@ -335,7 +335,7 @@ async function startCheckout(priceId) {
   try {
     // If no tenant yet, auto-create one via server function (bypasses RLS)
     if (!currentTenantId && userId) {
-      const tRes  = await fetch('/.netlify/functions/create-tenant', {
+      const tRes  = await fetch('/api/tenant/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, email, company: email.split('@')[0] }),
@@ -345,7 +345,7 @@ async function startCheckout(priceId) {
       currentTenantId = tJson.tenantId;
     }
 
-    const res  = await fetch('/.netlify/functions/create-checkout-session', {
+    const res  = await fetch('/api/stripe/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ priceId, tenantId: currentTenantId, email }),
@@ -1162,7 +1162,10 @@ async function syncNow() {
   const btn = document.getElementById('sync-now-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
   try {
-    await fetch('/.netlify/functions/poll-turo-emails');
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch('/api/cron/poll-turo-emails', {
+      headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+    });
     await loadGmailSync();
     renderGmailSync();
     showToast('Sync complete', 'success');
@@ -1190,7 +1193,7 @@ async function connectIcloud() {
   if (btn) { btn.disabled = true; btn.textContent = 'Connecting…'; }
 
   try {
-    const res  = await fetch('/.netlify/functions/icloud-connect', {
+    const res  = await fetch('/api/integrations/turo/icloud/connect', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ tenant_id: tenantId, email, password }),
@@ -1213,7 +1216,7 @@ async function connectIcloud() {
 function connectGmail() {
   const tenantId = currentTenantId;
   if (!tenantId) { showToast('Not logged in', 'error'); return; }
-  window.location.href = `/.netlify/functions/gmail-oauth-start?tenant_id=${tenantId}`;
+  window.location.href = `/api/integrations/turo/gmail/start?tenant_id=${tenantId}`;
 }
 
 async function disconnectEmailSync(skipConfirm = false) {
@@ -1522,7 +1525,7 @@ async function syncTuro() {
 
   for (const feed of feeds) {
     try {
-      const proxyUrl = `/.netlify/functions/fetch-ical?url=${encodeURIComponent(feed.url)}`;
+      const proxyUrl = `/api/fetch-ical?url=${encodeURIComponent(feed.url)}`;
       const res  = await fetch(proxyUrl);
       if (!res.ok) throw new Error(`Fetch failed (${res.status})`);
       const icsText = await res.text();
@@ -3551,7 +3554,7 @@ async function inviteUser(e) {
   btn.textContent = 'Sending…';
 
   try {
-    const res = await fetch('/.netlify/functions/invite-user', {
+    const res = await fetch('/api/team/invite', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, name, role, tenantId: currentTenantId }),
@@ -3574,7 +3577,7 @@ async function inviteUser(e) {
 async function updateUserRole(userId, newRole) {
   try {
     const { data: { session } } = await sb.auth.getSession();
-    const res = await fetch('/.netlify/functions/update-user-role', {
+    const res = await fetch('/api/team/update-role', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
       body: JSON.stringify({ targetUserId: userId, newRole }),

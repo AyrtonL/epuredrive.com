@@ -241,7 +241,7 @@ async function init() {
 async function loadTenants() {
   document.getElementById('sa-tbody').innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>`;
   try {
-    const res  = await fetch('/.netlify/functions/superadmin-stats', {
+    const res  = await fetch('/api/superadmin/stats', {
       headers: { 'Authorization': `Bearer ${accessToken}` },
     });
     const json = await res.json();
@@ -357,7 +357,7 @@ document.getElementById('edit-form').addEventListener('submit', async (e) => {
   // Also update company name via direct Supabase (admin owns their tenant)
   const nameVal = document.getElementById('edit-name').value.trim();
   try {
-    const res = await fetch('/.netlify/functions/superadmin-update', {
+    const res = await fetch('/api/superadmin/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
       body: JSON.stringify({ tenantId, updates: { ...updates } }),
@@ -393,7 +393,7 @@ async function quickActivate(id) {
 
 async function patchTenant(id, updates) {
   try {
-    const res = await fetch('/.netlify/functions/superadmin-update', {
+    const res = await fetch('/api/superadmin/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
       body: JSON.stringify({ tenantId: id, updates }),

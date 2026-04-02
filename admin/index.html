@@ -232,7 +232,7 @@
         try {
           const userId = data.user?.id;
           if (userId) {
-            await fetch('/.netlify/functions/create-tenant', {
+            await fetch('/api/tenant/create', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ userId, email, company: company || name || email.split('@')[0] }),
