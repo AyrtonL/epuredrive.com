@@ -249,6 +249,7 @@
     @media (min-width: 1025px) {
       #main-sidebar { transform: none !important; }
       #mobile-menu-btn { display: none !important; }
+      .topbar-logout-label { display: inline !important; }
     }
 
     /* Mobile + tablet: sidebar drawer + layout reflow */
@@ -967,6 +968,10 @@
         </button>
         <button class="bg-primary-container border-0 cursor-pointer text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-all flex items-center gap-2 write-action" id="add-res-btn" style="background:#111c2d;color:#fff;">
           <span class="material-symbols-outlined text-sm">add</span> <span class="btn-label">New Booking</span>
+        </button>
+        <button id="topbar-logout-btn" title="Log out" style="background:none;border:1px solid #e2e8f0;cursor:pointer;padding:7px 10px;border-radius:8px;color:#64748b;display:flex;align-items:center;gap:6px;font-size:0.82rem;font-family:'Inter',sans-serif;transition:background 0.2s,color 0.2s;" onmouseenter="this.style.background='#fee2e2';this.style.color='#dc2626';this.style.borderColor='#fca5a5'" onmouseleave="this.style.background='none';this.style.color='#64748b';this.style.borderColor='#e2e8f0'">
+          <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
+          <span style="display:none;" class="topbar-logout-label">Log out</span>
         </button>
       </div>
     </header>
