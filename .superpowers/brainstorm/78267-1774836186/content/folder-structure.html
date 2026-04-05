@@ -1,0 +1,87 @@
+<h2>Next.js Folder Structure</h2>
+<p class="subtitle">How the current HTML files map into the new project</p>
+
+<div class="section" style="display:flex;gap:24px;flex-wrap:wrap;">
+
+  <!-- Current structure -->
+  <div style="flex:1;min-width:260px;">
+    <h3 style="color:#888;font-size:13px;text-transform:uppercase;letter-spacing:1px;">Current (vanilla HTML)</h3>
+    <div style="background:#111;border-radius:10px;padding:16px;font-family:monospace;font-size:12px;line-height:2;color:#aaa;">
+      <span style="color:#666;">📁</span> /
+      <div style="padding-left:16px;">
+        <div><span style="color:#f87171;">index.html</span> <span style="color:#555;">← becomes marketing site</span></div>
+        <div><span style="color:#fbbf24;">fleet.html</span> <span style="color:#555;">← tenant fleet page</span></div>
+        <div><span style="color:#aaa;">car-detail.html</span></div>
+        <div><span style="color:#aaa;">reservation.html</span></div>
+        <div><span style="color:#aaa;">checkout.html</span></div>
+        <div><span style="color:#aaa;">terms.html</span></div>
+        <div><span style="color:#aaa;">privacy.html</span></div>
+        <div><span style="color:#666;">📁</span> admin/
+          <div style="padding-left:16px;">
+            <div><span style="color:#38bdf8;">dashboard.html</span></div>
+            <div><span style="color:#aaa;">superadmin.html</span></div>
+          </div>
+        </div>
+        <div><span style="color:#666;">📁</span> js/ css/ assets/</div>
+        <div><span style="color:#666;">📁</span> netlify/functions/</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div style="display:flex;align-items:center;font-size:28px;color:#444;padding-top:40px;">→</div>
+
+  <!-- New structure -->
+  <div style="flex:1;min-width:280px;">
+    <h3 style="color:#22c55e;font-size:13px;text-transform:uppercase;letter-spacing:1px;">Next.js (App Router)</h3>
+    <div style="background:#111;border-radius:10px;padding:16px;font-family:monospace;font-size:12px;line-height:2;color:#aaa;">
+      <span style="color:#666;">📁</span> /
+      <div style="padding-left:16px;">
+        <div><span style="color:#22c55e;">middleware.ts</span> <span style="color:#555;">← subdomain router</span></div>
+        <div><span style="color:#666;">📁</span> app/
+          <div style="padding-left:16px;">
+            <div style="color:#a78bfa;">📁 (marketing)/   <span style="color:#555;">← epuredrive.com</span></div>
+            <div style="padding-left:16px;color:#aaa;">
+              <div>page.tsx <span style="color:#555;">← hero/pricing</span></div>
+              <div>pricing/page.tsx</div>
+              <div>login/page.tsx</div>
+              <div>sign-up/page.tsx</div>
+            </div>
+            <div style="color:#f59e0b;">📁 (tenant)/      <span style="color:#555;">← {slug}.epuredrive.com</span></div>
+            <div style="padding-left:16px;color:#aaa;">
+              <div>page.tsx <span style="color:#555;">← fleet listing</span></div>
+              <div>[carId]/page.tsx</div>
+              <div>checkout/page.tsx</div>
+            </div>
+            <div style="color:#38bdf8;">📁 dashboard/     <span style="color:#555;">← auth-protected</span></div>
+            <div style="padding-left:16px;color:#aaa;">
+              <div>page.tsx</div>
+              <div>fleet/page.tsx <span style="color:#555;">← customizer</span></div>
+              <div>cars/page.tsx</div>
+              <div>reservations/page.tsx</div>
+            </div>
+          </div>
+        </div>
+        <div><span style="color:#666;">📁</span> components/ <span style="color:#555;">← shared UI</span></div>
+        <div><span style="color:#666;">📁</span> lib/ <span style="color:#555;">← supabase, utils</span></div>
+        <div><span style="color:#666;">📁</span> public/ <span style="color:#555;">← assets, images</span></div>
+        <div><span style="color:#666;">📁</span> netlify/functions/ <span style="color:#555;">← kept as-is</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:20px;">
+  <h3>Route groups — the key trick</h3>
+  <p style="color:#aaa;font-size:13px;line-height:1.7;">
+    The <code style="background:#222;padding:2px 5px;border-radius:3px;">(marketing)</code> and <code style="background:#222;padding:2px 5px;border-radius:3px;">(tenant)</code> folders use Next.js <strong style="color:#fff;">route groups</strong> — the parentheses mean they don't affect the URL path, but they let each surface have its own layout, loading state, and metadata. The middleware reads the hostname first and rewrites the request to the correct group before the router sees it. Same page at <code style="background:#222;padding:2px 5px;border-radius:3px;">/</code>, completely different UI depending on which domain you're on.
+  </p>
+</div>
+
+<div class="section" style="margin-top:8px;background:#0a1a0a;border:1px solid #22c55e;border-radius:10px;padding:16px;">
+  <div style="font-size:12px;color:#22c55e;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Migration note — Netlify functions stay</div>
+  <p style="color:#aaa;font-size:13px;line-height:1.7;margin:0;">
+    Your existing Netlify functions (Stripe, iCal sync, Gmail, etc.) don't need to be rewritten. They stay in <code style="background:#111;padding:2px 5px;border-radius:3px;">netlify/functions/</code> and keep working. We migrate the frontend first, functions later only if needed.
+  </p>
+</div>
