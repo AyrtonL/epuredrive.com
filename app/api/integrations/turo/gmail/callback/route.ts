@@ -1,32 +1,38 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function getRedirectUri(): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '')
+  if (appUrl) return `${appUrl}/api/integrations/turo/gmail/callback`
+  return 'http://localhost:3000/api/integrations/turo/gmail/callback'
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const tenantId = searchParams.get('state')
-  const error = searchParams.get('error')
+  const oauthError = searchParams.get('error')
 
   const DASHBOARD_URL = '/dashboard/integrations/turo?gmail=connected'
   const ERROR_URL = '/dashboard/integrations/turo?gmail=error'
 
-  if (error || !code || !tenantId) {
-    console.error('[gmail-callback] OAuth Error or missing params:', { error, tenantId })
+  if (oauthError || !code || !tenantId || !UUID_RE.test(tenantId)) {
+    console.error('[gmail-callback] OAuth error or invalid params:', { oauthError, tenantId })
     return NextResponse.redirect(new URL(ERROR_URL, request.url))
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
   if (!clientId || !clientSecret) {
-    console.error('[gmail-callback] Missing GOOGLE_CLIENT_ID/SECRET')
+    console.error('[gmail-callback] Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET env vars')
     return NextResponse.redirect(new URL(ERROR_URL, request.url))
   }
 
-  const host = request.headers.get('host')
-  const protocol = host?.includes('localhost') ? 'http' : 'https'
-  const redirectUri = `${protocol}://${host}/api/integrations/turo/gmail/callback`
+  // Must match exactly what was sent in gmail-oauth-start
+  const redirectUri = getRedirectUri()
 
   try {
     // 1. Exchange code for tokens
@@ -55,9 +61,8 @@ export async function GET(request: Request) {
     const profile = profileRes.ok ? await profileRes.json() : {}
     const gmailAddress = profile.emailAddress || 'unknown@gmail.com'
 
-    // 3. Save to Supabase (using Service Role for RLS bypass if needed, or normal client)
-    // We use the server client which should have sufficient perms if it's the admin
-    const supabase = createClient()
+    // 3. Save to Supabase using service role (bypasses RLS — same pattern as iCloud connect)
+    const supabase = createAdminClient()
     const { error: upsertError } = await supabase.from('turo_email_syncs').upsert({
       tenant_id: tenantId,
       gmail_address: gmailAddress,
@@ -73,6 +78,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL(ERROR_URL, request.url))
     }
 
+    console.log(`[gmail-callback] Connected Gmail ${gmailAddress} for tenant ${tenantId}`)
     return NextResponse.redirect(new URL(DASHBOARD_URL, request.url))
   } catch (err) {
     console.error('[gmail-callback] Internal error:', err)

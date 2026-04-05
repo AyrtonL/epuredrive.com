@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import type { Car } from '@/lib/supabase/types'
 import { createFeed, deleteFeed, syncAllFeeds } from './actions'
 import { connectIcloud, disconnectEmailSync } from './email-actions'
@@ -23,6 +24,20 @@ interface Props {
 export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
   const [isPending, startTransition] = useTransition()
   const [syncMsg, setSyncMsg] = useState('')
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Show feedback from Gmail OAuth redirect and clean the URL
+  useEffect(() => {
+    const gmail = searchParams.get('gmail')
+    if (gmail === 'connected') {
+      setSyncMsg('Gmail connected successfully! Bookings will sync automatically.')
+      router.replace('/dashboard/integrations/turo', { scroll: false })
+    } else if (gmail === 'error') {
+      setSyncMsg('Gmail connection failed. Please try again or check your Google OAuth settings.')
+      router.replace('/dashboard/integrations/turo', { scroll: false })
+    }
+  }, [searchParams, router])
 
   // Add feed form
   const [newSource, setNewSource] = useState('')
@@ -158,7 +173,11 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
         )}
 
         {syncMsg && (
-          <div className="mt-6 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl text-sm relative z-10">
+          <div className={`mt-6 p-3 border rounded-xl text-sm relative z-10 ${
+            syncMsg.toLowerCase().includes('fail') || syncMsg.toLowerCase().includes('error')
+              ? 'bg-red-500/10 border-red-500/20 text-red-300'
+              : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+          }`}>
             {syncMsg}
           </div>
         )}

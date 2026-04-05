@@ -1,5 +1,16 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+
+const SCOPE = 'https://www.googleapis.com/auth/gmail.readonly'
+
+function getRedirectUri(): string {
+  // Always use the canonical production URL — never the deploy-preview host.
+  // Register EXACTLY this value in Google Cloud Console → OAuth credentials.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '')
+  if (appUrl) return `${appUrl}/api/integrations/turo/gmail/callback`
+
+  // Fallback for local dev only
+  return 'http://localhost:3000/api/integrations/turo/gmail/callback'
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -14,13 +25,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Server misconfigured: missing GOOGLE_CLIENT_ID' }, { status: 500 })
   }
 
-  // Use the host from the request to build the redirect URI dynamically
-  const host = request.headers.get('host')
-  const protocol = host?.includes('localhost') ? 'http' : 'https'
-  const redirectUri = `${protocol}://${host}/api/integrations/turo/gmail/callback`
+  const redirectUri = getRedirectUri()
 
-  const SCOPE = 'https://www.googleapis.com/auth/gmail.readonly'
-  
   const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
   url.searchParams.set('client_id', clientId)
   url.searchParams.set('redirect_uri', redirectUri)
