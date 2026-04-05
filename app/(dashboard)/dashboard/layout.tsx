@@ -28,7 +28,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             {/* Subtle radial gradient background behind the dashboard content */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-hero-glow opacity-30 -z-10 pointer-events-none" />
             
-            <div className="animate-fade-in-up">
+            <div className="animate-fade-in">
               {children}
             </div>
           </main>
