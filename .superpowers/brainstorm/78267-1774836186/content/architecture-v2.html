@@ -1,0 +1,90 @@
+<h2>Next.js Architecture — Updated Flow</h2>
+<p class="subtitle">Tenant logs in → Dashboard first → Fleet page preview inside dashboard</p>
+
+<div class="section">
+
+  <!-- Top: Marketing + Auth -->
+  <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;">
+
+    <div style="background:#1a1a2e;border:1px solid #4a4a8a;border-radius:12px;padding:18px;min-width:200px;max-width:220px;text-align:center;">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Surface 1</div>
+      <div style="font-size:14px;font-weight:700;color:#a78bfa;margin-bottom:4px;">epuredrive.com</div>
+      <div style="font-size:11px;color:#ccc;margin-bottom:10px;">SaaS Marketing Site</div>
+      <div style="font-size:11px;color:#aaa;background:#111;border-radius:6px;padding:8px;text-align:left;line-height:1.8;">
+        /&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ Hero / Pricing<br>
+        /sign-up&nbsp;&nbsp;→ New tenant<br>
+        /login&nbsp;&nbsp;&nbsp;→ Auth
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:#6ee7b7;background:#052e16;padding:4px 8px;border-radius:4px;display:inline-block;">Static (SSG)</div>
+    </div>
+
+    <div style="display:flex;align-items:center;flex-direction:column;justify-content:center;gap:6px;">
+      <div style="font-size:11px;color:#666;">after login</div>
+      <div style="font-size:24px;color:#22c55e;">↓</div>
+    </div>
+
+    <!-- Surface 2: Dashboard -->
+    <div style="background:#1a1a2e;border:2px solid #38bdf8;border-radius:12px;padding:18px;min-width:240px;max-width:280px;text-align:center;">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Surface 2 — First thing they see</div>
+      <div style="font-size:14px;font-weight:700;color:#38bdf8;margin-bottom:4px;">epuredrive.com/dashboard</div>
+      <div style="font-size:11px;color:#ccc;margin-bottom:10px;">Admin Dashboard</div>
+      <div style="font-size:11px;color:#aaa;background:#111;border-radius:6px;padding:8px;text-align:left;line-height:1.8;">
+        /dashboard&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ Overview<br>
+        /dashboard/fleet&nbsp;→ Fleet editor<br>
+        /dashboard/cars&nbsp;&nbsp;→ Cars<br>
+        /dashboard/res.&nbsp;&nbsp;→ Reservations
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:#38bdf8;background:#001a2e;padding:4px 8px;border-radius:4px;display:inline-block;">Client (CSR) + Auth guard</div>
+      <!-- Fleet preview callout -->
+      <div style="margin-top:12px;background:#0f2a1a;border:1px dashed #22c55e;border-radius:8px;padding:10px;text-align:left;">
+        <div style="font-size:10px;color:#22c55e;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Fleet Page Customizer (inside dashboard)</div>
+        <div style="font-size:11px;color:#aaa;line-height:1.7;">
+          ✦ Live preview of their public fleet page<br>
+          ✦ Edit brand colors, logo, cars shown<br>
+          ✦ "Open live page →" link to their subdomain
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;flex-direction:column;justify-content:center;gap:6px;">
+      <div style="font-size:11px;color:#666;">public URL</div>
+      <div style="font-size:24px;color:#f59e0b;">→</div>
+    </div>
+
+    <!-- Surface 3: Tenant Fleet Page -->
+    <div style="background:#1a1a2e;border:1px solid #4a4a8a;border-radius:12px;padding:18px;min-width:200px;max-width:220px;text-align:center;">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Surface 3 — Public</div>
+      <div style="font-size:14px;font-weight:700;color:#f59e0b;margin-bottom:4px;">{slug}.epuredrive.com</div>
+      <div style="font-size:11px;color:#ccc;margin-bottom:10px;">Tenant's Public Fleet Page</div>
+      <div style="font-size:11px;color:#aaa;background:#111;border-radius:6px;padding:8px;text-align:left;line-height:1.8;">
+        /&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ Fleet listing<br>
+        /[id]&nbsp;→ Car detail<br>
+        /book&nbsp;→ Checkout
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:#fbbf24;background:#2d1a00;padding:4px 8px;border-radius:4px;display:inline-block;">Server (SSR) — no auth</div>
+    </div>
+
+  </div>
+
+  <!-- Tenant onboarding flow -->
+  <div style="background:#111;border:1px solid #333;border-radius:10px;padding:16px;margin-top:8px;">
+    <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Tenant first-time flow</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:#ccc;">
+      <div style="background:#1a1a3e;padding:8px 14px;border-radius:20px;border:1px solid #4a4a8a;">1. Sign up at epuredrive.com</div>
+      <div style="color:#444;">→</div>
+      <div style="background:#1a1a3e;padding:8px 14px;border-radius:20px;border:1px solid #38bdf8;">2. Lands on Dashboard</div>
+      <div style="color:#444;">→</div>
+      <div style="background:#1a1a3e;padding:8px 14px;border-radius:20px;border:1px solid #22c55e;">3. Sees live fleet preview (example data)</div>
+      <div style="color:#444;">→</div>
+      <div style="background:#1a1a3e;padding:8px 14px;border-radius:20px;border:1px solid #f59e0b;">4. Customizes → publishes to their subdomain</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:16px;">
+  <h3>What "example right away" means in practice</h3>
+  <p style="color:#aaa;font-size:13px;line-height:1.7;">
+    When a tenant first logs in, the dashboard's Fleet Customizer shows a <strong style="color:#22c55e;">pre-populated demo</strong> of what their public fleet page will look like — with placeholder cars and their company name already applied. They can see it, customize it, and hit "Publish" to make it live at <strong style="color:#f59e0b;">{their-slug}.epuredrive.com</strong>. No guesswork about what it'll look like before they go live.
+  </p>
+</div>

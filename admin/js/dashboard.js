@@ -3690,10 +3690,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Topbar buttons
   document.getElementById('add-res-btn').addEventListener('click', openAdd);
   document.getElementById('block-btn').addEventListener('click', () => openModal('block-modal'));
-  document.getElementById('logout-btn').addEventListener('click', async () => {
+  const doLogout = async () => {
     await sb.auth.signOut();
     window.location.href = 'index.html';
-  });
+  };
+  document.getElementById('logout-btn').addEventListener('click', doLogout);
+  document.getElementById('topbar-logout-btn').addEventListener('click', doLogout);
 
   // Forms
   document.getElementById('reservation-form').addEventListener('submit', saveReservation);

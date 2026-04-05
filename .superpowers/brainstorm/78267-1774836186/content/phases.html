@@ -1,0 +1,111 @@
+<h2>Implementation Phases</h2>
+<p class="subtitle">What ships in April vs. what comes after first users</p>
+
+<div class="section" style="display:flex;gap:20px;flex-wrap:wrap;">
+
+  <!-- Phase 1 -->
+  <div style="flex:1;min-width:280px;background:#0a1a0a;border:2px solid #22c55e;border-radius:12px;padding:20px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div style="background:#22c55e;color:#000;font-weight:700;font-size:12px;padding:4px 10px;border-radius:20px;">PHASE 1 — APRIL</div>
+      <div style="font-size:12px;color:#666;">~3 weeks</div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:#a78bfa;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">New Next.js project</div>
+      <div style="font-size:12px;color:#ccc;line-height:1.9;">
+        ✦ Next.js 14 + TypeScript + Tailwind<br>
+        ✦ Supabase SSR client setup<br>
+        ✦ Middleware for subdomain routing<br>
+        ✦ Netlify Next.js runtime config
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:#a78bfa;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Surface 1 — Marketing site</div>
+      <div style="font-size:12px;color:#ccc;line-height:1.9;">
+        ✦ Hero section + value proposition<br>
+        ✦ Pricing plans<br>
+        ✦ Sign up page (creates tenant + profile)<br>
+        ✦ Login page → redirects to dashboard
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:#a78bfa;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Surface 2 — Dashboard (entry)</div>
+      <div style="font-size:12px;color:#ccc;line-height:1.9;">
+        ✦ Auth guard (redirect to login if not signed in)<br>
+        ✦ Overview page (welcome + quick stats)<br>
+        ✦ Fleet Customizer panel:<br>
+        &nbsp;&nbsp;&nbsp;— Preview iframe of éPure Drive page<br>
+        &nbsp;&nbsp;&nbsp;— 1 sample car pre-seeded<br>
+        &nbsp;&nbsp;&nbsp;— Edit name, logo, publish button<br>
+        ✦ Link to existing dashboard for rest
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:11px;color:#a78bfa;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Surface 3 — Tenant fleet page</div>
+      <div style="font-size:12px;color:#ccc;line-height:1.9;">
+        ✦ Migrate fleet.html → Next.js page<br>
+        ✦ Reads tenant by subdomain slug<br>
+        ✦ Shows tenant's cars from DB<br>
+        ✦ Car detail + basic booking flow
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div style="flex:1;min-width:280px;background:#0a0a1a;border:2px solid #4a4a8a;border-radius:12px;padding:20px;opacity:0.85;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div style="background:#4a4a8a;color:#fff;font-weight:700;font-size:12px;padding:4px 10px;border-radius:20px;">PHASE 2 — AFTER LAUNCH</div>
+      <div style="font-size:12px;color:#666;">post first users</div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Full dashboard migration</div>
+      <div style="font-size:12px;color:#aaa;line-height:1.9;">
+        ✦ Migrate admin/dashboard.html → Next.js<br>
+        ✦ Reservations, cars, calendar in React<br>
+        ✦ Superadmin panel migration<br>
+        ✦ Unified auth context across all pages
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Fleet customizer — full controls</div>
+      <div style="font-size:12px;color:#aaa;line-height:1.9;">
+        ✦ Brand colors + fonts<br>
+        ✦ Custom domain support (beyond subdomain)<br>
+        ✦ SEO metadata per tenant<br>
+        ✦ Multiple layout options
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Tenant fleet page — polish</div>
+      <div style="font-size:12px;color:#aaa;line-height:1.9;">
+        ✦ Full booking + checkout flow<br>
+        ✦ Stripe per-tenant payments<br>
+        ✦ Availability calendar<br>
+        ✦ Mobile optimized
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Marketing site — growth</div>
+      <div style="font-size:12px;color:#aaa;line-height:1.9;">
+        ✦ Tenant showcase / testimonials<br>
+        ✦ Blog / SEO content<br>
+        ✦ Affiliate / referral program
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:16px;background:#111;border:1px solid #333;border-radius:10px;padding:16px;">
+  <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Coexistence during Phase 1</div>
+  <p style="color:#aaa;font-size:13px;line-height:1.7;margin:0;">
+    During Phase 1, the new Next.js app handles <strong style="color:#a78bfa;">epuredrive.com</strong> (marketing + signup) and <strong style="color:#f59e0b;">{slug}.epuredrive.com</strong> (tenant fleet). The existing <strong style="color:#38bdf8;">admin/dashboard.html</strong> stays live at <code style="background:#222;padding:2px 5px;border-radius:3px;">epuredrive.com/admin/dashboard.html</code> during the transition — tenants get linked to it from the new dashboard entry page until Phase 2 completes the migration.
+  </p>
+</div>
