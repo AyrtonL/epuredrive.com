@@ -38,3 +38,14 @@ export async function deleteService(id: number): Promise<{ error: string | null 
   revalidatePath('/dashboard/maintenance')
   return { error: error?.message ?? null }
 }
+
+export async function updateCarMileage(
+  carId: number,
+  mileage: number
+): Promise<{ error: string | null }> {
+  const supabase = createClient()
+  const { error } = await supabase.from('cars').update({ mileage }).eq('id', carId)
+  revalidatePath('/dashboard/maintenance')
+  revalidatePath('/dashboard/fleet')
+  return { error: error?.message ?? null }
+}

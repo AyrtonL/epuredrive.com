@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CarService, Car } from '@/lib/supabase/types'
-import { createService, updateService } from './actions'
+import { createService, updateService, updateCarMileage } from './actions'
 
 interface Props {
   isOpen: boolean
@@ -15,20 +15,22 @@ interface Props {
 export default function ServiceModal({ isOpen, onClose, service, cars }: Props) {
   const [isPending, startTransition] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
+  const [currentMileage, setCurrentMileage] = useState<string>('')
   const router = useRouter()
-  
+
   const [formData, setFormData] = useState<Partial<CarService>>({})
 
   useEffect(() => {
     if (service) {
       setFormData(service)
+      const car = cars.find(c => c.id === service.car_id)
+      setCurrentMileage(car?.mileage != null ? String(car.mileage) : '')
     } else {
-      setFormData({
-        service_date: new Date().toISOString().split('T')[0]
-      })
+      setFormData({ service_date: new Date().toISOString().split('T')[0] })
+      setCurrentMileage('')
     }
     setErrorStr(null)
-  }, [service, isOpen])
+  }, [service, isOpen, cars])
 
   if (!isOpen) return null
 
@@ -64,10 +66,16 @@ export default function ServiceModal({ isOpen, onClose, service, cars }: Props) 
 
       if (result.error) {
         setErrorStr(result.error)
-      } else {
-        router.refresh()
-        onClose()
+        return
       }
+
+      const miles = Number(currentMileage)
+      if (formData.car_id && miles > 0) {
+        await updateCarMileage(Number(formData.car_id), miles)
+      }
+
+      router.refresh()
+      onClose()
     })
   }
 
@@ -97,21 +105,37 @@ export default function ServiceModal({ isOpen, onClose, service, cars }: Props) 
           )}
 
           <div className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Select Car</label>
-              <select 
-                required
-                value={formData.car_id || ''} 
-                onChange={e => setFormData({...formData, car_id: Number(e.target.value)})}
-                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
-              >
-                <option value="" disabled className="bg-[#0d0d0d]">Choose vehicle...</option>
-                {cars.map(c => (
-                  <option key={c.id} value={c.id} className="bg-[#0d0d0d]">
-                    {c.make} {c.model_full || c.model}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1 col-span-2 md:col-span-1">
+                <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Select Car</label>
+                <select
+                  required
+                  value={formData.car_id || ''}
+                  onChange={e => {
+                    const carId = Number(e.target.value)
+                    setFormData({ ...formData, car_id: carId })
+                    const car = cars.find(c => c.id === carId)
+                    setCurrentMileage(car?.mileage != null ? String(car.mileage) : '')
+                  }}
+                  className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+                >
+                  <option value="" disabled className="bg-[#0d0d0d]">Choose vehicle...</option>
+                  {cars.map(c => (
+                    <option key={c.id} value={c.id} className="bg-[#0d0d0d]">
+                      {c.make} {c.model_full || c.model}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Current Mileage (mi)</label>
+                <input
+                  type="number" min="0" placeholder="e.g. 24500"
+                  value={currentMileage}
+                  onChange={e => setCurrentMileage(e.target.value)}
+                  className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
