@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import type { Car } from '@/lib/supabase/types'
+import { createClient } from '@/lib/supabase/client'
 import { createFeed, deleteFeed, syncAllFeeds } from './actions'
 import { connectIcloud, disconnectEmailSync } from './email-actions'
 
@@ -80,6 +81,22 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
     }
   }
 
+  async function handleSyncNow() {
+    setSyncMsg('Syncing emails…')
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/cron/poll-turo-emails', {
+        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
+      })
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Sync failed')
+      setSyncMsg(`Sync complete — ${result.totalSynced ?? 0} booking(s) processed.`)
+    } catch (err: any) {
+      setSyncMsg('Sync failed: ' + err.message)
+    }
+  }
+
   async function handleDisconnect() {
     if (!confirm('Disconnect Turo email automation?')) return
     try {
@@ -142,9 +159,15 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
                   </div>
                 )}
               </div>
-              <button onClick={handleDisconnect} className="text-white/30 hover:text-red-400 p-2 transition-colors">
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={handleSyncNow}
+                  className="text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all">
+                  Sync Now
+                </button>
+                <button onClick={handleDisconnect} className="text-white/30 hover:text-red-400 p-2 transition-colors">
+                  ✕
+                </button>
+              </div>
             </div>
           )}
         </div>
