@@ -14,8 +14,9 @@ interface Props {
 export default function CarModal({ isOpen, onClose, car }: Props) {
   const [isPending, startTransition] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
+  const [isDecoding, setIsDecoding] = useState(false)
   const router = useRouter()
-  
+
   const [formData, setFormData] = useState<Partial<Car>>({})
 
   useEffect(() => {
@@ -33,6 +34,53 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
   if (!isOpen) return null
 
   const isEditing = !!car
+
+  async function decodeVin() {
+    const vin = (formData.vin || '').trim()
+    if (!vin || vin.length < 11) {
+      setErrorStr('Enter a valid VIN (min 11 characters).')
+      return
+    }
+    setIsDecoding(true)
+    setErrorStr(null)
+    try {
+      const res = await fetch(
+        `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${encodeURIComponent(vin)}?format=json`
+      )
+      const json = await res.json()
+      const r = json.Results?.[0] || {}
+      const updates: Partial<Car> = {}
+
+      const make  = (r.Make      || '').trim()
+      const model = (r.Model     || '').trim()
+      const year  = (r.ModelYear || '').trim()
+      if (make)  updates.make  = make
+      if (model) updates.model = model
+      if (year)  updates.year  = Number(year)
+
+      const hp = (r.EngineHP || '').trim()
+      if (hp && hp !== '0') updates.hp = `${hp} HP`
+
+      const seats = (r.Seats || r.NumberOfSeats || '').trim()
+      if (seats && seats !== '0') updates.seats = Number(seats)
+
+      const transStyle  = (r.TransmissionStyle  || '').toLowerCase()
+      const transSpeeds = (r.TransmissionSpeeds || '').trim()
+      let transLabel = ''
+      if (transStyle.includes('manual'))                     transLabel = 'Manual'
+      else if (transStyle.includes('continuously variable')) transLabel = 'CVT'
+      else if (transStyle.includes('automatic') && transSpeeds && transSpeeds !== '0')
+                                                             transLabel = `${transSpeeds}-Speed`
+      else if (transStyle.includes('automatic'))             transLabel = 'Auto'
+      if (transLabel) updates.transmission = transLabel
+
+      setFormData(prev => ({ ...prev, ...updates }))
+    } catch {
+      setErrorStr('VIN decode failed. Check your connection.')
+    } finally {
+      setIsDecoding(false)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -62,6 +110,7 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
       description: formData.description || null,
       turo_vehicle_id: formData.turo_vehicle_id || null,
       mileage: Number(formData.mileage) || null,
+      vin: formData.vin || null,
     }
 
     startTransition(async () => {
@@ -201,6 +250,27 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
                 <option value="maintenance" className="bg-[#0d0d0d]">Maintenance</option>
                 <option value="retired" className="bg-[#0d0d0d]">Retired</option>
               </select>
+            </div>
+
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">VIN</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. 1HGBH41JXMN109186"
+                  value={formData.vin || ''}
+                  onChange={e => setFormData({ ...formData, vin: e.target.value })}
+                  className="flex-1 bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+                />
+                <button
+                  type="button"
+                  onClick={decodeVin}
+                  disabled={isDecoding}
+                  className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all disabled:opacity-50 whitespace-nowrap"
+                >
+                  {isDecoding ? 'Decoding…' : '🔍 Decode VIN'}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1 md:col-span-2">

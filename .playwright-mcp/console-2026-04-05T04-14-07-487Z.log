@@ -1,0 +1,21 @@
+[     600ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.netlify.com/v3/static/storage.html:0
+[     732ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://app.netlify.com/access-control/bb-api/api/v1/sites/aca8175e-457e-4e87-b38b-1c5ca1e03dc8/deployed-branches:0
+[    1196ms] [WARNING] Merging a Pagefind index from a different version than the main Pagefind instance.
+Main Pagefind JS: 1.4.0. Merged index (https://docs.netlify.com/pagefind/): 1.3.0
+If you encounter any search errors, make sure that both sites are running the same version of Pagefind. @ https://www.netlify.com/pagefind/pagefind.js:0
+[    1561ms] [WARNING] Merging a Pagefind index from a different version than the main Pagefind instance.
+Main Pagefind JS: 1.4.0. Merged index (https://developers.netlify.com/pagefind/): 1.3.0
+If you encounter any search errors, make sure that both sites are running the same version of Pagefind. @ https://www.netlify.com/pagefind/pagefind.js:0
+[   73318ms] [ERROR] Loading the image 'https://app.netlify.com/favicon.ico' violates the following Content Security Policy directive: "default-src 'none'". Note that 'img-src' was not explicitly set, so 'default-src' is used as a fallback. The action has been blocked. @ https://app.netlify.com/auth#access_token=nfu_vvwz1xn6ZfG9vdNbBRjyevh2wAvcPnco91f9&new_user=&redirect=%2Fprojects%2Fepuredrivecom%2Fdeploys%2F69d1e172a24dfe000753d80f:0
+[   73318ms] [ERROR] Loading the image 'https://app.netlify.com/favicon-16x16.png' violates the following Content Security Policy directive: "default-src 'none'". Note that 'img-src' was not explicitly set, so 'default-src' is used as a fallback. The action has been blocked. @ https://app.netlify.com/auth#access_token=nfu_vvwz1xn6ZfG9vdNbBRjyevh2wAvcPnco91f9&new_user=&redirect=%2Fprojects%2Fepuredrivecom%2Fdeploys%2F69d1e172a24dfe000753d80f:0
+[   73318ms] [ERROR] Loading the image 'https://app.netlify.com/favicon-32x32.png' violates the following Content Security Policy directive: "default-src 'none'". Note that 'img-src' was not explicitly set, so 'default-src' is used as a fallback. The action has been blocked. @ https://app.netlify.com/auth#access_token=nfu_vvwz1xn6ZfG9vdNbBRjyevh2wAvcPnco91f9&new_user=&redirect=%2Fprojects%2Fepuredrivecom%2Fdeploys%2F69d1e172a24dfe000753d80f:0
+[   73318ms] [ERROR] Loading the image 'https://app.netlify.com/favicon-48x48.png' violates the following Content Security Policy directive: "default-src 'none'". Note that 'img-src' was not explicitly set, so 'default-src' is used as a fallback. The action has been blocked. @ https://app.netlify.com/auth#access_token=nfu_vvwz1xn6ZfG9vdNbBRjyevh2wAvcPnco91f9&new_user=&redirect=%2Fprojects%2Fepuredrivecom%2Fdeploys%2F69d1e172a24dfe000753d80f:0
+[   73320ms] [ERROR] Loading the script 'https://app.netlify.com/.netlify/scripts/rum' violates the following Content Security Policy directive: "script-src 'unsafe-inline'". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked. @ https://app.netlify.com/auth#access_token=nfu_vvwz1xn6ZfG9vdNbBRjyevh2wAvcPnco91f9&new_user=&redirect=%2Fprojects%2Fepuredrivecom%2Fdeploys%2F69d1e172a24dfe000753d80f:0
+[   73391ms] [LOG] redirecting user to: /auth/complete#access_token=use-http-auth-token&new_user=&redirect=%2Fprojects%2Fepuredrivecom%2Fdeploys%2F69d1e172a24dfe000753d80f @ https://app.netlify.com/auth:15
+[   73804ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.netlify.com/v3/static/storage.html:0
+[   74585ms] [WARNING] Merging a Pagefind index from a different version than the main Pagefind instance.
+Main Pagefind JS: 1.4.0. Merged index (https://docs.netlify.com/pagefind/): 1.3.0
+If you encounter any search errors, make sure that both sites are running the same version of Pagefind. @ https://www.netlify.com/pagefind/pagefind.js:0
+[   74890ms] [WARNING] Merging a Pagefind index from a different version than the main Pagefind instance.
+Main Pagefind JS: 1.4.0. Merged index (https://developers.netlify.com/pagefind/): 1.3.0
+If you encounter any search errors, make sure that both sites are running the same version of Pagefind. @ https://www.netlify.com/pagefind/pagefind.js:0

@@ -29,6 +29,7 @@ export interface Car {
   status: string | null
   turo_vehicle_id: string | null
   mileage: number | null
+  vin: string | null
 }
 
 export interface Reservation {

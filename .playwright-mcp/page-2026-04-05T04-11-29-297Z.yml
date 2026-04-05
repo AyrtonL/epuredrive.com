@@ -1,0 +1,388 @@
+- generic [active] [ref=e1]:
+  - img [ref=e2]
+  - generic [ref=e3]:
+    - status [ref=e4]
+    - generic [ref=e5]:
+      - link "Skip to main content ↓" [ref=e6] [cursor=pointer]:
+        - /url: "#main"
+        - generic [ref=e7]: Skip to main content
+        - text: ↓
+      - generic [ref=e8]:
+        - generic [ref=e12]:
+          - link "Netlify" [ref=e15] [cursor=pointer]:
+            - /url: /
+            - img "Netlify" [ref=e17]
+          - navigation "Team navigation" [ref=e21]:
+            - generic:
+              - generic:
+                - list
+        - generic [ref=e24]:
+          - generic [ref=e26]:
+            - generic [ref=e27]:
+              - list [ref=e28]:
+                - listitem [ref=e29]:
+                  - link "Projects" [ref=e30] [cursor=pointer]:
+                    - /url: /teams/ayrtonl/projects
+                - listitem [ref=e31]:
+                  - img [ref=e32]
+                - listitem [ref=e34]:
+                  - link "AyrtonL's team/epuredrive.com" [ref=e35] [cursor=pointer]:
+                    - /url: /projects/epuredrivecom/deploys
+              - list [ref=e37]:
+                - listitem [ref=e38]:
+                  - link "Log in" [ref=e39] [cursor=pointer]:
+                    - /url: /login?next=/projects/epuredrivecom/deploys
+                - listitem [ref=e40]:
+                  - link "Sign up" [ref=e41] [cursor=pointer]:
+                    - /url: /signup?next=/projects/epuredrivecom/deploys
+            - generic [ref=e42]:
+              - navigation "Project navigation" [ref=e45]:
+                - heading "Project navigation" [level=2] [ref=e46]
+                - list [ref=e47]:
+                  - listitem [ref=e48]:
+                    - link "Deploys" [ref=e49] [cursor=pointer]:
+                      - /url: /projects/epuredrivecom/deploys
+                      - generic [ref=e50]: Deploys
+                  - listitem [ref=e51]:
+                    - link "Preview links" [ref=e52] [cursor=pointer]:
+                      - /url: /projects/epuredrivecom/review
+                      - generic [ref=e53]: Preview links
+              - main "Deploys" [ref=e54]:
+                - generic [ref=e55]:
+                  - generic [ref=e59]:
+                    - heading "Deploys for epuredrivecom" [level=1] [ref=e60]
+                    - paragraph [ref=e61]:
+                      - link "epuredrive.com" [ref=e62] [cursor=pointer]:
+                        - /url: https://epuredrive.com
+                    - paragraph [ref=e63]:
+                      - generic [ref=e64]:
+                        - text: Published
+                        - generic [ref=e65]:
+                          - generic "main" [ref=e66]
+                          - text: "@"
+                          - link "5489367" [ref=e67] [cursor=pointer]:
+                            - /url: https://github.com/AyrtonL/epuredrive.com/commit/548936792fdbef8e6914084e4bef685e647a778b
+                  - generic [ref=e68]:
+                    - generic [ref=e69]:
+                      - heading "Deploys" [level=2] [ref=e71]
+                      - list [ref=e72]:
+                        - listitem [ref=e73]:
+                          - paragraph [ref=e76] [cursor=pointer]:
+                            - generic [ref=e78]:
+                              - generic [ref=e79]:
+                                - generic [ref=e81]:
+                                  - 'link "Production: main @310cc24" [ref=e83]':
+                                    - /url: /projects/epuredrivecom/deploys/69d1e016b2457d00098991f5
+                                    - generic [ref=e84]:
+                                      - text: Production
+                                      - generic [ref=e85]:
+                                        - text: ":"
+                                        - generic [ref=e86]:
+                                          - generic "main" [ref=e87]
+                                          - text: "@310cc24"
+                                  - generic [ref=e88]: failed
+                                - generic [ref=e89]: "feat: add logout button to dashboard sidebar"
+                              - generic [ref=e90]:
+                                - time [ref=e91]: Today at 12:07 AM
+                                - paragraph
+                          - link "Go to deploy details" [ref=e92] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys/69d1e016b2457d00098991f5
+                            - img "Go to deploy details" [ref=e93]
+                        - listitem [ref=e95]:
+                          - paragraph [ref=e98] [cursor=pointer]:
+                            - generic [ref=e100]:
+                              - generic [ref=e101]:
+                                - generic [ref=e103]:
+                                  - 'link "Production: main @00ec275" [ref=e105]':
+                                    - /url: /projects/epuredrivecom/deploys/69d1df2744e61a0008f6858c
+                                    - generic [ref=e106]:
+                                      - text: Production
+                                      - generic [ref=e107]:
+                                        - text: ":"
+                                        - generic [ref=e108]:
+                                          - generic "main" [ref=e109]
+                                          - text: "@00ec275"
+                                  - generic [ref=e110]: failed
+                                - generic [ref=e111]: Merge branch 'claude/fix-vehicle-price-mismatch-VWf66'
+                              - generic [ref=e112]:
+                                - time [ref=e113]: Today at 12:03 AM
+                                - paragraph
+                          - link "Go to deploy details" [ref=e114] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys/69d1df2744e61a0008f6858c
+                            - img "Go to deploy details" [ref=e115]
+                        - listitem [ref=e117]:
+                          - paragraph [ref=e120] [cursor=pointer]:
+                            - generic [ref=e122]:
+                              - generic [ref=e123]:
+                                - generic [ref=e125]:
+                                  - 'link "Production: main @5489367" [ref=e127]':
+                                    - /url: /projects/epuredrivecom/deploys/69ced08dd7e1070008081158
+                                    - generic [ref=e128]:
+                                      - text: Production
+                                      - generic [ref=e129]:
+                                        - text: ":"
+                                        - generic [ref=e130]:
+                                          - generic "main" [ref=e131]
+                                          - text: "@5489367"
+                                  - generic [ref=e132]: published
+                                - generic [ref=e133]: "fix(build): resolve ESLint and TypeScript errors blocking Netlify build"
+                              - generic [ref=e134]:
+                                - time [ref=e135]: Apr 2 at 4:24 PM
+                                - paragraph [ref=e136]:
+                                  - generic [ref=e137]: Deployed in 57s
+                          - link "Go to deploy details" [ref=e138] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys/69ced08dd7e1070008081158
+                            - img "Go to deploy details" [ref=e139]
+                        - listitem [ref=e141]:
+                          - paragraph [ref=e144] [cursor=pointer]:
+                            - generic [ref=e146]:
+                              - generic [ref=e147]:
+                                - generic [ref=e149]:
+                                  - 'link "Production: main @de8eb7c" [ref=e151]':
+                                    - /url: /projects/epuredrivecom/deploys/69cece1cc3aa6b0008fe5b3a
+                                    - generic [ref=e152]:
+                                      - text: Production
+                                      - generic [ref=e153]:
+                                        - text: ":"
+                                        - generic [ref=e154]:
+                                          - generic "main" [ref=e155]
+                                          - text: "@de8eb7c"
+                                  - generic [ref=e156]: failed
+                                - generic [ref=e157]: s
+                              - generic [ref=e158]:
+                                - time [ref=e159]: Apr 2 at 4:14 PM
+                                - paragraph
+                          - link "Go to deploy details" [ref=e160] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys/69cece1cc3aa6b0008fe5b3a
+                            - img "Go to deploy details" [ref=e161]
+                        - listitem [ref=e163]:
+                          - paragraph [ref=e166] [cursor=pointer]:
+                            - generic [ref=e168]:
+                              - generic [ref=e169]:
+                                - generic [ref=e171]:
+                                  - 'link "Production: main @1144e00" [ref=e173]':
+                                    - /url: /projects/epuredrivecom/deploys/69cecd5d373933000867a776
+                                    - generic [ref=e174]:
+                                      - text: Production
+                                      - generic [ref=e175]:
+                                        - text: ":"
+                                        - generic [ref=e176]:
+                                          - generic "main" [ref=e177]
+                                          - text: "@1144e00"
+                                  - generic [ref=e178]: failed
+                                - generic [ref=e179]: s
+                              - generic [ref=e180]:
+                                - time [ref=e181]: Apr 2 at 4:11 PM
+                                - paragraph
+                          - link "Go to deploy details" [ref=e182] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys/69cecd5d373933000867a776
+                            - img "Go to deploy details" [ref=e183]
+                        - listitem [ref=e185]:
+                          - paragraph [ref=e188] [cursor=pointer]:
+                            - generic [ref=e190]:
+                              - generic [ref=e191]:
+                                - generic [ref=e193]:
+                                  - 'link "Production: main @b492a9e" [ref=e195]':
+                                    - /url: /projects/epuredrivecom/deploys/69cec9f9dfc4df00086fdb26
+                                    - generic [ref=e196]:
+                                      - text: Production
+                                      - generic [ref=e197]:
+                                        - text: ":"
+                                        - generic [ref=e198]:
+                                          - generic "main" [ref=e199]
+                                          - text: "@b492a9e"
+                                  - generic [ref=e200]: failed
+                                - generic [ref=e201]: s
+                              - generic [ref=e202]:
+                                - time [ref=e203]: Apr 2 at 3:56 PM
+                                - paragraph
+                          - link "Go to deploy details" [ref=e204] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys/69cec9f9dfc4df00086fdb26
+                            - img "Go to deploy details" [ref=e205]
+                        - listitem [ref=e207]:
+                          - paragraph [ref=e210] [cursor=pointer]:
+                            - generic [ref=e212]:
+                              - generic [ref=e213]:
+                                - generic [ref=e215]:
+                                  - 'link "Production: main @bd42034" [ref=e217]':
+                                    - /url: /projects/epuredrivecom/deploys/69cd6e4a69d89500085919ab
+                                    - generic [ref=e218]:
+                                      - text: Production
+                                      - generic [ref=e219]:
+                                        - text: ":"
+                                        - generic [ref=e220]:
+                                          - generic "main" [ref=e221]
+                                          - text: "@bd42034"
+                                  - generic [ref=e222]: failed
+                                - generic [ref=e223]: s
+                              - generic [ref=e224]:
+                                - time [ref=e225]: Apr 1 at 3:13 PM
+                                - paragraph
+                          - link "Go to deploy details" [ref=e226] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys/69cd6e4a69d89500085919ab
+                            - img "Go to deploy details" [ref=e227]
+                        - listitem [ref=e229]:
+                          - paragraph [ref=e232] [cursor=pointer]:
+                            - generic [ref=e234]:
+                              - generic [ref=e235]:
+                                - generic [ref=e237]:
+                                  - 'link "Production: main @a7d7181" [ref=e239]':
+                                    - /url: /projects/epuredrivecom/deploys/69cd62ebaf100d00083ee9a4
+                                    - generic [ref=e240]:
+                                      - text: Production
+                                      - generic [ref=e241]:
+                                        - text: ":"
+                                        - generic [ref=e242]:
+                                          - generic "main" [ref=e243]
+                                          - text: "@a7d7181"
+                                  - generic [ref=e244]: failed
+                                - generic [ref=e245]: s
+                              - generic [ref=e246]:
+                                - time [ref=e247]: Apr 1 at 2:24 PM
+                                - paragraph
+                          - link "Go to deploy details" [ref=e248] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys/69cd62ebaf100d00083ee9a4
+                            - img "Go to deploy details" [ref=e249]
+                        - listitem [ref=e251]:
+                          - paragraph [ref=e254] [cursor=pointer]:
+                            - generic [ref=e256]:
+                              - generic [ref=e257]:
+                                - generic [ref=e259]:
+                                  - 'link "Production: main @0c59b84" [ref=e261]':
+                                    - /url: /projects/epuredrivecom/deploys/69cd57cced829000081f38af
+                                    - generic [ref=e262]:
+                                      - text: Production
+                                      - generic [ref=e263]:
+                                        - text: ":"
+                                        - generic [ref=e264]:
+                                          - generic "main" [ref=e265]
+                                          - text: "@0c59b84"
+                                  - generic [ref=e266]: completed
+                                - generic [ref=e267]: "fix(css): convert structure to route groups to fix missing global css injection on public sites"
+                              - generic [ref=e268]:
+                                - time [ref=e269]: Apr 1 at 1:37 PM
+                                - paragraph [ref=e270]:
+                                  - generic [ref=e271]: Deployed in 52s
+                          - link "Go to deploy details" [ref=e272] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys/69cd57cced829000081f38af
+                            - img "Go to deploy details" [ref=e273]
+                        - listitem [ref=e275]:
+                          - paragraph [ref=e278] [cursor=pointer]:
+                            - generic [ref=e280]:
+                              - generic [ref=e281]:
+                                - generic [ref=e283]:
+                                  - 'link "Production: main @c13a04e" [ref=e285]':
+                                    - /url: /projects/epuredrivecom/deploys/69cd2c0074418d0008258b3c
+                                    - generic [ref=e286]:
+                                      - text: Production
+                                      - generic [ref=e287]:
+                                        - text: ":"
+                                        - generic [ref=e288]:
+                                          - generic "main" [ref=e289]
+                                          - text: "@c13a04e"
+                                  - generic [ref=e290]: completed
+                                - generic [ref=e291]: s
+                              - generic [ref=e292]:
+                                - time [ref=e293]: Apr 1 at 10:30 AM
+                                - paragraph [ref=e294]:
+                                  - generic [ref=e295]: Deployed in 49s
+                          - link "Go to deploy details" [ref=e296] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys/69cd2c0074418d0008258b3c
+                            - img "Go to deploy details" [ref=e297]
+                        - listitem [ref=e299]:
+                          - paragraph [ref=e302] [cursor=pointer]:
+                            - generic [ref=e304]:
+                              - generic [ref=e305]:
+                                - generic [ref=e307]:
+                                  - 'link "Production: main @98a7d35" [ref=e309]':
+                                    - /url: /projects/epuredrivecom/deploys/69cd2a435ac1d0000848d3e4
+                                    - generic [ref=e310]:
+                                      - text: Production
+                                      - generic [ref=e311]:
+                                        - text: ":"
+                                        - generic [ref=e312]:
+                                          - generic "main" [ref=e313]
+                                          - text: "@98a7d35"
+                                  - generic [ref=e314]: completed
+                                - generic [ref=e315]: "fix(modals): center all modals properly on screen with scroll support for tall content"
+                              - generic [ref=e316]:
+                                - time [ref=e317]: Apr 1 at 10:22 AM
+                                - paragraph [ref=e318]:
+                                  - generic [ref=e319]: Deployed in 50s
+                          - link "Go to deploy details" [ref=e320] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys/69cd2a435ac1d0000848d3e4
+                            - img "Go to deploy details" [ref=e321]
+                        - listitem [ref=e323]:
+                          - paragraph [ref=e326] [cursor=pointer]:
+                            - generic [ref=e328]:
+                              - generic [ref=e329]:
+                                - generic [ref=e331]:
+                                  - 'link "Production: main @d41ea9f" [ref=e333]':
+                                    - /url: /projects/epuredrivecom/deploys/69cd297d60ba260008bfa43c
+                                    - generic [ref=e334]:
+                                      - text: Production
+                                      - generic [ref=e335]:
+                                        - text: ":"
+                                        - generic [ref=e336]:
+                                          - generic "main" [ref=e337]
+                                          - text: "@d41ea9f"
+                                  - generic [ref=e338]: completed
+                                - generic [ref=e339]: "fix: escape unescaped quotes in ConsignmentsManager to unblock Netlify build"
+                              - generic [ref=e340]:
+                                - time [ref=e341]: Apr 1 at 10:19 AM
+                                - paragraph [ref=e342]:
+                                  - generic [ref=e343]: Deployed in 51s
+                          - link "Go to deploy details" [ref=e344] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys/69cd297d60ba260008bfa43c
+                            - img "Go to deploy details" [ref=e345]
+                      - generic [ref=e349]:
+                        - heading "Collaborate, test, build…" [level=1] [ref=e350]
+                        - paragraph [ref=e351]: Every time you open a pull request, or push new changes to a branch, Netlify automatically builds a preview with a unique URL. Like a staging environment for every PR or branch, deploy previews are perfect for testing and collaboration.
+                        - paragraph [ref=e352]: Join Netlify or log in if you already have a Netlify account to browse the full deploy history for this project.
+                        - generic [ref=e355]:
+                          - link "Join Netlify" [ref=e356] [cursor=pointer]:
+                            - /url: /signup?next=/projects/epuredrivecom/deploys
+                          - link "Log in" [ref=e357] [cursor=pointer]:
+                            - /url: /login?next=/projects/epuredrivecom/deploys
+                    - navigation "Pagination" [ref=e359]:
+                      - list [ref=e360]:
+                        - listitem [ref=e361]:
+                          - button "Previous page" [disabled] [ref=e362]:
+                            - generic [ref=e363]:
+                              - img [ref=e364]
+                              - text: Prev
+                        - listitem [ref=e366]:
+                          - generic [ref=e367]: Page 1 of 18
+                        - listitem [ref=e368]:
+                          - link "Next page" [ref=e369] [cursor=pointer]:
+                            - /url: /projects/epuredrivecom/deploys?page=2
+                            - generic [ref=e370]:
+                              - text: Next
+                              - img [ref=e371]
+          - contentinfo [ref=e373]:
+            - generic [ref=e374]:
+              - navigation [ref=e375]:
+                - list "External links" [ref=e376]:
+                  - listitem [ref=e377]:
+                    - link "Docs" [ref=e378] [cursor=pointer]:
+                      - /url: https://docs.netlify.com/
+                  - listitem [ref=e379]:
+                    - link "Pricing" [ref=e380] [cursor=pointer]:
+                      - /url: https://www.netlify.com/pricing/
+                  - listitem [ref=e381]:
+                    - link "Support" [ref=e382] [cursor=pointer]:
+                      - /url: https://www.netlify.com/support/
+                  - listitem [ref=e383]:
+                    - link "Blog" [ref=e384] [cursor=pointer]:
+                      - /url: https://www.netlify.com/blog/
+                  - listitem [ref=e385]:
+                    - link "Changelog" [ref=e386] [cursor=pointer]:
+                      - /url: https://www.netlify.com/changelog/
+                  - listitem [ref=e387]:
+                    - link "Terms" [ref=e388] [cursor=pointer]:
+                      - /url: https://www.netlify.com/legal/terms-of-use/
+              - paragraph [ref=e389]:
+                - text: © 2026
+                - link "Netlify" [ref=e390] [cursor=pointer]:
+                  - /url: https://www.netlify.com
+    - region "Notifications alt+T"
