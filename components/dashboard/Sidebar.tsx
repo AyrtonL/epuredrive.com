@@ -47,7 +47,7 @@ const NAV: NavEntry[] = [
   { label: 'Team', href: '/dashboard/team' },
   {
     label: 'Integrations',
-    children: [{ label: 'Cal Sync', href: '/dashboard/integrations/turo' }],
+    children: [{ label: 'Turo', href: '/dashboard/integrations/turo' }],
   },
   { label: 'Settings', href: '/dashboard/settings' },
 ]
