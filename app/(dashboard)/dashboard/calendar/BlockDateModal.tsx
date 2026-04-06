@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Car } from '@/lib/supabase/types'
 import { createBlockedDate, createBlockedDateForAllCars } from './actions'
+import ModalPortal from '@/components/ui/ModalPortal'
 
 interface Props {
   isOpen: boolean
@@ -53,6 +54,7 @@ export default function BlockDateModal({ isOpen, onClose, cars, defaultStartDate
   }
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="glass w-full max-w-lg rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
@@ -114,5 +116,6 @@ export default function BlockDateModal({ isOpen, onClose, cars, defaultStartDate
         </form>
       </div>
     </div>
+    </ModalPortal>
   )
 }

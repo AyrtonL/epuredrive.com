@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Reservation, Car } from '@/lib/supabase/types'
 import { updateReservation } from '../bookings/actions'
+import ModalPortal from '@/components/ui/ModalPortal'
 
 interface Props {
   reservation: Reservation | null
@@ -57,6 +58,7 @@ export default function ReservationDetailModal({ reservation: r, cars, dailyRate
   }
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
       <div className="glass w-full max-w-lg rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up my-auto"
         onClick={e => e.stopPropagation()}>
@@ -145,5 +147,6 @@ export default function ReservationDetailModal({ reservation: r, cars, dailyRate
         </div>
       </div>
     </div>
+    </ModalPortal>
   )
 }

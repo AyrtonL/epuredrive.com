@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Reservation, Car } from '@/lib/supabase/types'
 import { createReservation, updateReservation } from './actions'
+import ModalPortal from '@/components/ui/ModalPortal'
 
 interface Props {
   isOpen: boolean
@@ -74,6 +75,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
   }
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <div className="glass w-full max-w-2xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up my-auto">
         
@@ -261,5 +263,6 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
         </form>
       </div>
     </div>
+    </ModalPortal>
   )
 }

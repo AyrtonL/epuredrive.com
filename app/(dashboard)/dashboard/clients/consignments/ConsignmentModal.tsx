@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Consignment, Car } from '@/lib/supabase/types'
 import { createConsignment, updateConsignment } from './actions'
+import ModalPortal from '@/components/ui/ModalPortal'
 
 interface Props {
   isOpen: boolean
@@ -52,6 +53,7 @@ export default function ConsignmentModal({ isOpen, onClose, consignment, cars }:
   }
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <div className="glass w-full max-w-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up my-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
@@ -122,5 +124,6 @@ export default function ConsignmentModal({ isOpen, onClose, consignment, cars }:
         </form>
       </div>
     </div>
+    </ModalPortal>
   )
 }
