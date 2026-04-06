@@ -26,3 +26,9 @@ out/
 
 # Superpowers
 .superpowers/
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Process files
+server.pid
