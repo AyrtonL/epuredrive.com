@@ -1,29 +1,16 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import type { Car } from '@/lib/supabase/types'
 import { createClient } from '@/lib/supabase/client'
-import { createFeed, deleteFeed, syncAllFeeds } from './actions'
 import { connectIcloud, disconnectEmailSync } from './email-actions'
 
-interface Feed {
-  id: number
-  car_id: number
-  ical_url: string
-  source_name: string
-  last_synced: string | null
-}
-
 interface Props {
-  feeds: Feed[]
-  cars: Car[]
   sync?: any
   tenantId: string
 }
 
-export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
-  const [isPending, startTransition] = useTransition()
+export default function FeedManager({ sync, tenantId }: Props) {
   const [syncMsg, setSyncMsg] = useState('')
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -40,30 +27,10 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
     }
   }, [searchParams, router])
 
-  // Add feed form
-  const [newSource, setNewSource] = useState('')
-  const [newCarId, setNewCarId] = useState('')
-  const [newUrl, setNewUrl] = useState('')
-
   // iCloud connect form
   const [showIcloud, setShowIcloud] = useState(false)
   const [icloudEmail, setIcloudEmail] = useState('')
   const [icloudPwd, setIcloudPwd] = useState('')
-
-  const carMap = Object.fromEntries(cars.map(c => [c.id, `${c.make} ${c.model_full || c.model}`]))
-
-  function handleDelete(id: number) {
-    if (!confirm('Remove this calendar feed?')) return
-    startTransition(async () => { await deleteFeed(id) })
-  }
-
-  function handleSync() {
-    setSyncMsg('Syncing...')
-    startTransition(async () => {
-      const result = await syncAllFeeds()
-      setSyncMsg(result.message)
-    })
-  }
 
   function handleGmailConnect() {
     window.location.href = `/api/integrations/turo/gmail/start?tenant_id=${tenantId}`
@@ -105,16 +72,6 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
     } catch (err: any) {
       setSyncMsg('Error: ' + err.message)
     }
-  }
-
-  async function handleAddFeed(e: React.FormEvent) {
-    e.preventDefault()
-    if (!newSource || !newCarId || !newUrl) return
-    startTransition(async () => {
-      const result = await createFeed({ car_id: Number(newCarId), ical_url: newUrl, source_name: newSource })
-      if (result.error) setSyncMsg('Error: ' + result.error)
-      else { setNewSource(''); setNewCarId(''); setNewUrl('') }
-    })
   }
 
   return (
@@ -202,86 +159,6 @@ export default function FeedManager({ feeds, cars, sync, tenantId }: Props) {
               : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
           }`}>
             {syncMsg}
-          </div>
-        )}
-      </div>
-
-      {/* ── Add Calendar Feed (URL only) ── */}
-      <div className="glass border border-white/10 rounded-3xl p-6">
-        <h3 className="text-white font-bold mb-4">Add Calendar Feed</h3>
-        <form onSubmit={handleAddFeed} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Platform Name</label>
-              <input type="text" required placeholder="e.g. Turo, Airbnb" value={newSource} onChange={e => setNewSource(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Vehicle</label>
-              <select required value={newCarId} onChange={e => setNewCarId(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20">
-                <option value="" disabled className="bg-[#0d0d0d]">Select vehicle...</option>
-                {cars.map(c => <option key={c.id} value={c.id} className="bg-[#0d0d0d]">{carMap[c.id]}</option>)}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">iCal URL</label>
-              <input type="url" required placeholder="https://..." value={newUrl} onChange={e => setNewUrl(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20" />
-            </div>
-          </div>
-          <button type="submit" disabled={isPending}
-            className="bg-white text-black hover:bg-white/90 px-6 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50">
-            {isPending ? 'Adding...' : 'Add Feed'}
-          </button>
-        </form>
-      </div>
-
-      {/* ── Active Feeds ── */}
-      <div className="glass border border-white/10 rounded-3xl p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-white font-bold">Active Feeds ({feeds.length})</h3>
-          {feeds.length > 0 && (
-            <button onClick={handleSync} disabled={isPending}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-50">
-              🔄 Sync All
-            </button>
-          )}
-        </div>
-
-        {feeds.length === 0 ? (
-          <p className="text-white/30 text-sm py-8 text-center">No calendar feeds added yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/40 border-b border-white/10">
-                  <th className="pb-3 pr-4">Platform</th>
-                  <th className="pb-3 pr-4">Vehicle</th>
-                  <th className="pb-3 pr-4">Last Synced</th>
-                  <th className="pb-3 pr-4">URL</th>
-                  <th className="pb-3"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {feeds.map(f => (
-                  <tr key={f.id} className="hover:bg-white/5 transition-colors">
-                    <td className="py-3 pr-4">
-                      <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-white/10 text-white/60">{f.source_name}</span>
-                    </td>
-                    <td className="py-3 pr-4 text-white/80 font-medium">{carMap[f.car_id] ?? `Car #${f.car_id}`}</td>
-                    <td className="py-3 pr-4 text-white/40 text-xs">
-                      {f.last_synced ? new Date(f.last_synced).toLocaleString() : 'Never'}
-                    </td>
-                    <td className="py-3 pr-4 text-white/30 text-xs max-w-[200px] truncate" title={f.ical_url}>{f.ical_url}</td>
-                    <td className="py-3">
-                      <button onClick={() => handleDelete(f.id)} disabled={isPending}
-                        className="text-red-400/60 hover:text-red-400 transition-colors text-xs font-semibold disabled:opacity-30">Remove</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         )}
       </div>

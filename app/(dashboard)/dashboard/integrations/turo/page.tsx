@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import PageHeader from '@/components/dashboard/PageHeader'
 import FeedManager from './FeedManager'
-import type { Car } from '@/lib/supabase/types'
 
 export default async function TuroSyncPage() {
   const supabase = createClient()
@@ -9,16 +8,12 @@ export default async function TuroSyncPage() {
   const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user!.id).single()
   const tenantId = profile!.tenant_id
 
-  const [{ data: feeds }, { data: syncs }, { data: cars }] = await Promise.all([
-    supabase.from('turo_feeds').select('*').eq('tenant_id', tenantId).order('created_at'),
-    supabase.from('turo_email_syncs').select('*').eq('tenant_id', tenantId).single(),
-    supabase.from('cars').select('id, make, model, model_full').eq('tenant_id', tenantId),
-  ])
+  const { data: syncs } = await supabase.from('turo_email_syncs').select('*').eq('tenant_id', tenantId).single()
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <PageHeader title="Calendar Sync" description="Connect your email to auto-sync Turo bookings, or add iCal feed URLs from any platform." />
-      <FeedManager feeds={feeds ?? []} sync={syncs} cars={(cars as Car[]) ?? []} tenantId={tenantId} />
+      <PageHeader title="Turo" description="Connect your email to automatically sync Turo bookings, modifications, and cancellations." />
+      <FeedManager sync={syncs} tenantId={tenantId} />
     </div>
   )
 }
