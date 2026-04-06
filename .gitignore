@@ -32,3 +32,23 @@ out/
 
 # Process files
 server.pid
+
+# Scripts - credentials and local tools (NEVER commit)
+scripts/gmail-automator/credentials.json
+scripts/gmail-automator/token.json
+scripts/gmail-automator/venv/
+scripts/gmail-automator-personal/credentials.json
+scripts/gmail-automator-personal/token.json
+scripts/gmail-automator-personal/venv/
+scripts/migrate_expenses.js
+scripts/migrate_expenses.mjs
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Internal legal/business documents (stay local only)
+legal/compliance-checklist.md
+legal/consignment-agreement.md
+legal/llc-setup-guide.md
