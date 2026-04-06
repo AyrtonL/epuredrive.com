@@ -18,12 +18,15 @@ export default async function DashboardPage() {
 
   const tenantId = profile!.tenant_id
 
-  const [{ data: tenant }, { data: cars }, { data: allRes }, { data: services }, { data: transactions }] = await Promise.all([
+  const today = new Date().toISOString().split('T')[0]
+
+  const [{ data: tenant }, { data: cars }, { data: allRes }, { data: services }, { data: transactions }, { data: activeRentals }] = await Promise.all([
     supabase.from('tenants').select('name, slug, brand_name, logo_url, plan').eq('id', tenantId).single(),
     supabase.from('cars').select('id, make, model, model_full, status, mileage').eq('tenant_id', tenantId),
     supabase.from('reservations').select('total_amount, status').eq('tenant_id', tenantId).eq('status', 'completed'),
     supabase.from('car_services').select('amount, next_service_date').eq('tenant_id', tenantId),
     supabase.from('transactions').select('amount').eq('tenant_id', tenantId),
+    supabase.from('reservations').select('car_id').eq('tenant_id', tenantId).not('status', 'in', '(completed,cancelled)').lte('pickup_date', today).gte('return_date', today),
   ])
 
   const t = tenant as Tenant
@@ -40,9 +43,11 @@ export default async function DashboardPage() {
   const totalExp = txRows.reduce((s, r) => s + (Number(r.amount) || 0), 0)
   const netProfit = totalGross - totalMaint - totalExp
 
-  const availableCars = carRows.filter(c => c.status === 'available').length
+  const rentedCarIds = new Set((activeRentals ?? []).map(r => r.car_id))
+  const rentedCars = rentedCarIds.size
   const maintenanceCars = carRows.filter(c => c.status === 'maintenance').length
-  const rentedCars = carRows.filter(c => c.status === 'rented').length
+  const inFleetCars = carRows.filter(c => c.status !== 'retired').length
+  const availableCars = Math.max(0, inFleetCars - rentedCars - maintenanceCars)
 
   const alertsCount = svcRows.filter(s => s.next_service_date && new Date(s.next_service_date) < new Date()).length
 

@@ -21,7 +21,7 @@ export default async function FleetPage() {
     .order('id')
 
   const rows = (cars as Car[]) ?? []
-  const active = rows.filter((c) => c.status === 'active').length
+  const active = rows.filter((c) => c.status !== 'maintenance' && c.status !== 'retired').length
   const avgRate = rows.length > 0
     ? rows.reduce((s, c) => s + (Number(c.daily_rate) || 0), 0) / rows.length
     : 0
