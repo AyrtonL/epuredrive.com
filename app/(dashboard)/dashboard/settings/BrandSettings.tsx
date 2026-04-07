@@ -24,7 +24,10 @@ export default function BrandSettings({ tenant }: Props) {
   const [primary, setPrimary] = useState(tenant?.primary_color || '#000000')
   const [accent, setAccent] = useState(tenant?.accent_color || '#3B82F6')
 
-  const publicUrl = slug ? `https://${slug}.epuredrive.com` : null
+  const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+  const publicUrl = slug 
+    ? (isLocal || process.env.NODE_ENV === 'development' ? `http://${slug}.localhost:3000` : `https://${slug}.epuredrive.com`)
+    : null
 
   const previewGradient = `linear-gradient(135deg, ${primary}, ${accent})`
 
@@ -34,7 +37,7 @@ export default function BrandSettings({ tenant }: Props) {
     startTransition(async () => {
       const result = await updateTenantBranding({
         brand_name: brandName.trim() || null,
-        slug: slug.trim().toLowerCase() || null,
+        slug: slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-') || null,
         logo_url: logoUrl.trim() || null,
         primary_color: primary,
         accent_color: accent,
@@ -85,7 +88,7 @@ export default function BrandSettings({ tenant }: Props) {
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest pl-1">Custom Domain (Slug)</label>
               <div className="relative">
-                <input type="text" value={slug} onChange={e => setSlug(e.target.value)}
+                <input type="text" value={slug} onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
                   placeholder="your-brand"
                   className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 pl-4 pr-32 text-sm focus:ring-1 focus:ring-white/20 text-white outline-none transition-all" />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20 uppercase">.epuredrive.com</span>
