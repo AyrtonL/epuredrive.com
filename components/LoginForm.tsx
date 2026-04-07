@@ -20,10 +20,30 @@ export default function LoginForm() {
     const password = form.get('password') as string
 
     const supabase = createClient()
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (authError) {
       setError(authError.message)
+      setLoading(false)
+      return
+    }
+
+    const userId = authData.user?.id
+    if (!userId) {
+      setError('Sign in failed — no user ID returned.')
+      setLoading(false)
+      return
+    }
+
+    const syncRes = await fetch('/.netlify/functions/create-tenant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, email }),
+    })
+
+    if (!syncRes.ok) {
+      const data = await syncRes.json().catch(() => ({}))
+      setError(data.error || 'Could not sync your workspace. Please try again.')
       setLoading(false)
       return
     }

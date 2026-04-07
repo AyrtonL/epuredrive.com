@@ -63,8 +63,33 @@ async function checkAuth() {
     return false;
   }
   currentUserId = data.session.user.id;
-  await loadTenantProfile(currentUserId, data.session.user.email);
+  const userEmail = data.session.user.email || '';
+  await loadTenantProfile(currentUserId, userEmail);
+  await ensureTenantProvisioned(currentUserId, userEmail);
   return true;
+}
+
+async function ensureTenantProvisioned(userId, userEmail = '') {
+  try {
+    const res = await fetch('/.netlify/functions/create-tenant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, email: userEmail }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      console.error('[tenant-sync] Failed to sync tenant:', data.error || res.statusText);
+      return;
+    }
+
+    const payload = await res.json().catch(() => ({}));
+    if (payload?.tenantId && payload.tenantId !== currentTenantId) {
+      await loadTenantProfile(userId, userEmail);
+    }
+  } catch (err) {
+    console.error('[tenant-sync] Failed to sync tenant:', err?.message || err);
+  }
 }
 
 async function loadTenantProfile(userId, userEmail = '') {
