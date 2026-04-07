@@ -1,16 +1,19 @@
-headersOrigin = "config"
-plugins = []
-redirects = []
-
-[functions]
-
-[functions."*"]
+functionsDirectory = "/opt/build/repo/netlify/functions"
+functionsDirectoryOrigin = "config"
+headersOrigin = "inline"
+redirectsOrigin = "inline"
 
 [build]
-publish = "/Users/ayrtonpaullohigorry/IA Projects/Aplicacion Rental"
+edge_functions = "/opt/build/repo/netlify/edge-functions"
+publish = "/opt/build/repo/.next"
 publishOrigin = "config"
+commandOrigin = "config"
+command = "npm run build"
+functions = "/opt/build/repo/netlify/functions"
 
 [build.environment]
+NODE_VERSION = "20"
+NPM_FLAGS = "--no-audit"
 
 [build.processing]
 
@@ -24,13 +27,42 @@ publishOrigin = "config"
 
 [build.services]
 
+[images]
+remote_images = ["^(?:https:\\/\\/brwzjwbpguiignrxvjdc\\.supabase\\.co\\/storage\\/v1\\/object\\/public(?:\\/(?!\\.)(?:(?:(?!(?:^|\\/)\\.).)*?)|$))$"]
+
+[functions]
+
+[functions.sync-ical-cron]
+schedule = "*/30 * * * *"
+
+[functions.poll-turo-emails]
+schedule = "*/15 * * * *"
+
+[functions."*"]
+
+[[plugins]]
+origin = "config"
+package = "@netlify/plugin-nextjs"
+
+[plugins.inputs]
+
 [[headers]]
 for = "/*"
 
 [headers.values]
-X-Frame-Options = "SAMEORIGIN"
+X-Frame-Options = "DENY"
 X-XSS-Protection = "1; mode=block"
 X-Content-Type-Options = "nosniff"
+Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+Referrer-Policy = "strict-origin-when-cross-origin"
+Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://cdn.tailwindcss.com https://assets.apollo.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com https://cdn.jsdelivr.net https://brwzjwbpguiignrxvjdc.supabase.co https://brwzjwbpguiignrxvjdc.supabase.co/storage/v1/object/public/tenant-logos/; connect-src 'self' https://formspree.io https://brwzjwbpguiignrxvjdc.supabase.co https://api.allorigins.win https://api.stripe.com https://vpic.nhtsa.dot.gov https://assets.apollo.io https://oauth2.googleapis.com https://www.googleapis.com; media-src 'self' https://player.vimeo.com https://vimeo.com; frame-src https://player.vimeo.com https://js.stripe.com; frame-ancestors 'none';"
+
+[[headers]]
+for = "/admin/*"
+
+[headers.values]
+X-Robots-Tag = "noindex, nofollow"
 
 [[headers]]
 for = "/assets/images/*"
@@ -49,3 +81,39 @@ for = "/js/*"
 
 [headers.values]
 Cache-Control = "public, max-age=86400"
+
+[[headers]]
+for = "/_next/static/*"
+
+[headers.values]
+Cache-Control = "public, max-age=31536000, immutable"
+
+[[redirects]]
+from = "/_next/image"
+to = "/.netlify/images?url=:url&w=:width&q=:quality"
+status = 200.0
+force = false
+
+[redirects.query]
+url = ":url"
+w = ":width"
+q = ":quality"
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/_ipx/*"
+to = "/.netlify/images?url=:url&w=:width&q=:quality"
+status = 200.0
+force = false
+
+[redirects.query]
+url = ":url"
+w = ":width"
+q = ":quality"
+
+[redirects.conditions]
+
+[redirects.headers]
