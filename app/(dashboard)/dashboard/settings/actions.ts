@@ -10,18 +10,26 @@ async function getTenantId(): Promise<string> {
   return p!.tenant_id
 }
 
-async function syncNetlifyDomainAlias(oldSlug: string | null, newSlug: string): Promise<void> {
+async function syncNetlifyDomainAlias(oldSlug: string | null, newSlug: string): Promise<string | null> {
   const token = process.env.NETLIFY_AUTH_TOKEN
   const siteId = process.env.NETLIFY_SITE_ID
-  if (!token || !siteId) return
+  if (!token || !siteId) {
+    console.error('[syncNetlifyDomainAlias] Missing NETLIFY_AUTH_TOKEN or NETLIFY_SITE_ID')
+    return 'Domain alias could not be registered: missing Netlify credentials'
+  }
 
   const headers = {
     Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
   }
 
-  const res = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, { headers })
-  const site = await res.json()
+  const getRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, { headers })
+  if (!getRes.ok) {
+    console.error('[syncNetlifyDomainAlias] GET site failed:', getRes.status, await getRes.text())
+    return `Domain alias could not be registered (Netlify error ${getRes.status})`
+  }
+
+  const site = await getRes.json()
   const current: string[] = site.domain_aliases ?? []
 
   const oldAlias = oldSlug ? `${oldSlug}.epuredrive.com` : null
@@ -30,11 +38,17 @@ async function syncNetlifyDomainAlias(oldSlug: string | null, newSlug: string): 
   const updated = current.filter(a => a !== oldAlias)
   if (!updated.includes(newAlias)) updated.push(newAlias)
 
-  await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
+  const patchRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
     method: 'PATCH',
     headers,
     body: JSON.stringify({ domain_aliases: updated }),
   })
+  if (!patchRes.ok) {
+    console.error('[syncNetlifyDomainAlias] PATCH failed:', patchRes.status, await patchRes.text())
+    return `Domain alias could not be registered (Netlify error ${patchRes.status})`
+  }
+
+  return null
 }
 
 export async function updateTenantBranding(data: {
@@ -56,7 +70,10 @@ export async function updateTenantBranding(data: {
       .single()
     const oldSlug = current?.slug ?? null
     if (oldSlug !== data.slug) {
-      await syncNetlifyDomainAlias(oldSlug, data.slug)
+      const netlifyError = await syncNetlifyDomainAlias(oldSlug, data.slug)
+      if (netlifyError) {
+        return { error: netlifyError }
+      }
     }
   }
 
