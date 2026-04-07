@@ -18,7 +18,8 @@ export default async function DashboardPage() {
 
   const tenantId = profile!.tenant_id
 
-  const today = new Date().toISOString().split('T')[0]
+  // Use localized date to prevent UTC offsets marking cars as non-rented at night
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
 
   const [{ data: tenant }, { data: cars }, { data: allRes }, { data: services }, { data: transactions }, { data: activeRentals }] = await Promise.all([
     supabase.from('tenants').select('name, slug, brand_name, logo_url, plan').eq('id', tenantId).single(),
