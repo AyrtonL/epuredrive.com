@@ -4,7 +4,7 @@
 
 @layer base {
   html {
-    background-color: #040404;
+    background-color: #000000;
     color: #ffffff;
     scroll-behavior: smooth;
   }
@@ -20,7 +20,7 @@
     height: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #040404;
+    background: #000000;
   }
   ::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.1);

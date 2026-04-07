@@ -14,13 +14,19 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
   return (
     <html lang="en">
       <body className={outfit.className}>
-        <nav className="fixed top-0 w-full z-50 bg-[#0a0a0a]/90 backdrop-blur border-b border-white/10">
+        <nav className="fixed top-0 w-full z-50 bg-black/85 backdrop-blur-xl border-b border-white/[0.07]">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <a href="/" className="flex items-center gap-2">
-              <img src="/assets/logo.png" alt="éPure Drive" className="h-8" />
+            <a href="/" className="flex items-center">
+              <img src="/assets/logo.png" alt="éPure Drive" className="h-7" />
             </a>
-            <div className="flex items-center gap-4">
-              <a href="/login" className="text-sm text-white/70 hover:text-white transition-colors">
+            <div className="flex items-center gap-6">
+              <a href="#features" className="text-sm text-white/45 hover:text-white transition-colors hidden sm:block">
+                Features
+              </a>
+              <a href="#pricing" className="text-sm text-white/45 hover:text-white transition-colors hidden sm:block">
+                Pricing
+              </a>
+              <a href="/login" className="text-sm text-white/60 hover:text-white transition-colors">
                 Sign in
               </a>
               <a

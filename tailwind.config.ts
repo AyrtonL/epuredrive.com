@@ -8,18 +8,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: '#040404',
-        surface: '#0d0d0d',
-        surfaceHover: '#161616',
+        // éPure Drive brand palette
+        background: '#000000',
+        surface: '#2B2B2B',
+        surfaceHover: '#383838',
         surfaceBorder: 'rgba(255, 255, 255, 0.08)',
         primary: '#ffffff',
         accent: '#f0f0f0',
-        muted: '#A1A1AA',
+        muted: '#ACACAC',
+        // Brand gray scale
+        gray1: '#565656',
+        gray2: '#818181',
+        gray3: '#ACACAC',
+        gray4: '#D7D7D7',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%)',
-        'hero-glow': 'radial-gradient(50% 50% at 50% 50%, rgba(255, 255, 255, 0.08) 0%, rgba(0, 0, 0, 0) 100%)',
+        'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)',
+        'hero-glow': 'radial-gradient(50% 50% at 50% 50%, rgba(255, 255, 255, 0.06) 0%, rgba(0, 0, 0, 0) 100%)',
       },
       animation: {
         'fade-in': 'fadeIn 0.7s ease-out forwards',
