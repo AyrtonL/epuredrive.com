@@ -10,6 +10,33 @@ async function getTenantId(): Promise<string> {
   return p!.tenant_id
 }
 
+async function syncNetlifyDomainAlias(oldSlug: string | null, newSlug: string): Promise<void> {
+  const token = process.env.NETLIFY_AUTH_TOKEN
+  const siteId = process.env.NETLIFY_SITE_ID
+  if (!token || !siteId) return
+
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  }
+
+  const res = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, { headers })
+  const site = await res.json()
+  const current: string[] = site.domain_aliases ?? []
+
+  const oldAlias = oldSlug ? `${oldSlug}.epuredrive.com` : null
+  const newAlias = `${newSlug}.epuredrive.com`
+
+  const updated = current.filter(a => a !== oldAlias)
+  if (!updated.includes(newAlias)) updated.push(newAlias)
+
+  await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ domain_aliases: updated }),
+  })
+}
+
 export async function updateTenantBranding(data: {
   brand_name?: string | null
   primary_color?: string | null
@@ -19,6 +46,20 @@ export async function updateTenantBranding(data: {
 }): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
+
+  // If slug is changing, sync Netlify domain aliases
+  if (data.slug) {
+    const { data: current } = await supabase
+      .from('tenants')
+      .select('slug')
+      .eq('id', tenantId)
+      .single()
+    const oldSlug = current?.slug ?? null
+    if (oldSlug !== data.slug) {
+      await syncNetlifyDomainAlias(oldSlug, data.slug)
+    }
+  }
+
   const { error } = await supabase.from('tenants').update(data).eq('id', tenantId)
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/settings')
