@@ -25,9 +25,7 @@ export default function BrandSettings({ tenant }: Props) {
   const [accent, setAccent] = useState(tenant?.accent_color || '#3B82F6')
 
   const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-  const publicUrl = slug 
-    ? (isLocal || process.env.NODE_ENV === 'development' ? `http://${slug}.localhost:3000` : `https://${slug}.epuredrive.com`)
-    : null
+  const publicUrl = slug ? `https://${slug}.epuredrive.com` : null
 
   const previewGradient = `linear-gradient(135deg, ${primary}, ${accent})`
 
