@@ -23,7 +23,7 @@ async function syncNetlifyDomainAlias(oldSlug: string | null, newSlug: string): 
     'Content-Type': 'application/json',
   }
 
-  const getRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, { headers })
+  const getRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, { headers, cache: 'no-store' })
   if (!getRes.ok) {
     console.error('[syncNetlifyDomainAlias] GET site failed:', getRes.status, await getRes.text())
     return `Domain alias could not be registered (Netlify error ${getRes.status})`
