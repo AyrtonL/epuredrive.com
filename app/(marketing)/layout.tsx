@@ -20,10 +20,10 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
               <img src="/assets/logo.png" alt="éPure Drive" className="h-7" />
             </a>
             <div className="flex items-center gap-6">
-              <a href="#features" className="text-sm text-white/45 hover:text-white transition-colors hidden sm:block">
+              <a href="/#features" className="text-sm text-white/45 hover:text-white transition-colors hidden sm:block">
                 Features
               </a>
-              <a href="#pricing" className="text-sm text-white/45 hover:text-white transition-colors hidden sm:block">
+              <a href="/#pricing" className="text-sm text-white/45 hover:text-white transition-colors hidden sm:block">
                 Pricing
               </a>
               <a href="/login" className="text-sm text-white/60 hover:text-white transition-colors">
