@@ -68,7 +68,7 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
       amount: formData.amount != null && formData.amount !== ('' as any) ? Number(formData.amount) : null,
       provider: formData.provider || null,
       next_service_date: formData.next_service_date || null,
-      next_service_mileage: formData.next_service_mileage ? Number(formData.next_service_mileage) : null,
+      next_service_mileage: formData.next_service_mileage != null && formData.next_service_mileage !== ('' as any) ? Number(formData.next_service_mileage) : null,
     }
 
     startTransition(async () => {
@@ -236,8 +236,8 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
                     <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Due Mileage (mi)</label>
                     <input
                       type="number"
-                      value={formData.next_service_mileage || ''}
-                      onChange={e => setFormData({ ...formData, next_service_mileage: Number(e.target.value) })}
+                      value={formData.next_service_mileage ?? ''}
+                      onChange={e => setFormData({ ...formData, next_service_mileage: e.target.value === '' ? undefined : Number(e.target.value) })}
                       className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
                     />
                   </div>
