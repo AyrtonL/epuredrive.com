@@ -5,6 +5,8 @@ import type { Tenant, Car } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
 import { buildFleetMetadata } from '@/lib/utils/fleet-metadata'
 import FleetGrid from '@/components/sites/FleetGrid'
+import ExperienceSection from '@/components/sites/ExperienceSection'
+import ConciergeSection from '@/components/sites/ConciergeSection'
 
 interface Props {
   params: { slug: string }
@@ -58,6 +60,10 @@ export default async function FleetPage({ params }: Props) {
       </div>
 
       <FleetGrid cars={fleet} slug={params.slug} />
+
+      <ExperienceSection cars={fleet} tenant={tenant as Tenant} />
+
+      <ConciergeSection tenant={tenant as Tenant} cars={fleet} />
     </main>
   )
 }
