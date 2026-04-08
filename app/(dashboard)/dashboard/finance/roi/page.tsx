@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import type { Reservation, Car, CarService, Consignment, Transaction } from '@/lib/supabase/types'
 
@@ -7,10 +7,7 @@ function fmt(n: number) {
 }
 
 export default async function ROIPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user!.id).single()
-  const tenantId = profile!.tenant_id
+  const { supabase, tenantId } = await requireTenantId()
 
   const [
     { data: reservations },

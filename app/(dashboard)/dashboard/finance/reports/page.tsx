@@ -1,13 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import ReportsClient from './ReportsClient'
 import type { Reservation, Transaction, Car } from '@/lib/supabase/types'
 
 export default async function ReportsPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user!.id).single()
-  const tenantId = profile!.tenant_id
+  const { supabase, tenantId } = await requireTenantId()
 
   const [{ data: reservations }, { data: transactions }, { data: cars }] = await Promise.all([
     supabase.from('reservations').select('*').eq('tenant_id', tenantId),

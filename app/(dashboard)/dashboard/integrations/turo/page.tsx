@@ -1,12 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import FeedManager from './FeedManager'
 
 export default async function TuroSyncPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user!.id).single()
-  const tenantId = profile!.tenant_id
+  const { supabase, tenantId } = await requireTenantId()
 
   const { data: syncs } = await supabase.from('turo_email_syncs').select('*').eq('tenant_id', tenantId).single()
 

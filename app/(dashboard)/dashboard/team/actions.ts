@@ -2,12 +2,11 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 
 async function getTenantId(): Promise<string> {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: p } = await supabase.from('profiles').select('tenant_id').eq('id', user!.id).single()
-  return p!.tenant_id
+  const { tenantId } = await requireTenantId()
+  return tenantId
 }
 
 export async function updateMemberRole(

@@ -1,13 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import ConsignmentsManager from './ConsignmentsManager'
 import type { Consignment, Car, Reservation } from '@/lib/supabase/types'
 
 export default async function ConsignmentsPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user!.id).single()
-  const tenantId = profile!.tenant_id
+  const { supabase, tenantId } = await requireTenantId()
 
   const [{ data: consignments }, { data: cars }, { data: reservations }, { data: transactions }] = await Promise.all([
     supabase.from('consignments').select('*').eq('tenant_id', tenantId).order('owner_name'),

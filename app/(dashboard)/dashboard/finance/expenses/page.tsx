@@ -1,17 +1,15 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import StatCard from '@/components/dashboard/StatCard'
 import ExpensesTable from './ExpensesTable'
 import type { Transaction, Car } from '@/lib/supabase/types'
 
 export default async function ExpensesPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user!.id).single()
+  const { supabase, tenantId } = await requireTenantId()
 
   const [{ data: transactions }, { data: cars }] = await Promise.all([
-    supabase.from('transactions').select('*').eq('tenant_id', profile!.tenant_id).order('transaction_date', { ascending: false }),
-    supabase.from('cars').select('id, make, model, model_full').eq('tenant_id', profile!.tenant_id)
+    supabase.from('transactions').select('*').eq('tenant_id', tenantId).order('transaction_date', { ascending: false }),
+    supabase.from('cars').select('id, make, model, model_full').eq('tenant_id', tenantId)
   ])
 
   const rows = (transactions as Transaction[]) ?? []
