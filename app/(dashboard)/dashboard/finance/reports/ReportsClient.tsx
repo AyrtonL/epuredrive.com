@@ -3,10 +3,17 @@
 import { useState, useMemo } from 'react'
 import type { Reservation, Transaction } from '@/lib/supabase/types'
 
+interface ReportCar {
+  id: number
+  make: string
+  model: string
+  model_full: string | null
+}
+
 interface Props {
   reservations: Reservation[]
   expenses: Transaction[]
-  cars: any[]
+  cars: ReportCar[]
 }
 
 function fmt(n: number) {

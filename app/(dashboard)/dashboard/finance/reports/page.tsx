@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import PageHeader from '@/components/dashboard/PageHeader'
 import ReportsClient from './ReportsClient'
-import type { Reservation, Transaction } from '@/lib/supabase/types'
+import type { Reservation, Transaction, Car } from '@/lib/supabase/types'
 
 export default async function ReportsPage() {
   const supabase = createClient()
@@ -16,12 +16,12 @@ export default async function ReportsPage() {
   ])
 
   return (
-    <div className="max-w-7xl space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       <PageHeader title="Reports" description="Filter by date range, track revenue and expenses, download CSV exports." />
       <ReportsClient 
         reservations={(reservations as Reservation[]) ?? []} 
         expenses={(transactions as Transaction[]) ?? []} 
-        cars={(cars as any[]) ?? []}
+        cars={(cars as Pick<Car, 'id' | 'make' | 'model' | 'model_full'>[]) ?? []}
       />
     </div>
   )

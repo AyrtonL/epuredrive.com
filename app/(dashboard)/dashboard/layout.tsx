@@ -24,7 +24,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <body className={`${outfit.className} bg-background text-primary min-h-screen selection:bg-white/30 selection:text-white`}>
         <div className="flex h-screen overflow-hidden bg-black">
           <Sidebar email={user.email ?? ''} role={profile?.role ?? null} />
-          <main className="flex-1 overflow-y-auto p-6 md:p-10 lg:p-12 relative z-0">
+          <main className="flex-1 overflow-y-auto pt-20 px-6 pb-6 md:pt-10 md:px-10 md:pb-10 lg:px-12 lg:pb-12 relative z-0">
             {/* Subtle radial gradient background behind the dashboard content */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-hero-glow opacity-30 -z-10 pointer-events-none" />
             

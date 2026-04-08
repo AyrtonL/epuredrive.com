@@ -1,23 +1,16 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import StatCard from '@/components/dashboard/StatCard'
 import FleetManager from './FleetManager'
 import type { Car } from '@/lib/supabase/types'
 
 export default async function FleetPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('tenant_id')
-    .eq('id', user!.id)
-    .single()
+  const { supabase, tenantId } = await requireTenantId()
 
   const { data: cars } = await supabase
     .from('cars')
     .select('*')
-    .eq('tenant_id', profile!.tenant_id)
+    .eq('tenant_id', tenantId)
     .order('id')
 
   const rows = (cars as Car[]) ?? []

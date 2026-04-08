@@ -2,8 +2,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 interface NavItem {
@@ -70,6 +71,7 @@ export default function Sidebar({ email, role }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState<Record<string, boolean>>({})
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -88,21 +90,36 @@ export default function Sidebar({ email, role }: Props) {
     setOpen(initialOpen)
   }, [pathname])
 
-  const toggle = (label: string) =>
-    setOpen((prev) => ({ ...prev, [label]: !prev[label] }))
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
+
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [mobileOpen])
+
+  const toggle = useCallback((label: string) =>
+    setOpen((prev) => ({ ...prev, [label]: !prev[label] })), [])
 
   const hidden: string[] = []
   if (role === 'staff') hidden.push('Finance', 'Clients')
   if (role === 'finance') hidden.push('Maintenance', 'Integrations', 'Team')
 
-  return (
-    <aside className="w-64 glass z-20 flex flex-col shrink-0 h-full shadow-[4px_0_24px_rgba(0,0,0,0.5)] relative">
+  const navContent = (
+    <>
       <div className="h-20 flex items-center px-5 border-b border-surfaceBorder relative overflow-hidden gap-3">
         {/* Subtle glow behind logo */}
         <div className="absolute inset-0 bg-hero-glow opacity-40 mix-blend-screen pointer-events-none" />
-        {/* 'é' standalone icon */}
-        <div className="relative z-10 w-9 h-9 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(255,255,255,0.15)]">
-          <span className="text-black font-extrabold text-lg leading-none tracking-tight">é</span>
+        {/* 'é' standalone icon — uses the brand SVG */}
+        <div className="relative z-10 w-9 h-9 rounded-lg overflow-hidden shrink-0 shadow-[0_0_12px_rgba(255,255,255,0.15)]">
+          <Image src="/favicon.svg" alt="éPure" width={36} height={36} className="w-full h-full" />
         </div>
         <span className="relative z-10 text-white font-semibold text-sm tracking-wide">éPure Drive</span>
       </div>
@@ -185,6 +202,56 @@ export default function Sidebar({ email, role }: Props) {
           Log out
         </button>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="fixed top-5 left-4 z-50 md:hidden w-10 h-10 rounded-xl bg-white/10 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+        aria-label="Open menu"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-64 glass z-20 flex-col shrink-0 h-full shadow-[4px_0_24px_rgba(0,0,0,0.5)] relative">
+        {navContent}
+      </aside>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile sidebar drawer */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 glass flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.5)] md:hidden transition-transform duration-300 ease-out ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Close button */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="absolute top-6 right-4 z-10 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition-colors"
+          aria-label="Close menu"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+        {navContent}
+      </aside>
+    </>
   )
 }

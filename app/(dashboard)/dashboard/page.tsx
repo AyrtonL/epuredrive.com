@@ -1,5 +1,5 @@
 // app/dashboard/page.tsx
-import { createClient } from '@/lib/supabase/server'
+import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import Link from 'next/link'
 import PageHeader from '@/components/dashboard/PageHeader'
 import StatCard from '@/components/dashboard/StatCard'
@@ -7,16 +7,7 @@ import MaintenanceAlerts from './maintenance/MaintenanceAlerts'
 import type { Tenant, Reservation, Car, CarService, Transaction } from '@/lib/supabase/types'
 
 export default async function DashboardPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('tenant_id')
-    .eq('id', user!.id)
-    .single()
-
-  const tenantId = profile!.tenant_id
+  const { supabase, tenantId } = await requireTenantId()
 
   // Use localized date to prevent UTC offsets marking cars as non-rented at night
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
@@ -94,7 +85,7 @@ export default async function DashboardPage() {
         <div className="space-y-6">
           <div className="glass rounded-3xl p-8 border border-white/10 flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4 text-primary text-2xl font-black italic">
-              É
+              é
             </div>
             <h3 className="text-white font-bold mb-1">{displayName}</h3>
             <p className="text-white/40 text-xs mb-6 capitalize">{t.plan || 'Free'} Plan Active</p>

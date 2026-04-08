@@ -1,21 +1,12 @@
 // app/dashboard/bookings/page.tsx
-import { createClient } from '@/lib/supabase/server'
+import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import StatCard from '@/components/dashboard/StatCard'
 import BookingsTable from './BookingsTable'
 import type { Reservation, Car } from '@/lib/supabase/types'
 
 export default async function BookingsPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('tenant_id')
-    .eq('id', user!.id)
-    .single()
-
-  const tenantId = profile!.tenant_id
+  const { supabase, tenantId } = await requireTenantId()
 
   const [{ data: reservations }, { data: cars }] = await Promise.all([
     supabase
@@ -39,7 +30,7 @@ export default async function BookingsPage() {
     .reduce((sum, r) => sum + (Number(r.total_amount) || 0), 0)
 
   return (
-    <div className="max-w-6xl">
+    <div className="max-w-6xl mx-auto">
       <PageHeader title="Bookings" description="All reservations across your fleet." />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -49,7 +40,7 @@ export default async function BookingsPage() {
         <StatCard label="Completed revenue" value={`$${totalRevenue.toFixed(0)}`} />
       </div>
 
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <div className="glass border border-white/10 rounded-3xl p-6 md:p-8">
         <BookingsTable reservations={rows} cars={carRows} />
       </div>
     </div>
