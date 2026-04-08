@@ -382,6 +382,7 @@ const ADMIN_NAV: NavGroup = {
 interface Props {
   email: string
   role: string | null
+  featureFlags?: Record<string, boolean>
 }
 
 function isGroup(entry: NavEntry): entry is NavGroup {
@@ -399,13 +400,22 @@ function hasActiveChild(pathname: string, children: NavItem[]): boolean {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export default function Sidebar({ email, role }: Props) {
+export default function Sidebar({ email, role, featureFlags = {} }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const isSuperuser = role === 'superuser'
+
+  // Map feature flags to nav items that should be hidden when disabled
+  const flagHiddenItems = useMemo(() => {
+    const items: string[] = []
+    if (!featureFlags['turo_sync']) items.push('Turo')
+    if (!featureFlags['custom_domains']) items.push('Custom Domain')
+    if (!featureFlags['api_access'] && !featureFlags['webhooks']) items.push('API & Webhooks')
+    return items
+  }, [featureFlags])
 
   const fullNav = useMemo<NavEntry[]>(
     () => (isSuperuser ? [...NAV, ADMIN_NAV] : NAV),
@@ -450,6 +460,9 @@ export default function Sidebar({ email, role }: Props) {
   if (role === 'staff') hidden.push('Finance', 'Clients', 'Settings')
   if (role === 'finance') hidden.push('Maintenance', 'Integrations', 'Team', 'Admin')
 
+  // Combine role-hidden and flag-hidden items
+  const allHiddenItems = [...hidden, ...flagHiddenItems]
+
   const renderIcon = (label: string, className: string) => {
     const Icon = ICONS[label]
     return Icon ? <Icon className={className} /> : null
@@ -470,9 +483,12 @@ export default function Sidebar({ email, role }: Props) {
       <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto custom-scrollbar">
         {fullNav.map((entry) => {
           if (isGroup(entry)) {
-            if (hidden.includes(entry.label)) return null
+            if (allHiddenItems.includes(entry.label)) return null
+            // Filter out flag-gated children
+            const visibleChildren = entry.children.filter((c) => !allHiddenItems.includes(c.label))
+            if (visibleChildren.length === 0) return null
             const isOpen = open[entry.label] ?? false
-            const groupActive = hasActiveChild(pathname, entry.children)
+            const groupActive = hasActiveChild(pathname, visibleChildren)
             const isAdmin = entry.label === 'Admin'
 
             return (
@@ -497,7 +513,7 @@ export default function Sidebar({ email, role }: Props) {
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ease-out ${isOpen ? 'max-h-96 opacity-100 mt-0.5' : 'max-h-0 opacity-0'}`}>
                   <div className="ml-4 pl-3 border-l border-white/[0.06] space-y-0.5 py-1">
-                    {entry.children.map((child) => {
+                    {visibleChildren.map((child) => {
                       const active = isActive(pathname, child.href)
                       return (
                         <Link
@@ -521,7 +537,7 @@ export default function Sidebar({ email, role }: Props) {
           }
 
           // Top-level item (e.g., Overview)
-          if (hidden.includes(entry.label)) return null
+          if (allHiddenItems.includes(entry.label)) return null
           const active = isActive(pathname, entry.href)
           return (
             <Link

@@ -13,9 +13,10 @@ interface Props {
     accent_color?: string | null
     logo_url?: string | null
   } | null
+  stripeEnabled?: boolean
 }
 
-export default function BrandSettings({ tenant }: Props) {
+export default function BrandSettings({ tenant, stripeEnabled = false }: Props) {
   const [isPending, startTransition] = useTransition()
   const [msg, setMsg] = useState('')
   const [brandName, setBrandName] = useState(tenant?.brand_name || tenant?.name || '')
@@ -130,7 +131,17 @@ export default function BrandSettings({ tenant }: Props) {
       </div>
 
       {/* Financial Configuration */}
-      <div className="glass border border-white/10 rounded-3xl p-8 lg:p-10 relative overflow-hidden group">
+      <div className={`glass border rounded-3xl p-8 lg:p-10 relative overflow-hidden group ${stripeEnabled ? 'border-white/10' : 'border-white/[0.04]'}`}>
+        {!stripeEnabled && (
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
+            <div className="text-center">
+              <div className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest inline-block mb-3">
+                Feature Not Enabled
+              </div>
+              <p className="text-white/40 text-sm max-w-xs">Stripe Connect is not enabled for your organization. Contact your administrator.</p>
+            </div>
+          </div>
+        )}
         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-all duration-700" />
         
         <div className="relative z-10">

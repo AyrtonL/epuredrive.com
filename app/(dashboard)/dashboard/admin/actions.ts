@@ -222,3 +222,52 @@ export async function toggleFeatureFlag(
   revalidatePath('/dashboard/admin/flags')
   return { error: null }
 }
+
+export async function setTenantFlagOverride(
+  flagKey: string,
+  tenantId: string,
+  enabled: boolean
+): Promise<{ error: string | null }> {
+  const { supabase, userId } = await requireSuperuserAction()
+
+  // Upsert: insert or update the override
+  const { error } = await supabase
+    .from('tenant_feature_flags')
+    .upsert(
+      { flag_key: flagKey, tenant_id: tenantId, enabled },
+      { onConflict: 'flag_key,tenant_id' }
+    )
+
+  if (error) return { error: error.message }
+
+  await log(
+    supabase, 'info', 'admin',
+    `Tenant override: "${flagKey}" → ${enabled ? 'ON' : 'OFF'} for tenant ${tenantId}`,
+    tenantId, userId
+  )
+  revalidatePath('/dashboard/admin/flags')
+  return { error: null }
+}
+
+export async function removeTenantFlagOverride(
+  flagKey: string,
+  tenantId: string
+): Promise<{ error: string | null }> {
+  const { supabase, userId } = await requireSuperuserAction()
+
+  const { error } = await supabase
+    .from('tenant_feature_flags')
+    .delete()
+    .eq('flag_key', flagKey)
+    .eq('tenant_id', tenantId)
+
+  if (error) return { error: error.message }
+
+  await log(
+    supabase, 'info', 'admin',
+    `Tenant override removed: "${flagKey}" for tenant ${tenantId} (falls back to global)`,
+    tenantId, userId
+  )
+  revalidatePath('/dashboard/admin/flags')
+  return { error: null }
+}

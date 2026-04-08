@@ -10,15 +10,16 @@ interface Props {
     brand_name?: string | null
     plan?: string | null
   } | null
+  customDomainsEnabled?: boolean
 }
 
-export default function DomainSettings({ tenant }: Props) {
+export default function DomainSettings({ tenant, customDomainsEnabled = false }: Props) {
   const [isPending, startTransition] = useTransition()
   const [msg, setMsg] = useState('')
   const [slug, setSlug] = useState(tenant?.slug || '')
 
   const publicUrl = slug ? `https://${slug}.epuredrive.com` : null
-  const isPro = tenant?.plan === 'pro' || tenant?.plan === 'enterprise'
+  const canUseCustomDomain = customDomainsEnabled
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -93,14 +94,14 @@ export default function DomainSettings({ tenant }: Props) {
       </div>
 
       {/* Custom Domain (Pro Feature) */}
-      <div className={`glass border rounded-3xl p-8 relative overflow-hidden ${isPro ? 'border-white/10' : 'border-white/[0.04]'}`}>
-        {!isPro && (
+      <div className={`glass border rounded-3xl p-8 relative overflow-hidden ${canUseCustomDomain ? 'border-white/10' : 'border-white/[0.04]'}`}>
+        {!canUseCustomDomain && (
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
             <div className="text-center">
               <div className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest inline-block mb-3">
-                Pro Plan Required
+                Feature Not Enabled
               </div>
-              <p className="text-white/40 text-sm">Upgrade to connect your own domain.</p>
+              <p className="text-white/40 text-sm">Custom domains are not enabled for your organization. Contact your administrator.</p>
             </div>
           </div>
         )}
@@ -120,7 +121,7 @@ export default function DomainSettings({ tenant }: Props) {
           <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest pl-1">Domain</label>
           <input
             type="text"
-            disabled={!isPro}
+            disabled={!canUseCustomDomain}
             placeholder="fleet.yourbrand.com"
             className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white outline-none transition-all disabled:opacity-30"
           />

@@ -1,30 +1,28 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
+import { getFeatureFlags } from '@/lib/supabase/feature-flags'
 import PageHeader from '@/components/dashboard/PageHeader'
 
 export default async function APIPage() {
-  const { supabase, tenantId } = await requireTenantId()
+  const { tenantId } = await requireTenantId()
 
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('plan')
-    .eq('id', tenantId)
-    .single()
+  const flags = await getFeatureFlags(tenantId, ['api_access', 'webhooks'])
 
-  const isEnterprise = tenant?.plan === 'enterprise'
+  const apiEnabled = flags['api_access']
+  const webhooksEnabled = flags['webhooks']
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 animate-fade-in pb-32">
       <PageHeader title="API & Webhooks" description="Programmatic access to your fleet data and real-time event notifications." />
 
       {/* API Keys */}
-      <div className={`glass border rounded-3xl p-8 relative overflow-hidden ${isEnterprise ? 'border-white/10' : 'border-white/[0.04]'}`}>
-        {!isEnterprise && (
+      <div className={`glass border rounded-3xl p-8 relative overflow-hidden ${apiEnabled ? 'border-white/10' : 'border-white/[0.04]'}`}>
+        {!apiEnabled && (
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
             <div className="text-center">
               <div className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest inline-block mb-3">
-                Enterprise Plan Required
+                Feature Not Enabled
               </div>
-              <p className="text-white/40 text-sm max-w-xs">API access is available on the Enterprise plan. Upgrade to generate keys.</p>
+              <p className="text-white/40 text-sm max-w-xs">API access is not enabled for your organization. Contact your administrator.</p>
             </div>
           </div>
         )}
@@ -88,13 +86,14 @@ export default async function APIPage() {
       </div>
 
       {/* Webhooks */}
-      <div className={`glass border rounded-3xl p-8 relative overflow-hidden ${isEnterprise ? 'border-white/10' : 'border-white/[0.04]'}`}>
-        {!isEnterprise && (
+      <div className={`glass border rounded-3xl p-8 relative overflow-hidden ${webhooksEnabled ? 'border-white/10' : 'border-white/[0.04]'}`}>
+        {!webhooksEnabled && (
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
             <div className="text-center">
               <div className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest inline-block mb-3">
-                Enterprise Plan Required
+                Feature Not Enabled
               </div>
+              <p className="text-white/40 text-sm max-w-xs">Webhooks are not enabled for your organization. Contact your administrator.</p>
             </div>
           </div>
         )}

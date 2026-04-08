@@ -1,4 +1,5 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
+import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
 import PageHeader from '@/components/dashboard/PageHeader'
 
 interface NotificationChannel {
@@ -50,7 +51,9 @@ function ChannelIcon({ type, className }: { type: string; className?: string }) 
 }
 
 export default async function NotificationsPage() {
-  await requireTenantId()
+  const { tenantId } = await requireTenantId()
+
+  const smsEnabled = await isFeatureEnabled(tenantId, 'sms_notifications')
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 animate-fade-in pb-32">
@@ -60,7 +63,7 @@ export default async function NotificationsPage() {
       <div className="grid grid-cols-3 gap-4">
         {[
           { type: 'email', label: 'Email', status: 'Active', statusColor: 'text-emerald-400 bg-emerald-500/10' },
-          { type: 'sms', label: 'SMS', status: 'Coming Soon', statusColor: 'text-white/30 bg-white/5' },
+          { type: 'sms', label: 'SMS', status: smsEnabled ? 'Active' : 'Not Enabled', statusColor: smsEnabled ? 'text-emerald-400 bg-emerald-500/10' : 'text-white/30 bg-white/5' },
           { type: 'app', label: 'In-App', status: 'Active', statusColor: 'text-emerald-400 bg-emerald-500/10' },
         ].map((ch) => (
           <div key={ch.type} className="glass border border-white/[0.06] rounded-2xl p-5 text-center">
