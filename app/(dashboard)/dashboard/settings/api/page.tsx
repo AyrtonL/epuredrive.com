@@ -1,0 +1,156 @@
+import { requireTenantId } from '@/lib/supabase/dashboard-auth'
+import PageHeader from '@/components/dashboard/PageHeader'
+
+export default async function APIPage() {
+  const { supabase, tenantId } = await requireTenantId()
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('plan')
+    .eq('id', tenantId)
+    .single()
+
+  const isEnterprise = tenant?.plan === 'enterprise'
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-10 animate-fade-in pb-32">
+      <PageHeader title="API & Webhooks" description="Programmatic access to your fleet data and real-time event notifications." />
+
+      {/* API Keys */}
+      <div className={`glass border rounded-3xl p-8 relative overflow-hidden ${isEnterprise ? 'border-white/10' : 'border-white/[0.04]'}`}>
+        {!isEnterprise && (
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
+            <div className="text-center">
+              <div className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest inline-block mb-3">
+                Enterprise Plan Required
+              </div>
+              <p className="text-white/40 text-sm max-w-xs">API access is available on the Enterprise plan. Upgrade to generate keys.</p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2.5 rounded-xl bg-violet-500/10 text-violet-400">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="16 18 22 12 16 6" />
+              <polyline points="8 6 2 12 8 18" />
+              <line x1="14" y1="4" x2="10" y2="20" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-white font-bold">API Keys</h3>
+            <p className="text-white/30 text-xs">Generate and manage API keys for external integrations</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.04]">
+            <div>
+              <div className="text-white text-sm font-medium">Production Key</div>
+              <div className="text-white/20 text-xs mt-0.5 font-mono">epd_live_••••••••••••••••</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="px-3 py-1.5 rounded-lg bg-white/5 text-white/40 text-xs hover:text-white hover:bg-white/10 transition-colors">
+                Reveal
+              </button>
+              <button className="px-3 py-1.5 rounded-lg bg-white/5 text-white/40 text-xs hover:text-white hover:bg-white/10 transition-colors">
+                Regenerate
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.04]">
+            <div>
+              <div className="text-white text-sm font-medium">Test Key</div>
+              <div className="text-white/20 text-xs mt-0.5 font-mono">epd_test_••••••••••••••••</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="px-3 py-1.5 rounded-lg bg-white/5 text-white/40 text-xs hover:text-white hover:bg-white/10 transition-colors">
+                Reveal
+              </button>
+              <button className="px-3 py-1.5 rounded-lg bg-white/5 text-white/40 text-xs hover:text-white hover:bg-white/10 transition-colors">
+                Regenerate
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 p-4 rounded-xl bg-amber-500/5 border border-amber-500/10">
+          <div className="flex items-start gap-3">
+            <svg className="w-4 h-4 text-amber-400/60 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className="text-amber-400/60 text-xs leading-relaxed">
+              Keep your API keys secret. Never expose them in client-side code or public repositories. Rotate keys immediately if compromised.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Webhooks */}
+      <div className={`glass border rounded-3xl p-8 relative overflow-hidden ${isEnterprise ? 'border-white/10' : 'border-white/[0.04]'}`}>
+        {!isEnterprise && (
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
+            <div className="text-center">
+              <div className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest inline-block mb-3">
+                Enterprise Plan Required
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 01-3.46 0" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-white font-bold">Webhooks</h3>
+              <p className="text-white/30 text-xs">Receive real-time notifications for fleet events</p>
+            </div>
+          </div>
+          <button className="bg-white text-black px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-white/90 transition-all">
+            Add Endpoint
+          </button>
+        </div>
+
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
+            <svg className="w-6 h-6 text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            </svg>
+          </div>
+          <p className="text-white/30 text-sm">No webhook endpoints configured.</p>
+          <p className="text-white/20 text-xs mt-1">Add an endpoint to receive booking, payment, and fleet events.</p>
+        </div>
+
+        <div className="mt-4">
+          <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-3">Available Events</div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              'booking.created', 'booking.updated', 'booking.cancelled',
+              'payment.received', 'vehicle.status_changed', 'maintenance.due',
+              'team.member_added', 'customer.created',
+            ].map((evt) => (
+              <span key={evt} className="text-[10px] px-2.5 py-1 rounded-full bg-white/5 text-white/30 border border-white/5 font-mono">
+                {evt}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* API Documentation Link */}
+      <div className="glass border border-white/[0.06] rounded-3xl p-8 text-center">
+        <h3 className="text-white font-bold mb-2">API Documentation</h3>
+        <p className="text-white/30 text-sm mb-6">Full reference for all endpoints, authentication, and data models.</p>
+        <button className="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl text-sm font-bold hover:bg-white/10 transition-all">
+          View Documentation
+        </button>
+      </div>
+    </div>
+  )
+}

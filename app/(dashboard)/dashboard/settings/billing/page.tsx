@@ -1,0 +1,118 @@
+import { requireTenantId } from '@/lib/supabase/dashboard-auth'
+import PageHeader from '@/components/dashboard/PageHeader'
+
+export default async function BillingPage() {
+  const { supabase, tenantId } = await requireTenantId()
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('name, plan, slug, brand_name')
+    .eq('id', tenantId)
+    .single()
+
+  const plan = tenant?.plan || 'free'
+
+  const plans = [
+    {
+      name: 'Free',
+      price: '$0',
+      period: '/month',
+      features: ['Up to 5 vehicles', '1 team member', 'Basic reporting', 'Community support'],
+      current: plan === 'free',
+    },
+    {
+      name: 'Pro',
+      price: '$49',
+      period: '/month',
+      features: ['Up to 25 vehicles', '5 team members', 'Advanced analytics & ROI', 'Turo integration', 'Custom domain', 'Priority support'],
+      current: plan === 'pro',
+      recommended: true,
+    },
+    {
+      name: 'Enterprise',
+      price: '$149',
+      period: '/month',
+      features: ['Unlimited vehicles', 'Unlimited team members', 'API access & webhooks', 'White-label branding', 'Dedicated account manager', 'SLA guarantee'],
+      current: plan === 'enterprise',
+    },
+  ]
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-10 animate-fade-in pb-32">
+      <PageHeader title="Billing & Plans" description="Manage your subscription and view invoicing history." />
+
+      {/* Current Plan */}
+      <div className="glass border border-white/10 rounded-3xl p-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">Current Plan</div>
+            <div className="text-2xl font-bold text-white capitalize">{plan}</div>
+          </div>
+          <div className="px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest">
+            Active
+          </div>
+        </div>
+      </div>
+
+      {/* Plan Cards */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {plans.map((p) => (
+          <div
+            key={p.name}
+            className={`glass rounded-3xl p-8 border transition-all duration-300 relative overflow-hidden ${
+              p.recommended
+                ? 'border-white/20 shadow-[0_0_40px_rgba(255,255,255,0.05)]'
+                : 'border-white/[0.06] hover:border-white/10'
+            }`}
+          >
+            {p.recommended && (
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-white/0 via-white/40 to-white/0" />
+            )}
+            <div className="mb-6">
+              <h3 className="text-white font-bold text-lg">{p.name}</h3>
+              <div className="flex items-baseline gap-1 mt-2">
+                <span className="text-3xl font-black text-white">{p.price}</span>
+                <span className="text-white/30 text-sm">{p.period}</span>
+              </div>
+            </div>
+            <ul className="space-y-3 mb-8">
+              {p.features.map((f) => (
+                <li key={f} className="flex items-start gap-2.5 text-sm text-white/60">
+                  <svg className="w-4 h-4 text-emerald-400/70 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <button
+              disabled={p.current}
+              className={`w-full py-3 rounded-xl text-sm font-bold transition-all ${
+                p.current
+                  ? 'bg-white/5 text-white/30 cursor-default border border-white/5'
+                  : 'bg-white text-black hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98]'
+              }`}
+            >
+              {p.current ? 'Current Plan' : 'Upgrade'}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Invoice History */}
+      <div className="glass border border-white/10 rounded-3xl p-8">
+        <h3 className="text-white font-bold mb-6">Invoice History</h3>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
+            <svg className="w-6 h-6 text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="1" y="4" width="22" height="16" rx="2" />
+              <line x1="1" y1="10" x2="23" y2="10" />
+            </svg>
+          </div>
+          <p className="text-white/30 text-sm">No invoices yet.</p>
+          <p className="text-white/20 text-xs mt-1">Invoices will appear here once you upgrade to a paid plan.</p>
+        </div>
+      </div>
+    </div>
+  )
+}
