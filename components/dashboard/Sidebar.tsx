@@ -97,10 +97,14 @@ export default function Sidebar({ email, role }: Props) {
 
   return (
     <aside className="w-64 glass z-20 flex flex-col shrink-0 h-full shadow-[4px_0_24px_rgba(0,0,0,0.5)] relative">
-      <div className="h-20 flex items-center justify-center border-b border-surfaceBorder px-6 relative overflow-hidden">
+      <div className="h-20 flex items-center px-5 border-b border-surfaceBorder relative overflow-hidden gap-3">
         {/* Subtle glow behind logo */}
         <div className="absolute inset-0 bg-hero-glow opacity-40 mix-blend-screen pointer-events-none" />
-        <img src="/assets/logo.png" alt="éPure Drive" className="h-8 relative z-10 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]" />
+        {/* 'é' standalone icon */}
+        <div className="relative z-10 w-9 h-9 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(255,255,255,0.15)]">
+          <span className="text-black font-extrabold text-lg leading-none tracking-tight">é</span>
+        </div>
+        <span className="relative z-10 text-white font-semibold text-sm tracking-wide">éPure Drive</span>
       </div>
 
       <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto custom-scrollbar">

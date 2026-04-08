@@ -35,6 +35,20 @@
   .glass {
     @apply bg-glass-gradient backdrop-blur-xl border border-surfaceBorder shadow-[0_8px_32px_0_rgba(0,0,0,0.36)];
   }
+
+  /* Subtle dot grid texture */
+  .bg-dot-pattern {
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Subtle grid line texture */
+  .bg-grid-lines {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
   
   .text-glow {
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
