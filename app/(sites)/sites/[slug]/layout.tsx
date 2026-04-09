@@ -3,11 +3,6 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Tenant } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
-import '@/app/globals.css'
-import { Inter, Outfit } from 'next/font/google'
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
-const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' })
 
 interface Props {
   children: React.ReactNode
@@ -42,12 +37,11 @@ export default async function TenantLayout({ children, params }: Props) {
   const displayName = (tenant as Tenant).brand_name || (tenant as Tenant).name
 
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable} scroll-smooth`}>
-      <body className="bg-[#040404] text-white min-h-screen font-sans selection:bg-primary/30">
-        {/* Progress Bar */}
-        <div className="fixed top-0 left-0 right-0 h-[3px] bg-primary z-[110] origin-left scale-x-0 transition-transform duration-300" id="scroll-progress" />
-        
-        <nav className="fixed top-0 inset-x-0 z-[100] h-20 transition-all duration-500 hover:h-24 group">
+    <div className="bg-[#040404] text-white min-h-screen font-sans selection:bg-primary/30 scroll-smooth">
+      {/* Progress Bar */}
+      <div className="fixed top-0 left-0 right-0 h-[3px] bg-primary z-[110] origin-left scale-x-0 transition-transform duration-300" id="scroll-progress" />
+
+      <nav className="fixed top-0 inset-x-0 z-[100] h-20 transition-all duration-500 hover:h-24 group">
           <div className="absolute inset-0 bg-[#040404]/40 backdrop-blur-3xl border-b border-white/5" />
           <div className="relative max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
             <div className="flex items-center gap-4 group/logo cursor-pointer">
@@ -85,13 +79,13 @@ export default async function TenantLayout({ children, params }: Props) {
 
         <script dangerouslySetInnerHTML={{ __html: `
           window.addEventListener('scroll', () => {
-            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrolled = (winScroll / height);
-            document.getElementById('scroll-progress').style.transform = 'scaleX(' + scrolled + ')';
+            var winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            var height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            var scrolled = (winScroll / height);
+            var el = document.getElementById('scroll-progress');
+            if (el) el.style.transform = 'scaleX(' + scrolled + ')';
           });
         `}} />
-      </body>
-    </html>
+    </div>
   )
 }

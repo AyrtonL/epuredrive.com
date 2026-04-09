@@ -5,6 +5,7 @@ import type { Car } from '@/lib/supabase/types'
 
 interface Props {
   car: Car
+  tenantId: string
 }
 
 const timeOptions = [
@@ -12,7 +13,7 @@ const timeOptions = [
   '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM'
 ];
 
-export default function BookingWidget({ car }: Props) {
+export default function BookingWidget({ car, tenantId }: Props) {
   const [pickDate, setPickDate] = useState('')
   const [retDate, setRetDate] = useState('')
   const [pickTime, setPickTime] = useState('10:00 AM')
@@ -22,6 +23,15 @@ export default function BookingWidget({ car }: Props) {
   const [hasProtection, setHasProtection] = useState(false)
   const [hasToll, setHasToll] = useState(false)
   const [hasFuel, setHasFuel] = useState(false)
+
+  // Booking form state
+  const [showBookingForm, setShowBookingForm] = useState(false)
+  const [custName, setCustName] = useState('')
+  const [custEmail, setCustEmail] = useState('')
+  const [custPhone, setCustPhone] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [formError, setFormError] = useState('')
 
   const days = useMemo(() => {
     if (!pickDate || !retDate) return 0
@@ -46,7 +56,6 @@ export default function BookingWidget({ car }: Props) {
   const handleWhatsapp = () => {
     if (!pickDate || !retDate) { alert('Please select dates first.'); return; }
     const phone = '17862096770'
-    const locLabels: Record<string, string> = { aventura: 'Aventura (Free)', mia: 'MIA Airport ($120)', fll: 'FLL Airport ($120)' }
     const addons = []
     if (hasProtection) addons.push('Standard Protection')
     if (hasToll) addons.push('Toll Package')
@@ -63,13 +72,58 @@ export default function BookingWidget({ car }: Props) {
   }
 
   const handleOnlineBooking = () => {
-    if (!pickDate || !retDate) { alert('Select dates first'); return; }
-    const params = new URLSearchParams({
-      id: String(car.id), start: pickDate, end: retDate,
-      start_time: pickTime, end_time: retTime, loc: location,
-      protection: hasProtection ? '1' : '0', toll: hasToll ? '1' : '0', fuel: hasFuel ? '1' : '0'
-    })
-    window.location.href = `/reservation.html?${params.toString()}`
+    if (!pickDate || !retDate) { alert('Please select dates first.'); return; }
+    setShowBookingForm(true)
+    setFormError('')
+  }
+
+  const locLabels: Record<string, string> = {
+    aventura: 'Aventura Showroom (Free)',
+    mia: 'MIA Airport ($120)',
+    fll: 'FLL Airport ($120)'
+  }
+
+  const handleSubmitBooking = async () => {
+    if (!custName.trim() || !custEmail.trim()) {
+      setFormError('Name and email are required.')
+      return
+    }
+    setSubmitting(true)
+    setFormError('')
+    try {
+      const res = await fetch('/api/booking/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenant_id: tenantId,
+          car_id: car.id,
+          customer_name: custName.trim(),
+          customer_email: custEmail.trim(),
+          customer_phone: custPhone.trim() || null,
+          pickup_date: pickDate,
+          pickup_time: pickTime,
+          return_date: retDate,
+          return_time: retTime,
+          pickup_location: locLabels[location] || location,
+          total_amount: total,
+          notes: [
+            hasProtection ? 'Shield Protection' : '',
+            hasToll ? 'Unlimited Tolls' : '',
+            hasFuel ? 'Prepaid Fuel' : ''
+          ].filter(Boolean).join(', ') || null,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Request failed' }))
+        setFormError((err as { error?: string }).error || 'Something went wrong.')
+        return
+      }
+      setSubmitted(true)
+    } catch {
+      setFormError('Network error. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const priceNum = Number(car.daily_rate) || 0
@@ -164,24 +218,92 @@ export default function BookingWidget({ car }: Props) {
               {days > 0 && <div className="text-[9px] font-bold text-white/20 uppercase">All-inclusive total</div>}
             </div>
           </div>
-          
-          {/* Main CTA */}
-          <button 
-            onClick={handleOnlineBooking}
-            className="w-full bg-white text-black font-black uppercase tracking-[0.2em] text-[11px] py-5 rounded-2xl hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-white/5"
-          >
-            Pay & Secure This Vehicle
-          </button>
-          
-          <button 
-            onClick={handleWhatsapp}
-            className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-[#25D366]/20 bg-[#25D366]/5 text-[#25D366] text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366]/10 transition-all"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            Inquire via SMS / WhatsApp
-          </button>
+
+          {submitted ? (
+            /* ── Success Confirmation ── */
+            <div className="text-center space-y-4 py-6">
+              <div className="w-16 h-16 mx-auto rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-sm font-black text-white uppercase tracking-wider">Reservation Requested</div>
+                <p className="text-white/40 text-xs mt-2 leading-relaxed">
+                  We&apos;ll confirm your {car.make} {car.model} reservation shortly via email or phone.
+                </p>
+              </div>
+              <button
+                onClick={handleWhatsapp}
+                className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-[#25D366]/20 bg-[#25D366]/5 text-[#25D366] text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366]/10 transition-all"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                Message Us on WhatsApp
+              </button>
+            </div>
+          ) : showBookingForm ? (
+            /* ── Booking Form ── */
+            <div className="space-y-4">
+              <div className="text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Your Details</div>
+              <input
+                type="text"
+                placeholder="Full Name *"
+                value={custName}
+                onChange={e => setCustName(e.target.value)}
+                className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white placeholder:text-white/20 focus:ring-1 focus:ring-primary/40 outline-none"
+              />
+              <input
+                type="email"
+                placeholder="Email *"
+                value={custEmail}
+                onChange={e => setCustEmail(e.target.value)}
+                className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white placeholder:text-white/20 focus:ring-1 focus:ring-primary/40 outline-none"
+              />
+              <input
+                type="tel"
+                placeholder="Phone (optional)"
+                value={custPhone}
+                onChange={e => setCustPhone(e.target.value)}
+                className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white placeholder:text-white/20 focus:ring-1 focus:ring-primary/40 outline-none"
+              />
+              {formError && (
+                <div className="text-red-400 text-xs font-bold px-1">{formError}</div>
+              )}
+              <button
+                onClick={handleSubmitBooking}
+                disabled={submitting}
+                className="w-full bg-white text-black font-black uppercase tracking-[0.2em] text-[11px] py-5 rounded-2xl hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Submitting...' : 'Confirm Reservation Request'}
+              </button>
+              <button
+                onClick={() => setShowBookingForm(false)}
+                className="w-full text-white/30 text-[10px] font-bold uppercase tracking-widest py-2 hover:text-white/50 transition-colors"
+              >
+                Back
+              </button>
+            </div>
+          ) : (
+            /* ── Default CTAs ── */
+            <>
+              <button
+                onClick={handleOnlineBooking}
+                className="w-full bg-white text-black font-black uppercase tracking-[0.2em] text-[11px] py-5 rounded-2xl hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-white/5"
+              >
+                Reserve This Vehicle
+              </button>
+
+              <button
+                onClick={handleWhatsapp}
+                className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-[#25D366]/20 bg-[#25D366]/5 text-[#25D366] text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366]/10 transition-all"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                Inquire via SMS / WhatsApp
+              </button>
+            </>
+          )}
         </div>
-        
+
         <div className="text-center pt-2">
           <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-white/20">Secured via éPure Drive Cloud</span>
         </div>

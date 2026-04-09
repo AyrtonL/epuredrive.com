@@ -59,7 +59,7 @@ export default async function FleetPage({ params }: Props) {
         </p>
       </div>
 
-      <FleetGrid cars={fleet} slug={params.slug} />
+      <FleetGrid cars={fleet} slug={params.slug} tenantId={(tenant as Tenant).id} />
 
       <ExperienceSection cars={fleet} tenant={tenant as Tenant} />
 
