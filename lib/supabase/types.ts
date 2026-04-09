@@ -76,9 +76,11 @@ export interface Consignment {
 export interface Transaction {
   id: number
   transaction_date: string | null
+  type: string | null
   category: string | null
   amount: number | null
   description: string | null
+  payment_method: string | null
   car_id: number | null
   tenant_id: string | null
 }

@@ -26,7 +26,9 @@ export default function ExpenseModal({ isOpen, onClose, expense, cars }: Props) 
     } else {
       setFormData({
         transaction_date: new Date().toISOString().split('T')[0],
+        type: 'expense',
         category: 'maintenance',
+        payment_method: 'cash',
       })
     }
     setErrorStr(null)
@@ -47,10 +49,11 @@ export default function ExpenseModal({ isOpen, onClose, expense, cars }: Props) 
 
     const dataToSubmit: Omit<Transaction, 'id' | 'tenant_id'> = {
       transaction_date: formData.transaction_date,
+      type: 'expense',
       category: formData.category || 'maintenance',
       description: formData.description || null,
       amount: Number(formData.amount) || null,
-      // Handle the case where user unsets the car
+      payment_method: formData.payment_method || 'cash',
       car_id: formData.car_id ? Number(formData.car_id) : null,
     }
 
@@ -150,9 +153,25 @@ export default function ExpenseModal({ isOpen, onClose, expense, cars }: Props) 
               </div>
               
               <div className="space-y-1">
+                <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Payment Method</label>
+                <select
+                  value={formData.payment_method || 'cash'}
+                  onChange={e => setFormData({...formData, payment_method: e.target.value})}
+                  className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+                >
+                  <option value="cash" className="bg-[#0d0d0d]">Cash</option>
+                  <option value="stripe" className="bg-[#0d0d0d]">Card (Stripe)</option>
+                  <option value="bank_transfer" className="bg-[#0d0d0d]">Bank Transfer</option>
+                  <option value="other" className="bg-[#0d0d0d]">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-1">
                 <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Associated Car (Optional)</label>
-                <select 
-                  value={formData.car_id || ''} 
+                <select
+                  value={formData.car_id || ''}
                   onChange={e => setFormData({...formData, car_id: e.target.value ? Number(e.target.value) : undefined})}
                   className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
                 >

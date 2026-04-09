@@ -95,9 +95,11 @@ export default function ExpensesTable({ expenses, cars }: Props) {
       if (!isNaN(amount)) {
         records.push({
           transaction_date: date,
+          type: 'expense',
           amount,
           category,
           description,
+          payment_method: (row.payment_method || 'other').toLowerCase(),
           car_id: null
         })
       }
