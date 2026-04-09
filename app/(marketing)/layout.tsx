@@ -1,19 +1,13 @@
 // app/(marketing)/layout.tsx
+import Logo from '@/components/Logo'
+import MarketingFooter from '@/components/MarketingFooter'
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-2xl border-b border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          {/* Logo — TODO: replace with actual SVG from designer */}
-          <a href="/" className="flex items-center gap-1">
-            <span className="text-lg font-bold tracking-[0.12em] text-white uppercase">
-              éPure
-            </span>
-            <span className="text-lg font-light tracking-[0.12em] text-white/40 uppercase">
-              Drive
-            </span>
-          </a>
+          <Logo />
 
           <div className="flex items-center gap-6">
             <a
@@ -44,6 +38,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         </div>
       </nav>
       <main>{children}</main>
+      <MarketingFooter />
     </>
   )
 }

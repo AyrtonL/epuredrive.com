@@ -3,9 +3,19 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Brand tokens — update these when designer delivers final palette */
+    --brand-bg: #000000;
+    --brand-text: #ffffff;
+    --brand-surface: #2B2B2B;
+    --brand-border: rgba(255, 255, 255, 0.08);
+    --brand-muted: #ACACAC;
+    --brand-accent: #ffffff;
+  }
+
   html {
-    background-color: #000000;
-    color: #ffffff;
+    background-color: var(--brand-bg);
+    color: var(--brand-text);
     scroll-behavior: smooth;
   }
   
