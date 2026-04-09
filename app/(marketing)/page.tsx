@@ -380,7 +380,7 @@ export default function HomePage() {
       {/* ─────────────────── Footer ─────────────────── */}
       <footer className="bg-black border-t border-white/[0.06] pt-16 pb-10">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-12 mb-16">
             {/* Brand column */}
             <div className="md:col-span-2">
               {/* TODO: replace with actual SVG logo from designer */}
@@ -422,6 +422,25 @@ export default function HomePage() {
               </ul>
             </div>
 
+            {/* Legal */}
+            <div>
+              <h4 className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-5">
+                Legal
+              </h4>
+              <ul className="space-y-3">
+                <li>
+                  <Link href="/terms" className="text-sm text-white/35 hover:text-white transition-colors">
+                    Terms &amp; Conditions
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="text-sm text-white/35 hover:text-white transition-colors">
+                    Privacy Policy
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
             {/* Contact */}
             <div>
               <h4 className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-5">
@@ -449,9 +468,14 @@ export default function HomePage() {
             <p className="text-white/20 text-xs">
               &copy; {new Date().getFullYear()} éPure Drive. All rights reserved.
             </p>
-            <p className="text-white/20 text-xs">
-              Built in Miami, FL
-            </p>
+            <div className="flex items-center gap-4">
+              <Link href="/terms" className="text-white/20 text-xs hover:text-white/40 transition-colors">
+                Terms &amp; Conditions
+              </Link>
+              <Link href="/privacy" className="text-white/20 text-xs hover:text-white/40 transition-colors">
+                Privacy Policy
+              </Link>
+            </div>
           </div>
         </div>
       </footer>
