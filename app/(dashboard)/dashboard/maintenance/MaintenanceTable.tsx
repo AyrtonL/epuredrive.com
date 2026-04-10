@@ -131,7 +131,7 @@ export default function MaintenanceTable({ services, cars }: Props) {
                       ) : '—'}
                     </td>
                     <td className="py-4 pr-4 text-white font-medium">
-                      {s.amount != null ? `$${Number(s.amount).toLocaleString()}` : '—'}
+                      {s.cost != null ? `$${Number(s.cost).toLocaleString()}` : '—'}
                     </td>
                     <td className="py-4 pr-6 text-right space-x-3">
                       <button

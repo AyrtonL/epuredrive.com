@@ -49,6 +49,11 @@ export interface Reservation {
   notes: string | null
   tenant_id: string | null
   created_at?: string
+  license_number: string | null
+  license_state: string | null
+  license_country: string | null
+  insurance_provider: string | null
+  insurance_policy_number: string | null
 }
 
 export interface Customer {
@@ -91,10 +96,13 @@ export interface CarService {
   service_date: string | null
   service_type: string | null
   description: string | null
-  amount: number | null
+  cost: number | null
+  mileage: number | null
+  mileage_interval: number | null
   provider: string | null
   next_service_date: string | null
   next_service_mileage: number | null
+  notes: string | null
   tenant_id: string | null
 }
 

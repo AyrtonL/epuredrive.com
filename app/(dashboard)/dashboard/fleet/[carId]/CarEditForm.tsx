@@ -28,6 +28,7 @@ export default function CarEditForm({ car }: Props) {
       seats: fd.get('seats') ? Number(fd.get('seats')) : null,
       transmission: (fd.get('transmission') as string) || null,
       hp: (fd.get('hp') as string) || null,
+      mileage: fd.get('mileage') ? Number(fd.get('mileage')) : null,
       description: (fd.get('description') as string) || null,
       status: fd.get('status') as string,
     }
@@ -61,6 +62,7 @@ export default function CarEditForm({ car }: Props) {
           { name: 'seats', label: 'Seats', type: 'number', defaultValue: car.seats ?? '' },
           { name: 'transmission', label: 'Transmission', defaultValue: car.transmission ?? '' },
           { name: 'hp', label: 'Horsepower', defaultValue: car.hp ?? '' },
+          { name: 'mileage', label: 'Mileage (mi)', type: 'number', defaultValue: car.mileage ?? '' },
           { name: 'category', label: 'Category', defaultValue: car.category ?? '' },
         ].map((field) => (
           <div key={field.name}>

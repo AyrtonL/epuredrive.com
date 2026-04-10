@@ -17,7 +17,6 @@ interface Props {
 export default function ServiceModal({ isOpen, onClose, service, cars, preselectedCarId }: Props) {
   const [isPending, startTransition] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
-  const [currentMileage, setCurrentMileage] = useState<string>('')
   const router = useRouter()
 
   const [formData, setFormData] = useState<Partial<CarService>>({})
@@ -25,20 +24,14 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
   useEffect(() => {
     if (service) {
       setFormData(service)
-      const car = cars.find(c => c.id === service.car_id)
-      setCurrentMileage(car?.mileage != null ? String(car.mileage) : '')
     } else {
       const carId = preselectedCarId ?? undefined
+      const car = carId ? cars.find(c => c.id === carId) : null
       setFormData({
         service_date: new Date().toISOString().split('T')[0],
         car_id: carId,
+        mileage: car?.mileage ?? undefined,
       })
-      if (carId) {
-        const car = cars.find(c => c.id === carId)
-        setCurrentMileage(car?.mileage != null ? String(car.mileage) : '')
-      } else {
-        setCurrentMileage('')
-      }
     }
     setErrorStr(null)
   }, [service, isOpen, cars, preselectedCarId])
@@ -60,15 +53,24 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
       return
     }
 
+    const serviceMileage = formData.mileage != null && formData.mileage !== ('' as any) ? Number(formData.mileage) : null
+    const interval = formData.mileage_interval != null && formData.mileage_interval !== ('' as any) ? Number(formData.mileage_interval) : null
+    const nextMileage = formData.next_service_mileage != null && formData.next_service_mileage !== ('' as any)
+      ? Number(formData.next_service_mileage)
+      : (serviceMileage && interval ? serviceMileage + interval : null)
+
     const dataToSubmit: Omit<CarService, 'id' | 'tenant_id'> = {
       car_id: Number(formData.car_id),
       service_date: formData.service_date,
       service_type: formData.service_type || null,
       description: formData.description || null,
-      amount: formData.amount != null && formData.amount !== ('' as any) ? Number(formData.amount) : null,
+      cost: formData.cost != null && formData.cost !== ('' as any) ? Number(formData.cost) : null,
+      mileage: serviceMileage,
+      mileage_interval: interval,
       provider: formData.provider || null,
       next_service_date: formData.next_service_date || null,
-      next_service_mileage: formData.next_service_mileage != null && formData.next_service_mileage !== ('' as any) ? Number(formData.next_service_mileage) : null,
+      next_service_mileage: nextMileage,
+      notes: formData.notes || null,
     }
 
     startTransition(async () => {
@@ -85,9 +87,12 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
           return
         }
 
-        const miles = Number(currentMileage)
-        if (formData.car_id && miles > 0) {
-          await updateCarMileage(Number(formData.car_id), miles)
+        // Auto-update car odometer if service mileage is higher than recorded
+        if (serviceMileage && formData.car_id) {
+          const car = cars.find(c => c.id === Number(formData.car_id))
+          if (!car?.mileage || serviceMileage > car.mileage) {
+            await updateCarMileage(Number(formData.car_id), serviceMileage)
+          }
         }
 
         onClose()
@@ -134,9 +139,8 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
                     value={formData.car_id || ''}
                     onChange={e => {
                       const carId = Number(e.target.value)
-                      setFormData({ ...formData, car_id: carId })
                       const car = cars.find(c => c.id === carId)
-                      setCurrentMileage(car?.mileage != null ? String(car.mileage) : '')
+                      setFormData({ ...formData, car_id: carId, mileage: car?.mileage ?? undefined })
                     }}
                     className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
                   >
@@ -149,11 +153,11 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Current Mileage (mi)</label>
+                  <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Mileage at Service</label>
                   <input
                     type="number" min="0" placeholder="e.g. 24500"
-                    value={currentMileage}
-                    onChange={e => setCurrentMileage(e.target.value)}
+                    value={formData.mileage ?? ''}
+                    onChange={e => setFormData({ ...formData, mileage: e.target.value === '' ? undefined : Number(e.target.value) })}
                     className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
                   />
                 </div>
@@ -203,8 +207,8 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
                   <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Cost ($)</label>
                   <input
                     type="number" step="0.01" min="0" placeholder="optional"
-                    value={formData.amount ?? ''}
-                    onChange={e => setFormData({ ...formData, amount: e.target.value === '' ? undefined : Number(e.target.value) })}
+                    value={formData.cost ?? ''}
+                    onChange={e => setFormData({ ...formData, cost: e.target.value === '' ? undefined : Number(e.target.value) })}
                     className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
                   />
                 </div>
@@ -220,9 +224,38 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
                 />
               </div>
 
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Notes</label>
+                <textarea
+                  placeholder="Additional details about the service..." rows={2}
+                  value={formData.notes || ''}
+                  onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                  className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white resize-none"
+                />
+              </div>
+
               <div className="pt-4 border-t border-white/5">
                 <h4 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-4">Next Service Reminders</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Interval (mi)</label>
+                    <input
+                      type="number" min="0" step="500" placeholder="e.g. 5000"
+                      value={formData.mileage_interval ?? ''}
+                      onChange={e => setFormData({ ...formData, mileage_interval: e.target.value === '' ? undefined : Number(e.target.value) })}
+                      className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Next at (mi)</label>
+                    <input
+                      type="number"
+                      placeholder={formData.mileage && formData.mileage_interval ? String(Number(formData.mileage) + Number(formData.mileage_interval)) : 'auto'}
+                      value={formData.next_service_mileage ?? ''}
+                      onChange={e => setFormData({ ...formData, next_service_mileage: e.target.value === '' ? undefined : Number(e.target.value) })}
+                      className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+                    />
+                  </div>
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Due Date</label>
                     <input
@@ -230,15 +263,6 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
                       value={formData.next_service_date || ''}
                       onChange={e => setFormData({ ...formData, next_service_date: e.target.value })}
                       className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white [color-scheme:dark]"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Due Mileage (mi)</label>
-                    <input
-                      type="number"
-                      value={formData.next_service_mileage ?? ''}
-                      onChange={e => setFormData({ ...formData, next_service_mileage: e.target.value === '' ? undefined : Number(e.target.value) })}
-                      className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
                     />
                   </div>
                 </div>

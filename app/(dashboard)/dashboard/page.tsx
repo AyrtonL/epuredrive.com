@@ -16,7 +16,7 @@ export default async function DashboardPage() {
     supabase.from('tenants').select('name, slug, brand_name, logo_url, plan').eq('id', tenantId).single(),
     supabase.from('cars').select('id, make, model, model_full, status, mileage').eq('tenant_id', tenantId),
     supabase.from('reservations').select('total_amount, status').eq('tenant_id', tenantId).eq('status', 'completed'),
-    supabase.from('car_services').select('amount, next_service_date').eq('tenant_id', tenantId),
+    supabase.from('car_services').select('cost, next_service_date').eq('tenant_id', tenantId),
     supabase.from('transactions').select('amount').eq('tenant_id', tenantId),
     supabase.from('reservations').select('car_id').eq('tenant_id', tenantId).not('status', 'in', '(completed,cancelled)').lte('pickup_date', today).gte('return_date', today),
   ])
@@ -31,7 +31,7 @@ export default async function DashboardPage() {
   const fleetUrl = `https://${t.slug}.epuredrive.com`
 
   const totalGross = resRows.reduce((s, r) => s + (Number(r.total_amount) || 0), 0)
-  const totalMaint = svcRows.reduce((s, r) => s + (Number(r.amount) || 0), 0)
+  const totalMaint = svcRows.reduce((s, r) => s + (Number(r.cost) || 0), 0)
   const totalExp = txRows.reduce((s, r) => s + (Number(r.amount) || 0), 0)
   const netProfit = totalGross - totalMaint - totalExp
 

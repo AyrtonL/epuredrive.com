@@ -18,7 +18,7 @@ export default async function ROIPage() {
   ] = await Promise.all([
     supabase.from('reservations').select('car_id, total_amount, status').eq('tenant_id', tenantId).eq('status', 'completed'),
     supabase.from('cars').select('id, make, model, model_full, daily_rate').eq('tenant_id', tenantId),
-    supabase.from('car_services').select('car_id, amount').eq('tenant_id', tenantId),
+    supabase.from('car_services').select('car_id, cost').eq('tenant_id', tenantId),
     supabase.from('consignments').select('car_id, owner_percentage, owner_name').eq('tenant_id', tenantId),
     supabase.from('transactions').select('amount, category, car_id').eq('tenant_id', tenantId),
   ])
@@ -41,7 +41,7 @@ export default async function ROIPage() {
 
   serviceRows.forEach((s) => {
     if (s.car_id != null) {
-      maintenanceMap[s.car_id] = (maintenanceMap[s.car_id] ?? 0) + (Number(s.amount) || 0)
+      maintenanceMap[s.car_id] = (maintenanceMap[s.car_id] ?? 0) + (Number(s.cost) || 0)
     }
   })
 

@@ -16,7 +16,7 @@ export default async function MaintenancePage() {
 
   const rows = (services as CarService[]) ?? []
   const carRows = (cars as Car[]) ?? []
-  const totalCost = rows.reduce((s, r) => s + (Number(r.amount) || 0), 0)
+  const totalCost = rows.reduce((s, r) => s + (Number(r.cost) || 0), 0)
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
