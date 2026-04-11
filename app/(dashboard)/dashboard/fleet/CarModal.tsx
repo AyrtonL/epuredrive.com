@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { Car } from '@/lib/supabase/types'
 import { createCar, updateCar } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
+import ImageUploader from './ImageUploader'
 
 interface Props {
   isOpen: boolean
@@ -157,15 +158,19 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
             </div>
           )}
 
-          {formData.image_url && (
-            <div className="w-full flex justify-center mb-6">
-              <img 
-                src={formData.image_url.startsWith('http') ? formData.image_url : `/${formData.image_url}`} 
-                alt="Preview" 
-                className="h-32 object-cover rounded-xl border border-white/10 shadow-xl"
-              />
-            </div>
-          )}
+          <ImageUploader
+            images={[
+              ...(formData.image_url ? [formData.image_url] : []),
+              ...(formData.gallery || []),
+            ].filter(Boolean)}
+            onChange={(urls) => {
+              setFormData(prev => ({
+                ...prev,
+                image_url: urls[0] || null,
+                gallery: urls.slice(1).length > 0 ? urls.slice(1) : null,
+              }))
+            }}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Core Info */}
@@ -217,15 +222,6 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
               />
             </div>
 
-            <div className="space-y-1 md:col-span-2">
-              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Image URL</label>
-              <input 
-                type="text" placeholder="https://..."
-                value={formData.image_url || ''} 
-                onChange={e => setFormData({...formData, image_url: e.target.value})}
-                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white" 
-              />
-            </div>
 
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Category</label>

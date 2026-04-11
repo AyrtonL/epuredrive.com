@@ -102,18 +102,28 @@ export default function CalendarClient({
     <div className="text-white">
       {/* Toolbar */}
       <div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <div className="flex gap-3 flex-wrap items-center">
+        <div className="flex gap-3 items-center">
           <span className="text-sm text-white/50 uppercase tracking-widest font-bold hidden md:block">Filter:</span>
-          <button onClick={() => setActiveCarFilter('all')}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 ${activeCarFilter === 'all' ? 'bg-white text-black' : 'bg-white/5 hover:bg-white/10 text-white/70'}`}>
-            All Fleet
-          </button>
-          {cars.map((car) => (
-            <button key={car.id} onClick={() => setActiveCarFilter(String(car.id))}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 ${activeCarFilter === String(car.id) ? 'bg-white text-black' : 'bg-white/5 hover:bg-white/10 text-white/70'}`}>
-              {carMap[car.id]}
+          <select
+            value={activeCarFilter}
+            onChange={e => setActiveCarFilter(e.target.value)}
+            className="bg-white/5 border border-white/10 text-white rounded-xl px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-white/20 transition-all min-w-[180px]"
+          >
+            <option value="all" className="bg-[#0d0d0d]">All Fleet</option>
+            {cars.map((car) => (
+              <option key={car.id} value={String(car.id)} className="bg-[#0d0d0d]">
+                {carMap[car.id]}
+              </option>
+            ))}
+          </select>
+          {activeCarFilter !== 'all' && (
+            <button
+              onClick={() => setActiveCarFilter('all')}
+              className="text-white/30 hover:text-white text-xs transition-colors"
+            >
+              Clear
             </button>
-          ))}
+          )}
         </div>
         <button onClick={() => setBlockModalOpen(true)}
           className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 px-5 py-2 rounded-xl text-sm font-bold transition-all flex-shrink-0">
