@@ -39,7 +39,7 @@ export default async function FleetPage({ params }: Props) {
     .from('cars')
     .select('*')
     .eq('tenant_id', (tenant as Tenant).id)
-    .eq('status', 'available')
+    .in('status', ['available', 'active'])
     .order('daily_rate', { ascending: true })
 
   const fleet = (cars ?? []) as Car[]

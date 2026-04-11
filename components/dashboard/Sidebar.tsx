@@ -356,6 +356,7 @@ const NAV: NavEntry[] = [
     label: 'Settings',
     children: [
       { label: 'General', href: '/dashboard/settings' },
+      { label: 'Payments & Invoices', href: '/dashboard/settings/payments' },
       { label: 'Billing & Plans', href: '/dashboard/settings/billing' },
       { label: 'Team & Roles', href: '/dashboard/settings/roles' },
       { label: 'Notifications', href: '/dashboard/settings/notifications' },

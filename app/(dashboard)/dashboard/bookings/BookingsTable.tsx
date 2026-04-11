@@ -26,6 +26,8 @@ export default function BookingsTable({ reservations, cars }: Props) {
   const [filter, setFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [carFilter, setCarFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [isPending, startTransition] = useTransition()
   
   const [page, setPage] = useState(1)
@@ -47,9 +49,11 @@ export default function BookingsTable({ reservations, cars }: Props) {
         carMap[r.car_id ?? -1]?.toLowerCase().includes(q)
       const statusMatch = !statusFilter || r.status === statusFilter
       const carMatch = !carFilter || String(r.car_id) === carFilter
-      return textMatch && statusMatch && carMatch
+      const fromMatch = !dateFrom || (r.pickup_date && r.pickup_date >= dateFrom)
+      const toMatch = !dateTo || (r.pickup_date && r.pickup_date <= dateTo)
+      return textMatch && statusMatch && carMatch && fromMatch && toMatch
     })
-  }, [reservations, filter, statusFilter, carFilter, carMap])
+  }, [reservations, filter, statusFilter, carFilter, carMap, dateFrom, dateTo])
 
   const paginated = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE
@@ -161,6 +165,34 @@ export default function BookingsTable({ reservations, cars }: Props) {
               </option>
             ))}
           </select>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={e => { setDateFrom(e.target.value); setPage(1); setSelectedIds(new Set()) }}
+              placeholder="From"
+              title="From date"
+              className="bg-white/5 border border-white/10 text-white/70 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all [color-scheme:dark]"
+            />
+            <span className="text-white/30 text-xs">to</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={e => { setDateTo(e.target.value); setPage(1); setSelectedIds(new Set()) }}
+              placeholder="To"
+              title="To date"
+              className="bg-white/5 border border-white/10 text-white/70 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all [color-scheme:dark]"
+            />
+            {(dateFrom || dateTo) && (
+              <button
+                onClick={() => { setDateFrom(''); setDateTo(''); setPage(1) }}
+                className="text-white/30 hover:text-white text-xs px-2 py-1 transition-colors"
+                title="Clear date filter"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
         <button
           onClick={openNew}

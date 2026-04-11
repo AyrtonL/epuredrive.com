@@ -33,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { data: cars } = await supabase
     .from('cars')
     .select('id, tenant_id, tenants!inner(slug)')
-    .eq('status', 'available')
+    .in('status', ['available', 'active'])
 
   const carPages: MetadataRoute.Sitemap = (cars ?? []).map((car) => {
     const tenant = car.tenants as unknown as { slug: string }

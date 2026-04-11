@@ -14,10 +14,8 @@ export default async function FleetPage() {
     .order('id')
 
   const rows = (cars as Car[]) ?? []
-  const active = rows.filter((c) => c.status !== 'maintenance' && c.status !== 'retired').length
-  const avgRate = rows.length > 0
-    ? rows.reduce((s, c) => s + (Number(c.daily_rate) || 0), 0) / rows.length
-    : 0
+  const active = rows.filter((c) => c.status === 'active' || c.status === 'available').length
+  const inactive = rows.filter((c) => c.status === 'maintenance' || c.status === 'retired' || c.status === 'inactive').length
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -26,7 +24,7 @@ export default async function FleetPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard label="Total Vehicles" value={rows.length} />
         <StatCard label="Active Fleet" value={active} />
-        <StatCard label="Avg Rate/Day" value={`$${avgRate.toFixed(2)}`} />
+        <StatCard label="Inactive Cars" value={inactive} />
       </div>
 
       <div className="glass border border-white/10 rounded-3xl p-6 md:p-8">

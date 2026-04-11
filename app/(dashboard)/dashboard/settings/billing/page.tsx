@@ -113,6 +113,30 @@ export default async function BillingPage() {
           <p className="text-white/20 text-xs mt-1">Invoices will appear here once you upgrade to a paid plan.</p>
         </div>
       </div>
+
+      {/* Danger Zone */}
+      <div className="glass border border-red-500/20 rounded-3xl p-8">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-xl bg-red-500/10 text-red-400">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-red-400 font-bold">Danger Zone</h3>
+            <p className="text-white/30 text-xs">Irreversible actions that affect your entire account.</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between p-5 bg-red-500/5 border border-red-500/10 rounded-2xl">
+          <div>
+            <div className="text-white text-sm font-medium">Deactivate Account</div>
+            <div className="text-white/30 text-xs mt-0.5">Permanently deactivate your organization and all associated data.</div>
+          </div>
+          <button className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
+            Deactivate
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

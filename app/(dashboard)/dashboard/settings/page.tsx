@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
 import PageHeader from '@/components/dashboard/PageHeader'
 import BrandSettings from './BrandSettings'
 
@@ -25,10 +24,11 @@ export default async function SettingsPage() {
     )
   }
 
-  const [{ data: tenant, error: tenantErr }, stripeEnabled] = await Promise.all([
-    supabase.from('tenants').select('*').eq('id', profile.tenant_id).single(),
-    isFeatureEnabled(profile.tenant_id, 'stripe_connect'),
-  ])
+  const { data: tenant, error: tenantErr } = await supabase
+    .from('tenants')
+    .select('*')
+    .eq('id', profile.tenant_id)
+    .single()
 
   if (tenantErr || !tenant) {
     return (
@@ -48,7 +48,7 @@ export default async function SettingsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-12 animate-fade-in pb-32">
       <PageHeader title="Settings" description="Manage your brand identity and financial configuration." />
-      <BrandSettings tenant={tenant} stripeEnabled={stripeEnabled} />
+      <BrandSettings tenant={tenant} />
     </div>
   )
 }

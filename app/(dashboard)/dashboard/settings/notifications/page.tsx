@@ -1,5 +1,4 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
-import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
 import PageHeader from '@/components/dashboard/PageHeader'
 
 interface NotificationChannel {
@@ -15,14 +14,14 @@ interface NotificationEvent {
 }
 
 const NOTIFICATION_EVENTS: NotificationEvent[] = [
-  { label: 'New Booking', description: 'When a new reservation is created.', channels: ['email', 'app'] },
-  { label: 'Booking Modified', description: 'When pickup/return dates or details change.', channels: ['email', 'app'] },
-  { label: 'Booking Cancelled', description: 'When a reservation is cancelled.', channels: ['email', 'app'] },
-  { label: 'Maintenance Due', description: 'When a vehicle service date is approaching or overdue.', channels: ['email', 'app'] },
+  { label: 'New Booking', description: 'When a new reservation is created.', channels: ['email'] },
+  { label: 'Booking Modified', description: 'When pickup/return dates or details change.', channels: ['email'] },
+  { label: 'Booking Cancelled', description: 'When a reservation is cancelled.', channels: ['email'] },
+  { label: 'Maintenance Due', description: 'When a vehicle service date is approaching or overdue.', channels: ['email'] },
   { label: 'Payment Received', description: 'When a payment is processed via Stripe.', channels: ['email'] },
-  { label: 'Team Invite Accepted', description: 'When a new member joins the team.', channels: ['email', 'app'] },
-  { label: 'Turo Sync Complete', description: 'When new Turo bookings are imported.', channels: ['email', 'app'] },
-  { label: 'Vehicle Status Change', description: 'When a car moves to maintenance or is retired.', channels: ['email', 'app'] },
+  { label: 'Team Invite Accepted', description: 'When a new member joins the team.', channels: ['email'] },
+  { label: 'Turo Sync Complete', description: 'When new Turo bookings are imported.', channels: ['email'] },
+  { label: 'Vehicle Status Change', description: 'When a car moves to maintenance or is retired.', channels: ['email'] },
 ]
 
 function ChannelIcon({ type, className }: { type: string; className?: string }) {
@@ -51,20 +50,17 @@ function ChannelIcon({ type, className }: { type: string; className?: string }) 
 }
 
 export default async function NotificationsPage() {
-  const { tenantId } = await requireTenantId()
-
-  const smsEnabled = await isFeatureEnabled(tenantId, 'sms_notifications')
+  await requireTenantId()
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 animate-fade-in pb-32">
       <PageHeader title="Notifications" description="Configure alerts and notification preferences for your team." />
 
       {/* Channels Overview */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         {[
           { type: 'email', label: 'Email', status: 'Active', statusColor: 'text-emerald-400 bg-emerald-500/10' },
-          { type: 'sms', label: 'SMS', status: smsEnabled ? 'Active' : 'Not Enabled', statusColor: smsEnabled ? 'text-emerald-400 bg-emerald-500/10' : 'text-white/30 bg-white/5' },
-          { type: 'app', label: 'In-App', status: 'Active', statusColor: 'text-emerald-400 bg-emerald-500/10' },
+          { type: 'app', label: 'In-App', status: 'Coming Soon', statusColor: 'text-amber-400 bg-amber-500/10' },
         ].map((ch) => (
           <div key={ch.type} className="glass border border-white/[0.06] rounded-2xl p-5 text-center">
             <ChannelIcon type={ch.type} className="w-6 h-6 text-white/40 mx-auto mb-3" />

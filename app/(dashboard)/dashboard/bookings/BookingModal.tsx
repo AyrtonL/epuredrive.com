@@ -55,6 +55,10 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
       status: formData.status || 'pending',
       source: formData.source || 'admin',
       notes: formData.notes || null,
+      license_number: formData.license_number || null,
+      license_state: formData.license_state || null,
+      insurance_provider: formData.insurance_provider || null,
+      insurance_policy_number: formData.insurance_policy_number || null,
     }
 
     startTransition(async () => {
@@ -235,11 +239,52 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
 
             <div className="space-y-1 md:col-span-2">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Notes (internal)</label>
-              <textarea 
+              <textarea
                 rows={2} placeholder="Internal notes, special requests..."
-                value={formData.notes || ''} 
+                value={formData.notes || ''}
                 onChange={e => setFormData({...formData, notes: e.target.value})}
-                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white resize-none" 
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white resize-none"
+              />
+            </div>
+
+            {/* Driver License & Insurance (optional) */}
+            <div className="md:col-span-2 pt-4 border-t border-white/[0.06]">
+              <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-4">Driver License &amp; Insurance (optional)</p>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">License Number</label>
+              <input
+                type="text" placeholder="e.g. D123-456-78-901"
+                value={formData.license_number || ''}
+                onChange={e => setFormData({...formData, license_number: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">License State / Country</label>
+              <input
+                type="text" placeholder="e.g. Florida, USA"
+                value={formData.license_state || ''}
+                onChange={e => setFormData({...formData, license_state: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Insurance Provider</label>
+              <input
+                type="text" placeholder="e.g. State Farm, Geico..."
+                value={formData.insurance_provider || ''}
+                onChange={e => setFormData({...formData, insurance_provider: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Policy Number</label>
+              <input
+                type="text" placeholder="e.g. POL-123456"
+                value={formData.insurance_policy_number || ''}
+                onChange={e => setFormData({...formData, insurance_policy_number: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
               />
             </div>
           </div>
