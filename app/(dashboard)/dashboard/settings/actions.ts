@@ -82,6 +82,39 @@ export async function updateTenantBranding(data: {
   return { error: error?.message ?? null }
 }
 
+export async function uploadLogo(
+  formData: FormData
+): Promise<{ url: string | null; error: string | null }> {
+  const supabase = createClient()
+  const tenantId = await getTenantId()
+
+  const file = formData.get('file') as File | null
+  if (!file) return { url: null, error: 'No file provided.' }
+
+  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']
+  if (!allowed.includes(file.type)) {
+    return { url: null, error: 'Only JPEG, PNG, WebP, and SVG are allowed.' }
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    return { url: null, error: 'File must be under 5MB.' }
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
+  const fileName = `${tenantId}/logo-${Date.now()}.${ext}`
+
+  const { error } = await supabase.storage
+    .from('tenant-assets')
+    .upload(fileName, file, { contentType: file.type, upsert: false })
+
+  if (error) return { url: null, error: error.message }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('tenant-assets')
+    .getPublicUrl(fileName)
+
+  return { url: publicUrl, error: null }
+}
+
 export async function getTenantBranding(): Promise<{
   brand_name: string | null
   primary_color: string | null

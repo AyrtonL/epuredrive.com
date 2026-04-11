@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { updateTenantBranding } from './actions'
+import { useState, useTransition, useRef } from 'react'
+import { updateTenantBranding, uploadLogo } from './actions'
 
 interface Props {
   tenant: {
@@ -23,6 +23,8 @@ export default function BrandSettings({ tenant }: Props) {
   const [logoUrl, setLogoUrl] = useState(tenant?.logo_url || '')
   const [primary, setPrimary] = useState(tenant?.primary_color || '#000000')
   const [accent, setAccent] = useState(tenant?.accent_color || '#3B82F6')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost'
   const publicUrl = slug ? `https://${slug}.epuredrive.com` : null
@@ -94,11 +96,57 @@ export default function BrandSettings({ tenant }: Props) {
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest pl-1">Logo URL</label>
-            <input type="text" value={logoUrl} onChange={e => setLogoUrl(e.target.value)}
-              placeholder="https://example.com/logo.png"
-              className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm focus:ring-1 focus:ring-white/20 text-white outline-none transition-all" />
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest pl-1">Logo</label>
+            <div className="flex items-center gap-4">
+              {logoUrl ? (
+                <div className="relative group">
+                  <img src={logoUrl} alt="Logo" className="w-16 h-16 object-contain rounded-xl border border-white/10 bg-white/5 p-1" />
+                  <button
+                    type="button"
+                    onClick={() => setLogoUrl('')}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-white/10 flex items-center justify-center text-white/20">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
+                  </svg>
+                </div>
+              )}
+              <div className="flex-1">
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    setUploadingLogo(true)
+                    const fd = new FormData()
+                    fd.append('file', file)
+                    const result = await uploadLogo(fd)
+                    if (result.url) setLogoUrl(result.url)
+                    else if (result.error) setMsg('Error: ' + result.error)
+                    setUploadingLogo(false)
+                    if (logoInputRef.current) logoInputRef.current.value = ''
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={uploadingLogo}
+                  className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 text-xs font-bold px-4 py-2 rounded-xl transition-all disabled:opacity-50"
+                >
+                  {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                </button>
+                <p className="text-[10px] text-white/20 mt-1">PNG, JPEG, SVG, WebP — Max 5MB</p>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-6">
