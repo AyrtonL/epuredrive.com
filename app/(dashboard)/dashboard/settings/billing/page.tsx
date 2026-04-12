@@ -1,7 +1,13 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
+import UpgradeButton from './UpgradeButton'
 
-export default async function BillingPage() {
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string; cancelled?: string }>
+}) {
+  const params = await searchParams
   const { supabase, tenantId } = await requireTenantId()
 
   const { data: tenant } = await supabase
@@ -40,6 +46,17 @@ export default async function BillingPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-10 animate-fade-in pb-32">
       <PageHeader title="Billing & Plans" description="Manage your subscription and view invoicing history." />
+
+      {params.success && (
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-2xl text-sm">
+          Payment successful! Your plan will be updated shortly.
+        </div>
+      )}
+      {params.cancelled && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-2xl text-sm">
+          Checkout was cancelled. No changes were made to your plan.
+        </div>
+      )}
 
       {/* Current Plan */}
       <div className="glass border border-white/10 rounded-3xl p-8">
@@ -85,16 +102,7 @@ export default async function BillingPage() {
                 </li>
               ))}
             </ul>
-            <button
-              disabled={p.current}
-              className={`w-full py-3 rounded-xl text-sm font-bold transition-all ${
-                p.current
-                  ? 'bg-white/5 text-white/30 cursor-default border border-white/5'
-                  : 'bg-white text-black hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98]'
-              }`}
-            >
-              {p.current ? 'Current Plan' : 'Upgrade'}
-            </button>
+            <UpgradeButton planName={p.name} isCurrent={p.current ?? false} />
           </div>
         ))}
       </div>
