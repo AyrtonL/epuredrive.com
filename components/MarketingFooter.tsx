@@ -41,6 +41,11 @@ export default function MarketingFooter() {
                   Sign in
                 </Link>
               </li>
+              <li>
+                <Link href="/faq" className="text-sm text-white/35 hover:text-white transition-colors">
+                  FAQ
+                </Link>
+              </li>
             </ul>
           </div>
 

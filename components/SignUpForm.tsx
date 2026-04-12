@@ -9,6 +9,7 @@ export default function SignUpForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [emailSent, setEmailSent] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -37,6 +38,14 @@ export default function SignUpForm() {
       return
     }
 
+    // Check if email confirmation is required (identities empty = unconfirmed)
+    const needsConfirmation = authData.user?.identities?.length === 0
+    if (needsConfirmation) {
+      setEmailSent(true)
+      setLoading(false)
+      return
+    }
+
     // 2 — Create tenant via existing Netlify function
     const res = await fetch('/.netlify/functions/create-tenant', {
       method: 'POST',
@@ -52,6 +61,25 @@ export default function SignUpForm() {
     }
 
     router.push('/dashboard')
+  }
+
+  if (emailSent) {
+    return (
+      <div className="text-center space-y-4 py-4">
+        <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto">
+          <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h3 className="text-white font-bold text-lg">Check your email</h3>
+        <p className="text-white/50 text-sm max-w-xs mx-auto">
+          We sent a confirmation link to your email. Click it to activate your account and access your dashboard.
+        </p>
+        <a href="/login" className="text-white/60 hover:text-white text-sm transition-colors inline-block mt-2">
+          Back to sign in
+        </a>
+      </div>
+    )
   }
 
   return (
