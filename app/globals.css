@@ -4,13 +4,15 @@
 
 @layer base {
   :root {
-    /* Brand tokens — update these when designer delivers final palette */
+    /* Brand tokens */
     --brand-bg: #000000;
     --brand-text: #ffffff;
-    --brand-surface: #2B2B2B;
+    --brand-surface: #111111;
     --brand-border: rgba(255, 255, 255, 0.08);
     --brand-muted: #ACACAC;
     --brand-accent: #ffffff;
+    --font-heading: var(--font-outfit), 'Outfit', sans-serif;
+    --font-body: var(--font-manrope), 'Manrope', sans-serif;
   }
 
   html {

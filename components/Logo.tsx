@@ -1,23 +1,22 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface LogoProps {
   href?: string
   className?: string
+  height?: number
 }
 
-/**
- * Shared logo component — update this single file when the designer delivers final assets.
- * Currently renders text; replace with <Image> or inline SVG when ready.
- */
-export default function Logo({ href = '/', className = '' }: LogoProps) {
+export default function Logo({ href = '/', className = '', height = 28 }: LogoProps) {
   const content = (
-    <span className={`flex items-center gap-1 ${className}`}>
-      <span className="text-lg font-bold tracking-[0.12em] text-white uppercase">
-        éPure
-      </span>
-      <span className="text-lg font-light tracking-[0.12em] text-white/40 uppercase">
-        Drive
-      </span>
+    <span className={`flex items-center ${className}`}>
+      <Image
+        src="/logo-white.svg"
+        alt="éPure Drive"
+        width={Math.round(height * (790 / 173))}
+        height={height}
+        priority
+      />
     </span>
   )
 

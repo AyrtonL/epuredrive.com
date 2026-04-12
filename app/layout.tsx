@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
-import { Outfit } from 'next/font/google'
+import { Outfit, Manrope } from 'next/font/google'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 import './globals.css'
 
-const outfit = Outfit({ subsets: ['latin'], weight: ['300', '400', '600', '700', '800'] })
+const outfit = Outfit({ subsets: ['latin'], weight: ['300', '400', '600', '700', '800'], variable: '--font-outfit' })
+const manrope = Manrope({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-manrope' })
 
 export const metadata: Metadata = {
   title: {
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={outfit.className}>
+      <body className={`${outfit.variable} ${manrope.variable} ${outfit.className}`}>
         <GoogleAnalytics />
         {children}
       </body>
