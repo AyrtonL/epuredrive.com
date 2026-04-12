@@ -6,7 +6,7 @@ import { getStripe } from '@/lib/stripe'
 
 const PRICE_MAP: Record<string, string | undefined> = {
   pro: process.env.STRIPE_PRICE_PRO,
-  enterprise: process.env.STRIPE_PRICE_ENTERPRISE,
+  max: process.env.STRIPE_PRICE_MAX,
 }
 
 export async function createCheckoutSession(planName: string): Promise<{ error: string | null }> {

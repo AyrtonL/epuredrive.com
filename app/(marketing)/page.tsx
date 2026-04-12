@@ -294,7 +294,7 @@ export default function HomePage() {
                   <span className="text-white/50 text-xs">&#10003;</span> Everything in Starter
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Unlimited vehicles
+                  <span className="text-white/50 text-xs">&#10003;</span> Up to 20 vehicles
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Connect custom domain
@@ -303,13 +303,55 @@ export default function HomePage() {
                   <span className="text-white/50 text-xs">&#10003;</span> Deep brand customization
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Zero-fee Stripe payments
+                  <span className="text-white/50 text-xs">&#10003;</span> Stripe payments
                 </li>
               </ul>
 
               <a
                 href="mailto:info@epuredrive.com?subject=Pro%20Plan%20Waitlist"
                 className="block text-center bg-white text-black font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/90 transition-colors mt-auto"
+              >
+                Join waitlist
+              </a>
+            </div>
+
+            {/* ── Max ── */}
+            <div className="glass rounded-2xl p-8 text-left relative overflow-hidden group hover:border-white/15 transition-all duration-500 flex flex-col">
+              <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/10 to-transparent" />
+
+              <div className="absolute top-5 right-5 bg-white/15 text-white text-[10px] font-bold px-3 py-1.5 rounded-full tracking-widest uppercase border border-white/20">
+                Coming Soon
+              </div>
+
+              <div className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-6">
+                Max
+              </div>
+              <div className="flex items-baseline gap-1 mb-1">
+                <span className="text-5xl font-extrabold text-white tracking-tight">$99</span>
+              </div>
+              <div className="text-white/30 text-sm mb-8">/ month</div>
+
+              <ul className="space-y-3 text-sm text-white/50 mb-10 font-light flex-1">
+                <li className="flex items-center gap-3">
+                  <span className="text-white/50 text-xs">&#10003;</span> Everything in Pro
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-white/50 text-xs">&#10003;</span> Up to 50 vehicles
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-white/50 text-xs">&#10003;</span> Unlimited team members
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-white/50 text-xs">&#10003;</span> White-label branding
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-white/50 text-xs">&#10003;</span> SLA &amp; priority support
+                </li>
+              </ul>
+
+              <a
+                href="mailto:info@epuredrive.com?subject=Max%20Plan%20Waitlist"
+                className="block text-center bg-white/[0.06] text-white/60 font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/10 hover:text-white transition-colors border border-white/10 mt-auto"
               >
                 Join waitlist
               </a>
@@ -328,16 +370,16 @@ export default function HomePage() {
 
               <ul className="space-y-3 text-sm text-white/50 mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Everything in Pro
+                  <span className="text-white/50 text-xs">&#10003;</span> Everything in Max
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-white/50 text-xs">&#10003;</span> Unlimited vehicles
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Multi-location management
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Dedicated onboarding
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> SLA &amp; priority support
+                  <span className="text-white/50 text-xs">&#10003;</span> Dedicated account manager
                 </li>
               </ul>
 

@@ -19,11 +19,11 @@ const faqs = [
       },
       {
         q: 'Is there a free plan?',
-        a: 'Yes. The Free plan supports up to 5 vehicles and 1 team member with basic reporting. Upgrade to Pro or Enterprise for more vehicles, team members, and advanced features.',
+        a: 'Yes. The Free plan supports up to 5 vehicles and 1 team member with basic reporting. Upgrade to Pro, Max, or Enterprise for more vehicles, team members, and advanced features.',
       },
       {
         q: 'Can I use my own domain?',
-        a: 'Yes. Pro and Enterprise plans support custom subdomains (e.g., fleet.yourbrand.com). Full custom domain support is coming in Phase 2.',
+        a: 'Yes. Pro, Max, and Enterprise plans support custom subdomains (e.g., fleet.yourbrand.com). Full custom domain support is coming in Phase 2.',
       },
     ],
   },
@@ -70,7 +70,7 @@ const faqs = [
       },
       {
         q: 'Can I add team members?',
-        a: 'Pro plans support up to 5 team members, and Enterprise supports unlimited. Go to Settings > Team & Roles to invite members.',
+        a: 'Pro plans support up to 5 team members, Max and Enterprise support unlimited. Go to Settings > Team & Roles to invite members.',
       },
       {
         q: 'How do I reset my password?',
@@ -83,11 +83,11 @@ const faqs = [
     items: [
       {
         q: 'How do I contact support?',
-        a: 'Email us at support@epuredrive.com or use the contact form on our website. Pro and Enterprise customers receive priority support.',
+        a: 'Email us at support@epuredrive.com or use the contact form on our website. Pro, Max, and Enterprise customers receive priority support.',
       },
       {
         q: 'Do you offer onboarding help?',
-        a: 'Yes. Enterprise plan customers get a dedicated account manager. All customers can access our documentation and email support.',
+        a: 'Yes. Max and Enterprise plan customers get a dedicated account manager. All customers can access our documentation and email support.',
       },
     ],
   },
