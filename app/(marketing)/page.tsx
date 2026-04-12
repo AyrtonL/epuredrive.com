@@ -158,8 +158,8 @@ export default function HomePage() {
             className="object-cover object-center"
             sizes="100vw"
           />
-          {/* Gradient overlays: black fade top + bottom */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black" />
+          {/* Gradient overlays: black fade top + bottom + center darken for text */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-black" />
 
           {/* Centered overlay content */}
           <div className="absolute inset-0 flex items-center justify-center">
@@ -167,7 +167,7 @@ export default function HomePage() {
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">
                 Built for premium fleets
               </h2>
-              <p className="text-white/50 text-lg font-light max-w-xl mx-auto">
+              <p className="text-white/70 text-lg font-light max-w-xl mx-auto">
                 From a single vehicle to a multi-location operation — one
                 platform that scales with your ambition.
               </p>
