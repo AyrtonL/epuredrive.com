@@ -337,6 +337,7 @@ const NAV: NavEntry[] = [
     label: 'Finance',
     children: [
       { label: 'Expenses', href: '/dashboard/finance/expenses' },
+      { label: 'Taxes', href: '/dashboard/finance/taxes' },
       { label: 'Reports', href: '/dashboard/finance/reports' },
       { label: 'ROI', href: '/dashboard/finance/roi' },
     ],

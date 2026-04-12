@@ -1,27 +1,29 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
+import { getConnectAccountStatus } from './actions'
+import ConnectButton from './ConnectButton'
 
-export default async function PaymentsPage() {
+export default async function PaymentsPage({ searchParams }: { searchParams: Promise<{ connected?: string }> }) {
   await requireTenantId()
-
-  const stripeEnabled = false // TODO: derive from tenant config
+  const params = await searchParams
+  const status = await getConnectAccountStatus()
+  const justConnected = params.connected === 'true'
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 animate-fade-in pb-32">
       <PageHeader title="Payments & Invoices" description="Manage payment processing, Stripe integration, and payout settings." />
 
+      {justConnected && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm px-5 py-4 rounded-2xl flex items-center gap-3">
+          <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Stripe account connected successfully. You can now accept online payments.
+        </div>
+      )}
+
       {/* Stripe Connect */}
-      <div className={`glass border rounded-3xl p-8 lg:p-10 relative overflow-hidden group ${stripeEnabled ? 'border-white/10' : 'border-white/[0.04]'}`}>
-        {!stripeEnabled && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
-            <div className="text-center">
-              <div className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest inline-block mb-3">
-                Feature Not Enabled
-              </div>
-              <p className="text-white/40 text-sm max-w-xs">Stripe Connect is not enabled for your organization. Contact your administrator.</p>
-            </div>
-          </div>
-        )}
+      <div className="glass border border-white/10 rounded-3xl p-8 lg:p-10 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-all duration-700" />
 
         <div className="relative z-10">
@@ -44,25 +46,48 @@ export default async function PaymentsPage() {
               </div>
               <div>
                 <div className="text-white font-bold text-sm">Stripe Connect</div>
-                <div className="text-xs text-white/40">Accept online payments and automate payouts.</div>
+                {status.connected && status.chargesEnabled ? (
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="text-xs text-emerald-400 font-medium">Connected — accepting payments</span>
+                  </div>
+                ) : status.connected && !status.detailsSubmitted ? (
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    <span className="text-xs text-amber-400 font-medium">Onboarding incomplete — finish setup</span>
+                  </div>
+                ) : (
+                  <div className="text-xs text-white/40">Accept online payments and automate payouts.</div>
+                )}
               </div>
             </div>
 
-            <button className="bg-[#635BFF] hover:bg-[#635BFF]/90 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-[#635BFF]/20 transition-all flex items-center gap-2">
-              Connect Account
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-            </button>
+            {status.connected && status.chargesEnabled ? (
+              <div className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest">
+                Active
+              </div>
+            ) : (
+              <ConnectButton />
+            )}
           </div>
 
           <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
-             <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest px-2">
-               <span className="text-white/30">Currency</span>
-               <span className="text-white">USD (United States Dollar)</span>
-             </div>
-             <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest px-2">
-               <span className="text-white/30">Payout Method</span>
-               <span className="text-white/60 italic">Not configured</span>
-             </div>
+            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest px-2">
+              <span className="text-white/30">Currency</span>
+              <span className="text-white">USD (United States Dollar)</span>
+            </div>
+            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest px-2">
+              <span className="text-white/30">Charges Enabled</span>
+              <span className={status.chargesEnabled ? 'text-emerald-400' : 'text-white/60 italic'}>
+                {status.chargesEnabled ? 'Yes' : 'No'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest px-2">
+              <span className="text-white/30">Payouts Enabled</span>
+              <span className={status.payoutsEnabled ? 'text-emerald-400' : 'text-white/60 italic'}>
+                {status.payoutsEnabled ? 'Yes' : 'No'}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -70,7 +95,11 @@ export default async function PaymentsPage() {
       {/* Invoices Placeholder */}
       <div className="glass border border-white/[0.06] rounded-3xl p-8">
         <h3 className="text-white font-bold mb-4">Recent Invoices</h3>
-        <p className="text-white/30 text-sm">No invoices yet. Connect your Stripe account to start accepting payments and generating invoices.</p>
+        <p className="text-white/30 text-sm">
+          {status.chargesEnabled
+            ? 'No invoices yet. Invoices will appear here once customers make payments.'
+            : 'Connect your Stripe account to start accepting payments and generating invoices.'}
+        </p>
       </div>
     </div>
   )
