@@ -3,7 +3,7 @@
 import { useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Reservation, Car } from '@/lib/supabase/types'
-import { updateReservation, deleteReservation } from './actions'
+import { updateReservation, deleteReservation, bulkUpdateReservations } from './actions'
 import BookingModal from './BookingModal'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -81,9 +81,7 @@ export default function BookingsTable({ reservations, cars }: Props) {
   function handleBulkComplete() {
     if (!confirm(`Mark ${selectedIds.size} bookings as Completed?`)) return
     startTransition(async () => {
-      for (const id of Array.from(selectedIds)) {
-        await updateReservation(id, { status: 'completed' })
-      }
+      await bulkUpdateReservations(Array.from(selectedIds), { status: 'completed' })
       setSelectedIds(new Set())
       router.refresh()
     })

@@ -3,7 +3,7 @@
 import { useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Customer } from '@/lib/supabase/types'
-import { syncCustomersFromReservations, deleteCustomer } from './actions'
+import { syncCustomersFromReservations, deleteCustomer, bulkDeleteCustomers } from './actions'
 
 interface Props {
   customers: Customer[]
@@ -111,9 +111,7 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
   function handleBulkDelete() {
     if (!confirm(`Permanently delete ${selectedIds.size} customers?`)) return
     startTransition(async () => {
-      for (const id of Array.from(selectedIds)) {
-        await deleteCustomer(id)
-      }
+      await bulkDeleteCustomers(Array.from(selectedIds))
       setSelectedIds(new Set())
       router.refresh()
     })

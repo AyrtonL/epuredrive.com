@@ -51,7 +51,7 @@ export default async function BillingPage({
 
       {params.success && (
         <>
-          <SubscribeTracker plan={plan} />
+          {plan !== 'free' && <SubscribeTracker plan={plan} />}
           <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-2xl text-sm">
             Payment successful! Your plan will be updated shortly.
           </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Consignment, Car, Reservation } from '@/lib/supabase/types'
 import { deleteConsignment } from './actions'
 import ConsignmentModal from './ConsignmentModal'
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function ConsignmentsManager({ consignments, cars, reservations, expenses }: Props) {
+  const router = useRouter()
   const [, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Consignment | null>(null)
@@ -23,7 +25,7 @@ export default function ConsignmentsManager({ consignments, cars, reservations, 
 
   function handleDelete(id: number) {
     if (!confirm('Delete this consignment? This cannot be undone.')) return
-    startTransition(async () => { await deleteConsignment(id) })
+    startTransition(async () => { await deleteConsignment(id); router.refresh() })
   }
 
   return (

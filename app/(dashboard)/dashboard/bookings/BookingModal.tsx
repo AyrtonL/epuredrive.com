@@ -42,6 +42,15 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
     e.preventDefault()
     setErrorStr(null)
 
+    if (
+      formData.pickup_date &&
+      formData.return_date &&
+      formData.return_date < formData.pickup_date
+    ) {
+      setErrorStr('Return date must be on or after the pickup date.')
+      return
+    }
+
     // Data prep
     const dataToSubmit = {
       car_id: Number(formData.car_id),

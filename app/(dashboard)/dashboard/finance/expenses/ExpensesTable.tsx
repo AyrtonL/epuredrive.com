@@ -87,22 +87,31 @@ export default function ExpensesTable({ expenses, cars }: Props) {
       const row: Record<string, string> = {}
       headers.forEach((h, idx) => { row[h] = fields[idx] || '' })
 
-      const amount = parseFloat(row.amount || row.cost || row.total)
-      const date = row.date || row.expense_date || new Date().toISOString().split('T')[0]
-      const category = (row.category || row.type || 'other').toLowerCase()
-      const description = row.description || row.notes || ''
+      const rawAmount = parseFloat(row.amount || row.cost || row.total)
+      const rawDate = row.date || row.expense_date || ''
+      const rawCategory = (row.category || row.type || 'other').toLowerCase()
+      const rawDescription = row.description || row.notes || ''
 
-      if (!isNaN(amount)) {
-        records.push({
-          transaction_date: date,
-          type: 'expense',
-          amount,
-          category,
-          description,
-          payment_method: (row.payment_method || 'other').toLowerCase(),
-          car_id: null
-        })
-      }
+      // Validate amount: must be a finite positive number under $10M
+      if (isNaN(rawAmount) || !isFinite(rawAmount) || rawAmount <= 0 || rawAmount > 10_000_000) continue
+
+      // Validate date: must match YYYY-MM-DD
+      const dateMatch = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
+      const date = dateMatch ? rawDate : new Date().toISOString().split('T')[0]
+
+      // Clamp string lengths
+      const category = rawCategory.slice(0, 50)
+      const description = rawDescription.slice(0, 500)
+
+      records.push({
+        transaction_date: date,
+        type: 'expense',
+        amount: rawAmount,
+        category,
+        description,
+        payment_method: (row.payment_method || 'other').toLowerCase().slice(0, 50),
+        car_id: null
+      })
     }
 
     if (records.length > 0) {
