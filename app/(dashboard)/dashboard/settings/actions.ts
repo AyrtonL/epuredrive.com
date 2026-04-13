@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
+import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
 
 async function getTenantId(): Promise<string> {
   const { tenantId } = await requireTenantId()
@@ -207,18 +208,48 @@ async function syncNetlifyCustomDomain(domain: string): Promise<string | null> {
   return null
 }
 
+async function removeNetlifyCustomDomain(domain: string): Promise<void> {
+  const token = process.env.NETLIFY_AUTH_TOKEN
+  const siteId = process.env.NETLIFY_SITE_ID
+  if (!token || !siteId) return
+
+  try {
+    const getRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!getRes.ok) return
+    const site = await getRes.json()
+    const aliases: string[] = site.domain_aliases ?? []
+    const updated = aliases.filter((a: string) => a !== domain)
+    await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain_aliases: updated }),
+    })
+  } catch {
+    // Best-effort — do not throw, the primary error is already being surfaced
+  }
+}
+
 export async function saveCustomDomain(
   data: { domain: string | null }
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
 
+  if (data.domain !== null) {
+    const allowed = await isFeatureEnabled(tenantId, 'custom_domains')
+    if (!allowed) {
+      return { error: 'Custom domains require an Enterprise plan. Contact support to upgrade.' }
+    }
+  }
+
   if (!data.domain) {
     const { error } = await supabase
       .from('tenants')
       .update({ custom_domain: null })
       .eq('id', tenantId)
-    revalidatePath('/dashboard/settings/domain')
+    if (!error) revalidatePath('/dashboard/settings/domain')
     return { error: error?.message ?? null }
   }
 
@@ -235,11 +266,17 @@ export async function saveCustomDomain(
   const netlifyError = await syncNetlifyCustomDomain(domain)
   if (netlifyError) return { error: netlifyError }
 
-  const { error } = await supabase
+  const { error: dbError } = await supabase
     .from('tenants')
     .update({ custom_domain: domain })
     .eq('id', tenantId)
 
+  if (dbError) {
+    // Compensating rollback: remove the alias from Netlify
+    await removeNetlifyCustomDomain(domain)
+    return { error: dbError.message }
+  }
+
   revalidatePath('/dashboard/settings/domain')
-  return { error: error?.message ?? null }
+  return { error: null }
 }

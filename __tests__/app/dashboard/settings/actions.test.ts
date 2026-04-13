@@ -11,6 +11,9 @@ jest.mock('../../../../lib/supabase/dashboard-auth', () => ({
     supabase: null,
   }),
 }))
+jest.mock('../../../../lib/supabase/feature-flags', () => ({
+  isFeatureEnabled: jest.fn().mockResolvedValue(true),
+}))
 
 import { saveCustomDomain } from '@/app/(dashboard)/dashboard/settings/actions'
 

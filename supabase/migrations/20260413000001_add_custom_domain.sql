@@ -6,3 +6,8 @@ ALTER TABLE tenants
 CREATE INDEX IF NOT EXISTS idx_tenants_custom_domain
   ON tenants (custom_domain)
   WHERE custom_domain IS NOT NULL;
+
+-- Allow anonymous middleware lookup (only slug + custom_domain columns are selected)
+CREATE POLICY "anon_read_tenant_routing" ON tenants
+  FOR SELECT TO anon
+  USING (true);
