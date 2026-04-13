@@ -108,7 +108,7 @@ export default function FleetGrid({ cars, slug, tenantId, pickupLocations = [], 
                 <div className="lg:col-span-8">
                   <CarDetailView car={car} />
                 </div>
-                <div className="lg:col-span-4 sticky top-48">
+                <div className="lg:col-span-4 lg:sticky lg:top-32">
                   <div className="relative group/booking">
                      {/* Dynamic Background Flare */}
                     <div className="absolute -z-10 -right-20 -top-20 w-80 h-80 bg-primary/5 rounded-full blur-[120px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />

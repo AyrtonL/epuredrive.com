@@ -1,0 +1,145 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { sendEmail } from '@/lib/email/resend'
+import { agreementSignedCustomerEmail, agreementSignedOperatorEmail } from '@/lib/email/templates'
+
+export async function POST(req: NextRequest) {
+  try {
+    const { token, signature } = await req.json()
+
+    if (!token || !signature) {
+      return NextResponse.json({ error: 'Missing token or signature' }, { status: 400 })
+    }
+
+    const supabase = createClient()
+
+    // Find the reservation by token
+    const { data: reservation, error: fetchError } = await supabase
+      .from('reservations')
+      .select('*, tenants(name, brand_name, slug, logo_url, company_address, company_phone)')
+      .eq('agreement_token', token)
+      .single()
+
+    if (fetchError || !reservation) {
+      return NextResponse.json({ error: 'Invalid agreement token' }, { status: 404 })
+    }
+
+    if (reservation.agreement_signed_at) {
+      return NextResponse.json({ error: 'Agreement already signed' }, { status: 409 })
+    }
+
+    // Convert base64 signature to buffer for storage
+    const base64Data = signature.replace(/^data:image\/png;base64,/, '')
+    const buffer = Buffer.from(base64Data, 'base64')
+
+    // Upload signature image to Supabase Storage
+    const signatureFileName = `signatures/${reservation.tenant_id}/${reservation.id}-${Date.now()}.png`
+    const { error: uploadError } = await supabase.storage
+      .from('agreements')
+      .upload(signatureFileName, buffer, {
+        contentType: 'image/png',
+        upsert: true,
+      })
+
+    let signatureUrl: string | null = null
+    if (!uploadError) {
+      const { data: urlData } = supabase.storage
+        .from('agreements')
+        .getPublicUrl(signatureFileName)
+      signatureUrl = urlData.publicUrl
+    }
+
+    // Get client IP
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      req.headers.get('x-real-ip') ||
+      'unknown'
+
+    // Update reservation with signature info
+    const { error: updateError } = await supabase
+      .from('reservations')
+      .update({
+        agreement_signed_at: new Date().toISOString(),
+        agreement_signed_ip: ip,
+        agreement_signature_url: signatureUrl,
+      })
+      .eq('id', reservation.id)
+
+    if (updateError) {
+      return NextResponse.json({ error: 'Failed to save signature' }, { status: 500 })
+    }
+
+    // Get car info
+    const { data: car } = await supabase
+      .from('cars')
+      .select('make, model, model_full')
+      .eq('id', reservation.car_id)
+      .maybeSingle()
+
+    const tenant = (reservation as any).tenants
+    const tenantName = tenant?.brand_name || tenant?.name || 'Your rental company'
+    const carName = car ? `${car.make} ${car.model_full || car.model}` : 'Vehicle'
+
+    // Send emails (fire and forget — don't block response)
+    Promise.resolve().then(async () => {
+      try {
+        const promises: Promise<unknown>[] = []
+
+        // Email to customer
+        if (reservation.customer_email) {
+          promises.push(
+            sendEmail({
+              to: reservation.customer_email,
+              ...agreementSignedCustomerEmail({
+                customerName: reservation.customer_name || 'Renter',
+                tenantName,
+                carName,
+                pickupDate: reservation.pickup_date || '',
+                returnDate: reservation.return_date || '',
+                tenantSlug: tenant?.slug || '',
+              }),
+            })
+          )
+        }
+
+        // Emails to operator profiles
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('tenant_id', reservation.tenant_id)
+
+        if (profiles?.length) {
+          for (const profile of profiles) {
+            const { data } = await supabase.auth.admin
+              .getUserById(profile.id)
+              .catch(() => ({ data: null }))
+            const email = (data as any)?.user?.email
+            if (email) {
+              promises.push(
+                sendEmail({
+                  to: email,
+                  ...agreementSignedOperatorEmail({
+                    customerName: reservation.customer_name || 'Renter',
+                    tenantName,
+                    carName,
+                    pickupDate: reservation.pickup_date || '',
+                    returnDate: reservation.return_date || '',
+                    reservationId: reservation.id,
+                  }),
+                })
+              )
+            }
+          }
+        }
+
+        await Promise.allSettled(promises)
+      } catch {
+        // Non-critical
+      }
+    })
+
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

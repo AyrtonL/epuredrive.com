@@ -21,6 +21,10 @@ export interface Tenant {
   whatsapp_phone: string | null
   business_hours: string | null
   pickup_locations: PickupLocation[]
+  company_address: string | null
+  company_phone: string | null
+  agreement_clauses: string | null
+  agreement_template_url: string | null
 }
 
 export interface Car {
@@ -68,6 +72,12 @@ export interface Reservation {
   license_country: string | null
   insurance_provider: string | null
   insurance_policy_number: string | null
+  agreement_token: string | null
+  agreement_sent_at: string | null
+  agreement_signed_at: string | null
+  agreement_signed_ip: string | null
+  agreement_pdf_url: string | null
+  agreement_signature_url: string | null
 }
 
 export interface Customer {

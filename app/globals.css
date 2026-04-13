@@ -11,6 +11,9 @@
     --brand-border: rgba(255, 255, 255, 0.08);
     --brand-muted: #ACACAC;
     --brand-accent: #ffffff;
+    /* Tenant-overridable color tokens (defaults for dashboard/marketing) */
+    --color-primary: #ffffff;
+    --color-accent: #f0f0f0;
     --font-heading: var(--font-outfit), 'Outfit', sans-serif;
     --font-body: var(--font-manrope), 'Manrope', sans-serif;
   }

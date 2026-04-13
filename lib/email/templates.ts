@@ -72,6 +72,116 @@ export function bookingCancelledEmail(params: {
   }
 }
 
+export function agreementSignedCustomerEmail(params: {
+  customerName: string
+  tenantName: string
+  carName: string
+  pickupDate: string
+  returnDate: string
+  tenantSlug: string
+}): { subject: string; html: string } {
+  const pickupFormatted = params.pickupDate
+    ? new Date(params.pickupDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : '—'
+  const returnFormatted = params.returnDate
+    ? new Date(params.returnDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : '—'
+
+  return {
+    subject: `Your Rental Agreement is Signed — ${params.tenantName}`,
+    html: baseLayout(`
+      <h2 style="margin:0 0 8px;font-size:18px;color:#fff;">Agreement Signed Successfully</h2>
+      <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0 0 24px;">
+        Hi ${params.customerName}, your rental agreement with <strong style="color:#fff;">${params.tenantName}</strong> has been signed. Please keep this email for your records.
+      </p>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Vehicle</td><td style="padding:8px 0;color:#fff;font-size:14px;text-align:right;font-weight:600;">${params.carName}</td></tr>
+        <tr><td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Pickup</td><td style="padding:8px 0;color:#fff;font-size:14px;text-align:right;">${pickupFormatted}</td></tr>
+        <tr><td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Return</td><td style="padding:8px 0;color:#fff;font-size:14px;text-align:right;">${returnFormatted}</td></tr>
+        <tr><td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Signed</td><td style="padding:8px 0;color:#00d2ff;font-size:14px;text-align:right;font-weight:700;">${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</td></tr>
+      </table>
+      <div style="margin-top:24px;padding:16px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
+        <p style="margin:0;color:rgba(255,255,255,0.5);font-size:12px;line-height:1.6;">
+          Your signed PDF agreement will be available shortly. If you have any questions about your rental, please contact ${params.tenantName} directly.
+        </p>
+      </div>
+    `),
+  }
+}
+
+export function agreementSignedOperatorEmail(params: {
+  customerName: string
+  tenantName: string
+  carName: string
+  pickupDate: string
+  returnDate: string
+  reservationId: number
+}): { subject: string; html: string } {
+  const pickupFormatted = params.pickupDate
+    ? new Date(params.pickupDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : '—'
+  const returnFormatted = params.returnDate
+    ? new Date(params.returnDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : '—'
+
+  return {
+    subject: `Agreement Signed: ${params.customerName} — ${params.carName}`,
+    html: baseLayout(`
+      <h2 style="margin:0 0 8px;font-size:18px;color:#fff;">Rental Agreement Signed</h2>
+      <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0 0 24px;">
+        <strong style="color:#fff;">${params.customerName}</strong> has signed the rental agreement for <strong style="color:#fff;">${params.carName}</strong>.
+      </p>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Customer</td><td style="padding:8px 0;color:#fff;font-size:14px;text-align:right;font-weight:600;">${params.customerName}</td></tr>
+        <tr><td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Vehicle</td><td style="padding:8px 0;color:#fff;font-size:14px;text-align:right;font-weight:600;">${params.carName}</td></tr>
+        <tr><td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Pickup</td><td style="padding:8px 0;color:#fff;font-size:14px;text-align:right;">${pickupFormatted}</td></tr>
+        <tr><td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Return</td><td style="padding:8px 0;color:#fff;font-size:14px;text-align:right;">${returnFormatted}</td></tr>
+        <tr><td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Signed At</td><td style="padding:8px 0;color:#00d2ff;font-size:14px;text-align:right;font-weight:700;">${new Date().toLocaleString('en-US')}</td></tr>
+      </table>
+      <div style="margin-top:24px;text-align:center;">
+        <a href="https://epuredrive.com/dashboard/bookings" style="display:inline-block;background:#fff;color:#000;padding:12px 32px;border-radius:12px;text-decoration:none;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">View in Dashboard</a>
+      </div>
+    `),
+  }
+}
+
+export function agreementRequestEmail(params: {
+  customerName: string
+  tenantName: string
+  carName: string
+  pickupDate: string
+  returnDate: string
+  agreementUrl: string
+}): { subject: string; html: string } {
+  const pickupFormatted = params.pickupDate
+    ? new Date(params.pickupDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : '—'
+  const returnFormatted = params.returnDate
+    ? new Date(params.returnDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : '—'
+
+  return {
+    subject: `Please Sign Your Rental Agreement — ${params.tenantName}`,
+    html: baseLayout(`
+      <h2 style="margin:0 0 8px;font-size:18px;color:#fff;">Action Required: Sign Your Rental Agreement</h2>
+      <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0 0 24px;">
+        Hi ${params.customerName}, your rental is almost confirmed! Please review and sign the agreement below to complete your booking with <strong style="color:#fff;">${params.tenantName}</strong>.
+      </p>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Vehicle</td><td style="padding:8px 0;color:#fff;font-size:14px;text-align:right;font-weight:600;">${params.carName}</td></tr>
+        <tr><td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Pickup</td><td style="padding:8px 0;color:#fff;font-size:14px;text-align:right;">${pickupFormatted}</td></tr>
+        <tr><td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Return</td><td style="padding:8px 0;color:#fff;font-size:14px;text-align:right;">${returnFormatted}</td></tr>
+      </table>
+      <div style="margin-top:28px;text-align:center;">
+        <a href="${params.agreementUrl}" style="display:inline-block;background:#00d2ff;color:#000;padding:14px 36px;border-radius:12px;text-decoration:none;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:2px;">Sign Agreement</a>
+      </div>
+      <p style="margin-top:20px;color:rgba(255,255,255,0.3);font-size:11px;text-align:center;">
+        Or copy this link: ${params.agreementUrl}
+      </p>
+    `),
+  }
+}
+
 export function newInquiryEmail(params: {
   customerName: string
   customerEmail: string

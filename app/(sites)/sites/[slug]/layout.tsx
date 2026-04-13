@@ -1,8 +1,10 @@
 // app/sites/[slug]/layout.tsx
+import type React from 'react'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Tenant } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
+import CookieConsent from '@/components/sites/CookieConsent'
 
 interface Props {
   children: React.ReactNode
@@ -38,8 +40,14 @@ export default async function TenantLayout({ children, params }: Props) {
   const displayName = typedTenant.brand_name || typedTenant.name
   const tagline = typedTenant.tagline || 'Premium Fleet'
 
+  const primaryColor = typedTenant.primary_color || '#ffffff'
+  const accentColor = typedTenant.accent_color || '#f0f0f0'
+
   return (
-    <div className="bg-[#040404] text-white min-h-screen font-sans selection:bg-primary/30 scroll-smooth">
+    <div
+      className="bg-[#040404] text-white min-h-screen font-sans selection:bg-primary/30 scroll-smooth"
+      style={{ '--color-primary': primaryColor, '--color-accent': accentColor } as React.CSSProperties}
+    >
       {/* Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-[3px] bg-primary z-[110] origin-left scale-x-0 transition-transform duration-300" id="scroll-progress" />
 
@@ -65,6 +73,7 @@ export default async function TenantLayout({ children, params }: Props) {
                 <a href={`/sites/${params.slug}/fleet`} className="text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors">Fleet</a>
                 <a href={`/sites/${params.slug}#experience`} className="text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors">Experience</a>
                 <a href={`/sites/${params.slug}#concierge`} className="text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors">Concierge</a>
+                <a href={`/sites/${params.slug}/my-booking`} className="text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors">My Booking</a>
               </div>
               <a
                 href={`/sites/${params.slug}/fleet`}
@@ -88,6 +97,8 @@ export default async function TenantLayout({ children, params }: Props) {
             if (el) el.style.transform = 'scaleX(' + scrolled + ')';
           });
         `}} />
+
+        <CookieConsent />
 
         {/* Powered by badge — hidden for Max/Enterprise (white-label) */}
         {!['max', 'enterprise'].includes((tenant as Tenant & { plan?: string }).plan ?? '') && (

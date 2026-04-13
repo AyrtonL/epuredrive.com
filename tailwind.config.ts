@@ -13,8 +13,8 @@ const config: Config = {
         surface: '#2B2B2B',
         surfaceHover: '#383838',
         surfaceBorder: 'rgba(255, 255, 255, 0.08)',
-        primary: '#ffffff',
-        accent: '#f0f0f0',
+        primary: 'var(--color-primary)',
+        accent: 'var(--color-accent)',
         muted: '#ACACAC',
         // Brand gray scale
         gray1: '#565656',

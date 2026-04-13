@@ -15,9 +15,17 @@ const timeOptions = [
   '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM'
 ];
 
+interface BookedRange { from: string; to: string }
+
+function datesOverlap(pickupA: string, returnA: string, pickupB: string, returnB: string) {
+  return pickupA <= returnB && returnA >= pickupB
+}
+
 export default function BookingWidget({ car, tenantId, pickupLocations = [], whatsappPhone }: Props) {
   const [pickDate, setPickDate] = useState('')
   const [retDate, setRetDate] = useState('')
+  const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([])
+  const [dateConflict, setDateConflict] = useState(false)
   const [pickTime, setPickTime] = useState('10:00 AM')
   const [retTime, setRetTime] = useState('10:00 AM')
   const [locationIdx, setLocationIdx] = useState(0)
@@ -27,6 +35,14 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   const [hasFuel, setHasFuel] = useState(false)
 
   const selectedLocation: PickupLocation | null = pickupLocations[locationIdx] ?? null
+
+  // Fetch booked date ranges for this car
+  useEffect(() => {
+    fetch(`/api/availability?carId=${car.id}&tenantId=${tenantId}`)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data?.bookedRanges)) setBookedRanges(data.bookedRanges) })
+      .catch(() => {/* non-critical */})
+  }, [car.id, tenantId])
 
   // Pre-fill from URL params (set by QuickSearchBar on the home page)
   useEffect(() => {
@@ -62,6 +78,13 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
     const d2 = new Date(retDate)
     return Math.max(1, Math.round((d2.getTime() - d1.getTime()) / 86400000))
   }, [pickDate, retDate])
+
+  // Check date conflict whenever pickup or return changes
+  useEffect(() => {
+    if (!pickDate || !retDate) { setDateConflict(false); return }
+    const conflict = bookedRanges.some(r => datesOverlap(pickDate, retDate, r.from, r.to))
+    setDateConflict(conflict)
+  }, [pickDate, retDate, bookedRanges])
 
   const { total, locFee, protFee, tollFee, fuelFee, baseCost } = useMemo(() => {
     const baserate = Number(car.daily_rate) || 0
@@ -108,6 +131,10 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   const handleSubmitBooking = async () => {
     if (!custName.trim()) {
       setFormError('Full name is required.')
+      return
+    }
+    if (dateConflict) {
+      setFormError('Selected dates are unavailable. Please choose different dates.')
       return
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -214,6 +241,16 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
             </div>
           </div>
         </div>
+
+        {/* Date conflict warning */}
+        {dateConflict && (
+          <div className="flex items-center gap-2 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-[10px] font-bold uppercase tracking-widest">
+            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            These dates are already booked — please select different dates.
+          </div>
+        )}
 
         {/* Location Select */}
         {pickupLocations.length > 0 && (
@@ -333,7 +370,8 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
             <>
               <button
                 onClick={handleOnlineBooking}
-                className="w-full bg-white text-black font-black uppercase tracking-[0.2em] text-[11px] py-5 rounded-2xl hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-white/5"
+                disabled={dateConflict}
+                className="w-full bg-white text-black font-black uppercase tracking-[0.2em] text-[11px] py-5 rounded-2xl hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-white/5 disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
               >
                 Reserve This Vehicle
               </button>
@@ -341,7 +379,8 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
               {whatsappPhone && (
                 <button
                   onClick={handleWhatsapp}
-                  className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-[#25D366]/20 bg-[#25D366]/5 text-[#25D366] text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366]/10 transition-all"
+                  disabled={dateConflict}
+                  className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-[#25D366]/20 bg-[#25D366]/5 text-[#25D366] text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366]/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                   Inquire via SMS / WhatsApp
