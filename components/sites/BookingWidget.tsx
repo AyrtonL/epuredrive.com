@@ -21,6 +21,12 @@ function datesOverlap(pickupA: string, returnA: string, pickupB: string, returnB
   return pickupA <= returnB && returnA >= pickupB
 }
 
+function formatBookedRange(from: string, to: string): string {
+  const fmt = (d: string) =>
+    new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return `${fmt(from)} – ${fmt(to)}`
+}
+
 export default function BookingWidget({ car, tenantId, pickupLocations = [], whatsappPhone }: Props) {
   const [pickDate, setPickDate] = useState('')
   const [retDate, setRetDate] = useState('')
@@ -215,6 +221,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
             <div className="space-y-2">
               <label className="block text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Pickup</label>
               <input type="date" value={pickDate} onChange={e => setPickDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
                 className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none [color-scheme:dark]" />
             </div>
             <div className="space-y-2">
@@ -230,6 +237,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
             <div className="space-y-2">
               <label className="block text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Return</label>
               <input type="date" value={retDate} onChange={e => setRetDate(e.target.value)}
+                min={pickDate || new Date().toISOString().split('T')[0]}
                 className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none [color-scheme:dark]" />
             </div>
             <div className="space-y-2">
@@ -241,6 +249,28 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
             </div>
           </div>
         </div>
+
+        {/* Unavailable periods */}
+        {bookedRanges.length > 0 && (
+          <div className="space-y-2">
+            <span className="block text-[9px] font-black text-white/25 uppercase tracking-widest ml-1">
+              Unavailable periods
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {bookedRanges.map((r, i) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400/80 text-[10px] font-bold"
+                >
+                  <svg className="w-2.5 h-2.5 flex-shrink-0" fill="currentColor" viewBox="0 0 8 8">
+                    <circle cx="4" cy="4" r="3" />
+                  </svg>
+                  {formatBookedRange(r.from, r.to)}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Date conflict warning */}
         {dateConflict && (
