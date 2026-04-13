@@ -1,6 +1,7 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import type { Profile } from '@/lib/supabase/types'
+import InviteModal from './InviteModal'
 
 const ROLE_CONFIG: Record<string, { color: string; description: string; permissions: string[] }> = {
   admin: {
@@ -69,9 +70,7 @@ export default async function RolesPage() {
       <div className="glass border border-white/10 rounded-3xl p-8">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-white font-bold">Team Members</h3>
-          <button className="bg-white text-black px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-white/90 transition-all hover:scale-[1.02] active:scale-[0.98]">
-            Invite Member
-          </button>
+          <InviteModal />
         </div>
 
         {rows.length === 0 ? (
