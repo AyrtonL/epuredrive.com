@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import JsonLd from '@/components/JsonLd'
+import { buildFAQPageSchema } from '@/lib/utils/jsonld'
 
 export const metadata: Metadata = {
   title: 'FAQ — Frequently Asked Questions',
@@ -99,6 +101,8 @@ const faqs = [
   },
 ]
 
+const allFaqItems = faqs.flatMap((section) => section.items)
+
 export default function FAQPage() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-20">
@@ -147,6 +151,7 @@ export default function FAQPage() {
           </div>
         ))}
       </div>
+      <JsonLd schema={buildFAQPageSchema(allFaqItems)} />
     </div>
   )
 }
