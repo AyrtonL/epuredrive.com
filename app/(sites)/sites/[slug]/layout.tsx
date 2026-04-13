@@ -28,7 +28,7 @@ export default async function TenantLayout({ children, params }: Props) {
   const supabase = createClient()
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, slug, logo_url, brand_name, primary_color, accent_color')
+    .select('id, name, slug, logo_url, brand_name, primary_color, accent_color, plan')
     .eq('slug', params.slug)
     .single()
 
@@ -86,6 +86,21 @@ export default async function TenantLayout({ children, params }: Props) {
             if (el) el.style.transform = 'scaleX(' + scrolled + ')';
           });
         `}} />
+
+        {/* Powered by badge — hidden for Max/Enterprise (white-label) */}
+        {!['max', 'enterprise'].includes((tenant as Tenant & { plan?: string }).plan ?? '') && (
+          <div className="fixed bottom-4 right-4 z-50">
+            <a
+              href="https://epuredrive.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 bg-black/80 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white/70 hover:border-white/20 transition-all shadow-lg"
+            >
+              Powered by
+              <span className="text-white font-black italic">éPure</span>
+            </a>
+          </div>
+        )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import UpgradeButton from './UpgradeButton'
+import DeactivateButton from './DeactivateButton'
 
 export default async function BillingPage({
   searchParams,
@@ -140,9 +141,7 @@ export default async function BillingPage({
             <div className="text-white text-sm font-medium">Deactivate Account</div>
             <div className="text-white/30 text-xs mt-0.5">Permanently deactivate your organization and all associated data.</div>
           </div>
-          <button className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
-            Deactivate
-          </button>
+          <DeactivateButton />
         </div>
       </div>
     </div>

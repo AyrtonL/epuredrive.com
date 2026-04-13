@@ -51,3 +51,20 @@ export async function createCheckoutSession(planName: string): Promise<{ error: 
 
   return { error: 'Could not create checkout session.' }
 }
+
+export async function deactivateAccount(): Promise<{ error: string | null }> {
+  const { supabase, tenantId } = await requireTenantId()
+
+  // Mark tenant as deactivated
+  const { error } = await supabase
+    .from('tenants')
+    .update({ plan: 'deactivated' })
+    .eq('id', tenantId)
+
+  if (error) return { error: error.message }
+
+  // Sign out the user
+  await supabase.auth.signOut()
+
+  redirect('/login?deactivated=1')
+}
