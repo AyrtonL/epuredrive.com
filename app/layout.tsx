@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { Outfit, Manrope } from 'next/font/google'
-import GoogleAnalytics from '@/components/GoogleAnalytics'
-import GoogleAds from '@/components/GoogleAds'
-import MetaPixel from '@/components/MetaPixel'
+import CookieConsentBanner from '@/components/CookieConsentBanner'
+import CookieConsentManager from '@/components/CookieConsentManager'
 import './globals.css'
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['300', '400', '600', '700', '800'], variable: '--font-outfit' })
@@ -42,9 +41,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${outfit.variable} ${manrope.variable} ${outfit.className}`}>
-        <GoogleAnalytics />
-        <GoogleAds />
-        <MetaPixel />
+        <CookieConsentManager />
+        <CookieConsentBanner />
         {children}
       </body>
     </html>

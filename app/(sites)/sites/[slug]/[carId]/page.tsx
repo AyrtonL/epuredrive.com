@@ -8,7 +8,7 @@ import CarDetailView from '@/components/sites/CarDetailView'
 
 interface Props {
   params: { slug: string; carId: string }
-  searchParams: { booked?: string }
+  searchParams: { booked?: string; pickup?: string; return?: string; pickTime?: string; retTime?: string; location?: string }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

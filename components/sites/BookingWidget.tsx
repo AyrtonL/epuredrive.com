@@ -83,7 +83,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   const handleWhatsapp = () => {
     if (!pickDate || !retDate) { alert('Please select dates first.'); return; }
     if (!whatsappPhone) { alert('WhatsApp contact not configured.'); return; }
-    const addons = []
+    const addons: string[] = []
     if (hasProtection) addons.push('Standard Protection')
     if (hasToll) addons.push('Toll Package')
     if (hasFuel) addons.push('Prepaid Fuel')
@@ -95,7 +95,8 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
       + (addons.length ? `Add-ons: ${addons.join(', ')}\n` : '')
       + `Estimated Total: $${total}`
 
-    window.open(`https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`, '_blank')
+    const cleanPhone = whatsappPhone.replace(/\D/g, '')
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   const handleOnlineBooking = () => {
@@ -105,8 +106,13 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   }
 
   const handleSubmitBooking = async () => {
-    if (!custName.trim() || !custEmail.trim()) {
-      setFormError('Name and email are required.')
+    if (!custName.trim()) {
+      setFormError('Full name is required.')
+      return
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+    if (!emailRegex.test(custEmail.trim())) {
+      setFormError('Please enter a valid email address.')
       return
     }
     setSubmitting(true)
@@ -137,6 +143,18 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Request failed' }))
         setFormError((err as { error?: string }).error || 'Something went wrong.')
+        return
+      }
+      const result = await res.json().catch(() => ({})) as { reservationId?: number }
+      // Redirect to confirmation page if we have a slug (public site context)
+      if (typeof window !== 'undefined') {
+        const pathParts = window.location.pathname.split('/')
+        // Detect slug from /sites/[slug]/... or subdomain routing
+        const siteIdx = pathParts.indexOf('sites')
+        const slug = siteIdx >= 0 ? pathParts[siteIdx + 1] : null
+        const basePath = slug ? `/sites/${slug}` : ''
+        const confirmUrl = `${basePath}/booking-confirmation?id=${result.reservationId ?? ''}&car=${encodeURIComponent(car.make + ' ' + (car.model_full || car.model))}`
+        window.location.href = confirmUrl
         return
       }
       setSubmitted(true)

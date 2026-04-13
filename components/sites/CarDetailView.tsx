@@ -39,18 +39,24 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled }: 
           />
 
           {/* Floating Specs Overlay (Mobile & Desktop) */}
-          <div className="absolute bottom-8 left-8 right-8 flex gap-3 overflow-x-auto scrollbar-hide pointer-events-none translate-y-10 opacity-0 group-hover/car:translate-y-0 group-hover/car:opacity-100 transition-all duration-700">
-            {[
-              { l: '0-60', v: '3.8s' },
-              { l: 'Top Speed', v: '185 mph' },
-              { l: 'Engine', v: 'V8 Biturbo' }
-            ].map(s => (
-              <div key={s.l} className="glass border border-white/10 px-6 py-3 rounded-2xl flex flex-col items-start min-w-[120px]">
-                <span className="text-[8px] font-black uppercase tracking-widest text-white/40">{s.l}</span>
-                <span className="text-xs font-outfit font-black italic">{s.v}</span>
+          {(() => {
+            const specs = [
+              car.hp ? { l: 'Power', v: car.hp } : null,
+              car.transmission ? { l: 'Transmission', v: car.transmission } : null,
+              car.seats ? { l: 'Seats', v: String(car.seats) } : null,
+            ].filter(Boolean) as { l: string; v: string }[]
+            if (specs.length === 0) return null
+            return (
+              <div className="absolute bottom-8 left-8 right-8 flex gap-3 overflow-x-auto scrollbar-hide pointer-events-none translate-y-10 opacity-0 group-hover/car:translate-y-0 group-hover/car:opacity-100 transition-all duration-700">
+                {specs.map(s => (
+                  <div key={s.l} className="glass border border-white/10 px-6 py-3 rounded-2xl flex flex-col items-start min-w-[100px]">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-white/40">{s.l}</span>
+                    <span className="text-xs font-outfit font-black italic">{s.v}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )
+          })()}
           
           {/* Floating Luxury Badge */}
           <div className="absolute top-8 left-8 px-6 py-2 bg-white text-black text-[9px] font-outfit font-black uppercase tracking-[0.3em] rounded-full shadow-2xl">

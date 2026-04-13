@@ -1,3 +1,5 @@
+'use client'
+import { useMemo } from 'react'
 import type { Car } from '@/lib/supabase/types'
 
 interface Props {
@@ -12,6 +14,11 @@ function resolveImageUrl(url: string | null): string {
 }
 
 export default function FleetPreview({ cars, slug }: Props) {
+  // On subdomain routing the browser path starts at "/", not "/sites/slug"
+  const base = useMemo(() => {
+    if (typeof window === 'undefined') return `/sites/${slug}`
+    return window.location.pathname.startsWith('/sites/') ? `/sites/${slug}` : ''
+  }, [])
   const featured = cars.slice(0, 6)
 
   if (featured.length === 0) return null
@@ -26,7 +33,7 @@ export default function FleetPreview({ cars, slug }: Props) {
           </h2>
         </div>
         <a
-          href={`/sites/${slug}/fleet`}
+          href={`${base}/fleet`}
           className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors border border-white/10 hover:border-white/20 px-6 py-3 rounded-full"
         >
           View All {cars.length} Vehicles
@@ -40,7 +47,7 @@ export default function FleetPreview({ cars, slug }: Props) {
         {featured.map((car, i) => (
           <a
             key={car.id}
-            href={`/sites/${slug}/${car.id}`}
+            href={`${base}/${car.id}`}
             className="group relative rounded-[2rem] overflow-hidden border border-white/5 hover:border-white/15 transition-all duration-700 bg-white/[0.02]"
             style={{ animation: `fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards ${i * 0.1}s`, opacity: 0 }}
           >
@@ -90,7 +97,7 @@ export default function FleetPreview({ cars, slug }: Props) {
       {/* Mobile CTA */}
       <div className="mt-8 sm:hidden text-center">
         <a
-          href={`/sites/${slug}/fleet`}
+          href={`${base}/fleet`}
           className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors border border-white/10 px-8 py-3.5 rounded-full"
         >
           View All {cars.length} Vehicles

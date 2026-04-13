@@ -28,7 +28,11 @@ export default function QuickSearchBar({ slug, locations }: Props) {
     if (pickTime) params.set('pickTime', pickTime)
     if (retTime) params.set('retTime', retTime)
     if (location) params.set('location', location)
-    window.location.href = `/sites/${slug}/fleet?${params.toString()}`
+    // When on a subdomain, the browser path starts at "/" — middleware handles the /sites/slug rewrite internally.
+    // Navigating to /sites/slug/fleet from a subdomain would double the prefix → 404.
+    const onSubdomain = !window.location.pathname.startsWith('/sites/')
+    const fleetPath = onSubdomain ? '/fleet' : `/sites/${slug}/fleet`
+    window.location.href = `${fleetPath}?${params.toString()}`
   }
 
   const selectCls = 'w-full bg-white/5 border border-white/5 rounded-xl px-3 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none appearance-none [color-scheme:dark]'
