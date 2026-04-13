@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { updateTenantBranding } from '../actions'
+import { updateTenantBranding, saveCustomDomain } from '../actions'
 
 interface Props {
   tenant: {
@@ -9,6 +9,7 @@ interface Props {
     slug?: string | null
     brand_name?: string | null
     plan?: string | null
+    custom_domain?: string | null
   } | null
   customDomainsEnabled?: boolean
 }
@@ -17,6 +18,9 @@ export default function DomainSettings({ tenant, customDomainsEnabled = false }:
   const [isPending, startTransition] = useTransition()
   const [msg, setMsg] = useState('')
   const [slug, setSlug] = useState(tenant?.slug || '')
+  const [customDomain, setCustomDomain] = useState(tenant?.custom_domain || '')
+  const [isCustomPending, startCustomTransition] = useTransition()
+  const [customMsg, setCustomMsg] = useState('')
 
   const publicUrl = slug ? `https://${slug}.epuredrive.com` : null
   const canUseCustomDomain = customDomainsEnabled
@@ -30,6 +34,17 @@ export default function DomainSettings({ tenant, customDomainsEnabled = false }:
       })
       if (result.error) setMsg('Error: ' + result.error)
       else setMsg('Domain updated successfully.')
+    })
+  }
+
+  async function handleCustomDomainSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setCustomMsg('')
+    startCustomTransition(async () => {
+      const trimmed = customDomain.trim().toLowerCase()
+      const result = await saveCustomDomain({ domain: trimmed || null })
+      if (result.error) setCustomMsg('Error: ' + result.error)
+      else setCustomMsg('Custom domain saved.')
     })
   }
 
@@ -99,7 +114,7 @@ export default function DomainSettings({ tenant, customDomainsEnabled = false }:
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
             <div className="text-center">
               <div className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest inline-block mb-3">
-                Feature Not Enabled
+                Enterprise Only
               </div>
               <p className="text-white/40 text-sm">Custom domains are not enabled for your organization. Contact your administrator.</p>
             </div>
@@ -117,23 +132,41 @@ export default function DomainSettings({ tenant, customDomainsEnabled = false }:
             <p className="text-white/30 text-xs">Point your own domain to your fleet page</p>
           </div>
         </div>
-        <div className="space-y-1">
-          <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest pl-1">Domain</label>
-          <input
-            type="text"
-            disabled={!canUseCustomDomain}
-            placeholder="fleet.yourbrand.com"
-            className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white outline-none transition-all disabled:opacity-30"
-          />
-        </div>
-        <div className="mt-4 p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-          <div className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">DNS Configuration</div>
-          <div className="grid grid-cols-3 gap-4 text-xs">
-            <div><span className="text-white/30">Type:</span> <span className="text-white/60">CNAME</span></div>
-            <div><span className="text-white/30">Host:</span> <span className="text-white/60">fleet</span></div>
-            <div><span className="text-white/30">Value:</span> <span className="text-white/60">cname.epuredrive.com</span></div>
+        <form onSubmit={handleCustomDomainSubmit} className="space-y-5">
+          {customMsg && (
+            <div className={`p-3 rounded-xl text-sm border ${customMsg.startsWith('Error') ? 'bg-red-500/20 text-red-300 border-red-500/30' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'}`}>
+              {customMsg}
+            </div>
+          )}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest pl-1">Domain</label>
+            <input
+              type="text"
+              value={customDomain}
+              onChange={(e) => setCustomDomain(e.target.value)}
+              disabled={!canUseCustomDomain}
+              placeholder="fleet.yourbrand.com"
+              className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white outline-none transition-all disabled:opacity-30"
+            />
           </div>
-        </div>
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+            <div className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">DNS Configuration</div>
+            <div className="grid grid-cols-3 gap-4 text-xs">
+              <div><span className="text-white/30">Type:</span> <span className="text-white/60">CNAME</span></div>
+              <div><span className="text-white/30">Host:</span> <span className="text-white/60">fleet</span></div>
+              <div><span className="text-white/30">Value:</span> <span className="text-white/60">cname.epuredrive.com</span></div>
+            </div>
+          </div>
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={isCustomPending || !canUseCustomDomain}
+              className="bg-white text-black hover:bg-white/90 px-8 py-3 rounded-xl text-xs font-bold uppercase tracking-[0.15em] transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {isCustomPending ? 'Saving...' : 'Save Domain'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )

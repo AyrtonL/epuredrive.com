@@ -7,7 +7,7 @@ export default async function DomainPage() {
   const { supabase, tenantId } = await requireTenantId()
 
   const [{ data: tenant }, customDomainsEnabled] = await Promise.all([
-    supabase.from('tenants').select('name, slug, brand_name, plan').eq('id', tenantId).single(),
+    supabase.from('tenants').select('name, slug, brand_name, plan, custom_domain').eq('id', tenantId).single(),
     isFeatureEnabled(tenantId, 'custom_domains'),
   ])
 
