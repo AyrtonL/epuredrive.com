@@ -35,29 +35,7 @@ const PILLARS = [
   },
 ]
 
-const LOCATIONS = [
-  {
-    label: 'Showroom',
-    address: 'Aventura, FL',
-    note: 'Free pickup & drop-off',
-    fee: '$0',
-    mapsQuery: 'Aventura+Mall,+Aventura,+FL',
-  },
-  {
-    label: 'MIA Airport',
-    address: 'Miami International Airport',
-    note: 'Terminal delivery available',
-    fee: '$120',
-    mapsQuery: 'Miami+International+Airport,+Miami,+FL',
-  },
-  {
-    label: 'FLL Airport',
-    address: 'Fort Lauderdale-Hollywood Intl',
-    note: 'Terminal delivery available',
-    fee: '$120',
-    mapsQuery: 'Fort+Lauderdale+Hollywood+International+Airport,+FL',
-  },
-]
+
 
 export default function ExperienceSection({ cars, tenant }: Props) {
   const displayName = tenant.brand_name || tenant.name
@@ -167,46 +145,48 @@ export default function ExperienceSection({ cars, tenant }: Props) {
         )}
 
         {/* ── Pickup locations ── */}
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[.4em] text-primary/60 mb-4">Pickup &amp; Delivery</p>
-          <h3 className="font-outfit font-black text-3xl text-white mb-12 tracking-tight">
-            We come to you.
-          </h3>
+        {tenant.pickup_locations && tenant.pickup_locations.length > 0 && (
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[.4em] text-primary/60 mb-4">Pickup &amp; Delivery</p>
+            <h3 className="font-outfit font-black text-3xl text-white mb-12 tracking-tight">
+              We come to you.
+            </h3>
 
-          <div className="grid md:grid-cols-3 gap-4">
-            {LOCATIONS.map((loc) => (
-              <a
-                key={loc.label}
-                href={`https://www.google.com/maps/search/?api=1&query=${loc.mapsQuery}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group glass border border-white/5 rounded-[2rem] p-8 hover:border-white/15 transition-all duration-500 block"
-              >
-                <div className="flex items-start justify-between mb-6">
-                  <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
-                    <svg className="w-5 h-5 text-white/40 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+            <div className="grid md:grid-cols-3 gap-4">
+              {tenant.pickup_locations.map((loc) => (
+                <a
+                  key={loc.label}
+                  href={`https://www.google.com/maps/search/?api=1&query=${loc.maps_query}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group glass border border-white/5 rounded-[2rem] p-8 hover:border-white/15 transition-all duration-500 block"
+                >
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
+                      <svg className="w-5 h-5 text-white/40 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                      </svg>
+                    </div>
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${loc.fee === 0 ? 'text-primary border-primary/20 bg-primary/10' : 'text-white/30 border-white/10 bg-white/5'}`}>
+                      {loc.fee === 0 ? 'Free' : `$${loc.fee}`}
+                    </span>
+                  </div>
+                  <h4 className="font-outfit font-black text-lg text-white mb-1 tracking-tight">{loc.label}</h4>
+                  <p className="text-[11px] text-white/30 font-bold mb-2">{loc.address}</p>
+                  <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">{loc.note}</p>
+
+                  <div className="mt-6 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/20 group-hover:text-primary/60 transition-colors">
+                    <span>View on Google Maps</span>
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                     </svg>
                   </div>
-                  <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${loc.fee === '$0' ? 'text-primary border-primary/20 bg-primary/10' : 'text-white/30 border-white/10 bg-white/5'}`}>
-                    {loc.fee}
-                  </span>
-                </div>
-                <h4 className="font-outfit font-black text-lg text-white mb-1 tracking-tight">{loc.label}</h4>
-                <p className="text-[11px] text-white/30 font-bold mb-2">{loc.address}</p>
-                <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">{loc.note}</p>
-
-                <div className="mt-6 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/20 group-hover:text-primary/60 transition-colors">
-                  <span>View on Google Maps</span>
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                  </svg>
-                </div>
-              </a>
-            ))}
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
       </div>
     </section>

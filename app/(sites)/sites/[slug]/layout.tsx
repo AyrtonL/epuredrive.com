@@ -28,13 +28,15 @@ export default async function TenantLayout({ children, params }: Props) {
   const supabase = createClient()
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, slug, logo_url, brand_name, primary_color, accent_color, plan')
+    .select('id, name, slug, logo_url, brand_name, primary_color, accent_color, plan, tagline')
     .eq('slug', params.slug)
     .single()
 
   if (!tenant) notFound()
 
-  const displayName = (tenant as Tenant).brand_name || (tenant as Tenant).name
+  const typedTenant = tenant as Tenant
+  const displayName = typedTenant.brand_name || typedTenant.name
+  const tagline = typedTenant.tagline || 'Premium Fleet'
 
   return (
     <div className="bg-[#040404] text-white min-h-screen font-sans selection:bg-primary/30 scroll-smooth">
@@ -52,20 +54,20 @@ export default async function TenantLayout({ children, params }: Props) {
                   <span className="font-outfit font-black text-xl text-primary tracking-tighter">É</span>
                 )}
               </div>
-              <div className="flex flex-col -space-y-1">
+              <a href={`/sites/${params.slug}`} className="flex flex-col -space-y-1">
                 <span className="font-outfit font-black text-lg tracking-tight group-hover/logo:text-glow transition-all duration-500">{displayName}</span>
-                <span className="text-[10px] font-black uppercase tracking-[.3em] text-white/20">Elite Performance</span>
-              </div>
+                <span className="text-[10px] font-black uppercase tracking-[.3em] text-white/20">{tagline}</span>
+              </a>
             </div>
-            
+
             <div className="flex items-center gap-8">
               <div className="hidden md:flex items-center gap-6">
-                {['Cars', 'Experience', 'Concierge'].map((item) => (
-                  <a key={item} href={`#${item.toLowerCase()}`} className="text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors">{item}</a>
-                ))}
+                <a href={`/sites/${params.slug}/fleet`} className="text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors">Fleet</a>
+                <a href={`/sites/${params.slug}#experience`} className="text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors">Experience</a>
+                <a href={`/sites/${params.slug}#concierge`} className="text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors">Concierge</a>
               </div>
               <a
-                href="#cars"
+                href={`/sites/${params.slug}/fleet`}
                 className="bg-white text-black font-black uppercase tracking-widest text-[10px] px-8 py-3.5 rounded-full hover:bg-primary hover:text-white hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/5"
               >
                 Reserve Now

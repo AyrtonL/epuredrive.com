@@ -52,13 +52,14 @@ export default function ConciergeSection({ tenant, cars }: Props) {
 
       setFormState('success')
 
-      // Also open WhatsApp with the inquiry summary
-      const waPhone = '17862096770'
-      const vehicleLabel = vehicle ? `\nVehicle of interest: ${vehicle}` : ''
-      const serviceLabel = service ? `\nService: ${service}` : ''
-      const msgLabel = message ? `\nMessage: ${message}` : ''
-      const waMsg = `Hello ${displayName}! I'd like to make a concierge inquiry.\n\nName: ${name}\nEmail: ${email}${phone ? `\nPhone: ${phone}` : ''}${serviceLabel}${vehicleLabel}${msgLabel}`
-      window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(waMsg)}`, '_blank')
+      // Also open WhatsApp with the inquiry summary (only if tenant has configured a phone)
+      if (tenant.whatsapp_phone) {
+        const vehicleLabel = vehicle ? `\nVehicle of interest: ${vehicle}` : ''
+        const serviceLabel = service ? `\nService: ${service}` : ''
+        const msgLabel = message ? `\nMessage: ${message}` : ''
+        const waMsg = `Hello ${displayName}! I'd like to make a concierge inquiry.\n\nName: ${name}\nEmail: ${email}${phone ? `\nPhone: ${phone}` : ''}${serviceLabel}${vehicleLabel}${msgLabel}`
+        window.open(`https://wa.me/${tenant.whatsapp_phone}?text=${encodeURIComponent(waMsg)}`, '_blank')
+      }
     } catch {
       setFormState('error')
     }
@@ -226,17 +227,19 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                   <div className="h-px flex-1 bg-white/5" />
                 </div>
 
-                <a
-                  href="https://wa.me/17862096770"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-[#25D366]/20 bg-[#25D366]/5 text-[#25D366] text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366]/10 transition-all"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                  </svg>
-                  WhatsApp / SMS
-                </a>
+                {tenant.whatsapp_phone && (
+                  <a
+                    href={`https://wa.me/${tenant.whatsapp_phone}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-[#25D366]/20 bg-[#25D366]/5 text-[#25D366] text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366]/10 transition-all"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                    </svg>
+                    WhatsApp / SMS
+                  </a>
+                )}
               </form>
             )}
           </div>

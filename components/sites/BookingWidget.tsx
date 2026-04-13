@@ -1,28 +1,51 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import type { Car } from '@/lib/supabase/types'
+import { useState, useMemo, useEffect } from 'react'
+import type { Car, PickupLocation } from '@/lib/supabase/types'
 
 interface Props {
   car: Car
   tenantId: string
+  pickupLocations?: PickupLocation[]
+  whatsappPhone?: string | null
 }
 
 const timeOptions = [
-  '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', 
+  '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM',
   '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM'
 ];
 
-export default function BookingWidget({ car, tenantId }: Props) {
+export default function BookingWidget({ car, tenantId, pickupLocations = [], whatsappPhone }: Props) {
   const [pickDate, setPickDate] = useState('')
   const [retDate, setRetDate] = useState('')
   const [pickTime, setPickTime] = useState('10:00 AM')
   const [retTime, setRetTime] = useState('10:00 AM')
-  const [location, setLocation] = useState('aventura')
+  const [locationIdx, setLocationIdx] = useState(0)
 
   const [hasProtection, setHasProtection] = useState(false)
   const [hasToll, setHasToll] = useState(false)
   const [hasFuel, setHasFuel] = useState(false)
+
+  const selectedLocation: PickupLocation | null = pickupLocations[locationIdx] ?? null
+
+  // Pre-fill from URL params (set by QuickSearchBar on the home page)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const p = params.get('pickup')
+    const r = params.get('return')
+    const pt = params.get('pickTime')
+    const rt = params.get('retTime')
+    const loc = params.get('location')
+    if (p) setPickDate(p)
+    if (r) setRetDate(r)
+    if (pt) setPickTime(pt)
+    if (rt) setRetTime(rt)
+    if (loc && pickupLocations.length > 0) {
+      const idx = pickupLocations.findIndex(l => l.label === loc)
+      if (idx >= 0) setLocationIdx(idx)
+    }
+  }, [pickupLocations])
 
   // Booking form state
   const [showBookingForm, setShowBookingForm] = useState(false)
@@ -42,45 +65,43 @@ export default function BookingWidget({ car, tenantId }: Props) {
 
   const { total, locFee, protFee, tollFee, fuelFee, baseCost } = useMemo(() => {
     const baserate = Number(car.daily_rate) || 0
-    let base = days * baserate
-    let lFee = (location === 'mia' || location === 'fll') ? 120 : 0
-    let pFee = hasProtection ? days * 30 : 0
-    let tFee = hasToll ? days * 10 : 0
-    let fFee = hasFuel ? 80 : 0
+    const base = days * baserate
+    const lFee = selectedLocation?.fee ?? 0
+    const pFee = hasProtection ? days * 30 : 0
+    const tFee = hasToll ? days * 10 : 0
+    const fFee = hasFuel ? 80 : 0
     return {
       baseCost: base, locFee: lFee, protFee: pFee, tollFee: tFee, fuelFee: fFee,
       total: base + lFee + pFee + tFee + fFee
     }
-  }, [days, car.daily_rate, location, hasProtection, hasToll, hasFuel])
+  }, [days, car.daily_rate, selectedLocation, hasProtection, hasToll, hasFuel])
+
+  const locationLabel = selectedLocation
+    ? `${selectedLocation.label}${selectedLocation.fee > 0 ? ` ($${selectedLocation.fee})` : ' (Free)'}`
+    : 'Not specified'
 
   const handleWhatsapp = () => {
     if (!pickDate || !retDate) { alert('Please select dates first.'); return; }
-    const phone = '17862096770'
+    if (!whatsappPhone) { alert('WhatsApp contact not configured.'); return; }
     const addons = []
     if (hasProtection) addons.push('Standard Protection')
     if (hasToll) addons.push('Toll Package')
     if (hasFuel) addons.push('Prepaid Fuel')
-    
+
     const msg = `Hello! I'd like to reserve the *${car.make} ${car.model_full || car.model}*.\n\n`
       + `Pickup: ${pickDate} at ${pickTime}\n`
       + `Return: ${retDate} at ${retTime}\n`
-      + `Location: ${locLabels[location] || location}\n`
+      + `Location: ${locationLabel}\n`
       + (addons.length ? `Add-ons: ${addons.join(', ')}\n` : '')
       + `Estimated Total: $${total}`
 
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank')
+    window.open(`https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   const handleOnlineBooking = () => {
     if (!pickDate || !retDate) { alert('Please select dates first.'); return; }
     setShowBookingForm(true)
     setFormError('')
-  }
-
-  const locLabels: Record<string, string> = {
-    aventura: 'Aventura Showroom (Free)',
-    mia: 'MIA Airport ($120)',
-    fll: 'FLL Airport ($120)'
   }
 
   const handleSubmitBooking = async () => {
@@ -104,7 +125,7 @@ export default function BookingWidget({ car, tenantId }: Props) {
           pickup_time: pickTime,
           return_date: retDate,
           return_time: retTime,
-          pickup_location: locLabels[location] || location,
+          pickup_location: locationLabel,
           total_amount: total,
           notes: [
             hasProtection ? 'Shield Protection' : '',
@@ -177,15 +198,19 @@ export default function BookingWidget({ car, tenantId }: Props) {
         </div>
 
         {/* Location Select */}
-        <div className="space-y-2">
-          <label className="block text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Delivery / Pickup</label>
-          <select value={location} onChange={e => setLocation(e.target.value)}
-            className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-4 text-xs text-white font-bold focus:ring-1 focus:ring-primary/40 outline-none appearance-none">
-            <option value="aventura" className="text-black">Miami: Aventura Showroom (Free)</option>
-            <option value="mia" className="text-black">Miami Int&apos;l Airport ($120 Fee)</option>
-            <option value="fll" className="text-black">Ft. Lauderdale Airport ($120 Fee)</option>
-          </select>
-        </div>
+        {pickupLocations.length > 0 && (
+          <div className="space-y-2">
+            <label className="block text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Delivery / Pickup</label>
+            <select value={locationIdx} onChange={e => setLocationIdx(Number(e.target.value))}
+              className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-4 text-xs text-white font-bold focus:ring-1 focus:ring-primary/40 outline-none appearance-none">
+              {pickupLocations.map((loc, i) => (
+                <option key={`${loc.label}-${i}`} value={i} className="text-black">
+                  {loc.label} {loc.fee > 0 ? `($${loc.fee} Fee)` : '(Free)'}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Add-ons - Minimalist Toggle Style */}
         <div className="space-y-3 pt-4">
@@ -233,13 +258,15 @@ export default function BookingWidget({ car, tenantId }: Props) {
                   We&apos;ll confirm your {car.make} {car.model} reservation shortly via email or phone.
                 </p>
               </div>
-              <button
-                onClick={handleWhatsapp}
-                className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-[#25D366]/20 bg-[#25D366]/5 text-[#25D366] text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366]/10 transition-all"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                Message Us on WhatsApp
-              </button>
+              {whatsappPhone && (
+                <button
+                  onClick={handleWhatsapp}
+                  className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-[#25D366]/20 bg-[#25D366]/5 text-[#25D366] text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366]/10 transition-all"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  Message Us on WhatsApp
+                </button>
+              )}
             </div>
           ) : showBookingForm ? (
             /* ── Booking Form ── */
@@ -293,13 +320,15 @@ export default function BookingWidget({ car, tenantId }: Props) {
                 Reserve This Vehicle
               </button>
 
-              <button
-                onClick={handleWhatsapp}
-                className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-[#25D366]/20 bg-[#25D366]/5 text-[#25D366] text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366]/10 transition-all"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                Inquire via SMS / WhatsApp
-              </button>
+              {whatsappPhone && (
+                <button
+                  onClick={handleWhatsapp}
+                  className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border border-[#25D366]/20 bg-[#25D366]/5 text-[#25D366] text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366]/10 transition-all"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  Inquire via SMS / WhatsApp
+                </button>
+              )}
             </>
           )}
         </div>

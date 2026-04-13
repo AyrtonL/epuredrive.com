@@ -56,6 +56,12 @@ export async function updateTenantBranding(data: {
   accent_color?: string | null
   logo_url?: string | null
   slug?: string | null
+  tagline?: string | null
+  description?: string | null
+  hero_image_url?: string | null
+  whatsapp_phone?: string | null
+  business_hours?: string | null
+  pickup_locations?: Array<{ label: string; address: string; note: string; fee: number; maps_query: string }>
 }): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
@@ -101,6 +107,39 @@ export async function uploadLogo(
 
   const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
   const fileName = `${tenantId}/logo-${Date.now()}.${ext}`
+
+  const { error } = await supabase.storage
+    .from('tenant-assets')
+    .upload(fileName, file, { contentType: file.type, upsert: false })
+
+  if (error) return { url: null, error: error.message }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('tenant-assets')
+    .getPublicUrl(fileName)
+
+  return { url: publicUrl, error: null }
+}
+
+export async function uploadHeroImage(
+  formData: FormData
+): Promise<{ url: string | null; error: string | null }> {
+  const supabase = createClient()
+  const tenantId = await getTenantId()
+
+  const file = formData.get('file') as File | null
+  if (!file) return { url: null, error: 'No file provided.' }
+
+  const allowed = ['image/jpeg', 'image/png', 'image/webp']
+  if (!allowed.includes(file.type)) {
+    return { url: null, error: 'Only JPEG, PNG, and WebP are allowed.' }
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    return { url: null, error: 'File must be under 10MB.' }
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const fileName = `${tenantId}/hero-${Date.now()}.${ext}`
 
   const { error } = await supabase.storage
     .from('tenant-assets')

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useMemo } from 'react'
-import type { Car } from '@/lib/supabase/types'
+import type { Car, PickupLocation } from '@/lib/supabase/types'
 import CarDetailView from './CarDetailView'
 import BookingWidget from './BookingWidget'
 
@@ -8,9 +8,11 @@ interface Props {
   cars: Car[]
   slug: string
   tenantId: string
+  pickupLocations?: PickupLocation[]
+  whatsappPhone?: string | null
 }
 
-export default function FleetGrid({ cars, slug, tenantId }: Props) {
+export default function FleetGrid({ cars, slug, tenantId, pickupLocations = [], whatsappPhone = null }: Props) {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
@@ -110,7 +112,7 @@ export default function FleetGrid({ cars, slug, tenantId }: Props) {
                   <div className="relative group/booking">
                      {/* Dynamic Background Flare */}
                     <div className="absolute -z-10 -right-20 -top-20 w-80 h-80 bg-primary/5 rounded-full blur-[120px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-                    <BookingWidget car={car} tenantId={tenantId} />
+                    <BookingWidget car={car} tenantId={tenantId} pickupLocations={pickupLocations} whatsappPhone={whatsappPhone} />
                   </div>
                 </div>
               </div>

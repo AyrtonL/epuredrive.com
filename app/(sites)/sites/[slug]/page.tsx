@@ -1,10 +1,11 @@
-// app/sites/[slug]/page.tsx
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Tenant, Car } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
 import { buildFleetMetadata } from '@/lib/utils/fleet-metadata'
-import FleetGrid from '@/components/sites/FleetGrid'
+import HeroSection from '@/components/sites/HeroSection'
+import QuickSearchBar from '@/components/sites/QuickSearchBar'
+import FleetPreview from '@/components/sites/FleetPreview'
 import ExperienceSection from '@/components/sites/ExperienceSection'
 import ConciergeSection from '@/components/sites/ConciergeSection'
 
@@ -24,46 +25,42 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return buildFleetMetadata(tenant as Pick<Tenant, 'name' | 'brand_name' | 'slug' | 'logo_url'>, params.slug)
 }
 
-export default async function FleetPage({ params }: Props) {
+export default async function TenantLandingPage({ params }: Props) {
   const supabase = createClient()
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, brand_name')
+    .select('*')
     .eq('slug', params.slug)
     .single()
 
   if (!tenant) notFound()
 
+  const typedTenant = {
+    ...tenant,
+    pickup_locations: Array.isArray(tenant.pickup_locations) ? tenant.pickup_locations : [],
+  } as Tenant
+
   const { data: cars } = await supabase
     .from('cars')
     .select('*')
-    .eq('tenant_id', (tenant as Tenant).id)
+    .eq('tenant_id', typedTenant.id)
     .in('status', ['available', 'active'])
     .order('daily_rate', { ascending: true })
 
   const fleet = (cars ?? []) as Car[]
-  const displayName = (tenant as Tenant).brand_name || (tenant as Tenant).name
 
   return (
     <main>
-      {/* Hero */}
-      <div className="max-w-6xl mx-auto px-6 pt-16 pb-8 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-          Our Fleet
-        </h1>
-        <p className="text-white/50 text-lg max-w-xl mx-auto">
-          {fleet.length > 0
-            ? `${fleet.length} vehicle${fleet.length === 1 ? '' : 's'} available from ${displayName}`
-            : `No vehicles currently available from ${displayName}`}
-        </p>
-      </div>
+      <HeroSection tenant={typedTenant} carCount={fleet.length} />
 
-      <FleetGrid cars={fleet} slug={params.slug} tenantId={(tenant as Tenant).id} />
+      <QuickSearchBar slug={params.slug} locations={typedTenant.pickup_locations} />
 
-      <ExperienceSection cars={fleet} tenant={tenant as Tenant} />
+      <FleetPreview cars={fleet} slug={params.slug} />
 
-      <ConciergeSection tenant={tenant as Tenant} cars={fleet} />
+      <ExperienceSection cars={fleet} tenant={typedTenant} />
+
+      <ConciergeSection tenant={typedTenant} cars={fleet} />
     </main>
   )
 }

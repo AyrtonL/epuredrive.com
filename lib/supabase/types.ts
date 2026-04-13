@@ -1,3 +1,11 @@
+export interface PickupLocation {
+  label: string
+  address: string
+  note: string
+  fee: number
+  maps_query: string
+}
+
 export interface Tenant {
   id: string
   name: string
@@ -7,6 +15,12 @@ export interface Tenant {
   primary_color: string | null
   accent_color: string | null
   brand_name: string | null
+  tagline: string | null
+  description: string | null
+  hero_image_url: string | null
+  whatsapp_phone: string | null
+  business_hours: string | null
+  pickup_locations: PickupLocation[]
 }
 
 export interface Car {
