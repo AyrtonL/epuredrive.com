@@ -2,7 +2,10 @@
 import type { Metadata } from 'next'
 import SignUpForm from '@/components/SignUpForm'
 
-export const metadata: Metadata = { title: 'Sign Up — éPure Drive Platform' }
+export const metadata: Metadata = {
+  title: 'Sign Up — éPure Drive Platform',
+  robots: { index: false, follow: false },
+}
 
 export default function SignUpPage() {
   return (
