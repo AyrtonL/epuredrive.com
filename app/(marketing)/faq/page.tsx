@@ -23,7 +23,7 @@ const faqs = [
       },
       {
         q: 'Can I use my own domain?',
-        a: 'Yes. Pro, Max, and Enterprise plans support custom subdomains (e.g., fleet.yourbrand.com). Full custom domain support is coming in Phase 2.',
+        a: 'Custom domain support (e.g., fleet.yourbrand.com) is available on the Enterprise plan.',
       },
     ],
   },
