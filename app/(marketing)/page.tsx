@@ -112,7 +112,7 @@ export default function HomePage() {
             and sets a new standard for how rental businesses are run.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-200">
+          <div className="flex flex-col sm:flex-row items-center gap-5 justify-center animate-fade-in-up animation-delay-200">
             <Link
               href="/sign-up"
               className="bg-white text-black font-semibold px-10 py-4 rounded-xl text-base hover:bg-white/90 active:scale-[0.97] transition-all cta-glow"
@@ -121,9 +121,9 @@ export default function HomePage() {
             </Link>
             <Link
               href="/login"
-              className="glass text-white/70 font-semibold px-10 py-4 rounded-xl text-base hover:text-white hover:bg-white/[0.06] transition-all"
+              className="text-white/50 text-sm font-medium hover:text-white transition-colors underline-offset-4 hover:underline"
             >
-              Sign in to dashboard
+              Sign in to dashboard →
             </Link>
           </div>
         </div>
@@ -271,13 +271,13 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* ── Pro (Coming Soon) ── */}
+            {/* ── Pro ── */}
             <div className="rounded-2xl p-8 text-left relative overflow-hidden group transition-all duration-500 flex flex-col bg-glass-gradient backdrop-blur-xl border-2 border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),0_0_60px_rgba(255,255,255,0.03)]">
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/40 to-white/5" />
 
-              {/* Coming Soon badge — visible */}
-              <div className="absolute top-5 right-5 bg-white/15 text-white text-[10px] font-bold px-3 py-1.5 rounded-full tracking-widest uppercase border border-white/20">
-                Coming Soon
+              {/* Most Popular badge */}
+              <div className="absolute top-5 right-5 bg-white text-black text-[10px] font-bold px-3 py-1.5 rounded-full tracking-widest uppercase">
+                Most Popular
               </div>
 
               <div className="text-[11px] font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
@@ -307,21 +307,17 @@ export default function HomePage() {
                 </li>
               </ul>
 
-              <a
-                href="mailto:info@epuredrive.com?subject=Pro%20Plan%20Waitlist"
+              <Link
+                href="/sign-up"
                 className="block text-center bg-white text-black font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/90 transition-colors mt-auto"
               >
-                Join waitlist
-              </a>
+                Get started
+              </Link>
             </div>
 
             {/* ── Max ── */}
             <div className="glass rounded-2xl p-8 text-left relative overflow-hidden group hover:border-white/15 transition-all duration-500 flex flex-col">
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/10 to-transparent" />
-
-              <div className="absolute top-5 right-5 bg-white/15 text-white text-[10px] font-bold px-3 py-1.5 rounded-full tracking-widest uppercase border border-white/20">
-                Coming Soon
-              </div>
 
               <div className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-6">
                 Max
@@ -349,12 +345,12 @@ export default function HomePage() {
                 </li>
               </ul>
 
-              <a
-                href="mailto:info@epuredrive.com?subject=Max%20Plan%20Waitlist"
+              <Link
+                href="/sign-up"
                 className="block text-center bg-white/[0.06] text-white/60 font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/10 hover:text-white transition-colors border border-white/10 mt-auto"
               >
-                Join waitlist
-              </a>
+                Get started
+              </Link>
             </div>
 
             {/* ── Enterprise ── */}
