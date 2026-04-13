@@ -16,11 +16,13 @@ export async function requireTenantId(): Promise<{ supabase: ReturnType<typeof c
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('tenant_id')
+    .select('tenant_id, full_name')
     .eq('id', user.id)
     .single()
 
   if (profile?.tenant_id) {
+    // Force name collection for invited users who haven't completed onboarding
+    if (!profile.full_name) redirect('/dashboard/onboarding')
     return { supabase, tenantId: profile.tenant_id }
   }
 
@@ -33,11 +35,11 @@ export async function requireTenantId(): Promise<{ supabase: ReturnType<typeof c
         id: user.id,
         tenant_id: meta.tenant_id,
         role: meta.role,
-        full_name: user.email ?? null,
+        full_name: null, // Set during onboarding
       })
 
     if (!error) {
-      return { supabase, tenantId: meta.tenant_id }
+      redirect('/dashboard/onboarding')
     }
   }
 

@@ -1,4 +1,5 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
+import { createAdminClient } from '@/lib/supabase/admin'
 import PageHeader from '@/components/dashboard/PageHeader'
 import type { Profile } from '@/lib/supabase/types'
 import InviteModal from './InviteModal'
@@ -26,10 +27,18 @@ const ROLE_CONFIG: Record<string, { color: string; description: string; permissi
   },
 }
 
+interface PendingInvite {
+  id: string
+  email: string
+  role: string
+  invitedAt: string
+}
+
 export default async function RolesPage() {
   const { supabase, tenantId } = await requireTenantId()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Active team members (accepted invite + profile created)
   const { data: members } = await supabase
     .from('profiles')
     .select('id, full_name, role, created_at')
@@ -37,6 +46,24 @@ export default async function RolesPage() {
     .order('created_at')
 
   const rows = (members as Profile[]) ?? []
+
+  // Pending invites: invited but not yet accepted (no profile row yet)
+  const adminClient = createAdminClient()
+  const { data: { users: allUsers } } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
+  const activeIds = new Set(rows.map(r => r.id))
+  const pending: PendingInvite[] = allUsers
+    .filter(u =>
+      u.user_metadata?.tenant_id === tenantId &&
+      u.invited_at &&
+      !u.email_confirmed_at &&
+      !activeIds.has(u.id)
+    )
+    .map(u => ({
+      id: u.id,
+      email: u.email ?? '',
+      role: u.user_metadata?.role ?? 'staff',
+      invitedAt: u.invited_at!,
+    }))
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 animate-fade-in pb-32">
@@ -73,44 +100,76 @@ export default async function RolesPage() {
           <InviteModal />
         </div>
 
-        {rows.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-white/30 text-sm">No team members found.</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {rows.map((member) => {
-              const isCurrentUser = member.id === user?.id
-              const roleConfig = ROLE_CONFIG[member.role ?? 'staff'] ?? ROLE_CONFIG.staff
-              return (
-                <div
-                  key={member.id}
-                  className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.04] transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 text-sm font-bold uppercase">
-                      {(member.full_name ?? 'U')[0]}
+        <div className="space-y-2">
+          {/* Active members */}
+          {rows.map((member) => {
+            const isCurrentUser = member.id === user?.id
+            const roleConfig = ROLE_CONFIG[member.role ?? 'staff'] ?? ROLE_CONFIG.staff
+            return (
+              <div
+                key={member.id}
+                className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.04] transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 text-sm font-bold uppercase">
+                    {(member.full_name ?? 'U')[0]}
+                  </div>
+                  <div>
+                    <div className="text-white text-sm font-medium flex items-center gap-2">
+                      {member.full_name ?? 'Unnamed'}
+                      {isCurrentUser && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/40 font-bold uppercase tracking-wider">You</span>
+                      )}
                     </div>
-                    <div>
-                      <div className="text-white text-sm font-medium flex items-center gap-2">
-                        {member.full_name ?? 'Unnamed'}
-                        {isCurrentUser && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/40 font-bold uppercase tracking-wider">You</span>
-                        )}
-                      </div>
-                      <div className="text-white/30 text-xs mt-0.5">
-                        Joined {member.created_at ? new Date(member.created_at).toLocaleDateString() : 'N/A'}
-                      </div>
+                    <div className="text-white/30 text-xs mt-0.5">
+                      Joined {member.created_at ? new Date(member.created_at).toLocaleDateString() : 'N/A'}
                     </div>
                   </div>
-                  <span className={`inline-block px-2.5 py-1 text-[10px] font-bold tracking-widest rounded-full uppercase border ${roleConfig.color}`}>
-                    {member.role ?? 'staff'}
+                </div>
+                <span className={`inline-block px-2.5 py-1 text-[10px] font-bold tracking-widest rounded-full uppercase border ${roleConfig.color}`}>
+                  {member.role ?? 'staff'}
+                </span>
+              </div>
+            )
+          })}
+
+          {/* Pending invites */}
+          {pending.map((invite) => {
+            const roleConfig = ROLE_CONFIG[invite.role] ?? ROLE_CONFIG.staff
+            return (
+              <div
+                key={invite.id}
+                className="flex items-center justify-between p-4 rounded-xl bg-white/[0.01] border border-white/[0.03] border-dashed transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-white/[0.03] border border-dashed border-white/10 flex items-center justify-center text-white/20 text-sm font-bold">
+                    ?
+                  </div>
+                  <div>
+                    <div className="text-white/50 text-sm font-medium">{invite.email}</div>
+                    <div className="text-white/20 text-xs mt-0.5">
+                      Invited {new Date(invite.invitedAt).toLocaleDateString()} · Pending acceptance
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`inline-block px-2.5 py-1 text-[10px] font-bold tracking-widest rounded-full uppercase border opacity-50 ${roleConfig.color}`}>
+                    {invite.role}
+                  </span>
+                  <span className="inline-block px-2.5 py-1 text-[10px] font-bold tracking-widest rounded-full uppercase border text-yellow-400/70 bg-yellow-500/5 border-yellow-500/15">
+                    Pending
                   </span>
                 </div>
-              )
-            })}
-          </div>
-        )}
+              </div>
+            )
+          })}
+
+          {rows.length === 0 && pending.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-white/30 text-sm">No team members found.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
