@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
+import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
 
 async function getTenantId(): Promise<string> {
   const { tenantId } = await requireTenantId()
@@ -168,4 +169,114 @@ export async function getTenantBranding(): Promise<{
     .select('name, plan, slug, brand_name, primary_color, accent_color')
     .eq('id', tenantId).single()
   return data ?? null
+}
+
+// ── Custom Domain ──────────────────────────────────────────────────────────────
+
+const DOMAIN_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i
+
+async function syncNetlifyCustomDomain(domain: string): Promise<string | null> {
+  const token = process.env.NETLIFY_AUTH_TOKEN
+  const siteId = process.env.NETLIFY_SITE_ID
+  if (!token || !siteId) {
+    console.error('[syncNetlifyCustomDomain] Missing NETLIFY_AUTH_TOKEN or NETLIFY_SITE_ID')
+    return 'Could not register domain in hosting: missing credentials'
+  }
+
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  }
+
+  const getRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
+    headers, cache: 'no-store',
+  })
+  if (!getRes.ok) return `Netlify error ${getRes.status} while reading site`
+
+  const site = await getRes.json()
+  const current: string[] = site.domain_aliases ?? []
+
+  if (!current.includes(domain)) {
+    const patchRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ domain_aliases: [...current, domain] }),
+    })
+    if (!patchRes.ok) return `Netlify error ${patchRes.status} while adding domain alias`
+  }
+
+  return null
+}
+
+async function removeNetlifyCustomDomain(domain: string): Promise<void> {
+  const token = process.env.NETLIFY_AUTH_TOKEN
+  const siteId = process.env.NETLIFY_SITE_ID
+  if (!token || !siteId) return
+
+  try {
+    const getRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!getRes.ok) return
+    const site = await getRes.json()
+    const aliases: string[] = site.domain_aliases ?? []
+    const updated = aliases.filter((a: string) => a !== domain)
+    await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain_aliases: updated }),
+    })
+  } catch {
+    // Best-effort — do not throw, the primary error is already being surfaced
+  }
+}
+
+export async function saveCustomDomain(
+  data: { domain: string | null }
+): Promise<{ error: string | null }> {
+  const supabase = createClient()
+  const tenantId = await getTenantId()
+
+  if (data.domain !== null) {
+    const allowed = await isFeatureEnabled(tenantId, 'custom_domains')
+    if (!allowed) {
+      return { error: 'Custom domains require an Enterprise plan. Contact support to upgrade.' }
+    }
+  }
+
+  if (!data.domain) {
+    const { error } = await supabase
+      .from('tenants')
+      .update({ custom_domain: null })
+      .eq('id', tenantId)
+    if (!error) revalidatePath('/dashboard/settings/domain')
+    return { error: error?.message ?? null }
+  }
+
+  const domain = data.domain.trim().toLowerCase()
+
+  if (domain.includes('epuredrive.com')) {
+    return { error: 'Cannot use epuredrive.com as a custom domain.' }
+  }
+
+  if (!DOMAIN_REGEX.test(domain)) {
+    return { error: 'Invalid domain format. Use something like fleet.yourcompany.com' }
+  }
+
+  const netlifyError = await syncNetlifyCustomDomain(domain)
+  if (netlifyError) return { error: netlifyError }
+
+  const { error: dbError } = await supabase
+    .from('tenants')
+    .update({ custom_domain: domain })
+    .eq('id', tenantId)
+
+  if (dbError) {
+    // Compensating rollback: remove the alias from Netlify
+    await removeNetlifyCustomDomain(domain)
+    return { error: dbError.message }
+  }
+
+  revalidatePath('/dashboard/settings/domain')
+  return { error: null }
 }

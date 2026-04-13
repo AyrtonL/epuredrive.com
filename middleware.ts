@@ -2,15 +2,40 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getTenantSlug } from '@/lib/utils/routing'
+import { createEdgeClient } from '@/lib/supabase/edge'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const host = request.headers.get('host') ?? ''
-  const slug = getTenantSlug(host)
 
+  // Path 1: epuredrive.com subdomain → slug-based rewrite (no DB call)
+  const slug = getTenantSlug(host)
   if (slug) {
     const url = request.nextUrl.clone()
-    // Rewrite /{anything} on subdomain → /sites/{slug}/{anything}
     url.pathname = `/sites/${slug}${url.pathname === '/' ? '' : url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
+  // Path 2: custom domain → look up tenant by custom_domain column
+  const hostname = host.split(':')[0]
+  const isEpureDomain =
+    hostname === 'epuredrive.com' ||
+    hostname === 'www.epuredrive.com' ||
+    hostname.endsWith('.epuredrive.com')
+
+  if (!isEpureDomain) {
+    const supabase = createEdgeClient()
+    const { data } = await supabase
+      .from('tenants')
+      .select('slug')
+      .eq('custom_domain', hostname)
+      .maybeSingle()
+
+    if (!data?.slug) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    const url = request.nextUrl.clone()
+    url.pathname = `/sites/${data.slug}${url.pathname === '/' ? '' : url.pathname}`
     return NextResponse.rewrite(url)
   }
 
@@ -19,7 +44,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals, static files, and API routes
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
