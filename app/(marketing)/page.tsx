@@ -290,9 +290,6 @@ export default function HomePage() {
                   <span className="text-white/50 text-xs">&#10003;</span> Up to 50 vehicles
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Custom domain
-                </li>
-                <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Full brand customization
                 </li>
                 <li className="flex items-center gap-3">
@@ -331,6 +328,9 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Multi-location management
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-white/50 text-xs">&#10003;</span> Custom domain
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> White-label branding
