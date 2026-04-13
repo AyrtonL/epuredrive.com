@@ -3,7 +3,6 @@
 import { useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SignatureCanvas = dynamic(() => import('react-signature-canvas'), { ssr: false }) as any
 
 interface Car {
@@ -465,12 +464,12 @@ export default function AgreementSigner({
                 Terms &amp; Conditions
               </div>
               <div className="text-[11px] text-gray-600 leading-relaxed space-y-2 border border-gray-200 rounded-lg p-4 bg-gray-50 max-h-60 overflow-y-auto">
-                <p><strong>1. RENTER ELIGIBILITY.</strong> Renter must be 21 years of age or older, possess a valid driver's license, and have a clean driving record. A credit or debit card is required for deposit.</p>
+                <p><strong>1. RENTER ELIGIBILITY.</strong> Renter must be 21 years of age or older, possess a valid driver&apos;s license, and have a clean driving record. A credit or debit card is required for deposit.</p>
                 <p><strong>2. VEHICLE USE.</strong> The vehicle may only be used on paved roads within the United States. Off-road use, racing, or any illegal activity is strictly prohibited. Smoking in the vehicle is not permitted.</p>
                 <p><strong>3. FUEL POLICY.</strong> The vehicle will be returned with the same fuel level as at pickup. A refueling fee of $10 plus the cost of fuel will be charged if the vehicle is returned with less fuel.</p>
                 <p><strong>4. MILEAGE.</strong> If a mileage limit is specified, overages will be charged at the rate stated above per mile. Unlimited mileage agreements are subject to fair use within the rental period.</p>
-                <p><strong>5. DAMAGE & LIABILITY.</strong> Renter is responsible for any damage to the vehicle during the rental period including collision, vandalism, and theft. Renter's personal auto insurance or credit card coverage may apply.</p>
-                <p><strong>6. LATE RETURN.</strong> Vehicles returned more than 2 hours late will be charged an additional day's rental rate.</p>
+                <p><strong>5. DAMAGE &amp; LIABILITY.</strong> Renter is responsible for any damage to the vehicle during the rental period including collision, vandalism, and theft. Renter&apos;s personal auto insurance or credit card coverage may apply.</p>
+                <p><strong>6. LATE RETURN.</strong> Vehicles returned more than 2 hours late will be charged an additional day&apos;s rental rate.</p>
                 <p><strong>7. CANCELLATION.</strong> Cancellations made more than 48 hours in advance are fully refundable. Cancellations within 48 hours may be subject to a one-day charge.</p>
                 <p><strong>8. TRAFFIC VIOLATIONS & TOLLS.</strong> Renter is responsible for all traffic citations, parking tickets, and toll charges incurred during the rental period. An administrative fee of $35 may be assessed per citation.</p>
                 <p><strong>9. BREAKDOWN.</strong> In the event of a mechanical breakdown, renter must contact the company immediately. Unauthorized repairs will not be reimbursed.</p>
