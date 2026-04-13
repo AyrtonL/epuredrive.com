@@ -10,7 +10,7 @@ const ROLES = [
   { value: 'finance', label: 'Finance', desc: 'Finance only' },
 ]
 
-export default function InviteModal() {
+export default function InviteModal({ canInvite }: { canInvite: boolean }) {
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('staff')
@@ -38,6 +38,20 @@ export default function InviteModal() {
         setRole('staff')
       }
     })
+  }
+
+  if (!canInvite) {
+    return (
+      <a
+        href="/dashboard/settings/billing"
+        className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-amber-500/15 transition-all"
+      >
+        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        Upgrade to Pro
+      </a>
+    )
   }
 
   return (

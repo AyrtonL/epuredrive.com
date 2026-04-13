@@ -38,6 +38,15 @@ export default async function RolesPage() {
   const { supabase, tenantId } = await requireTenantId()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Fetch tenant plan
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('plan')
+    .eq('id', tenantId)
+    .single()
+  const plan = tenant?.plan ?? 'free'
+  const canInvite = plan === 'pro' || plan === 'max'
+
   // Active team members (accepted invite + profile created)
   const { data: members } = await supabase
     .from('profiles')
@@ -97,7 +106,7 @@ export default async function RolesPage() {
       <div className="glass border border-white/10 rounded-3xl p-8">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-white font-bold">Team Members</h3>
-          <InviteModal />
+          <InviteModal canInvite={canInvite} />
         </div>
 
         <div className="space-y-2">
