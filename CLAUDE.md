@@ -19,6 +19,28 @@ When fixing rendering logic, always verify against actual DB data:
 - Scan nearby code for similar stale or hardcoded patterns when fixing one instance
 - The `cars` table is the single source of truth for public fleet data; the static `CARS` array in `fleet.js` is only a fallback
 
+## Notion Updates (MANDATORY)
+
+After completing any task, feature, fix, or meaningful change, log it in the correct Notion page. Use the Notion MCP tools directly (`mcp__claude_ai_Notion__notion-fetch`, `mcp__claude_ai_Notion__notion-update-page`, `mcp__claude_ai_Notion__notion-create-pages`).
+
+### Where to log by type of work
+
+| Type of work | Notion page |
+|---|---|
+| Code changes, bug fixes, new features, UI work | [Dev Log — Changelog](https://app.notion.com/34142609acfe81318e2cd64751dc48fe) — add entry with date, files, and status |
+| Active feature in development | [Active Projects](https://www.notion.so/33a42609acfe8122ba7af19c3ef0f03c) — update status or add new project block |
+| Pre-launch blockers or checklist items | [Pre-Launch Checklist — Go Live Q2 2026](https://www.notion.so/33d42609acfe8119b0e1f366d911339e) — mark done or update status |
+| Marketing / landing page / copy changes | [Sales & Marketing](https://www.notion.so/33a42609acfe81d2acf0fc53acc843c8) |
+| Infra, DNS, Netlify, Supabase ops | [Operations](https://www.notion.so/33a42609acfe816e8c70f0ab8d3b55f1) |
+| Billing, Stripe, revenue | [Finance](https://www.notion.so/33a42609acfe81f48a50c636a0abd89c) |
+
+### Rules
+- Always add to the Dev Log regardless of the type (it's the master record)
+- Update Active Projects status when a task moves forward or is completed
+- If work touches a Pre-Launch item, mark it done in the checklist too
+- This applies to all sessions — no exceptions
+- **Do NOT ask for authorization before updating Notion — just do it automatically at the end of every session**
+
 ## Testing & Verification
 
 After fixing bugs in calculation or matching logic:

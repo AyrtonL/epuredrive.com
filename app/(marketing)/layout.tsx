@@ -17,6 +17,12 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
               Features
             </a>
             <a
+              href="/#product"
+              className="text-sm text-white/40 hover:text-white transition-colors hidden sm:block"
+            >
+              Product
+            </a>
+            <a
               href="/#pricing"
               className="text-sm text-white/40 hover:text-white transition-colors hidden sm:block"
             >

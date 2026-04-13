@@ -79,12 +79,7 @@ export default function MarketingFooter() {
                   info@epuredrive.com
                 </a>
               </li>
-              <li>+1 (561) 546-1461</li>
-              <li>
-                19707 Turnberry Way
-                <br />
-                Aventura, Florida 33180
-              </li>
+              <li>Miami, Florida</li>
             </ul>
           </div>
         </div>

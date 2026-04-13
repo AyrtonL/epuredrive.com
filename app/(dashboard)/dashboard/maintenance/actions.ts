@@ -25,14 +25,16 @@ export async function updateService(
   data: Partial<Omit<CarService, 'id' | 'tenant_id'>>
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
-  const { error } = await supabase.from('car_services').update(data).eq('id', id)
+  const tenantId = await getTenantId()
+  const { error } = await supabase.from('car_services').update(data).eq('id', id).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/maintenance')
   return { error: error?.message ?? null }
 }
 
 export async function deleteService(id: number): Promise<{ error: string | null }> {
   const supabase = createClient()
-  const { error } = await supabase.from('car_services').delete().eq('id', id)
+  const tenantId = await getTenantId()
+  const { error } = await supabase.from('car_services').delete().eq('id', id).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/maintenance')
   return { error: error?.message ?? null }
 }
@@ -42,7 +44,8 @@ export async function updateCarMileage(
   mileage: number
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
-  const { error } = await supabase.from('cars').update({ mileage }).eq('id', carId)
+  const tenantId = await getTenantId()
+  const { error } = await supabase.from('cars').update({ mileage }).eq('id', carId).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/maintenance')
   revalidatePath('/dashboard/fleet')
   return { error: error?.message ?? null }

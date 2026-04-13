@@ -2,15 +2,36 @@
  * POST /api/team/invite
  * Sends a Supabase invitation email and creates the profile row.
  * Requires: SUPABASE_SERVICE_ROLE_KEY
+ *
+ * NOTE: Prefer the `inviteTeamMember` Server Action in settings/roles/actions.ts
+ * which has the same functionality with auth already enforced by requireTenantId().
  */
 
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 
 const ALLOWED_ROLES = ['admin', 'finance', 'staff'] as const
 type Role = (typeof ALLOWED_ROLES)[number]
 
 export async function POST(request: Request) {
+  // Verify the caller is authenticated and belongs to the supplied tenantId
+  const supabaseUser = createClient()
+  const { data: { user } } = await supabaseUser.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { data: profile } = await supabaseUser
+    .from('profiles')
+    .select('tenant_id, role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.tenant_id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   let body: unknown
   try {
     body = await request.json()
@@ -19,6 +40,11 @@ export async function POST(request: Request) {
   }
 
   const { email, name, role, tenantId } = body as Record<string, string>
+
+  // Ensure the caller can only invite into their own tenant
+  if (tenantId !== profile.tenant_id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   if (!email) {
     return NextResponse.json({ error: 'Email is required' }, { status: 400 })

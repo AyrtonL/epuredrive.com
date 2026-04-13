@@ -52,7 +52,17 @@ export async function syncCustomersFromReservations(): Promise<{ created: number
 
 export async function deleteCustomer(id: number): Promise<{ error: string | null }> {
   const supabase = createClient()
-  const { error } = await supabase.from('customers').delete().eq('id', id)
+  const tenantId = await getTenantId()
+  const { error } = await supabase.from('customers').delete().eq('id', id).eq('tenant_id', tenantId)
+  revalidatePath('/dashboard/clients/customers')
+  return { error: error?.message ?? null }
+}
+
+export async function bulkDeleteCustomers(ids: number[]): Promise<{ error: string | null }> {
+  if (!ids.length) return { error: null }
+  const supabase = createClient()
+  const tenantId = await getTenantId()
+  const { error } = await supabase.from('customers').delete().in('id', ids).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/clients/customers')
   return { error: error?.message ?? null }
 }

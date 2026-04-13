@@ -23,6 +23,18 @@ export async function GET(request: NextRequest) {
 
   const supabase = createAdminClient()
 
+  // Verify the car actually belongs to this tenant before returning any data
+  const { data: carCheck } = await supabase
+    .from('cars')
+    .select('id')
+    .eq('id', Number(carId))
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (!carCheck) {
+    return NextResponse.json({ bookedRanges: [] })
+  }
+
   const { data, error } = await supabase
     .from('reservations')
     .select('pickup_date, return_date')

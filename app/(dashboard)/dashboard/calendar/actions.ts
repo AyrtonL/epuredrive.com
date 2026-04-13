@@ -39,7 +39,8 @@ export async function createBlockedDateForAllCars(data: {
 
 export async function deleteBlockedDate(id: number): Promise<{ error: string | null }> {
   const supabase = createClient()
-  const { error } = await supabase.from('blocked_dates').delete().eq('id', id)
+  const tenantId = await getTenantId()
+  const { error } = await supabase.from('blocked_dates').delete().eq('id', id).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/calendar')
   return { error: error?.message ?? null }
 }

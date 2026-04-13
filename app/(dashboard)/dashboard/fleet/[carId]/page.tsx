@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import CarEditForm from './CarEditForm'
 import type { Car } from '@/lib/supabase/types'
@@ -10,12 +10,13 @@ interface Props {
 }
 
 export default async function CarEditPage({ params }: Props) {
-  const supabase = createClient()
+  const { supabase, tenantId } = await requireTenantId()
 
   const { data: car } = await supabase
     .from('cars')
     .select('*')
     .eq('id', Number(params.carId))
+    .eq('tenant_id', tenantId)
     .single()
 
   if (!car) notFound()

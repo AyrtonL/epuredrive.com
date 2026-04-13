@@ -14,15 +14,17 @@ export async function updateMemberRole(
   role: 'admin' | 'staff' | 'finance'
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
-  const { error } = await supabase.from('profiles').update({ role }).eq('id', profileId)
+  const tenantId = await getTenantId()
+  const { error } = await supabase.from('profiles').update({ role }).eq('id', profileId).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/team')
   return { error: error?.message ?? null }
 }
 
 export async function removeMember(profileId: string): Promise<{ error: string | null }> {
   const supabase = createClient()
-  // Remove from tenant by nullifying tenant_id
-  const { error } = await supabase.from('profiles').update({ tenant_id: null }).eq('id', profileId)
+  const tenantId = await getTenantId()
+  // Remove from tenant by nullifying tenant_id — only if the profile belongs to caller's tenant
+  const { error } = await supabase.from('profiles').update({ tenant_id: null }).eq('id', profileId).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/team')
   return { error: error?.message ?? null }
 }

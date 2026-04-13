@@ -25,14 +25,16 @@ export async function updateTransaction(
   data: Partial<Omit<Transaction, 'id' | 'tenant_id'>>
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
-  const { error } = await supabase.from('transactions').update(data).eq('id', id)
+  const tenantId = await getTenantId()
+  const { error } = await supabase.from('transactions').update(data).eq('id', id).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/finance/expenses')
   return { error: error?.message ?? null }
 }
 
 export async function deleteTransaction(id: number): Promise<{ error: string | null }> {
   const supabase = createClient()
-  const { error } = await supabase.from('transactions').delete().eq('id', id)
+  const tenantId = await getTenantId()
+  const { error } = await supabase.from('transactions').delete().eq('id', id).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/finance/expenses')
   return { error: error?.message ?? null }
 }

@@ -229,7 +229,6 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* 3-column grid — all cards aligned at top and stretched to equal height */}
           <div className="grid md:grid-cols-3 gap-6 items-stretch">
             {/* ── Starter ── */}
             <div className="glass rounded-2xl p-8 text-left relative overflow-hidden group hover:border-white/15 transition-all duration-500 flex flex-col">
@@ -244,18 +243,19 @@ export default function HomePage() {
 
               <ul className="space-y-3 text-sm text-white/50 mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> 1 Premium branded page
+                  <span className="text-white/50 text-xs">&#10003;</span> 1 branded fleet page
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Up to 5 vehicles
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span>{' '}
-                  {'{slug}'}.epuredrive.com
+                  <span className="text-white/50 text-xs">&#10003;</span> {'{slug}'}.epuredrive.com
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Live availability
-                  calendar
+                  <span className="text-white/50 text-xs">&#10003;</span> Live availability calendar
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-white/50 text-xs">&#10003;</span> Booking management
                 </li>
               </ul>
 
@@ -270,15 +270,12 @@ export default function HomePage() {
             {/* ── Pro ── */}
             <div className="rounded-2xl p-8 text-left relative overflow-hidden group transition-all duration-500 flex flex-col bg-glass-gradient backdrop-blur-xl border-2 border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),0_0_60px_rgba(255,255,255,0.03)]">
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/40 to-white/5" />
-
-              {/* Most Popular badge */}
               <div className="absolute top-5 right-5 bg-white text-black text-[10px] font-bold px-3 py-1.5 rounded-full tracking-widest uppercase">
                 Most Popular
               </div>
 
               <div className="text-[11px] font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
-                Pro{' '}
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                Pro <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               </div>
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">$49</span>
@@ -290,60 +287,25 @@ export default function HomePage() {
                   <span className="text-white/50 text-xs">&#10003;</span> Everything in Starter
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Up to 20 vehicles
+                  <span className="text-white/50 text-xs">&#10003;</span> Up to 50 vehicles
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Connect custom domain
+                  <span className="text-white/50 text-xs">&#10003;</span> Custom domain
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Deep brand customization
+                  <span className="text-white/50 text-xs">&#10003;</span> Full brand customization
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Stripe payments
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-white/50 text-xs">&#10003;</span> Unlimited team members
                 </li>
               </ul>
 
               <Link
                 href="/sign-up"
                 className="block text-center bg-white text-black font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/90 transition-colors mt-auto"
-              >
-                Get started
-              </Link>
-            </div>
-
-            {/* ── Max ── */}
-            <div className="glass rounded-2xl p-8 text-left relative overflow-hidden group hover:border-white/15 transition-all duration-500 flex flex-col">
-              <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/10 to-transparent" />
-
-              <div className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-6">
-                Max
-              </div>
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-5xl font-extrabold text-white tracking-tight">$99</span>
-              </div>
-              <div className="text-white/30 text-sm mb-8">/ month</div>
-
-              <ul className="space-y-3 text-sm text-white/50 mb-10 font-light flex-1">
-                <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Everything in Pro
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Up to 50 vehicles
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Unlimited team members
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> White-label branding
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> SLA &amp; priority support
-                </li>
-              </ul>
-
-              <Link
-                href="/sign-up"
-                className="block text-center bg-white/[0.06] text-white/60 font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/10 hover:text-white transition-colors border border-white/10 mt-auto"
               >
                 Get started
               </Link>
@@ -362,13 +324,16 @@ export default function HomePage() {
 
               <ul className="space-y-3 text-sm text-white/50 mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Everything in Max
+                  <span className="text-white/50 text-xs">&#10003;</span> Everything in Pro
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Unlimited vehicles
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Multi-location management
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-white/50 text-xs">&#10003;</span> White-label branding
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Dedicated account manager

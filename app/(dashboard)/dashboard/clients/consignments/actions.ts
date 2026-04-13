@@ -20,14 +20,16 @@ export async function createConsignment(data: Omit<Consignment, 'id' | 'tenant_i
 
 export async function updateConsignment(id: number, data: Partial<Omit<Consignment, 'id' | 'tenant_id'>>): Promise<{ error: string | null }> {
   const supabase = createClient()
-  const { error } = await supabase.from('consignments').update(data).eq('id', id)
+  const tenantId = await getTenantId()
+  const { error } = await supabase.from('consignments').update(data).eq('id', id).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/clients/consignments')
   return { error: error?.message ?? null }
 }
 
 export async function deleteConsignment(id: number): Promise<{ error: string | null }> {
   const supabase = createClient()
-  const { error } = await supabase.from('consignments').delete().eq('id', id)
+  const tenantId = await getTenantId()
+  const { error } = await supabase.from('consignments').delete().eq('id', id).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/clients/consignments')
   return { error: error?.message ?? null }
 }

@@ -87,11 +87,12 @@ export async function updateReservation(
   data: Partial<Omit<Reservation, 'id' | 'tenant_id'>>
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
+  const tenantId = await getTenantId()
 
   // Fetch current reservation before update (for cancellation notification)
   let prevReservation: Reservation | null = null
   if (data.status === 'cancelled') {
-    const { data: prev } = await supabase.from('reservations').select('*').eq('id', id).single()
+    const { data: prev } = await supabase.from('reservations').select('*').eq('id', id).eq('tenant_id', tenantId).single()
     prevReservation = prev
   }
 
@@ -99,6 +100,7 @@ export async function updateReservation(
     .from('reservations')
     .update(data)
     .eq('id', id)
+    .eq('tenant_id', tenantId)
   revalidatePath('/dashboard/bookings')
 
   if (!error && data.status === 'cancelled' && prevReservation) {
@@ -191,10 +193,28 @@ export async function sendAgreement(reservationId: number): Promise<{ error: str
 
 export async function deleteReservation(id: number): Promise<{ error: string | null }> {
   const supabase = createClient()
+  const tenantId = await getTenantId()
   const { error } = await supabase
     .from('reservations')
     .delete()
     .eq('id', id)
+    .eq('tenant_id', tenantId)
+  revalidatePath('/dashboard/bookings')
+  return { error: error?.message ?? null }
+}
+
+export async function bulkUpdateReservations(
+  ids: number[],
+  data: Partial<Omit<Reservation, 'id' | 'tenant_id'>>
+): Promise<{ error: string | null }> {
+  if (!ids.length) return { error: null }
+  const supabase = createClient()
+  const tenantId = await getTenantId()
+  const { error } = await supabase
+    .from('reservations')
+    .update(data)
+    .in('id', ids)
+    .eq('tenant_id', tenantId)
   revalidatePath('/dashboard/bookings')
   return { error: error?.message ?? null }
 }
