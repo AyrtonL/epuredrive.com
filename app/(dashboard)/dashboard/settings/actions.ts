@@ -169,3 +169,77 @@ export async function getTenantBranding(): Promise<{
     .eq('id', tenantId).single()
   return data ?? null
 }
+
+// ── Custom Domain ──────────────────────────────────────────────────────────────
+
+const DOMAIN_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i
+
+async function syncNetlifyCustomDomain(domain: string): Promise<string | null> {
+  const token = process.env.NETLIFY_AUTH_TOKEN
+  const siteId = process.env.NETLIFY_SITE_ID
+  if (!token || !siteId) {
+    console.error('[syncNetlifyCustomDomain] Missing NETLIFY_AUTH_TOKEN or NETLIFY_SITE_ID')
+    return 'Could not register domain in hosting: missing credentials'
+  }
+
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  }
+
+  const getRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
+    headers, cache: 'no-store',
+  })
+  if (!getRes.ok) return `Netlify error ${getRes.status} while reading site`
+
+  const site = await getRes.json()
+  const current: string[] = site.domain_aliases ?? []
+
+  if (!current.includes(domain)) {
+    const patchRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ domain_aliases: [...current, domain] }),
+    })
+    if (!patchRes.ok) return `Netlify error ${patchRes.status} while adding domain alias`
+  }
+
+  return null
+}
+
+export async function saveCustomDomain(
+  data: { domain: string | null }
+): Promise<{ error: string | null }> {
+  const supabase = createClient()
+  const tenantId = await getTenantId()
+
+  if (!data.domain) {
+    const { error } = await supabase
+      .from('tenants')
+      .update({ custom_domain: null })
+      .eq('id', tenantId)
+    revalidatePath('/dashboard/settings/domain')
+    return { error: error?.message ?? null }
+  }
+
+  const domain = data.domain.trim().toLowerCase()
+
+  if (domain.includes('epuredrive.com')) {
+    return { error: 'Cannot use epuredrive.com as a custom domain.' }
+  }
+
+  if (!DOMAIN_REGEX.test(domain)) {
+    return { error: 'Invalid domain format. Use something like fleet.yourcompany.com' }
+  }
+
+  const netlifyError = await syncNetlifyCustomDomain(domain)
+  if (netlifyError) return { error: netlifyError }
+
+  const { error } = await supabase
+    .from('tenants')
+    .update({ custom_domain: domain })
+    .eq('id', tenantId)
+
+  revalidatePath('/dashboard/settings/domain')
+  return { error: error?.message ?? null }
+}
