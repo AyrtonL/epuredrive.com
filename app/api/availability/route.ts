@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
  * GET /api/availability?carId=123&tenantId=uuid
@@ -25,6 +20,8 @@ export async function GET(request: NextRequest) {
   from.setDate(from.getDate() - 30)
   const until = new Date(today)
   until.setDate(until.getDate() + 365)
+
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('reservations')
