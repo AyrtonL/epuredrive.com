@@ -2,6 +2,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
+import ProductShowcase from './ProductShowcase'
 
 export const metadata: Metadata = {
   title: 'éPure Drive — Premium Fleet Software for Car Rental Businesses',
@@ -9,37 +10,52 @@ export const metadata: Metadata = {
     'A Miami-based SaaS platform built for the modern car rental industry. Streamline operations, elevate the customer journey.',
 }
 
-const FEATURES = [
+const SPLIT_FEATURES = [
   {
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
       </svg>
     ),
-    title: 'Branded Fleet Page',
-    description: 'Your own premium page showcasing your vehicles — live in minutes, no code needed.',
+    title: 'Your branded fleet page,\nlive in minutes.',
+    description:
+      'A premium public page showcasing your vehicles — with real-time availability, pricing, and your brand. No code, no developer, no waiting.',
+    bullets: ['Custom domain support', 'Live availability calendar', 'Auto-syncs with your inventory'],
+    screenshot: '/assets/screenshots/dash-fleet.png',
+    alt: 'Fleet management dashboard',
   },
   {
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
       </svg>
     ),
-    title: 'Smart Booking System',
-    description: 'Automated availability, confirmations, and calendar sync with Turo and iCal.',
+    title: 'Every booking,\nunder control.',
+    description:
+      'Track all your rentals in one place — who booked, which vehicle, dates, amounts, and status. Automated confirmations keep customers informed without lifting a finger.',
+    bullets: ['Turo & iCal sync', 'Automated confirmations', 'Customer records per booking'],
+    screenshot: '/assets/screenshots/dash-bookings.png',
+    alt: 'Bookings dashboard',
   },
   {
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
       </svg>
     ),
-    title: 'Finance & ROI',
-    description: 'Track revenue, expenses, and profitability per vehicle in real time.',
+    title: 'Know exactly what\neach car earns.',
+    description:
+      'Real-time ROI per vehicle — revenue, expenses, and net profit broken down so you always know which cars are working for you and which aren\'t.',
+    bullets: ['Revenue vs. expense breakdown', 'Net profit per vehicle', 'Consignment split tracking'],
+    screenshot: '/assets/screenshots/dash-roi.png',
+    alt: 'Finance and ROI dashboard',
   },
+]
+
+const MINI_FEATURES = [
   {
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
       </svg>
     ),
@@ -48,7 +64,7 @@ const FEATURES = [
   },
   {
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
       </svg>
     ),
@@ -57,7 +73,7 @@ const FEATURES = [
   },
   {
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
       </svg>
     ),
@@ -176,13 +192,46 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─────────────────── Features ─────────────────── */}
+      {/* ─────────────────── Testimonial ─────────────────── */}
+      <section className="relative py-24 bg-black overflow-hidden">
+        <div className="section-divider absolute top-0 left-0 right-0" />
+        <div className="max-w-3xl mx-auto px-6 text-center relative z-10">
+          {/* Stars */}
+          <div className="flex justify-center gap-1 mb-8">
+            {[...Array(5)].map((_, i) => (
+              <svg key={i} className="w-4 h-4 text-white/60" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            ))}
+          </div>
+
+          {/* Quote */}
+          <blockquote className="text-2xl md:text-3xl font-light text-white/80 leading-relaxed mb-10 tracking-tight">
+            &ldquo;Antes manejaba todo en hojas de Excel y WhatsApp. Ahora tengo mis carros, las
+            reservas y las finanzas en un solo lugar. En menos de una semana ya estaba
+            operando.&rdquo;
+          </blockquote>
+
+          {/* Author */}
+          <div className="flex items-center justify-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/60 font-semibold text-sm">
+              CM
+            </div>
+            <div className="text-left">
+              <div className="text-white font-medium text-sm">Carlos Medina</div>
+              <div className="text-white/35 text-xs">CML Premium Rentals · Brickell, Miami FL</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────── Features (split) ─────────────────── */}
       <section className="relative py-32 overflow-hidden bg-black" id="features">
         <div className="absolute inset-0 bg-grid-lines opacity-100 pointer-events-none" />
         <div className="absolute inset-0 bg-warm-glow pointer-events-none" />
 
         <div className="max-w-6xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-20 animate-fade-in">
+          <div className="text-center mb-24">
             <span className="text-[11px] font-bold tracking-[0.3em] text-white/25 uppercase block mb-4">
               Platform
             </span>
@@ -194,8 +243,58 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/[0.06] rounded-2xl overflow-hidden">
-            {FEATURES.map((feature) => (
+          {/* Split features */}
+          <div className="space-y-32">
+            {SPLIT_FEATURES.map((feature, i) => (
+              <div
+                key={feature.title}
+                className={`flex flex-col lg:flex-row items-center gap-12 lg:gap-20 ${
+                  i % 2 === 1 ? 'lg:flex-row-reverse' : ''
+                }`}
+              >
+                {/* Text side */}
+                <div className="flex-1 min-w-0">
+                  <div className="text-white/30 mb-5">{feature.icon}</div>
+                  <h3 className="text-3xl md:text-4xl font-bold text-white mb-5 tracking-tight leading-tight whitespace-pre-line">
+                    {feature.title}
+                  </h3>
+                  <p className="text-white/45 leading-relaxed mb-8 font-light text-lg">
+                    {feature.description}
+                  </p>
+                  <ul className="space-y-3">
+                    {feature.bullets.map((bullet) => (
+                      <li key={bullet} className="flex items-center gap-3 text-white/55 text-sm">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/40 flex-shrink-0" />
+                        {bullet}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Screenshot side */}
+                <div className="flex-1 min-w-0 w-full">
+                  <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.5)]">
+                    <div className="bg-[#1a1a1a] px-3 py-2.5 flex items-center gap-1.5 border-b border-white/[0.06]">
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                    </div>
+                    <Image
+                      src={feature.screenshot}
+                      alt={feature.alt}
+                      width={800}
+                      height={500}
+                      className="w-full object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Mini features grid */}
+          <div className="mt-32 grid md:grid-cols-3 gap-px bg-white/[0.06] rounded-2xl overflow-hidden">
+            {MINI_FEATURES.map((feature) => (
               <div
                 key={feature.title}
                 className="bg-black/90 p-10 hover:bg-white/[0.03] transition-all duration-500 group"
@@ -203,7 +302,7 @@ export default function HomePage() {
                 <div className="text-white/30 group-hover:text-white/60 transition-colors duration-500 mb-5">
                   {feature.icon}
                 </div>
-                <h3 className="text-white font-semibold mb-3 text-lg group-hover:text-white transition-colors">
+                <h3 className="text-white font-semibold mb-3 text-lg">
                   {feature.title}
                 </h3>
                 <p className="text-white/40 text-sm leading-relaxed font-light">
@@ -214,6 +313,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ─────────────────── Product Showcase ─────────────────── */}
+      <ProductShowcase />
 
       {/* ─────────────────── Pricing ─────────────────── */}
       <section className="relative py-32 bg-black" id="pricing">
