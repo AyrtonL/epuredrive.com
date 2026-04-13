@@ -3,6 +3,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import ProductShowcase from './ProductShowcase'
+import JsonLd from '@/components/JsonLd'
+import {
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+  buildSoftwareApplicationSchema,
+} from '@/lib/utils/jsonld'
 
 export const metadata: Metadata = {
   title: 'éPure Drive — Premium Fleet Software for Car Rental Businesses',
@@ -37,56 +43,6 @@ const SPLIT_FEATURES = [
     screenshot: '/assets/screenshots/dash-bookings.png',
     alt: 'Bookings dashboard',
   },
-  {
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-      </svg>
-    ),
-    title: 'Know exactly what\neach car earns.',
-    description:
-      'Real-time ROI per vehicle — revenue, expenses, and net profit broken down so you always know which cars are working for you and which aren\'t.',
-    bullets: ['Revenue vs. expense breakdown', 'Net profit per vehicle', 'Consignment split tracking'],
-    screenshot: '/assets/screenshots/dash-roi.png',
-    alt: 'Finance and ROI dashboard',
-  },
-]
-
-const MINI_FEATURES = [
-  {
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-      </svg>
-    ),
-    title: 'Fleet Management',
-    description: 'Maintenance schedules, service history, and vehicle status at a glance.',
-  },
-  {
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-      </svg>
-    ),
-    title: 'Client Management',
-    description: 'Full customer records, rental history, and consignment tracking.',
-  },
-  {
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-      </svg>
-    ),
-    title: 'Team Access',
-    description: 'Role-based access for staff, finance teams, and managers.',
-  },
-]
-
-const STATS = [
-  { value: 'Miami', label: 'Headquarters' },
-  { value: '100%', label: 'SaaS — no installs' },
-  { value: '$0', label: 'to get started' },
-  { value: '5 min', label: 'to go live' },
 ]
 
 export default function HomePage() {
@@ -145,55 +101,45 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─────────────────── Stats bar ─────────────────── */}
-      <section className="relative bg-black py-10">
+      {/* ─────────────────── Integrations strip ─────────────────── */}
+      <section className="relative bg-black py-12">
         <div className="section-divider absolute top-0 left-0 right-0" />
         <div className="max-w-5xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {STATS.map((stat) => (
-              <div key={stat.label}>
-                <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
-                <div className="text-[11px] text-white/30 uppercase tracking-[0.2em] font-medium">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
+          <p className="text-center text-[11px] font-bold tracking-[0.3em] text-white/20 uppercase mb-8">
+            Works with the tools you already use
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
+            {/* Turo */}
+            <span className="text-white/25 text-lg font-bold tracking-tight hover:text-white/50 transition-colors cursor-default select-none">
+              Turo
+            </span>
+            <span className="text-white/10 text-xs">·</span>
+            {/* Stripe */}
+            <span className="text-white/25 text-lg font-bold tracking-tight hover:text-white/50 transition-colors cursor-default select-none" style={{ fontFamily: 'system-ui, sans-serif', letterSpacing: '-0.02em' }}>
+              Stripe
+            </span>
+            <span className="text-white/10 text-xs">·</span>
+            {/* iCal */}
+            <span className="text-white/25 text-lg font-semibold tracking-tight hover:text-white/50 transition-colors cursor-default select-none">
+              iCal
+            </span>
+            <span className="text-white/10 text-xs">·</span>
+            {/* Google Calendar */}
+            <span className="text-white/25 text-lg font-semibold tracking-tight hover:text-white/50 transition-colors cursor-default select-none">
+              Google Calendar
+            </span>
+            <span className="text-white/10 text-xs">·</span>
+            {/* WhatsApp */}
+            <span className="text-white/25 text-lg font-semibold tracking-tight hover:text-white/50 transition-colors cursor-default select-none">
+              WhatsApp
+            </span>
           </div>
         </div>
         <div className="section-divider absolute bottom-0 left-0 right-0" />
       </section>
 
-      {/* ─────────────────── Showcase / Fleet visual ─────────────────── */}
-      <section className="relative py-0 overflow-hidden">
-        {/* Full-bleed fleet image */}
-        <div className="relative h-[50vh] md:h-[60vh]">
-          <Image
-            src="/assets/images/Imagenes/obi-XT95JA80yzM-unsplash.jpg"
-            alt="Premium fleet lineup"
-            fill
-            className="object-cover object-center"
-            sizes="100vw"
-          />
-          {/* Gradient overlays: black fade top + bottom + center darken for text */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-black" />
-
-          {/* Centered overlay content */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center px-6">
-              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">
-                Built for premium fleets
-              </h2>
-              <p className="text-white/70 text-lg font-light max-w-xl mx-auto">
-                From a single vehicle to a multi-location operation — one
-                platform that scales with your ambition.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ─────────────────── Features (split) ─────────────────── */}
-      <section className="relative py-32 overflow-hidden bg-black" id="features">
+      <section className="relative py-24 overflow-hidden bg-black" id="features">
         <div className="absolute inset-0 bg-grid-lines opacity-100 pointer-events-none" />
         <div className="absolute inset-0 bg-warm-glow pointer-events-none" />
 
@@ -203,15 +149,15 @@ export default function HomePage() {
               Platform
             </span>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-5 tracking-tight">
-              Everything you need to run your fleet
+              Your fleet. Your brand. Your numbers.
             </h2>
             <p className="text-lg text-white/35 font-light max-w-xl mx-auto">
-              One platform. Zero compromise.
+              One platform built end-to-end for rental operators.
             </p>
           </div>
 
           {/* Split features */}
-          <div className="space-y-32">
+          <div className="space-y-24">
             {SPLIT_FEATURES.map((feature, i) => (
               <div
                 key={feature.title}
@@ -259,25 +205,6 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Mini features grid */}
-          <div className="mt-32 grid md:grid-cols-3 gap-px bg-white/[0.06] rounded-2xl overflow-hidden">
-            {MINI_FEATURES.map((feature) => (
-              <div
-                key={feature.title}
-                className="bg-black/90 p-10 hover:bg-white/[0.03] transition-all duration-500 group"
-              >
-                <div className="text-white/30 group-hover:text-white/60 transition-colors duration-500 mb-5">
-                  {feature.icon}
-                </div>
-                <h3 className="text-white font-semibold mb-3 text-lg">
-                  {feature.title}
-                </h3>
-                <p className="text-white/40 text-sm leading-relaxed font-light">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -484,6 +411,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      <JsonLd schema={buildOrganizationSchema()} />
+      <JsonLd schema={buildWebSiteSchema()} />
+      <JsonLd schema={buildSoftwareApplicationSchema()} />
     </>
   )
 }
