@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Reservation, Car } from '@/lib/supabase/types'
-import { createReservation, updateReservation } from './actions'
+import { createReservation, updateReservation, sendAgreement } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 
 interface Props {
@@ -15,7 +15,9 @@ interface Props {
 
 export default function BookingModal({ isOpen, onClose, reservation, cars }: Props) {
   const [isPending, startTransition] = useTransition()
+  const [isSendingAgreement, setIsSendingAgreement] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
+  const [agreementMsg, setAgreementMsg] = useState<string | null>(null)
   const router = useRouter()
   
   const [formData, setFormData] = useState<Partial<Reservation>>({})
@@ -246,6 +248,93 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
                 className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white resize-none"
               />
             </div>
+
+            {/* ── Rental Agreement ── */}
+            {isEditing && reservation && (
+              <div className="md:col-span-2 pt-4 border-t border-white/[0.06]">
+                <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-4">Rental Agreement</p>
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 space-y-3">
+                  {/* Status row */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {reservation.agreement_signed_at ? (
+                        <>
+                          <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                          <span className="text-xs text-emerald-300 font-bold">Signed</span>
+                          <span className="text-xs text-white/30 ml-1">
+                            {new Date(reservation.agreement_signed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        </>
+                      ) : reservation.agreement_sent_at ? (
+                        <>
+                          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                          <span className="text-xs text-amber-300 font-bold">Pending Signature</span>
+                          <span className="text-xs text-white/30 ml-1">
+                            Sent {new Date(reservation.agreement_sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-2 h-2 rounded-full bg-white/20" />
+                          <span className="text-xs text-white/40 font-bold">Not Sent</span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2">
+                      {reservation.agreement_pdf_url && (
+                        <a
+                          href={reservation.agreement_pdf_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs bg-white/5 hover:bg-white/10 text-white/70 px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1"
+                        >
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          PDF
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        disabled={isSendingAgreement || !reservation.customer_email}
+                        onClick={() => {
+                          setAgreementMsg(null)
+                          setIsSendingAgreement(async () => {
+                            const result = await sendAgreement(reservation.id)
+                            if (result.error) {
+                              setAgreementMsg('Error: ' + result.error)
+                            } else {
+                              setAgreementMsg('Agreement sent successfully!')
+                              router.refresh()
+                            }
+                          })
+                        }}
+                        title={!reservation.customer_email ? 'Customer email is required' : undefined}
+                        className="text-xs bg-white/5 hover:bg-white/10 text-white/70 px-3 py-1.5 rounded-lg font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {isSendingAgreement
+                          ? 'Sending...'
+                          : reservation.agreement_sent_at
+                          ? 'Resend'
+                          : 'Send Agreement'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {agreementMsg && (
+                    <p className={`text-xs ${agreementMsg.startsWith('Error') ? 'text-red-400' : 'text-emerald-400'}`}>
+                      {agreementMsg}
+                    </p>
+                  )}
+
+                  {!reservation.customer_email && (
+                    <p className="text-xs text-amber-400/70">Add customer email above to enable agreement sending.</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Driver License & Insurance (optional) */}
             <div className="md:col-span-2 pt-4 border-t border-white/[0.06]">

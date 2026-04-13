@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import type { Reservation } from '@/lib/supabase/types'
 import { sendEmail } from '@/lib/email/resend'
-import { newBookingEmail, bookingCancelledEmail } from '@/lib/email/templates'
+import { newBookingEmail, bookingCancelledEmail, agreementRequestEmail } from '@/lib/email/templates'
 
 async function getTenantId(): Promise<string> {
   const { tenantId } = await requireTenantId()
@@ -127,6 +127,66 @@ export async function updateReservation(
   }
 
   return { error: error?.message ?? null }
+}
+
+export async function sendAgreement(reservationId: number): Promise<{ error: string | null }> {
+  const supabase = createClient()
+  const tenantId = await getTenantId()
+
+  const { data: reservation } = await supabase
+    .from('reservations')
+    .select('*')
+    .eq('id', reservationId)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (!reservation) return { error: 'Reservation not found' }
+  if (!reservation.customer_email) return { error: 'Customer email is required to send agreement' }
+
+  // Refresh token and set sent_at
+  const newToken = crypto.randomUUID()
+  const { error: updateError } = await supabase
+    .from('reservations')
+    .update({
+      agreement_token: newToken,
+      agreement_sent_at: new Date().toISOString(),
+    })
+    .eq('id', reservationId)
+
+  if (updateError) return { error: updateError.message }
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('name, brand_name, slug')
+    .eq('id', tenantId)
+    .single()
+
+  const tenantName = tenant?.brand_name || tenant?.name || 'Your Rental Company'
+  const tenantSlug = tenant?.slug || ''
+  const carName = await getCarName(supabase, reservation.car_id ?? null)
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${tenantSlug}.epuredrive.com`
+  const agreementUrl = `${baseUrl}/sites/${tenantSlug}/agreement/${newToken}`
+
+  try {
+    await sendEmail({
+      to: reservation.customer_email,
+      ...agreementRequestEmail({
+        customerName: reservation.customer_name || 'Renter',
+        tenantName,
+        carName,
+        pickupDate: reservation.pickup_date || '',
+        returnDate: reservation.return_date || '',
+        agreementUrl,
+      }),
+    })
+  } catch (e) {
+    console.error('[sendAgreement] Email failed:', e)
+    return { error: 'Failed to send agreement email' }
+  }
+
+  revalidatePath('/dashboard/bookings')
+  return { error: null }
 }
 
 export async function deleteReservation(id: number): Promise<{ error: string | null }> {
