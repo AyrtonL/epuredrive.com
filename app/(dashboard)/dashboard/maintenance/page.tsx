@@ -17,15 +17,19 @@ export default async function MaintenancePage() {
   const rows = (services as CarService[]) ?? []
   const carRows = (cars as Car[]) ?? []
   const totalCost = rows.reduce((s, r) => s + (Number(r.cost) || 0), 0)
+  const now = new Date()
+  const in30Days = new Date(now); in30Days.setDate(now.getDate() + 30)
+  const overdue = rows.filter(s => s.next_service_date && new Date(s.next_service_date) < now).length
+  const upcoming = rows.filter(s => s.next_service_date && new Date(s.next_service_date) >= now && new Date(s.next_service_date) <= in30Days).length
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <PageHeader title="Maintenance" description="Service and repair records." />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Total records" value={rows.length} />
-        <StatCard label="Total cost" value={`$${totalCost.toLocaleString()}`} />
-        <StatCard label="Overdue / Pending" value={rows.filter(s => s.next_service_date && new Date(s.next_service_date) < new Date()).length} />
+        <StatCard label="Service Records" value={rows.length} />
+        <StatCard label="Total Cost" value={`$${totalCost.toLocaleString()}`} />
+        <StatCard label="Overdue" value={overdue} sub={upcoming > 0 ? `${upcoming} due in 30 days` : undefined} />
         <StatCard label="Fleet Mileage" value={`${carRows.reduce((acc, car) => acc + (car.mileage || 0), 0).toLocaleString()} mi`} />
       </div>
 

@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Consignment, Car, Reservation } from '@/lib/supabase/types'
+import type { Consignment, Car, Reservation, Transaction } from '@/lib/supabase/types'
 import { deleteConsignment } from './actions'
 import ConsignmentModal from './ConsignmentModal'
 
@@ -10,7 +10,7 @@ interface Props {
   consignments: Consignment[]
   cars: Car[]
   reservations: Reservation[]
-  expenses: any[]
+  expenses: Transaction[]
 }
 
 export default function ConsignmentsManager({ consignments, cars, reservations, expenses }: Props) {

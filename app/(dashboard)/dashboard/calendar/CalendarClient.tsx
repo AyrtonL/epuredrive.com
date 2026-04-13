@@ -6,7 +6,7 @@ import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import listPlugin from '@fullcalendar/list'
 import interactionPlugin from '@fullcalendar/interaction'
-import type { Reservation, Car } from '@/lib/supabase/types'
+import type { Reservation, Car, BlockedDate } from '@/lib/supabase/types'
 import { deleteBlockedDate } from './actions'
 import BlockDateModal from './BlockDateModal'
 import ReservationDetailModal from './ReservationDetailModal'
@@ -31,7 +31,7 @@ export default function CalendarClient({
 }: {
   reservations: Reservation[]
   cars: Car[]
-  blockedDates: any[]
+  blockedDates: BlockedDate[]
 }) {
   const router = useRouter()
   const [, startTransition] = useTransition()

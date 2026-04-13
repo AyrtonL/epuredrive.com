@@ -22,8 +22,8 @@ export default async function ExpensesPage() {
       <PageHeader title="Business Expenses" description="Track category-based outgoings and maintenance overhead." />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <StatCard label="Total Output Volume" value={`$${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} />
-        <StatCard label="Total Expense Records" value={rows.length} />
+        <StatCard label="Total Expenses" value={`$${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} />
+        <StatCard label="Total Records" value={rows.length} />
       </div>
 
       <div className="glass border border-white/10 rounded-3xl p-6 md:p-8">

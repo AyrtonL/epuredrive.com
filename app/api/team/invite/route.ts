@@ -56,8 +56,9 @@ export async function POST(request: Request) {
   const supabase = createAdminClient()
 
   // 1 — Send invitation email via Supabase Auth Admin API
+  // tenant_id in user_metadata lets the roles page identify pending (unaccepted) invites
   const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
-    data: { full_name: name || '', role },
+    data: { full_name: name || '', role, tenant_id: tenantId },
   })
 
   if (inviteError) {

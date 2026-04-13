@@ -5,8 +5,14 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { connectIcloud, disconnectEmailSync } from './email-actions'
 
+interface TuroEmailSync {
+  provider: string | null
+  gmail_address: string | null
+  last_checked: string | null
+}
+
 interface Props {
-  sync?: any
+  sync?: TuroEmailSync | null
   tenantId: string
 }
 

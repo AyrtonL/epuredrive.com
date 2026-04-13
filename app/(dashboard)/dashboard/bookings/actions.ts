@@ -3,6 +3,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import type { Reservation } from '@/lib/supabase/types'
 import { sendEmail } from '@/lib/email/resend'
@@ -21,14 +22,14 @@ async function getOperatorEmails(supabase: ReturnType<typeof createClient>, tena
 
   if (!profiles?.length) return []
 
-  const userIds = profiles.map(p => p.id)
-  const emails: string[] = []
-  for (const uid of userIds) {
-    const { data } = await supabase.auth.admin.getUserById(uid).catch(() => ({ data: null }))
-    if ((data as any)?.user?.email) emails.push((data as any).user.email)
-  }
+  const adminClient = createAdminClient()
+  const results = await Promise.all(
+    profiles.map(p => adminClient.auth.admin.getUserById(p.id).catch(() => ({ data: null, error: null })))
+  )
 
-  return emails
+  return results
+    .map(r => r.data?.user?.email)
+    .filter((email): email is string => !!email)
 }
 
 async function getCarName(supabase: ReturnType<typeof createClient>, carId: number | null): Promise<string> {

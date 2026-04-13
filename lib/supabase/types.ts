@@ -150,6 +150,15 @@ export interface CarService {
 }
 
 
+export interface BlockedDate {
+  id: number
+  start_date: string
+  end_date: string
+  car_id: number | null
+  reason: string | null
+  tenant_id: string | null
+}
+
 export interface Profile {
   id: string
   full_name: string | null

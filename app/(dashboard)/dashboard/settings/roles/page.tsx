@@ -47,16 +47,18 @@ export default async function RolesPage() {
   const plan = tenant?.plan ?? 'free'
   const canInvite = plan === 'pro' || plan === 'max'
 
-  // Active team members (accepted invite + profile created)
+  // Active team members: profiles that have completed onboarding (full_name set)
   const { data: members } = await supabase
     .from('profiles')
     .select('id, full_name, role, created_at')
     .eq('tenant_id', tenantId)
+    .not('full_name', 'is', null)
     .order('created_at')
 
   const rows = (members as Profile[]) ?? []
 
-  // Pending invites: invited but not yet accepted (no profile row yet)
+  // Pending invites: invited to this tenant but haven't completed onboarding yet.
+  // Uses admin client scoped to this tenant via user_metadata (set at invite time).
   const adminClient = createAdminClient()
   const { data: { users: allUsers } } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
   const activeIds = new Set(rows.map(r => r.id))
@@ -64,7 +66,6 @@ export default async function RolesPage() {
     .filter(u =>
       u.user_metadata?.tenant_id === tenantId &&
       u.invited_at &&
-      !u.email_confirmed_at &&
       !activeIds.has(u.id)
     )
     .map(u => ({

@@ -15,16 +15,18 @@ export default async function FleetPage() {
 
   const rows = (cars as Car[]) ?? []
   const active = rows.filter((c) => c.status === 'active' || c.status === 'available').length
-  const inactive = rows.filter((c) => c.status === 'maintenance' || c.status === 'retired' || c.status === 'inactive').length
+  const maintenance = rows.filter((c) => c.status === 'maintenance').length
+  const retired = rows.filter((c) => c.status === 'retired' || c.status === 'inactive').length
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <PageHeader title="Fleet Management" description="Manage your vehicles, pricing, and availability." />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard label="Total Vehicles" value={rows.length} />
-        <StatCard label="Active Fleet" value={active} />
-        <StatCard label="Inactive Cars" value={inactive} />
+        <StatCard label="Active Fleet" value={active} sub="available or rented" />
+        <StatCard label="In Maintenance" value={maintenance} />
+        <StatCard label="Retired / Inactive" value={retired} />
       </div>
 
       <div className="glass border border-white/10 rounded-3xl p-6 md:p-8">

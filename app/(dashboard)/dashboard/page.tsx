@@ -6,19 +6,36 @@ import StatCard from '@/components/dashboard/StatCard'
 import MaintenanceAlerts from './maintenance/MaintenanceAlerts'
 import type { Tenant, Reservation, Car, CarService, Transaction } from '@/lib/supabase/types'
 
+const STATUS_COLORS: Record<string, string> = {
+  confirmed: 'text-green-400 bg-green-500/10',
+  pending: 'text-yellow-400 bg-yellow-500/10',
+  active: 'text-blue-400 bg-blue-500/10',
+  completed: 'text-white/40 bg-white/5',
+  cancelled: 'text-red-400 bg-red-500/10',
+}
+
 export default async function DashboardPage() {
   const { supabase, tenantId } = await requireTenantId()
 
   // Use localized date to prevent UTC offsets marking cars as non-rented at night
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
 
-  const [{ data: tenant }, { data: cars }, { data: allRes }, { data: services }, { data: transactions }, { data: activeRentals }] = await Promise.all([
+  const [
+    { data: tenant },
+    { data: cars },
+    { data: allRes },
+    { data: services },
+    { data: transactions },
+    { data: activeRentals },
+    { data: recentReservations },
+  ] = await Promise.all([
     supabase.from('tenants').select('name, slug, brand_name, logo_url, plan').eq('id', tenantId).single(),
     supabase.from('cars').select('id, make, model, model_full, status, mileage').eq('tenant_id', tenantId),
     supabase.from('reservations').select('total_amount, status').eq('tenant_id', tenantId).eq('status', 'completed'),
     supabase.from('car_services').select('cost, next_service_date').eq('tenant_id', tenantId),
     supabase.from('transactions').select('amount').eq('tenant_id', tenantId),
     supabase.from('reservations').select('car_id').eq('tenant_id', tenantId).not('status', 'in', '(completed,cancelled)').lte('pickup_date', today).gte('return_date', today),
+    supabase.from('reservations').select('id, customer_name, car_id, pickup_date, return_date, status, total_amount').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(6),
   ])
 
   const t = tenant as Tenant
@@ -26,14 +43,17 @@ export default async function DashboardPage() {
   const resRows = (allRes ?? []) as Reservation[]
   const svcRows = (services ?? []) as CarService[]
   const txRows = (transactions ?? []) as Transaction[]
+  const recentRows = (recentReservations ?? []) as Reservation[]
 
-  const displayName = t.brand_name || t.name
-  const fleetUrl = `https://${t.slug}.epuredrive.com`
+  const displayName = t?.brand_name || t?.name || 'Your Fleet'
+  const fleetUrl = t?.slug ? `https://${t.slug}.epuredrive.com` : null
 
   const totalGross = resRows.reduce((s, r) => s + (Number(r.total_amount) || 0), 0)
   const totalMaint = svcRows.reduce((s, r) => s + (Number(r.cost) || 0), 0)
   const totalExp = txRows.reduce((s, r) => s + (Number(r.amount) || 0), 0)
   const netProfit = totalGross - totalMaint - totalExp
+
+  const carMap = Object.fromEntries(carRows.map(c => [c.id, `${c.make} ${c.model_full || c.model}`]))
 
   const rentedCarIds = new Set((activeRentals ?? []).map(r => r.car_id))
   const rentedCars = rentedCarIds.size
@@ -48,10 +68,10 @@ export default async function DashboardPage() {
       <PageHeader title={`Welcome, ${displayName}`} description="Your fleet at a glance." />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fade-in-up animation-delay-100">
-        <StatCard label="Fleet Net Profit" value={`$${netProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} variant="primary" />
-        <StatCard label="Gross Revenue" value={`$${totalGross.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
-        <StatCard label="Total Expenses" value={`$${(totalMaint + totalExp).toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
-        <StatCard label="Cars Listed" value={carRows.length} />
+        <StatCard label="Fleet Net Profit" value={`$${netProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} variant="primary" sub="all time" />
+        <StatCard label="Gross Revenue" value={`$${totalGross.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} sub="completed bookings" />
+        <StatCard label="Total Expenses" value={`$${(totalMaint + totalExp).toLocaleString(undefined, { maximumFractionDigits: 0 })}`} sub="maintenance + ops" />
+        <StatCard label="Cars Listed" value={carRows.length} sub={`${inFleetCars} in fleet`} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -62,8 +82,8 @@ export default async function DashboardPage() {
 
            <div className="glass rounded-3xl p-8 border border-white/10">
              <div className="flex items-center justify-between mb-8">
-                <h3 className="text-white font-bold tracking-tight">Fleet Status Breakdown</h3>
-                <div className="text-[10px] text-white/40 uppercase tracking-[0.2em] font-bold">Real-time overview</div>
+                <h3 className="text-white font-bold tracking-tight">Fleet Status</h3>
+                <div className="text-[10px] text-white/40 uppercase tracking-[0.2em] font-bold">As of today</div>
              </div>
              <div className="grid grid-cols-3 gap-4 text-center">
                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
@@ -88,15 +108,59 @@ export default async function DashboardPage() {
               é
             </div>
             <h3 className="text-white font-bold mb-1">{displayName}</h3>
-            <p className="text-white/40 text-xs mb-6 capitalize">{t.plan || 'Free'} Plan Active</p>
-            <a href={fleetUrl} target="_blank" rel="noopener noreferrer" 
-               className="w-full bg-white text-black py-3 rounded-xl text-sm font-bold hover:bg-white/90 transition-all">
-              Go To Public Fleet
-            </a>
-            <div className="mt-4 text-[10px] text-white/30 uppercase tracking-widest truncate max-w-full italic">{fleetUrl}</div>
+            <p className="text-white/40 text-xs mb-6 capitalize">{t?.plan || 'Free'} Plan Active</p>
+            {fleetUrl ? (
+              <>
+                <a href={fleetUrl} target="_blank" rel="noopener noreferrer"
+                   className="w-full bg-white text-black py-3 rounded-xl text-sm font-bold hover:bg-white/90 transition-all">
+                  Go To Public Fleet
+                </a>
+                <div className="mt-4 text-[10px] text-white/30 uppercase tracking-widest truncate max-w-full italic">{fleetUrl}</div>
+              </>
+            ) : (
+              <p className="text-white/30 text-xs">Public URL not configured.</p>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Recent Bookings */}
+      {recentRows.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white">Recent Bookings</h2>
+            <Link href="/dashboard/bookings" className="text-xs text-white/40 hover:text-white transition-colors">
+              View all →
+            </Link>
+          </div>
+          <div className="glass border border-white/10 rounded-3xl overflow-hidden">
+            <div className="divide-y divide-white/[0.04]">
+              {recentRows.map((r) => (
+                <div key={r.id} className="flex items-center justify-between px-6 py-3.5 hover:bg-white/[0.02] transition-colors">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="min-w-0">
+                      <div className="text-sm text-white font-medium truncate">{r.customer_name || 'Unknown'}</div>
+                      <div className="text-xs text-white/30 mt-0.5 truncate">
+                        {r.car_id ? (carMap[r.car_id] ?? `Car #${r.car_id}`) : '—'} · {r.pickup_date ?? 'TBD'} → {r.return_date ?? 'TBD'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0 ml-4">
+                    {r.total_amount != null && (
+                      <span className="text-sm text-white/60 font-medium">
+                        ${Number(r.total_amount).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </span>
+                    )}
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${STATUS_COLORS[r.status ?? ''] ?? 'text-white/40 bg-white/5'}`}>
+                      {r.status ?? '—'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="animate-fade-in-up animation-delay-200">
         <h2 className="text-xl font-bold text-white mb-6 flex items-center">
@@ -109,7 +173,7 @@ export default async function DashboardPage() {
               <div className="text-2xl font-bold text-white group-hover:text-glow transition-all duration-300">Bookings</div>
               <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-300">→</div>
             </div>
-            <p className="text-sm text-white/50 font-light relative z-10">Review and manage your incoming reservations meticulously.</p>
+            <p className="text-sm text-white/50 font-light relative z-10">Review and manage your incoming reservations.</p>
           </Link>
 
           <Link href="/dashboard/fleet" className="glass rounded-3xl p-8 transition-all duration-500 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_8px_30px_rgba(255,255,255,0.05)] group relative overflow-hidden">
@@ -118,17 +182,28 @@ export default async function DashboardPage() {
               <div className="text-2xl font-bold text-white group-hover:text-glow transition-all duration-300">Fleet</div>
               <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-300">→</div>
             </div>
-            <p className="text-sm text-white/50 font-light relative z-10">Curate your vehicles, edit details, and dial in availability.</p>
+            <p className="text-sm text-white/50 font-light relative z-10">Manage vehicles, pricing, and availability.</p>
           </Link>
 
-          <a href={fleetUrl} target="_blank" rel="noopener noreferrer" className="glass rounded-3xl p-8 transition-all duration-500 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_8px_30px_rgba(255,255,255,0.05)] group relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="relative z-10 flex items-center justify-between mb-4">
-              <div className="text-2xl font-bold text-white group-hover:text-glow transition-all duration-300">Public Page</div>
-              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-300">↗</div>
-            </div>
-            <p className="text-[13px] text-white/50 font-light break-all relative z-10">{fleetUrl}</p>
-          </a>
+          {fleetUrl ? (
+            <a href={fleetUrl} target="_blank" rel="noopener noreferrer" className="glass rounded-3xl p-8 transition-all duration-500 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_8px_30px_rgba(255,255,255,0.05)] group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative z-10 flex items-center justify-between mb-4">
+                <div className="text-2xl font-bold text-white group-hover:text-glow transition-all duration-300">Public Page</div>
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-300">↗</div>
+              </div>
+              <p className="text-[13px] text-white/50 font-light break-all relative z-10">{fleetUrl}</p>
+            </a>
+          ) : (
+            <Link href="/dashboard/settings" className="glass rounded-3xl p-8 transition-all duration-500 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_8px_30px_rgba(255,255,255,0.05)] group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative z-10 flex items-center justify-between mb-4">
+                <div className="text-2xl font-bold text-white group-hover:text-glow transition-all duration-300">Settings</div>
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-300">→</div>
+              </div>
+              <p className="text-sm text-white/50 font-light relative z-10">Configure your brand, slug, and public fleet page.</p>
+            </Link>
+          )}
         </div>
       </div>
     </div>

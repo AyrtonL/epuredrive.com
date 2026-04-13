@@ -5,9 +5,16 @@ import { useRouter } from 'next/navigation'
 import type { Customer } from '@/lib/supabase/types'
 import { syncCustomersFromReservations, deleteCustomer, bulkDeleteCustomers } from './actions'
 
+type ReservationSummary = {
+  customer_name: string | null
+  customer_email: string | null
+  customer_phone: string | null
+  total_amount: number | null
+}
+
 interface Props {
   customers: Customer[]
-  reservations: any[]
+  reservations: ReservationSummary[]
   tenantId: string
 }
 
