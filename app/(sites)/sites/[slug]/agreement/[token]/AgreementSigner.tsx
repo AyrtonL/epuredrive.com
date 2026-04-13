@@ -3,7 +3,8 @@
 import { useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 
-const SignatureCanvas = dynamic(() => import('react-signature-canvas'), { ssr: false })
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SignatureCanvas = dynamic(() => import('react-signature-canvas'), { ssr: false }) as any
 
 interface Car {
   make: string

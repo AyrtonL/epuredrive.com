@@ -448,7 +448,6 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
                 className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
               />
             </div>
-          </div>
 
             {/* Vehicle State */}
             <div className="md:col-span-2 pt-4 border-t border-white/[0.06]">
