@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { agreementSignedCustomerEmail, agreementSignedOperatorEmail } from '@/lib/email/templates'
 
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing token or signature' }, { status: 400 })
     }
 
-    const supabase = createClient()
+    const supabase = createAdminClient()
 
     // Find the reservation by token
     const { data: reservation, error: fetchError } = await supabase
