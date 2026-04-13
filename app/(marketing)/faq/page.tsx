@@ -3,6 +3,12 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'FAQ — Frequently Asked Questions',
   description: 'Answers to common questions about éPure Drive, fleet management, pricing, and getting started.',
+  alternates: { canonical: 'https://epuredrive.com/faq' },
+  openGraph: {
+    title: 'FAQ — Frequently Asked Questions | éPure Drive',
+    description: 'Answers to common questions about éPure Drive, fleet management, pricing, and getting started.',
+    url: 'https://epuredrive.com/faq',
+  },
 }
 
 const faqs = [

@@ -3,8 +3,13 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — éPure Drive',
-  description:
-    'Privacy Policy for éPure Drive — how we collect, use, and protect your personal information.',
+  description: 'Privacy Policy for éPure Drive — how we collect, use, and protect your personal information.',
+  alternates: { canonical: 'https://epuredrive.com/privacy' },
+  openGraph: {
+    title: 'Privacy Policy — éPure Drive',
+    description: 'Privacy Policy for éPure Drive — how we collect, use, and protect your personal information.',
+    url: 'https://epuredrive.com/privacy',
+  },
 }
 
 function SectionHeading({ num, children }: { num: number; children: React.ReactNode }) {

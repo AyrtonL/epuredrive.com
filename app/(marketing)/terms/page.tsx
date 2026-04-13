@@ -5,6 +5,12 @@ export const metadata: Metadata = {
   title: 'Terms & Conditions — éPure Drive',
   description:
     'Read the full terms and conditions for renting a vehicle with éPure Drive in Miami, Aventura, and South Florida.',
+  alternates: { canonical: 'https://epuredrive.com/terms' },
+  openGraph: {
+    title: 'Terms & Conditions — éPure Drive',
+    description: 'Read the full terms and conditions for renting a vehicle with éPure Drive in Miami, Aventura, and South Florida.',
+    url: 'https://epuredrive.com/terms',
+  },
 }
 
 function SectionHeading({ num, children }: { num: number; children: React.ReactNode }) {
