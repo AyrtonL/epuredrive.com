@@ -48,12 +48,22 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
       customer_name: formData.customer_name || null,
       customer_email: formData.customer_email || null,
       customer_phone: formData.customer_phone || null,
+      customer_dob: formData.customer_dob || null,
+      customer_address: formData.customer_address || null,
       pickup_date: formData.pickup_date || null,
       pickup_time: formData.pickup_time || '10:00',
       return_date: formData.return_date || null,
       return_time: formData.return_time || '10:00',
       pickup_location: formData.pickup_location || 'Aventura',
+      return_location: formData.return_location || null,
       total_amount: Number(formData.total_amount) || null,
+      security_deposit: formData.security_deposit ? Number(formData.security_deposit) : null,
+      surcharge: formData.surcharge ? Number(formData.surcharge) : null,
+      amount_outstanding: formData.amount_outstanding ? Number(formData.amount_outstanding) : null,
+      odometer_out: formData.odometer_out ? Number(formData.odometer_out) : null,
+      odometer_in: formData.odometer_in ? Number(formData.odometer_in) : null,
+      fuel_out: formData.fuel_out || null,
+      fuel_in: formData.fuel_in || null,
       status: formData.status || 'pending',
       source: formData.source || 'admin',
       notes: formData.notes || null,
@@ -61,6 +71,8 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
       license_state: formData.license_state || null,
       insurance_provider: formData.insurance_provider || null,
       insurance_policy_number: formData.insurance_policy_number || null,
+      damage_checkin: formData.damage_checkin || null,
+      damage_checkout: formData.damage_checkout || null,
     }
 
     startTransition(async () => {
@@ -190,24 +202,33 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
               />
             </div>
 
-            {/* Location & Financials */}
-            <div className="space-y-1 md:col-span-2">
+            {/* Locations */}
+            <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Pickup Location</label>
-              <input 
+              <input
                 type="text" placeholder="e.g. Aventura, Miami Airport..."
-                value={formData.pickup_location || ''} 
+                value={formData.pickup_location || ''}
                 onChange={e => setFormData({...formData, pickup_location: e.target.value})}
-                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white" 
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Return Location</label>
+              <input
+                type="text" placeholder="If different from pickup..."
+                value={formData.return_location || ''}
+                onChange={e => setFormData({...formData, return_location: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
               />
             </div>
 
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Total Amount ($)</label>
-              <input 
+              <input
                 type="number" step="0.01" min="0" required
-                value={formData.total_amount || ''} 
+                value={formData.total_amount || ''}
                 onChange={e => setFormData({...formData, total_amount: Number(e.target.value)})}
-                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white" 
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
               />
             </div>
             <div className="space-y-1">
@@ -237,6 +258,34 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
                 <option value="ical" className="bg-[#0d0d0d]">iCal</option>
                 <option value="direct" className="bg-[#0d0d0d]">Direct</option>
               </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Security Deposit ($)</label>
+              <input
+                type="number" step="0.01" min="0"
+                value={formData.security_deposit || ''}
+                onChange={e => setFormData({...formData, security_deposit: e.target.value ? Number(e.target.value) : null})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Surcharge ($)</label>
+              <input
+                type="number" step="0.01" min="0"
+                value={formData.surcharge || ''}
+                onChange={e => setFormData({...formData, surcharge: e.target.value ? Number(e.target.value) : null})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Amount Outstanding ($)</label>
+              <input
+                type="number" step="0.01" min="0"
+                value={formData.amount_outstanding || ''}
+                onChange={e => setFormData({...formData, amount_outstanding: e.target.value ? Number(e.target.value) : null})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
             </div>
 
             <div className="space-y-1 md:col-span-2">
@@ -336,6 +385,29 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
               </div>
             )}
 
+            {/* Renter Details */}
+            <div className="md:col-span-2 pt-4 border-t border-white/[0.06]">
+              <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-4">Renter Details (optional)</p>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Date of Birth</label>
+              <input
+                type="date"
+                value={formData.customer_dob || ''}
+                onChange={e => setFormData({...formData, customer_dob: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white [color-scheme:dark]"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Address</label>
+              <input
+                type="text" placeholder="Full address..."
+                value={formData.customer_address || ''}
+                onChange={e => setFormData({...formData, customer_address: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+
             {/* Driver License & Insurance (optional) */}
             <div className="md:col-span-2 pt-4 border-t border-white/[0.06]">
               <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-4">Driver License &amp; Insurance (optional)</p>
@@ -374,6 +446,83 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
                 value={formData.insurance_policy_number || ''}
                 onChange={e => setFormData({...formData, insurance_policy_number: e.target.value})}
                 className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+          </div>
+
+            {/* Vehicle State */}
+            <div className="md:col-span-2 pt-4 border-t border-white/[0.06]">
+              <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-4">Vehicle State (optional)</p>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Odometer Out</label>
+              <input
+                type="number" min="0" placeholder="Miles at pickup"
+                value={formData.odometer_out || ''}
+                onChange={e => setFormData({...formData, odometer_out: e.target.value ? Number(e.target.value) : null})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Odometer In</label>
+              <input
+                type="number" min="0" placeholder="Miles at return"
+                value={formData.odometer_in || ''}
+                onChange={e => setFormData({...formData, odometer_in: e.target.value ? Number(e.target.value) : null})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Fuel Out</label>
+              <select
+                value={formData.fuel_out || ''}
+                onChange={e => setFormData({...formData, fuel_out: e.target.value || null})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              >
+                <option value="" className="bg-[#0d0d0d]">—</option>
+                <option value="Full" className="bg-[#0d0d0d]">Full</option>
+                <option value="3/4" className="bg-[#0d0d0d]">3/4</option>
+                <option value="1/2" className="bg-[#0d0d0d]">1/2</option>
+                <option value="1/4" className="bg-[#0d0d0d]">1/4</option>
+                <option value="Empty" className="bg-[#0d0d0d]">Empty</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Fuel In</label>
+              <select
+                value={formData.fuel_in || ''}
+                onChange={e => setFormData({...formData, fuel_in: e.target.value || null})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              >
+                <option value="" className="bg-[#0d0d0d]">—</option>
+                <option value="Full" className="bg-[#0d0d0d]">Full</option>
+                <option value="3/4" className="bg-[#0d0d0d]">3/4</option>
+                <option value="1/2" className="bg-[#0d0d0d]">1/2</option>
+                <option value="1/4" className="bg-[#0d0d0d]">1/4</option>
+                <option value="Empty" className="bg-[#0d0d0d]">Empty</option>
+              </select>
+            </div>
+
+            {/* Damage Report */}
+            <div className="md:col-span-2 pt-4 border-t border-white/[0.06]">
+              <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-4">Damage Report (optional)</p>
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Check-In Notes</label>
+              <textarea
+                rows={2} placeholder="Describe any pre-existing damage at pickup..."
+                value={formData.damage_checkin || ''}
+                onChange={e => setFormData({...formData, damage_checkin: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white resize-none"
+              />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Check-Out Notes</label>
+              <textarea
+                rows={2} placeholder="Describe any damage found at return..."
+                value={formData.damage_checkout || ''}
+                onChange={e => setFormData({...formData, damage_checkout: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white resize-none"
               />
             </div>
           </div>

@@ -113,6 +113,8 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
       turo_vehicle_id: formData.turo_vehicle_id || null,
       mileage: Number(formData.mileage) || null,
       vin: formData.vin || null,
+      color: formData.color || null,
+      plate: formData.plate || null,
     }
 
     startTransition(async () => {
@@ -248,6 +250,25 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
                 <option value="maintenance" className="bg-[#0d0d0d]">Maintenance</option>
                 <option value="retired" className="bg-[#0d0d0d]">Retired</option>
               </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Color</label>
+              <input
+                type="text" placeholder="e.g. Blue, White, Black..."
+                value={(formData as any).color || ''}
+                onChange={e => setFormData({...formData, color: e.target.value} as any)}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">License Plate</label>
+              <input
+                type="text" placeholder="e.g. ABC1234"
+                value={(formData as any).plate || ''}
+                onChange={e => setFormData({...formData, plate: e.target.value} as any)}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
             </div>
 
             <div className="space-y-1 md:col-span-2">

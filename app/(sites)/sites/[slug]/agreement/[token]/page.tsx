@@ -30,7 +30,7 @@ export default async function AgreementPage({ params }: Props) {
   // Fetch car info
   const { data: car } = await supabase
     .from('cars')
-    .select('make, model, model_full, year, vin, transmission')
+    .select('make, model, model_full, year, vin, transmission, color, plate')
     .eq('id', reservation.car_id)
     .maybeSingle()
 

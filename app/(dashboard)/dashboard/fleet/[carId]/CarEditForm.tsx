@@ -90,6 +90,8 @@ export default function CarEditForm({ car }: Props) {
       description: (fd.get('description') as string) || null,
       status: fd.get('status') as string,
       vin: vin || null,
+      color: (fd.get('color') as string) || null,
+      plate: (fd.get('plate') as string) || null,
       image_url: images[0] || null,
       gallery: images.slice(1).length > 0 ? images.slice(1) : null,
     }
@@ -148,6 +150,30 @@ export default function CarEditForm({ car }: Props) {
             <option value="maintenance">Maintenance</option>
             <option value="retired">Retired</option>
           </select>
+        </div>
+      </div>
+
+      {/* Color & Plate */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm text-white/60 mb-1">Color</label>
+          <input
+            type="text"
+            name="color"
+            placeholder="e.g. Blue, White..."
+            defaultValue={car.color ?? ''}
+            className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-white/30"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-white/60 mb-1">License Plate</label>
+          <input
+            type="text"
+            name="plate"
+            placeholder="e.g. ABC1234"
+            defaultValue={car.plate ?? ''}
+            className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-white/30"
+          />
         </div>
       </div>
 

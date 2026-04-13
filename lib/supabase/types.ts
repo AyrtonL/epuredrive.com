@@ -48,6 +48,8 @@ export interface Car {
   turo_vehicle_id: string | null
   mileage: number | null
   vin: string | null
+  color: string | null
+  plate: string | null
 }
 
 export interface Reservation {
@@ -78,6 +80,23 @@ export interface Reservation {
   agreement_signed_ip: string | null
   agreement_pdf_url: string | null
   agreement_signature_url: string | null
+  // renter extras
+  customer_dob: string | null
+  customer_address: string | null
+  // charges
+  security_deposit: number | null
+  surcharge: number | null
+  amount_outstanding: number | null
+  // vehicle state
+  odometer_out: number | null
+  odometer_in: number | null
+  fuel_out: string | null
+  fuel_in: string | null
+  // locations
+  return_location: string | null
+  // damage report
+  damage_checkin: string | null
+  damage_checkout: string | null
 }
 
 export interface Customer {

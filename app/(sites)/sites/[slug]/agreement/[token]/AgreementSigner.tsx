@@ -12,6 +12,8 @@ interface Car {
   year: number | null
   vin: string | null
   transmission: string | null
+  color: string | null
+  plate: string | null
 }
 
 interface Tenant {
@@ -33,16 +35,28 @@ interface Reservation {
   customer_name: string | null
   customer_email: string | null
   customer_phone: string | null
+  customer_dob: string | null
+  customer_address: string | null
   pickup_date: string | null
   pickup_time: string | null
   return_date: string | null
   return_time: string | null
   pickup_location: string | null
+  return_location: string | null
   total_amount: number | null
+  security_deposit: number | null
+  surcharge: number | null
+  amount_outstanding: number | null
+  odometer_out: number | null
+  odometer_in: number | null
+  fuel_out: string | null
+  fuel_in: string | null
   license_number: string | null
   license_state: string | null
   insurance_provider: string | null
   insurance_policy_number: string | null
+  damage_checkin: string | null
+  damage_checkout: string | null
   agreement_signed_at: string | null
 }
 
@@ -288,7 +302,7 @@ export default function AgreementSigner({
                     <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2 w-1/4 whitespace-nowrap">Pickup Location</td>
                     <td className="border border-gray-200 px-3 py-2">{reservation.pickup_location || '—'}</td>
                     <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2 w-1/4">Return Location</td>
-                    <td className="border border-gray-200 px-3 py-2">{reservation.pickup_location || '—'}</td>
+                    <td className="border border-gray-200 px-3 py-2">{reservation.return_location || reservation.pickup_location || '—'}</td>
                   </tr>
                   <tr>
                     <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Date &amp; Time Out</td>
@@ -314,14 +328,30 @@ export default function AgreementSigner({
                       <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2 w-1/4">Year</td>
                       <td className="border border-gray-200 px-3 py-2">{car.year || '—'}</td>
                     </tr>
-                    {car.vin && (
-                      <tr>
-                        <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">VIN Number</td>
-                        <td className="border border-gray-200 px-3 py-2 font-mono text-xs">{car.vin}</td>
-                        <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Transmission</td>
-                        <td className="border border-gray-200 px-3 py-2">{car.transmission || '—'}</td>
-                      </tr>
-                    )}
+                    <tr>
+                      <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Color</td>
+                      <td className="border border-gray-200 px-3 py-2">{car.color || '—'}</td>
+                      <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Plate</td>
+                      <td className="border border-gray-200 px-3 py-2">{car.plate || '—'}</td>
+                    </tr>
+                    <tr>
+                      <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">VIN Number</td>
+                      <td className="border border-gray-200 px-3 py-2 font-mono text-xs">{car.vin || '—'}</td>
+                      <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Transmission</td>
+                      <td className="border border-gray-200 px-3 py-2">{car.transmission || '—'}</td>
+                    </tr>
+                    <tr>
+                      <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Odometer Out</td>
+                      <td className="border border-gray-200 px-3 py-2">{reservation.odometer_out != null ? reservation.odometer_out.toLocaleString() : '—'}</td>
+                      <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Odometer In</td>
+                      <td className="border border-gray-200 px-3 py-2">{reservation.odometer_in != null ? reservation.odometer_in.toLocaleString() : '—'}</td>
+                    </tr>
+                    <tr>
+                      <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Fuel Out</td>
+                      <td className="border border-gray-200 px-3 py-2">{reservation.fuel_out || '—'}</td>
+                      <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Fuel In</td>
+                      <td className="border border-gray-200 px-3 py-2">{reservation.fuel_in || '—'}</td>
+                    </tr>
                   </tbody>
                 </table>
               </section>
@@ -343,11 +373,17 @@ export default function AgreementSigner({
                   <tr>
                     <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Email</td>
                     <td className="border border-gray-200 px-3 py-2">{reservation.customer_email || '—'}</td>
+                    <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Date of Birth</td>
+                    <td className="border border-gray-200 px-3 py-2">{reservation.customer_dob ? formatDate(reservation.customer_dob) : '—'}</td>
+                  </tr>
+                  <tr>
                     <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">License #</td>
                     <td className="border border-gray-200 px-3 py-2">
                       {reservation.license_number || '—'}
                       {reservation.license_state && ` (${reservation.license_state})`}
                     </td>
+                    <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Address</td>
+                    <td className="border border-gray-200 px-3 py-2">{reservation.customer_address || '—'}</td>
                   </tr>
                   {(reservation.insurance_provider || reservation.insurance_policy_number) && (
                     <tr>
@@ -366,20 +402,61 @@ export default function AgreementSigner({
             {reservation.total_amount && (
               <section>
                 <div className="text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded mb-3 text-black" style={{ background: accentColor }}>
-                  Charges
+                  Charge Information
                 </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-1">
                   <div className="flex justify-between py-1.5 border-b border-gray-200">
                     <span className="text-gray-600">Rental ({days || '?'} day{days !== 1 ? 's' : ''})</span>
                     <span className="font-medium">${reservation.total_amount.toLocaleString()}</span>
                   </div>
+                  {reservation.surcharge != null && (
+                    <div className="flex justify-between py-1.5 border-b border-gray-200">
+                      <span className="text-gray-600">Surcharge</span>
+                      <span className="font-medium">${reservation.surcharge.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {reservation.security_deposit != null && (
+                    <div className="flex justify-between py-1.5 border-b border-gray-200">
+                      <span className="text-gray-600">Security Deposit</span>
+                      <span className="font-medium">${reservation.security_deposit.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {reservation.amount_outstanding != null && (
+                    <div className="flex justify-between py-1.5 border-b border-gray-200">
+                      <span className="text-gray-600">Amount Outstanding</span>
+                      <span className="font-medium">${reservation.amount_outstanding.toLocaleString()}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between py-2 font-black text-base border-t-2 border-gray-800 mt-1">
-                    <span>TOTAL DUE</span>
+                    <span>TOTAL</span>
                     <span style={{ color: accentColor }}>${reservation.total_amount.toLocaleString()}</span>
                   </div>
                 </div>
               </section>
             )}
+
+            {/* Damage Report */}
+            <section>
+              <div className="text-[11px] font-black uppercase tracking-widest text-white px-3 py-1.5 rounded mb-3" style={{ background: '#111' }}>
+                Damage Report
+              </div>
+              <table className="w-full border-collapse text-sm">
+                <tbody>
+                  <tr>
+                    <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2 w-1/4 align-top">Check-In</td>
+                    <td className="border border-gray-200 px-3 py-2 min-h-[60px] whitespace-pre-line">
+                      {reservation.damage_checkin || <span className="text-gray-400 italic">No damage noted at check-in</span>}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2 align-top">Check-Out</td>
+                    <td className="border border-gray-200 px-3 py-2 min-h-[60px] whitespace-pre-line">
+                      {reservation.damage_checkout || <span className="text-gray-400 italic">To be completed at return</span>}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
 
             {/* Terms & Conditions */}
             <section>
