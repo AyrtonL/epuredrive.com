@@ -2,6 +2,7 @@ import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import UpgradeButton from './UpgradeButton'
 import DeactivateButton from './DeactivateButton'
+import SubscribeTracker from './SubscribeTracker'
 
 export default async function BillingPage({
   searchParams,
@@ -49,9 +50,12 @@ export default async function BillingPage({
       <PageHeader title="Billing & Plans" description="Manage your subscription and view invoicing history." />
 
       {params.success && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-2xl text-sm">
-          Payment successful! Your plan will be updated shortly.
-        </div>
+        <>
+          <SubscribeTracker plan={plan} />
+          <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-2xl text-sm">
+            Payment successful! Your plan will be updated shortly.
+          </div>
+        </>
       )}
       {params.cancelled && (
         <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-2xl text-sm">

@@ -2,10 +2,16 @@
 
 import { useTransition, useState } from 'react'
 import { createCheckoutSession } from './actions'
+import { trackPixelEvent } from '@/lib/meta-pixel'
 
 interface Props {
   planName: string
   isCurrent: boolean
+}
+
+const PLAN_VALUES: Record<string, number> = {
+  pro: 49,
+  max: 99,
 }
 
 export default function UpgradeButton({ planName, isCurrent }: Props) {
@@ -39,8 +45,15 @@ export default function UpgradeButton({ planName, isCurrent }: Props) {
       <button
         onClick={() => {
           setError(null)
+          const plan = planName.toLowerCase()
+          trackPixelEvent('InitiateCheckout', {
+            value: PLAN_VALUES[plan],
+            currency: 'USD',
+            content_name: planName,
+            content_category: 'subscription',
+          })
           startTransition(async () => {
-            const result = await createCheckoutSession(planName.toLowerCase())
+            const result = await createCheckoutSession(plan)
             if (result.error) setError(result.error)
           })
         }}

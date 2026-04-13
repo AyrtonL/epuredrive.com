@@ -4,6 +4,8 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { trackPixelEvent } from '@/lib/meta-pixel'
+import { trackAdsConversion } from '@/lib/google-ads'
 
 export default function SignUpForm() {
   const router = useRouter()
@@ -23,7 +25,9 @@ export default function SignUpForm() {
 
     const supabase = createClient()
 
-    // 1 — Create auth user
+    trackPixelEvent('Lead', { content_name: 'Sign Up Form Submit' })
+    trackAdsConversion('lead')
+
     const { data: authData, error: authError } = await supabase.auth.signUp({ email, password })
     if (authError) {
       setError(authError.message)
@@ -59,6 +63,9 @@ export default function SignUpForm() {
       setLoading(false)
       return
     }
+
+    trackPixelEvent('CompleteRegistration', { content_name: 'Tenant Created' })
+    trackAdsConversion('signup')
 
     router.push('/dashboard')
   }
