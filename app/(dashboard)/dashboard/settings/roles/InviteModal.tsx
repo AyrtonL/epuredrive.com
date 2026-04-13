@@ -4,10 +4,10 @@ import { useState, useTransition } from 'react'
 import { inviteTeamMember } from './actions'
 
 const ROLES = [
-  { value: 'admin', label: 'Admin', desc: 'Full access including settings and team management' },
-  { value: 'manager', label: 'Manager', desc: 'Operations + financial data, no settings' },
-  { value: 'staff', label: 'Staff', desc: 'Day-to-day operations only' },
-  { value: 'finance', label: 'Finance', desc: 'Financial modules only' },
+  { value: 'admin',   label: 'Admin',   desc: 'Full access' },
+  { value: 'manager', label: 'Manager', desc: 'Ops + finance' },
+  { value: 'staff',   label: 'Staff',   desc: 'Operations only' },
+  { value: 'finance', label: 'Finance', desc: 'Finance only' },
 ]
 
 export default function InviteModal() {
@@ -40,9 +40,6 @@ export default function InviteModal() {
     })
   }
 
-  const inputCls = 'w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white placeholder:text-white/20 focus:ring-1 focus:ring-white/20 outline-none transition-all'
-  const labelCls = 'block text-[10px] font-black text-white/30 uppercase tracking-widest mb-2'
-
   return (
     <>
       <button
@@ -54,88 +51,101 @@ export default function InviteModal() {
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
           onClick={e => { if (e.target === e.currentTarget) handleClose() }}
         >
-          <div className="glass border border-white/10 rounded-3xl p-8 w-full max-w-md shadow-2xl space-y-6 animate-fade-in">
-            <div className="flex items-start justify-between">
+          <div className="w-full max-w-sm bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fade-in">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-white/[0.06]">
               <div>
-                <h2 className="text-white font-bold text-lg">Invite Team Member</h2>
-                <p className="text-white/40 text-xs mt-1">They&apos;ll receive an email to set their password.</p>
+                <h2 className="text-white font-bold text-sm">Invite team member</h2>
+                <p className="text-white/30 text-[11px] mt-0.5">They&apos;ll get an email with a sign-in link.</p>
               </div>
               <button
                 onClick={handleClose}
-                className="text-white/30 hover:text-white/60 transition-colors text-xl leading-none"
+                className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 text-white/40 hover:text-white hover:bg-white/10 transition-all text-base leading-none"
               >
                 ×
               </button>
             </div>
 
             {result?.success ? (
-              <div className="text-center py-6 space-y-3">
-                <div className="w-12 h-12 mx-auto rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <div className="px-6 py-10 text-center space-y-3">
+                <div className="w-10 h-10 mx-auto rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p className="text-white font-bold text-sm">Invitation sent!</p>
-                <p className="text-white/40 text-xs">They&apos;ll receive a link valid for 24 hours.</p>
+                <p className="text-white font-bold text-sm">Invitation sent</p>
+                <p className="text-white/30 text-xs">Link expires in 24 hours.</p>
                 <button
                   onClick={handleClose}
-                  className="mt-2 text-white/40 text-xs font-bold uppercase tracking-widest hover:text-white/60 transition-colors"
+                  className="mt-1 text-white/30 text-xs font-bold uppercase tracking-widest hover:text-white/50 transition-colors"
                 >
                   Close
                 </button>
               </div>
             ) : (
-              <>
-                <div className="space-y-4">
-                  <div>
-                    <label className={labelCls}>Email address</label>
-                    <input
-                      type="email"
-                      placeholder="colleague@company.com"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      className={inputCls}
-                      disabled={isPending}
-                      onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Role</label>
-                    <div className="space-y-2">
-                      {ROLES.map(r => (
-                        <button
-                          key={r.value}
-                          type="button"
-                          onClick={() => setRole(r.value)}
-                          className={`w-full text-left p-4 rounded-2xl border transition-all ${
-                            role === r.value
-                              ? 'bg-white/10 border-white/20 text-white'
-                              : 'bg-white/[0.02] border-white/[0.04] text-white/40 hover:border-white/10'
-                          }`}
-                        >
-                          <div className="text-xs font-bold">{r.label}</div>
-                          <div className="text-[10px] mt-0.5 opacity-60">{r.desc}</div>
-                        </button>
-                      ))}
-                    </div>
+              <div className="px-6 py-5 space-y-5">
+
+                {/* Email */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-black text-white/30 uppercase tracking-widest">Email</label>
+                  <input
+                    type="email"
+                    placeholder="colleague@company.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    disabled={isPending}
+                    onKeyDown={e => e.key === 'Enter' && email.trim() && handleSubmit()}
+                    className="w-full bg-white/5 border border-white/[0.08] rounded-xl py-2.5 px-3.5 text-sm text-white placeholder:text-white/20 focus:ring-1 focus:ring-white/20 outline-none transition-all"
+                  />
+                </div>
+
+                {/* Role — 2×2 grid */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-black text-white/30 uppercase tracking-widest">Role</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {ROLES.map(r => (
+                      <button
+                        key={r.value}
+                        type="button"
+                        onClick={() => setRole(r.value)}
+                        className={`text-left px-3.5 py-3 rounded-xl border transition-all ${
+                          role === r.value
+                            ? 'bg-white/10 border-white/25 text-white'
+                            : 'bg-white/[0.02] border-white/[0.05] text-white/40 hover:border-white/10 hover:text-white/60'
+                        }`}
+                      >
+                        <div className="text-xs font-bold">{r.label}</div>
+                        <div className="text-[10px] mt-0.5 opacity-60 leading-snug">{r.desc}</div>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
                 {result?.error && (
-                  <p className="text-red-400 text-xs font-bold px-1">{result.error}</p>
+                  <p className="text-red-400 text-xs font-medium">{result.error}</p>
                 )}
 
-                <button
-                  onClick={handleSubmit}
-                  disabled={isPending || !email.trim()}
-                  className="w-full bg-white text-black font-black uppercase tracking-[0.15em] text-[11px] py-4 rounded-2xl hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
-                >
-                  {isPending ? 'Sending…' : 'Send Invitation'}
-                </button>
-              </>
+                {/* Footer */}
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={handleClose}
+                    className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-white/40 text-xs font-bold hover:text-white/60 hover:border-white/15 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isPending || !email.trim()}
+                    className="flex-1 py-2.5 bg-white text-black font-bold text-xs rounded-xl hover:bg-white/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    {isPending ? 'Sending…' : 'Send invite'}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
