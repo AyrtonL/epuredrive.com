@@ -3,6 +3,10 @@
 JavaScript/HTML web application (rental car dashboard + public-facing fleet site).
 Backend: Supabase (PostgreSQL). Hosting: Netlify. Always push to `main` so changes go live immediately.
 
+## Skills
+
+The `/brainstorm` skill (`superpowers:brainstorm`) is deprecated and will be removed in the next major release. When brainstorming is needed, invoke `superpowers:brainstorming` instead.
+
 ## Database
 
 This app uses Supabase (PostgreSQL). Before writing any INSERT or UPDATE query:
@@ -40,6 +44,27 @@ After completing any task, feature, fix, or meaningful change, log it in the cor
 - If work touches a Pre-Launch item, mark it done in the checklist too
 - This applies to all sessions — no exceptions
 - **Do NOT ask for authorization before updating Notion — just do it automatically at the end of every session**
+
+## Stripe
+
+Claude has direct Stripe API access via `STRIPE_SECRET_KEY` in `.env.local`. For any Stripe operation (create products, prices, coupons, etc.) use curl against the Stripe API — do NOT ask the user to do it manually.
+
+```bash
+curl https://api.stripe.com/v1/products \
+  -u "$(grep STRIPE_SECRET_KEY .env.local | cut -d= -f2-):"
+```
+
+### Known Price IDs (live mode)
+| Plan | Price ID |
+|---|---|
+| Starter | `price_1TDaQ3HAH4zJnnwfasGBYtYO` |
+| Pro | `price_1TF2UnHAH4zJnnwfTwU129PO` |
+| Max | `price_1TMBzWHAH4zJnnwf9xd3BxGL` |
+
+After creating a new price, always:
+1. Add it to `.env.local` as `STRIPE_PRICE_<PLAN>=...`
+2. Add the fallback hardcoded in `app/api/stripe/webhook/route.ts`
+3. Add to the table above in this file
 
 ## Testing & Verification
 

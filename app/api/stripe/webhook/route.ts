@@ -10,7 +10,7 @@ import crypto from 'crypto'
 
 const STARTER_PRICE_ID = 'price_1TDaQ3HAH4zJnnwfasGBYtYO'
 const PRO_PRICE_ID = 'price_1TF2UnHAH4zJnnwfTwU129PO'
-const MAX_PRICE_ID = process.env.STRIPE_PRICE_MAX ?? ''
+const MAX_PRICE_ID = process.env.STRIPE_PRICE_MAX ?? 'price_1TMBzWHAH4zJnnwf9xd3BxGL'
 
 function resolvePlan(priceId: string | undefined, metaPlan: string | undefined): string {
   // Prefer the plan name set in checkout metadata (most reliable)
