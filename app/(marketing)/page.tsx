@@ -229,7 +229,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 items-stretch">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
             {/* ── Starter ── */}
             <div className="glass rounded-2xl p-8 text-left relative overflow-hidden group hover:border-white/15 transition-all duration-500 flex flex-col">
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/10 to-transparent" />
@@ -280,14 +280,14 @@ export default function HomePage() {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">$49</span>
               </div>
-              <div className="text-white/30 text-sm mb-8">/ month</div>
+              <div className="text-white/30 text-sm mb-8">/ month + taxes</div>
 
               <ul className="space-y-3 text-sm text-white/50 mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Everything in Starter
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Up to 50 vehicles
+                  <span className="text-white/50 text-xs">&#10003;</span> Up to 25 vehicles
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Full brand customization
@@ -308,6 +308,44 @@ export default function HomePage() {
               </Link>
             </div>
 
+            {/* ── Max ── */}
+            <div className="glass rounded-2xl p-8 text-left relative overflow-hidden group transition-all duration-500 flex flex-col border border-amber-500/20 hover:border-amber-500/35">
+              <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-amber-500/40 to-transparent" />
+
+              <div className="text-[11px] font-bold text-amber-400/80 uppercase tracking-widest mb-6">
+                Max
+              </div>
+              <div className="flex items-baseline gap-1 mb-1">
+                <span className="text-5xl font-extrabold text-white tracking-tight">$99</span>
+              </div>
+              <div className="text-white/30 text-sm mb-8">/ month + taxes</div>
+
+              <ul className="space-y-3 text-sm text-white/50 mb-10 font-light flex-1">
+                <li className="flex items-center gap-3">
+                  <span className="text-amber-400/60 text-xs">&#10003;</span> Everything in Pro
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-amber-400/60 text-xs">&#10003;</span> Up to 60 vehicles
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-amber-400/60 text-xs">&#10003;</span> Custom domain
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-amber-400/60 text-xs">&#10003;</span> API access
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-amber-400/60 text-xs">&#10003;</span> Priority help & assistance
+                </li>
+              </ul>
+
+              <Link
+                href="/sign-up"
+                className="block text-center bg-amber-500/10 text-amber-300 font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-amber-500/20 hover:text-amber-200 transition-colors border border-amber-500/20 mt-auto"
+              >
+                Get started
+              </Link>
+            </div>
+
             {/* ── Enterprise ── */}
             <div className="glass rounded-2xl p-8 text-left relative overflow-hidden group hover:border-white/15 transition-all duration-500 flex flex-col">
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/10 to-transparent" />
@@ -317,20 +355,17 @@ export default function HomePage() {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">Custom</span>
               </div>
-              <div className="text-white/30 text-sm mb-8">tailored pricing</div>
+              <div className="text-white/30 text-sm mb-8">tailored pricing + taxes</div>
 
               <ul className="space-y-3 text-sm text-white/50 mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Everything in Pro
+                  <span className="text-white/50 text-xs">&#10003;</span> Everything in Max
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Unlimited vehicles
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> Multi-location management
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="text-white/50 text-xs">&#10003;</span> Custom domain
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-white/50 text-xs">&#10003;</span> White-label branding
