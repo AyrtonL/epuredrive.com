@@ -13,11 +13,8 @@ export default function HelpButton({ plan }: Props) {
   const panelRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
-  if (!PAID_PLANS.includes(plan)) return null
-
-  const isPriority = plan === 'max' || plan === 'enterprise'
-
   useEffect(() => {
+    if (!PAID_PLANS.includes(plan)) return
     function handleClickOutside(e: MouseEvent) {
       if (
         panelRef.current &&
@@ -29,7 +26,11 @@ export default function HelpButton({ plan }: Props) {
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [plan])
+
+  if (!PAID_PLANS.includes(plan)) return null
+
+  const isPriority = plan === 'max' || plan === 'enterprise'
 
   return (
     <>
