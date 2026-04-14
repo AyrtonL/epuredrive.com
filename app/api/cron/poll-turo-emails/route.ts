@@ -7,6 +7,8 @@
  * Protected by Authorization: Bearer {CRON_SECRET}
  */
 
+export const dynamic = 'force-dynamic'
+
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
