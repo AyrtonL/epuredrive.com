@@ -1,20 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email/resend'
-import { Ratelimit } from '@upstash/ratelimit'
-import { Redis } from '@upstash/redis'
 
-// Persistent rate limiter (Upstash Redis). Falls back to in-memory for local dev.
-let ratelimit: Ratelimit | null = null
-if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-  ratelimit = new Ratelimit({
-    redis: Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(5, '10 m'),
-    prefix: 'booking',
-  })
-}
-
-// In-memory fallback (dev only — resets on cold start)
 const rateLimitStore = new Map<string, number[]>()
 
 const supabase = createClient(
@@ -46,24 +33,15 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown'
+  const now = Date.now()
+  const windowMs = 10 * 60 * 1000 // 10 minutes
+  const maxRequests = 5
 
-  if (ratelimit) {
-    // Persistent rate limit via Upstash Redis
-    const { success } = await ratelimit.limit(ip)
-    if (!success) {
-      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
-    }
-  } else {
-    // In-memory fallback (dev / no Redis configured)
-    const now = Date.now()
-    const windowMs = 10 * 60 * 1000
-    const maxRequests = 5
-    const timestamps = (rateLimitStore.get(ip) ?? []).filter((t) => now - t < windowMs)
-    if (timestamps.length >= maxRequests) {
-      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
-    }
-    rateLimitStore.set(ip, [...timestamps, now])
+  const timestamps = (rateLimitStore.get(ip) ?? []).filter((t) => now - t < windowMs)
+  if (timestamps.length >= maxRequests) {
+    return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }
+  rateLimitStore.set(ip, [...timestamps, now])
 
   let body: unknown
   try {
