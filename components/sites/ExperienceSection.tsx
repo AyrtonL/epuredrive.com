@@ -1,24 +1,10 @@
-import type { Car, Tenant, ExperiencePillar } from '@/lib/supabase/types'
+import type { Car, Tenant } from '@/lib/supabase/types'
+import { DEFAULT_EXPERIENCE_PILLARS } from '@/lib/constants/experience-pillars'
 
 interface Props {
   cars: Car[]
   tenant: Tenant
 }
-
-const DEFAULT_PILLARS: ExperiencePillar[] = [
-  {
-    title: 'White-Glove Delivery',
-    body: 'Your vehicle arrives spotless, fueled, and ready. No rental counters, no hidden queues — just a seamless handoff at your location.',
-  },
-  {
-    title: 'Any Occasion',
-    body: 'Weekend escapes, corporate events, photoshoots, or simply elevating a Tuesday — our fleet adapts to every moment.',
-  },
-  {
-    title: 'Transparent Pricing',
-    body: 'What you see is what you pay. No platform markups, no last-minute surprise fees — direct pricing saves you up to 25%.',
-  },
-]
 
 const PILLAR_ICONS = [
   // Checkmark circle
@@ -41,7 +27,7 @@ export default function ExperienceSection({ cars, tenant }: Props) {
   const pillars =
     tenant.experience_pillars?.length === 3
       ? tenant.experience_pillars
-      : DEFAULT_PILLARS
+      : DEFAULT_EXPERIENCE_PILLARS
 
   const validRates = cars.map(c => Number(c.daily_rate) || 0).filter(r => r > 0)
   const lowestRate = validRates.length > 0 ? Math.min(...validRates) : 0

@@ -69,6 +69,24 @@ export async function updateTenantBranding(data: {
   const supabase = createClient()
   const tenantId = await getTenantId()
 
+  // Validate experience_pillars before writing
+  if (data.experience_pillars != null) {
+    const p = data.experience_pillars
+    if (
+      !Array.isArray(p) ||
+      p.length !== 3 ||
+      p.some(
+        (item) =>
+          typeof item.title !== 'string' ||
+          typeof item.body !== 'string' ||
+          item.title.length > 40 ||
+          item.body.length > 160
+      )
+    ) {
+      return { error: 'Invalid experience pillars: must be exactly 3 items, each with a title (≤40 chars) and body (≤160 chars).' }
+    }
+  }
+
   // If slug is changing, sync Netlify domain aliases
   if (data.slug) {
     const { data: current } = await supabase

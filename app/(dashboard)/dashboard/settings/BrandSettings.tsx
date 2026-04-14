@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef } from 'react'
 import { updateTenantBranding, uploadLogo, uploadHeroImage } from './actions'
 import type { PickupLocation, ExperiencePillar } from '@/lib/supabase/types'
+import { DEFAULT_EXPERIENCE_PILLARS } from '@/lib/constants/experience-pillars'
 
 interface Props {
   tenant: {
@@ -55,15 +56,10 @@ export default function BrandSettings({ tenant }: Props) {
   )
 
   // Experience pillars
-  const DEFAULT_PILLARS: ExperiencePillar[] = [
-    { title: 'White-Glove Delivery', body: 'Your vehicle arrives spotless, fueled, and ready. No rental counters, no hidden queues — just a seamless handoff at your location.' },
-    { title: 'Any Occasion', body: 'Weekend escapes, corporate events, photoshoots, or simply elevating a Tuesday — our fleet adapts to every moment.' },
-    { title: 'Transparent Pricing', body: 'What you see is what you pay. No platform markups, no last-minute surprise fees — direct pricing saves you up to 25%.' },
-  ]
   const [pillars, setPillars] = useState<ExperiencePillar[]>(
     tenant?.experience_pillars?.length === 3
       ? tenant.experience_pillars
-      : DEFAULT_PILLARS
+      : DEFAULT_EXPERIENCE_PILLARS
   )
 
   const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost'
@@ -429,7 +425,7 @@ export default function BrandSettings({ tenant }: Props) {
         ))}
         <button
           type="button"
-          onClick={() => setPillars(DEFAULT_PILLARS)}
+          onClick={() => setPillars(DEFAULT_EXPERIENCE_PILLARS)}
           className="text-[10px] font-bold text-white/25 hover:text-white/50 uppercase tracking-widest transition-colors"
         >
           Reset to defaults
