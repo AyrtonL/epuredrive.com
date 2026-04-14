@@ -10,10 +10,10 @@ const SCREENS = [
     url: 'app.epuredrive.com',
   },
   {
-    src: '/assets/screenshots/site-fleet.png',
-    alt: 'Tenant fleet site',
-    label: 'Fleet site',
-    url: 'epurerental.epuredrive.com',
+    src: '/assets/screenshots/dash-main.png',
+    alt: 'Main dashboard',
+    label: 'Dashboard',
+    url: 'app.epuredrive.com',
   },
   {
     src: '/assets/screenshots/dash-fleet.png',
