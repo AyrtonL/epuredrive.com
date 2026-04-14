@@ -29,22 +29,33 @@ All emails use Resend (`lib/email/resend.ts` → `sendEmail()`). Templates are H
 
 All asset URLs in emails use the absolute base: `https://epuredrive.com/assets/email/`
 
-### Layout Design — two tiers
+### Layout Design — inspired directly by éPure advertising materials
 
-**Tier 1 — Hero layout** (welcome, onboarding, subscription activated, team invite)
-Inspired by the éPure advertising materials (wide, cinematic format):
-- Full-width black header with the white logo centered + a car hero image beneath it (cropped to ~260px height, object-fit cover)
-- Bold italic headline over a dark card
-- Clean detail rows or step cards
-- White CTA button
+The adv templates (éPure-adv-2,1x1, éPure-adv-2,6x1, éPure-adv-4x1) use a **white background with black text** — clean, editorial, luxury. Emails adopt this language, **not** the dark app theme.
 
-**Tier 2 — Compact layout** (receipts, notifications, support, cancellations)
-- Black background, dark card
-- White logo top-left (smaller, ~120px wide)
-- Headline + body + detail table
-- No car imagery (keeps it tight for transactional emails)
+**Shared layout system:**
+- Background: `#ffffff` (white)
+- Text: `#000000` (black headlines), `#666666` (body), `#999999` (labels/meta)
+- Font: `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`
+- Logo: `logo-black.png`, top-left, 140px wide
+- Max-width: 600px, centered, no outer card border
 
-Both tiers share the same typographic system: `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`, uppercase tracking for labels, bold italic for headlines.
+**Tier 1 — Split hero layout** (welcome, onboarding, subscription activated/changed, team invite)
+Mirrors the adv template structure:
+- **Top strip:** Black logo left, contact meta right (`epuredrive.com`)
+- **Body split — 55% / 45%:**
+  - Left: Large bold headline (28–32px), body copy, CTA button (black pill)
+  - Right: Car photography full-bleed, vertically cropped to match content height
+- **Footer:** Small grey address/legal line
+
+**Tier 2 — Compact layout** (receipts, payment failure, cancellations, support confirms, maintenance alerts)
+- Logo top-left (same black logo)
+- Full-width content, no car image
+- Headline + body paragraph + detail table (label left / value right)
+- Black CTA button where needed
+- Footer: `epuredrive.com · info@epuredrive.com`
+
+Both tiers share the same typographic system. The split is purely about whether a car image is included.
 
 ### Car image assignment
 | Email | Car image |
