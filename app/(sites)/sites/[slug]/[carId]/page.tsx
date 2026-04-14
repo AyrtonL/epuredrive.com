@@ -1,7 +1,7 @@
 // app/sites/[slug]/[carId]/page.tsx
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import type { Car, Tenant } from '@/lib/supabase/types'
+import type { Car, Tenant, PickupLocation } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
 import { buildCarMetadata } from '@/lib/utils/fleet-metadata'
 import CarDetailView from '@/components/sites/CarDetailView'
@@ -42,7 +42,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, brand_name, slug, stripe_account_id')
+    .select('id, name, brand_name, slug, stripe_account_id, whatsapp_phone, pickup_locations')
     .eq('slug', params.slug)
     .single()
 
@@ -56,6 +56,10 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
     .single()
 
   if (!car) notFound()
+
+  const pickupLocations = Array.isArray(tenant.pickup_locations)
+    ? (tenant.pickup_locations as PickupLocation[])
+    : []
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
@@ -78,6 +82,8 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
         tenantId={tenant.id}
         slug={tenant.slug!}
         paymentsEnabled={!!tenant.stripe_account_id}
+        whatsappPhone={tenant.whatsapp_phone ?? null}
+        pickupLocations={pickupLocations}
       />
     </div>
   )

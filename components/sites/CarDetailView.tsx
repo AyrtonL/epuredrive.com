@@ -1,12 +1,15 @@
 'use client'
-import { useState, useMemo } from 'react'
-import type { Car } from '@/lib/supabase/types'
+import { useState } from 'react'
+import type { Car, PickupLocation } from '@/lib/supabase/types'
+import BookingWidget from './BookingWidget'
 
 interface Props {
   car: Car
   tenantId?: string
   slug?: string
   paymentsEnabled?: boolean
+  whatsappPhone?: string | null
+  pickupLocations?: PickupLocation[]
 }
 
 function resolveImageUrl(url: string | null): string {
@@ -15,7 +18,7 @@ function resolveImageUrl(url: string | null): string {
   return `/${url}`
 }
 
-export default function CarDetailView({ car, tenantId, slug, paymentsEnabled }: Props) {
+export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, whatsappPhone, pickupLocations = [] }: Props) {
   const gallery: string[] = Array.isArray(car.gallery) && car.gallery.length > 0
     ? car.gallery
     : car.image_url
@@ -132,11 +135,11 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled }: 
         {/* Booking Sidebar (only on detail page) */}
         {tenantId && slug && (
           <div className="md:col-span-2 md:sticky md:top-8">
-            <BookingCard
+            <BookingWidget
               car={car}
               tenantId={tenantId}
-              slug={slug}
-              paymentsEnabled={paymentsEnabled ?? false}
+              pickupLocations={pickupLocations}
+              whatsappPhone={whatsappPhone}
             />
           </div>
         )}
@@ -145,185 +148,3 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled }: 
   )
 }
 
-/* ─── Booking Card ─── */
-
-function BookingCard({ car, tenantId, slug, paymentsEnabled }: {
-  car: Car
-  tenantId: string
-  slug: string
-  paymentsEnabled: boolean
-}) {
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const today = new Date().toISOString().split('T')[0]
-
-  const days = useMemo(() => {
-    if (!startDate || !endDate) return 0
-    const diff = new Date(endDate).getTime() - new Date(startDate).getTime()
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
-  }, [startDate, endDate])
-
-  const total = days * (car.daily_rate || 0)
-
-  async function handleBooking() {
-    if (!startDate || !endDate || !name || !email) {
-      setError('Please fill in all fields.')
-      return
-    }
-    if (days < 1) {
-      setError('End date must be after start date.')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    if (paymentsEnabled) {
-      // Stripe Checkout flow
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          car_id: car.id,
-          tenant_id: tenantId,
-          start_date: startDate,
-          end_date: endDate,
-          customer_name: name,
-          customer_email: email,
-        }),
-      })
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-        return
-      }
-      setError(data.error || 'Failed to create checkout session.')
-    } else {
-      // Concierge inquiry fallback
-      const res = await fetch('/api/concierge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tenant_id: tenantId,
-          name,
-          email,
-          vehicle: `${car.make} ${car.model}`,
-          message: `Booking request: ${startDate} to ${endDate} (${days} days). Total: $${total.toLocaleString()}.`,
-        }),
-      })
-      if (res.ok) {
-        setError(null)
-        alert('Booking request sent! The operator will contact you shortly.')
-      } else {
-        setError('Failed to submit request. Please try again.')
-      }
-    }
-    setLoading(false)
-  }
-
-  return (
-    <div className="glass border border-white/10 rounded-3xl p-8 space-y-6">
-      {/* Rate */}
-      {car.daily_rate ? (
-        <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-outfit font-black text-white">${car.daily_rate.toLocaleString()}</span>
-          <span className="text-xs text-white/30 font-bold uppercase tracking-widest">/ day</span>
-        </div>
-      ) : (
-        <div className="text-white/40 text-sm font-medium">Contact for pricing</div>
-      )}
-
-      <div className="section-divider" />
-
-      {/* Date Pickers */}
-      <div className="space-y-3">
-        <div>
-          <label className="block text-[10px] font-black uppercase tracking-widest text-white/30 mb-1.5">Pick-up</label>
-          <input
-            type="date"
-            value={startDate}
-            min={today}
-            onChange={e => { setStartDate(e.target.value); setError(null) }}
-            className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30 [color-scheme:dark]"
-          />
-        </div>
-        <div>
-          <label className="block text-[10px] font-black uppercase tracking-widest text-white/30 mb-1.5">Return</label>
-          <input
-            type="date"
-            value={endDate}
-            min={startDate || today}
-            onChange={e => { setEndDate(e.target.value); setError(null) }}
-            className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30 [color-scheme:dark]"
-          />
-        </div>
-      </div>
-
-      {/* Duration / Total */}
-      {days > 0 && car.daily_rate && (
-        <div className="bg-white/5 rounded-2xl p-4 space-y-2">
-          <div className="flex justify-between text-xs text-white/40">
-            <span>${car.daily_rate.toLocaleString()} x {days} day{days !== 1 ? 's' : ''}</span>
-            <span className="text-white font-bold">${total.toLocaleString()}</span>
-          </div>
-          <div className="section-divider" />
-          <div className="flex justify-between text-sm font-black text-white">
-            <span>Total</span>
-            <span>${total.toLocaleString()}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Customer Info */}
-      <div className="space-y-3">
-        <input
-          type="text"
-          placeholder="Full name"
-          value={name}
-          onChange={e => { setName(e.target.value); setError(null) }}
-          className="w-full bg-white/5 border border-white/10 text-white placeholder:text-white/25 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30"
-        />
-        <input
-          type="email"
-          placeholder="Email address"
-          value={email}
-          onChange={e => { setEmail(e.target.value); setError(null) }}
-          className="w-full bg-white/5 border border-white/10 text-white placeholder:text-white/25 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30"
-        />
-      </div>
-
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs px-4 py-3 rounded-xl">
-          {error}
-        </div>
-      )}
-
-      {/* CTA */}
-      <button
-        onClick={handleBooking}
-        disabled={loading || !days || !name || !email}
-        className="w-full bg-white text-black font-black py-4 rounded-2xl text-sm uppercase tracking-widest hover:bg-white/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all cta-glow"
-      >
-        {loading
-          ? 'Processing…'
-          : paymentsEnabled
-          ? 'Book & Pay Now'
-          : 'Request Booking'}
-      </button>
-
-      {paymentsEnabled && (
-        <p className="text-center text-[10px] text-white/20 flex items-center justify-center gap-1.5">
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          Secure payment via Stripe
-        </p>
-      )}
-    </div>
-  )
-}
