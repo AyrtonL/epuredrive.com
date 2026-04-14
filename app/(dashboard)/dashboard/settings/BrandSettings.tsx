@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from 'react'
 import { updateTenantBranding, uploadLogo, uploadHeroImage } from './actions'
-import type { PickupLocation } from '@/lib/supabase/types'
+import type { PickupLocation, ExperiencePillar } from '@/lib/supabase/types'
 
 interface Props {
   tenant: {
@@ -19,6 +19,7 @@ interface Props {
     whatsapp_phone?: string | null
     business_hours?: string | null
     pickup_locations?: PickupLocation[]
+    experience_pillars?: ExperiencePillar[] | null
   } | null
 }
 
@@ -53,6 +54,18 @@ export default function BrandSettings({ tenant }: Props) {
     tenant?.pickup_locations?.length ? tenant.pickup_locations : []
   )
 
+  // Experience pillars
+  const DEFAULT_PILLARS: ExperiencePillar[] = [
+    { title: 'White-Glove Delivery', body: 'Your vehicle arrives spotless, fueled, and ready. No rental counters, no hidden queues — just a seamless handoff at your location.' },
+    { title: 'Any Occasion', body: 'Weekend escapes, corporate events, photoshoots, or simply elevating a Tuesday — our fleet adapts to every moment.' },
+    { title: 'Transparent Pricing', body: 'What you see is what you pay. No platform markups, no last-minute surprise fees — direct pricing saves you up to 25%.' },
+  ]
+  const [pillars, setPillars] = useState<ExperiencePillar[]>(
+    tenant?.experience_pillars?.length === 3
+      ? tenant.experience_pillars
+      : DEFAULT_PILLARS
+  )
+
   const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost'
   const publicUrl = slug ? `https://${slug}.epuredrive.com` : null
   const previewGradient = `linear-gradient(135deg, ${primary}, ${accent})`
@@ -85,6 +98,7 @@ export default function BrandSettings({ tenant }: Props) {
         whatsapp_phone: whatsappPhone.replace(/\D/g, '') || null,
         business_hours: businessHours.trim() || null,
         pickup_locations: locations.filter(l => l.label.trim()),
+        experience_pillars: pillars,
       })
       if (result.error) setMsg('Error: ' + result.error)
       else setMsg('Settings saved successfully.')
@@ -386,6 +400,40 @@ export default function BrandSettings({ tenant }: Props) {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── Experience Section Pillars ── */}
+      <div className="glass border border-white/10 rounded-3xl p-6 space-y-5">
+        <h3 className="text-white font-bold text-sm uppercase tracking-widest opacity-50">Experience Section</h3>
+        <p className="text-white/30 text-xs -mt-3">The 3 pillars shown on your public site under "The Experience". Keep them short and relevant to your brand.</p>
+        {pillars.map((pillar, i) => (
+          <div key={i} className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 space-y-3">
+            <div className="text-[10px] font-black text-white/25 uppercase tracking-widest">Pillar {i + 1}</div>
+            <input
+              type="text"
+              value={pillar.title}
+              onChange={e => setPillars(prev => prev.map((p, idx) => idx === i ? { ...p, title: e.target.value } : p))}
+              placeholder="Title"
+              maxLength={40}
+              className={inputCls}
+            />
+            <textarea
+              value={pillar.body}
+              onChange={e => setPillars(prev => prev.map((p, idx) => idx === i ? { ...p, body: e.target.value } : p))}
+              placeholder="Description"
+              rows={2}
+              maxLength={160}
+              className={`${inputCls} resize-none`}
+            />
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => setPillars(DEFAULT_PILLARS)}
+          className="text-[10px] font-bold text-white/25 hover:text-white/50 uppercase tracking-widest transition-colors"
+        >
+          Reset to defaults
+        </button>
       </div>
 
       {/* ── Submit ── */}
