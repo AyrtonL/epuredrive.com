@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import type { Reservation, Transaction } from '@/lib/supabase/types'
+import FleetPerformanceTab from './FleetPerformanceTab'
 
 interface ReportCar {
   id: number
@@ -31,6 +32,7 @@ function today() {
 }
 
 export default function ReportsClient({ reservations, expenses, cars }: Props) {
+  const [activeTab, setActiveTab] = useState<'finance' | 'fleet'>('finance')
   const [dateFrom, setDateFrom] = useState(daysAgo(30))
   const [dateTo, setDateTo] = useState(today())
 
@@ -205,6 +207,23 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
   return (
     <div className="space-y-8 pb-12">
 
+      {/* Tab Switcher */}
+      <div className="flex gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 w-fit">
+        {(['finance', 'fleet'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+              activeTab === tab
+                ? 'bg-white/10 text-white shadow-sm'
+                : 'text-white/40 hover:text-white/70'
+            }`}
+          >
+            {tab === 'finance' ? 'Finance' : 'Fleet Performance'}
+          </button>
+        ))}
+      </div>
+
       {/* Date Range Controls */}
       <div className="glass border border-white/10 rounded-3xl p-6">
         <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-end justify-between flex-wrap">
@@ -234,6 +253,19 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Fleet Performance Tab */}
+      {activeTab === 'fleet' && (
+        <FleetPerformanceTab
+          reservations={reservations}
+          cars={cars}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+        />
+      )}
+
+      {/* Finance Tab Content */}
+      {activeTab === 'finance' && <>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
@@ -437,6 +469,8 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
           </div>
         )}
       </div>
+
+      </>}
 
     </div>
   )
