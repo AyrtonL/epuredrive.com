@@ -7,16 +7,19 @@ const SCREENS = [
     src: '/assets/screenshots/dash-bookings.png',
     alt: 'Bookings dashboard',
     label: 'Bookings',
+    url: 'app.epuredrive.com',
   },
   {
-    src: '/assets/screenshots/dash-overview.png',
-    alt: 'Overview dashboard',
-    label: 'Overview',
+    src: '/assets/screenshots/site-fleet.png',
+    alt: 'Tenant fleet site',
+    label: 'Fleet site',
+    url: 'epurerental.epuredrive.com',
   },
   {
     src: '/assets/screenshots/dash-fleet.png',
     alt: 'Fleet dashboard',
     label: 'Fleet',
+    url: 'app.epuredrive.com',
   },
 ]
 
@@ -59,7 +62,7 @@ export default function ProductShowcase() {
               marginRight: '-80px',
             }}
           >
-            <ScreenFrame src={SCREENS[0].src} alt={SCREENS[0].alt} label={SCREENS[0].label} />
+            <ScreenFrame src={SCREENS[0].src} alt={SCREENS[0].alt} label={SCREENS[0].label} url={SCREENS[0].url} />
           </div>
 
           {/* Center screenshot — hero */}
@@ -67,7 +70,7 @@ export default function ProductShowcase() {
             className="relative w-full lg:w-[56%] flex-shrink-0"
             style={{ zIndex: 20 }}
           >
-            <ScreenFrame src={SCREENS[1].src} alt={SCREENS[1].alt} label={SCREENS[1].label} isCenter />
+            <ScreenFrame src={SCREENS[1].src} alt={SCREENS[1].alt} label={SCREENS[1].label} url={SCREENS[1].url} isCenter />
           </div>
 
           {/* Right screenshot */}
@@ -80,14 +83,14 @@ export default function ProductShowcase() {
               marginLeft: '-80px',
             }}
           >
-            <ScreenFrame src={SCREENS[2].src} alt={SCREENS[2].alt} label={SCREENS[2].label} />
+            <ScreenFrame src={SCREENS[2].src} alt={SCREENS[2].alt} label={SCREENS[2].label} url={SCREENS[2].url} />
           </div>
         </div>
 
         {/* Mobile: stacked cards */}
         <div className="flex flex-col gap-6 lg:hidden mt-6">
           {SCREENS.map((s) => (
-            <ScreenFrame key={s.src} src={s.src} alt={s.alt} label={s.label} />
+            <ScreenFrame key={s.src} src={s.src} alt={s.alt} label={s.label} url={s.url} />
           ))}
         </div>
       </div>
@@ -99,11 +102,13 @@ function ScreenFrame({
   src,
   alt,
   label,
+  url = 'app.epuredrive.com',
   isCenter = false,
 }: {
   src: string
   alt: string
   label: string
+  url?: string
   isCenter?: boolean
 }) {
   return (
@@ -124,7 +129,7 @@ function ScreenFrame({
           </div>
           <div className="flex-1 mx-3">
             <div className="bg-white/[0.04] rounded-md px-3 py-1 text-[10px] text-white/20 font-mono text-center max-w-[220px] mx-auto">
-              app.epuredrive.com
+              {url}
             </div>
           </div>
         </div>

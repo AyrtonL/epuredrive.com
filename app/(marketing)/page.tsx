@@ -27,8 +27,8 @@ const SPLIT_FEATURES = [
     description:
       'A premium public page showcasing your vehicles — with real-time availability, pricing, and your brand. No code, no developer, no waiting.',
     bullets: ['Custom domain support', 'Live availability calendar', 'Auto-syncs with your inventory'],
-    screenshot: '/assets/screenshots/dash-fleet.png',
-    alt: 'Fleet management dashboard',
+    screenshot: '/assets/screenshots/site-fleet.png',
+    alt: 'Tenant branded fleet site',
   },
   {
     icon: (
