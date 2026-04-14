@@ -28,7 +28,7 @@ export default function HeroSection({ tenant, carCount, slug, locations }: Props
       {/* Bottom fade */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#040404] to-transparent" />
 
-      <div className="relative z-10 w-full max-w-5xl mx-auto px-6 text-center py-32">
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-6 text-center pt-16 pb-24">
         <p className="text-[10px] font-black uppercase tracking-[.5em] text-primary/60 mb-6 animate-fade-in">
           {displayName}
         </p>

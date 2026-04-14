@@ -37,11 +37,11 @@ export default function QuickSearchBar({ slug, locations, inline = false }: Prop
     window.location.href = `${fleetPath}?${params.toString()}`
   }
 
-  const selectCls = 'w-full bg-white/5 border border-white/5 rounded-xl px-3 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none appearance-none [color-scheme:dark]'
-  const labelCls = 'block text-[8px] font-black text-white/30 uppercase tracking-widest mb-1.5'
+  const selectCls = 'w-full bg-white/10 border border-white/15 rounded-xl px-3 py-3.5 text-sm text-white focus:ring-1 focus:ring-primary/50 outline-none appearance-none [color-scheme:dark]'
+  const labelCls = 'block text-[9px] font-black text-white/40 uppercase tracking-widest mb-2'
 
   const inner = (
-    <div className="glass border border-white/10 rounded-[2rem] p-6 sm:p-8 shadow-2xl">
+    <div className="bg-white/[0.08] backdrop-blur-xl border border-white/15 rounded-[2rem] p-6 sm:p-8 shadow-2xl">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
           {/* Pickup Date */}
           <div>
@@ -94,7 +94,7 @@ export default function QuickSearchBar({ slug, locations, inline = false }: Prop
           <div>
             <button
               onClick={handleSearch}
-              className="w-full bg-white text-black font-black uppercase tracking-[.15em] text-[10px] py-3.5 rounded-xl hover:bg-primary hover:text-white hover:scale-[1.02] active:scale-95 transition-all shadow-lg"
+              className="w-full bg-white text-black font-black uppercase tracking-[.15em] text-[11px] py-4 rounded-xl hover:bg-primary hover:text-white hover:scale-[1.02] active:scale-95 transition-all shadow-lg"
             >
               Search Fleet
             </button>
