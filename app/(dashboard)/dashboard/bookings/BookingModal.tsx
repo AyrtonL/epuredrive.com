@@ -5,15 +5,17 @@ import { useRouter } from 'next/navigation'
 import type { Reservation, Car } from '@/lib/supabase/types'
 import { createReservation, updateReservation, sendAgreement } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
+import FuelSummary from '@/components/dashboard/FuelSummary'
 
 interface Props {
   isOpen: boolean
   onClose: () => void
   reservation?: Reservation | null // null means creating a new one
   cars: Car[]
+  chargePerLevel: number
 }
 
-export default function BookingModal({ isOpen, onClose, reservation, cars }: Props) {
+export default function BookingModal({ isOpen, onClose, reservation, cars, chargePerLevel }: Props) {
   const [isPending, startTransition] = useTransition()
   const [isSendingAgreement, setIsSendingAgreement] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
@@ -510,6 +512,14 @@ export default function BookingModal({ isOpen, onClose, reservation, cars }: Pro
                 <option value="Empty" className="bg-[#0d0d0d]">Empty</option>
               </select>
             </div>
+
+            <FuelSummary
+              fuelOut={formData.fuel_out ?? null}
+              fuelIn={formData.fuel_in ?? null}
+              chargePerLevel={chargePerLevel}
+              amountOutstanding={formData.amount_outstanding ?? null}
+              onApplyCharge={(newAmount) => setFormData({ ...formData, amount_outstanding: newAmount })}
+            />
 
             {/* Damage Report */}
             <div className="md:col-span-2 pt-4 border-t border-white/[0.06]">

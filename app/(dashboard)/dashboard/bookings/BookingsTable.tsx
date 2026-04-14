@@ -19,9 +19,10 @@ const PAGE_SIZE = 25
 interface Props {
   reservations: Reservation[]
   cars: Car[]
+  chargePerLevel: number
 }
 
-export default function BookingsTable({ reservations, cars }: Props) {
+export default function BookingsTable({ reservations, cars, chargePerLevel }: Props) {
   const router = useRouter()
   const [filter, setFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -330,11 +331,12 @@ export default function BookingsTable({ reservations, cars }: Props) {
         </>
       )}
 
-      <BookingModal 
-        isOpen={modalOpen} 
-        onClose={() => setModalOpen(false)} 
+      <BookingModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
         reservation={editingRes}
         cars={cars}
+        chargePerLevel={chargePerLevel}
       />
     </div>
   )

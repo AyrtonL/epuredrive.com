@@ -8,7 +8,7 @@ import type { Reservation, Car } from '@/lib/supabase/types'
 export default async function BookingsPage() {
   const { supabase, tenantId } = await requireTenantId()
 
-  const [{ data: reservations }, { data: cars }] = await Promise.all([
+  const [{ data: reservations }, { data: cars }, { data: tenant }] = await Promise.all([
     supabase
       .from('reservations')
       .select('*')
@@ -18,6 +18,11 @@ export default async function BookingsPage() {
       .from('cars')
       .select('id, make, model, model_full')
       .eq('tenant_id', tenantId),
+    supabase
+      .from('tenants')
+      .select('fuel_charge_per_level')
+      .eq('id', tenantId)
+      .single(),
   ])
 
   const rows = (reservations as Reservation[]) ?? []
@@ -41,7 +46,7 @@ export default async function BookingsPage() {
       </div>
 
       <div className="glass border border-white/10 rounded-3xl p-6 md:p-8">
-        <BookingsTable reservations={rows} cars={carRows} />
+        <BookingsTable reservations={rows} cars={carRows} chargePerLevel={tenant?.fuel_charge_per_level ?? 20} />
       </div>
     </div>
   )
