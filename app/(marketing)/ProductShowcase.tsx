@@ -129,7 +129,7 @@ function ScreenFrame({
           </div>
         </div>
 
-        {/* Screenshot + privacy mask */}
+        {/* Screenshot + privacy masks */}
         <div className="relative">
           <Image
             src={src}
@@ -140,23 +140,38 @@ function ScreenFrame({
           />
 
           {/*
-            Privacy mask — covers the top-right region of the dashboard
+            Privacy mask A — covers the top-right region of the dashboard
             where user email / avatar appears in the nav bar.
-            Uses a hard fill + a soft blur bleed so it looks intentional.
           */}
           <div
             className="absolute top-0 right-0 pointer-events-none"
             style={{ width: '22%', height: '7.5%', minHeight: 28 }}
           >
-            {/* Hard fill matching the dashboard nav background */}
             <div className="absolute inset-0 bg-[#0f1117]" />
-            {/* Soft left bleed so the mask doesn't have a sharp edge */}
             <div
               className="absolute inset-y-0 left-0 w-16"
-              style={{
-                background:
-                  'linear-gradient(to right, transparent, #0f1117)',
-              }}
+              style={{ background: 'linear-gradient(to right, transparent, #0f1117)' }}
+            />
+          </div>
+
+          {/*
+            Privacy mask B — covers the sidebar footer (bottom-left) where
+            the user email and role badge appear.
+          */}
+          <div
+            className="absolute bottom-0 left-0 pointer-events-none"
+            style={{ width: '18%', height: '14%', minHeight: 40 }}
+          >
+            <div className="absolute inset-0 bg-[#0d0d0d]" />
+            {/* Soft top bleed */}
+            <div
+              className="absolute top-0 left-0 right-0 h-8"
+              style={{ background: 'linear-gradient(to bottom, transparent, #0d0d0d)' }}
+            />
+            {/* Soft right bleed */}
+            <div
+              className="absolute inset-y-0 right-0 w-6"
+              style={{ background: 'linear-gradient(to left, transparent, #0d0d0d)' }}
             />
           </div>
         </div>

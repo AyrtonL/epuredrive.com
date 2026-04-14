@@ -11,6 +11,12 @@ export interface ExperiencePillar {
   body: string
 }
 
+export interface HowItWorksStep {
+  icon: string  // emoji or short label
+  title: string
+  body: string
+}
+
 export interface Tenant {
   id: string
   name: string
@@ -31,6 +37,7 @@ export interface Tenant {
   agreement_clauses: string | null
   agreement_template_url: string | null
   experience_pillars: ExperiencePillar[] | null
+  how_it_works: HowItWorksStep[] | null
 }
 
 export interface Car {

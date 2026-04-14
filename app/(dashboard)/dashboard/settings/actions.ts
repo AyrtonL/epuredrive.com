@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
-import type { ExperiencePillar } from '@/lib/supabase/types'
+import type { ExperiencePillar, HowItWorksStep } from '@/lib/supabase/types'
 
 async function getTenantId(): Promise<string> {
   const { tenantId } = await requireTenantId()
@@ -65,6 +65,7 @@ export async function updateTenantBranding(data: {
   business_hours?: string | null
   pickup_locations?: Array<{ label: string; address: string; note: string; fee: number; maps_query: string }>
   experience_pillars?: ExperiencePillar[] | null
+  how_it_works?: HowItWorksStep[] | null
 }): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
@@ -84,6 +85,24 @@ export async function updateTenantBranding(data: {
       )
     ) {
       return { error: 'Invalid experience pillars: must be exactly 3 items, each with a title (≤40 chars) and body (≤160 chars).' }
+    }
+  }
+
+  // Validate how_it_works before writing
+  if (data.how_it_works != null) {
+    const h = data.how_it_works
+    if (
+      !Array.isArray(h) ||
+      h.length !== 3 ||
+      h.some(
+        (item) =>
+          typeof item.title !== 'string' ||
+          typeof item.body !== 'string' ||
+          item.title.length > 60 ||
+          item.body.length > 200
+      )
+    ) {
+      return { error: 'Invalid how it works steps: must be exactly 3 items, each with a title (≤60 chars) and body (≤200 chars).' }
     }
   }
 

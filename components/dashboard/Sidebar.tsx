@@ -497,11 +497,6 @@ export default function Sidebar({ email, role, featureFlags = {} }: Props) {
             return (
               <div key={entry.label} className={`mb-1 ${isAdmin ? 'mt-4 pt-4 border-t border-white/[0.06]' : ''}`}>
                 {/* Section header label */}
-                {isAdmin && (
-                  <div className="px-3 mb-2">
-                    <span className="text-[9px] font-black uppercase tracking-[0.25em] text-amber-400/50">Platform</span>
-                  </div>
-                )}
                 <button
                   onClick={() => toggle(entry.label)}
                   className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-[12px] font-bold tracking-[0.15em] uppercase transition-all duration-200 ${
@@ -562,15 +557,14 @@ export default function Sidebar({ email, role, featureFlags = {} }: Props) {
       {/* ── User Footer ───────────────────────────────────────────────── */}
       <div className="p-5 border-t border-surfaceBorder backdrop-blur-md bg-white/[0.02]">
         <div className="flex flex-col gap-1">
-          <p className="text-sm text-white/80 font-medium truncate">{email}</p>
           {role && (
-            <div className="mt-1">
+            <div>
               <span className={`inline-block px-2.5 py-1 text-[10px] font-bold tracking-widest rounded-full uppercase ${
                 isSuperuser
                   ? 'text-amber-300 bg-amber-500/10 border border-amber-500/20'
                   : 'text-primary bg-primary/10 border border-primary/20'
               }`}>
-                {role}
+                {isSuperuser ? 'Admin' : role}
               </span>
             </div>
           )}

@@ -7,6 +7,7 @@ import HeroSection from '@/components/sites/HeroSection'
 import QuickSearchBar from '@/components/sites/QuickSearchBar'
 import FleetPreview from '@/components/sites/FleetPreview'
 import ExperienceSection from '@/components/sites/ExperienceSection'
+import HowItWorksSection from '@/components/sites/HowItWorksSection'
 import ConciergeSection from '@/components/sites/ConciergeSection'
 
 interface Props {
@@ -57,6 +58,8 @@ export default async function TenantLandingPage({ params }: Props) {
       <QuickSearchBar slug={params.slug} locations={typedTenant.pickup_locations} />
 
       <FleetPreview cars={fleet} slug={params.slug} />
+
+      <HowItWorksSection tenant={typedTenant} />
 
       <ExperienceSection cars={fleet} tenant={typedTenant} />
 
