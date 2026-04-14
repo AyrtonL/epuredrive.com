@@ -73,7 +73,7 @@ export default function MaintenanceTable({ services, cars }: Props) {
             setFilter(e.target.value)
             setPage(1)
           }}
-          className="w-full max-w-sm bg-white/5 border border-white/10 text-white placeholder:text-white/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+          className="w-full max-w-sm dash-input px-4 py-3"
         />
         <button
           onClick={openNew}
@@ -84,15 +84,15 @@ export default function MaintenanceTable({ services, cars }: Props) {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-white/30 text-sm py-12 text-center bg-white/5 rounded-2xl border border-white/5">
+        <p className="empty-state">
           {filter ? 'No records match your search.' : 'No maintenance records found.'}
         </p>
       ) : (
         <>
-          <div className="overflow-x-auto bg-white/5 border border-white/10 rounded-2xl">
+          <div className="data-table">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/40 border-b border-white/10 bg-black/20">
+                <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/55 border-b border-white/[0.10] bg-white/[0.04]">
                   <th className="py-4 pl-6 pr-4">Vehicle</th>
                   <th className="py-4 pr-4">Type</th>
                   <th className="py-4 pr-4">Date</th>
@@ -102,7 +102,7 @@ export default function MaintenanceTable({ services, cars }: Props) {
                   <th className="py-4 pr-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-white/[0.07]">
                 {paginated.map((s) => (
                   <tr key={s.id} className="hover:bg-white/5 transition-colors">
                     <td className="py-4 pl-6 pr-4 font-semibold text-white tracking-wide">
@@ -116,17 +116,17 @@ export default function MaintenanceTable({ services, cars }: Props) {
                     <td className="py-4 pr-4 text-white/80 font-medium whitespace-nowrap">
                       {s.service_date || '—'}
                     </td>
-                    <td className="py-4 pr-4 text-white/60">
+                    <td className="py-4 pr-4 text-white/70">
                       <div className="line-clamp-2 max-w-xs">
                         {s.description || '—'}
-                        {s.provider && <div className="text-[10px] text-white/30 italic mt-0.5">at {s.provider}</div>}
+                        {s.provider && <div className="text-[10px] text-white/50 italic mt-0.5">at {s.provider}</div>}
                       </div>
                     </td>
                     <td className="py-4 pr-4">
                       {s.next_service_date || s.next_service_mileage ? (
                         <div className="space-y-0.5">
                           {s.next_service_date && <div className="text-xs text-primary font-medium">{s.next_service_date}</div>}
-                          {s.next_service_mileage && <div className="text-[10px] text-white/40 uppercase tracking-tighter">{s.next_service_mileage.toLocaleString()} mi</div>}
+                          {s.next_service_mileage && <div className="text-[10px] text-white/55 uppercase tracking-tighter">{s.next_service_mileage.toLocaleString()} mi</div>}
                         </div>
                       ) : '—'}
                     </td>
@@ -136,14 +136,14 @@ export default function MaintenanceTable({ services, cars }: Props) {
                     <td className="py-4 pr-6 text-right space-x-3">
                       <button
                         onClick={() => openEdit(s)}
-                        className="text-white/50 hover:text-white transition-colors text-xs font-semibold"
+                        className="text-white/65 hover:text-white transition-colors text-xs font-semibold"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(s.id)}
                         disabled={isPending}
-                        className="text-white/30 hover:text-red-400 transition-colors text-xs font-semibold disabled:opacity-50"
+                        className="text-white/45 hover:text-red-400 transition-colors text-xs font-semibold disabled:opacity-50"
                       >
                         Delete
                       </button>

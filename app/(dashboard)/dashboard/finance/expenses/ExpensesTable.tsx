@@ -140,7 +140,7 @@ export default function ExpensesTable({ expenses, cars }: Props) {
             setFilter(e.target.value)
             setPage(1)
           }}
-          className="w-full max-w-sm bg-white/5 border border-white/10 text-white placeholder:text-white/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+          className="w-full max-w-sm dash-input px-4 py-3"
         />
         <div className="flex gap-3 w-full md:w-auto">
           <input
@@ -167,15 +167,15 @@ export default function ExpensesTable({ expenses, cars }: Props) {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-white/30 text-sm py-12 text-center bg-white/5 rounded-2xl border border-white/5">
+        <p className="empty-state">
           {filter ? 'No records match your search.' : 'No expenses found.'}
         </p>
       ) : (
         <>
-          <div className="overflow-x-auto bg-white/5 border border-white/10 rounded-2xl">
+          <div className="data-table">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/40 border-b border-white/10 bg-black/20">
+                <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/55 border-b border-white/[0.10] bg-white/[0.04]">
                   <th className="py-4 pl-6 pr-4">Date</th>
                   <th className="py-4 pr-4">Category</th>
                   <th className="py-4 pr-4">Description</th>
@@ -184,14 +184,14 @@ export default function ExpensesTable({ expenses, cars }: Props) {
                   <th className="py-4 pr-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-white/[0.07]">
                 {paginated.map((e) => (
                   <tr key={e.id} className="hover:bg-white/5 transition-colors">
                     <td className="py-4 pl-6 pr-4 text-white/80 font-medium whitespace-nowrap">
                       {e.transaction_date || '—'}
                     </td>
                     <td className="py-4 pr-4">
-                      <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded bg-white/5 text-white/60">
+                      <span className="text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-lg bg-white/[0.08] border border-white/[0.10] text-white/70">
                         {e.category || 'General'}
                       </span>
                     </td>
@@ -207,14 +207,14 @@ export default function ExpensesTable({ expenses, cars }: Props) {
                     <td className="py-4 pr-6 text-right space-x-3">
                       <button
                         onClick={() => openEdit(e)}
-                        className="text-white/50 hover:text-white transition-colors text-xs font-semibold"
+                        className="text-white/65 hover:text-white transition-colors text-xs font-semibold"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(e.id)}
                         disabled={isPending}
-                        className="text-white/30 hover:text-red-400 transition-colors text-xs font-semibold disabled:opacity-50"
+                        className="text-white/45 hover:text-red-400 transition-colors text-xs font-semibold disabled:opacity-50"
                       >
                         Delete
                       </button>

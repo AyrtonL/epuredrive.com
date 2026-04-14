@@ -9,10 +9,10 @@ const config: Config = {
     extend: {
       colors: {
         // éPure Drive brand palette
-        background: '#000000',
-        surface: '#2B2B2B',
-        surfaceHover: '#383838',
-        surfaceBorder: 'rgba(255, 255, 255, 0.08)',
+        background: '#0b0d14',
+        surface: '#1a1c26',
+        surfaceHover: '#22253200',
+        surfaceBorder: 'rgba(255, 255, 255, 0.13)',
         primary: 'var(--color-primary)',
         accent: 'var(--color-accent)',
         muted: '#ACACAC',
@@ -24,8 +24,8 @@ const config: Config = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)',
-        'hero-glow': 'radial-gradient(50% 50% at 50% 50%, rgba(255, 255, 255, 0.06) 0%, rgba(0, 0, 0, 0) 100%)',
+        'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.04) 100%)',
+        'hero-glow': 'radial-gradient(50% 50% at 50% 50%, rgba(255, 255, 255, 0.09) 0%, rgba(0, 0, 0, 0) 100%)',
       },
       animation: {
         'fade-in': 'fadeIn 0.7s ease-out forwards',

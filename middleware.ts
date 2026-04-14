@@ -20,7 +20,9 @@ export async function middleware(request: NextRequest) {
   const isEpureDomain =
     hostname === 'epuredrive.com' ||
     hostname === 'www.epuredrive.com' ||
-    hostname.endsWith('.epuredrive.com')
+    hostname.endsWith('.epuredrive.com') ||
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1'
 
   if (!isEpureDomain) {
     const supabase = createEdgeClient()

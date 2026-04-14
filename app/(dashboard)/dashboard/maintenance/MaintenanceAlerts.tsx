@@ -25,20 +25,26 @@ export default function MaintenanceAlerts({ services, cars }: Props) {
     if (nextDate <= fourteenDaysFromNow) {
       const isOverdue = nextDate < today
       alerts.push(
-        <div 
+        <div
           key={`date-${s.id}`}
-          className={`flex items-center gap-4 p-4 rounded-2xl border ${
-            isOverdue 
-              ? 'bg-red-500/10 border-red-500/30 text-red-200' 
-              : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+          className={`flex items-start gap-3 p-4 rounded-2xl border ${
+            isOverdue
+              ? 'bg-red-500/[0.12] border-red-500/30'
+              : 'bg-amber-500/[0.10] border-amber-500/25'
           }`}
         >
-          <span className="text-xl">{isOverdue ? '⚠️' : '📅'}</span>
-          <div className="flex-1">
-            <div className="text-xs font-bold uppercase tracking-widest opacity-60 mb-0.5">
+          <div className={`mt-0.5 shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ${isOverdue ? 'bg-red-500/20' : 'bg-amber-500/20'}`}>
+            {isOverdue ? (
+              <svg className="w-4 h-4 text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            ) : (
+              <svg className="w-4 h-4 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${isOverdue ? 'text-red-400/80' : 'text-amber-400/80'}`}>
               {isOverdue ? 'Overdue Service' : 'Upcoming Service'}
             </div>
-            <div className="text-sm font-medium">
+            <div className={`text-sm font-medium ${isOverdue ? 'text-red-100' : 'text-amber-100'}`}>
               <span className="font-bold text-white">{car.make} {car.model_full || car.model}</span>
               {' — '}
               {s.service_type?.replace('_', ' ') || 'Maintenance'} due on <span className="font-bold">{s.next_service_date}</span>
@@ -64,24 +70,26 @@ export default function MaintenanceAlerts({ services, cars }: Props) {
     if (remaining <= 1000) {
       const isOverdue = remaining <= 0
       alerts.push(
-        <div 
+        <div
           key={`mileage-${car.id}`}
-          className={`flex items-center gap-4 p-4 rounded-2xl border ${
-            isOverdue 
-              ? 'bg-red-500/10 border-red-500/30 text-red-200' 
-              : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+          className={`flex items-start gap-3 p-4 rounded-2xl border ${
+            isOverdue
+              ? 'bg-red-500/[0.12] border-red-500/30'
+              : 'bg-amber-500/[0.10] border-amber-500/25'
           }`}
         >
-          <span className="text-xl">🔧</span>
-          <div className="flex-1">
-            <div className="text-xs font-bold uppercase tracking-widest opacity-60 mb-0.5">
+          <div className={`mt-0.5 shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ${isOverdue ? 'bg-red-500/20' : 'bg-amber-500/20'}`}>
+            <svg className={`w-4 h-4 ${isOverdue ? 'text-red-300' : 'text-amber-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${isOverdue ? 'text-red-400/80' : 'text-amber-400/80'}`}>
               {isOverdue ? 'Mileage Overdue' : 'Mileage Warning'}
             </div>
-            <div className="text-sm font-medium">
+            <div className={`text-sm font-medium ${isOverdue ? 'text-red-100' : 'text-amber-100'}`}>
               <span className="font-bold text-white">{car.make} {car.model_full || car.model}</span>
               {' — '}
-              {isOverdue 
-                ? `Overdue by ${Math.abs(remaining).toLocaleString()} mi` 
+              {isOverdue
+                ? `Overdue by ${Math.abs(remaining).toLocaleString()} mi`
                 : `Due in ${remaining.toLocaleString()} mi`
               } (at {latestWithMileage.next_service_mileage.toLocaleString()} mi)
             </div>
@@ -95,7 +103,7 @@ export default function MaintenanceAlerts({ services, cars }: Props) {
 
   return (
     <div className="space-y-3 mb-8 animate-fade-in">
-      <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] px-1">Maintenance Alerts</h3>
+      <h3 className="text-[10px] font-bold text-white/55 uppercase tracking-[0.2em] px-1">Maintenance Alerts</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {alerts}
       </div>

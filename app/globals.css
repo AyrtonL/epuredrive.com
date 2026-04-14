@@ -5,11 +5,11 @@
 @layer base {
   :root {
     /* Brand tokens */
-    --brand-bg: #000000;
+    --brand-bg: #0b0d14;
     --brand-text: #ffffff;
-    --brand-surface: #111111;
-    --brand-border: rgba(255, 255, 255, 0.08);
-    --brand-muted: #ACACAC;
+    --brand-surface: #141620;
+    --brand-border: rgba(255, 255, 255, 0.13);
+    --brand-muted: #C8C8C8;
     --brand-accent: #ffffff;
     /* Tenant-overridable color tokens (defaults for dashboard/marketing) */
     --color-primary: #ffffff;
@@ -35,10 +35,10 @@
     height: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #000000;
+    background: #0a0c11;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.13);
     border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
@@ -48,13 +48,32 @@
 
 @layer utilities {
   .glass {
-    @apply bg-glass-gradient backdrop-blur-xl border border-surfaceBorder shadow-[0_8px_32px_0_rgba(0,0,0,0.36)];
+    @apply bg-glass-gradient backdrop-blur-xl border border-surfaceBorder;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  /* Polished data table container */
+  .data-table {
+    @apply overflow-x-auto rounded-2xl border border-white/[0.13];
+    background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07);
+  }
+
+  /* Dashboard form input */
+  .dash-input {
+    @apply bg-white/[0.08] border border-white/[0.15] text-white placeholder:text-white/45 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-white/25 focus:border-white/35 transition-all;
+  }
+
+  /* Zero / empty state */
+  .empty-state {
+    @apply py-16 text-center rounded-2xl border border-white/[0.10] text-white/50 text-sm;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
   }
 
   /* Subtle dot grid texture */
   .bg-dot-pattern {
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-    background-size: 32px 32px;
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 
   /* Subtle grid line texture */

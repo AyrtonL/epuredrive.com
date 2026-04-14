@@ -55,7 +55,7 @@ export default function FleetManager({ initialCars }: Props) {
           placeholder="Search by make or model…"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="w-full max-w-sm bg-white/5 border border-white/10 text-white placeholder:text-white/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+          className="w-full max-w-sm dash-input px-4 py-3"
         />
         <button
           onClick={openNew}
@@ -67,7 +67,7 @@ export default function FleetManager({ initialCars }: Props) {
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <p className="text-white/30 text-sm py-12 text-center bg-white/5 rounded-2xl border border-white/5">
+        <p className="empty-state">
           {filter ? 'No vehicles match your search.' : 'Your fleet is empty. Click "Add Vehicle" to register one.'}
         </p>
       ) : (
@@ -75,7 +75,8 @@ export default function FleetManager({ initialCars }: Props) {
           {filtered.map((c) => (
             <div 
               key={c.id} 
-              className="group relative bg-white/5 border border-white/10 rounded-3xl overflow-hidden hover:bg-white/10 transition-all duration-300 hover:-translate-y-1 shadow-2xl shadow-black/50 flex flex-col"
+              className="group relative bg-white/[0.07] border border-white/[0.13] rounded-2xl overflow-hidden hover:bg-white/[0.11] transition-all duration-300 hover:-translate-y-1 flex flex-col"
+              style={{boxShadow: '0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)'}}
             >
               {/* Image Header */}
               <div className="h-48 w-full bg-black/40 relative overflow-hidden">
@@ -109,15 +110,15 @@ export default function FleetManager({ initialCars }: Props) {
                     <h3 className="text-white font-bold text-lg leading-tight">
                       {c.make} {c.model_full || c.model}
                     </h3>
-                    <p className="text-white/40 text-[11px] font-bold tracking-widest uppercase mt-1">
+                    <p className="text-white/55 text-[11px] font-semibold tracking-widest uppercase mt-1">
                       {c.year || 'N/A'} • {c.category || 'Economy'}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-auto pt-6 flex items-center justify-between border-t border-white/10">
+                <div className="mt-auto pt-6 flex items-center justify-between border-t border-white/[0.12]">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-0.5">Daily Rate</span>
+                    <span className="text-[10px] text-white/55 uppercase tracking-widest font-bold mb-0.5">Daily Rate</span>
                     <span className="text-white font-medium">
                       {c.daily_rate != null ? `$${Number(c.daily_rate).toFixed(0)}` : '—'}
                     </span>

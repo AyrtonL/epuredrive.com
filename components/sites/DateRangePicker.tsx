@@ -146,7 +146,7 @@ export default function DateRangePicker({
 
       {/* Calendar popup — rendered via portal so it floats above all page content */}
       {open && mounted && createPortal(
-        <div ref={popupRef} style={popupStyle} className="bg-[#0d0d0d] border border-white/10 rounded-3xl shadow-2xl p-5 overflow-hidden min-w-[320px]">
+        <div ref={popupRef} style={popupStyle} className="z-[9999] bg-[#0d0d0d] border border-white/10 rounded-3xl shadow-2xl p-5 overflow-hidden min-w-[320px]">
           <style>{`
             .rdp-root {
               --rdp-accent-color: rgba(255,255,255,0.15);

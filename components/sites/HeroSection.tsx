@@ -16,17 +16,19 @@ export default function HeroSection({ tenant, carCount, slug, locations }: Props
   const bgImage = tenant.hero_image_url || '/assets/images/Imagenes/kenny-sabugo-wErZFb01-5o-unsplash.jpg'
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background image — custom or default */}
-      <img
-        src={bgImage}
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover object-center"
-      />
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#040404]/75 via-[#040404]/55 to-[#040404]" />
-      {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#040404] to-transparent" />
+    <section className="relative min-h-screen flex items-center justify-center">
+      {/* Background image + overlays — clipped independently so the calendar popup can escape */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <img
+          src={bgImage}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#040404]/75 via-[#040404]/55 to-[#040404]" />
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#040404] to-transparent" />
+      </div>
 
       <div className="relative z-10 w-full max-w-5xl mx-auto px-6 text-center pt-16 pb-24">
         <p className="text-[10px] font-black uppercase tracking-[.5em] text-primary/60 mb-6 animate-fade-in">
@@ -55,8 +57,8 @@ export default function HeroSection({ tenant, carCount, slug, locations }: Props
           ))}
         </div>
 
-        {/* Search bar — primary CTA */}
-        <div className="animate-fade-in animation-delay-400 mb-8">
+        {/* Search bar — primary CTA; relative z-10 ensures this stacking context beats the animated buttons sibling below */}
+        <div className="animate-fade-in animation-delay-400 mb-8 relative z-10">
           <QuickSearchBar slug={slug} locations={locations} inline />
         </div>
 

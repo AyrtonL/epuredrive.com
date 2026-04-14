@@ -182,6 +182,38 @@ function IconAPI({ className }: { className?: string }) {
   )
 }
 
+function IconTaxes({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="9" y1="15" x2="15" y2="15" />
+      <line x1="9" y1="11" x2="15" y2="11" />
+    </svg>
+  )
+}
+
+function IconPayments({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2" />
+      <line x1="1" y1="10" x2="23" y2="10" />
+      <line x1="5" y1="15" x2="9" y2="15" />
+      <line x1="13" y1="15" x2="17" y2="15" />
+    </svg>
+  )
+}
+
+function IconAgreement({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <path d="M9 13l2 2 4-4" />
+    </svg>
+  )
+}
+
 // Admin icons
 function IconTenants({ className }: { className?: string }) {
   return (
@@ -279,6 +311,7 @@ const ICONS: Record<string, (props: { className?: string }) => React.ReactNode> 
   Fleet: IconFleet,
   Maintenance: IconMaintenance,
   Expenses: IconExpenses,
+  Taxes: IconTaxes,
   Reports: IconReports,
   ROI: IconROI,
   Customers: IconCustomers,
@@ -287,9 +320,11 @@ const ICONS: Record<string, (props: { className?: string }) => React.ReactNode> 
   Turo: IconTuro,
   // Settings sub-pages
   General: IconGeneral,
+  'Payments & Invoices': IconPayments,
   'Billing & Plans': IconBilling,
   'Team & Roles': IconRoles,
   Notifications: IconNotifications,
+  'Rental Agreement': IconAgreement,
   'Custom Domain': IconDomain,
   'API & Webhooks': IconAPI,
   // Admin sub-pages
@@ -502,9 +537,9 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
                   onClick={() => toggle(entry.label)}
                   className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-[12px] font-bold tracking-[0.15em] uppercase transition-all duration-200 ${
                     groupActive
-                      ? 'text-white/80 bg-white/[0.04]'
-                      : 'text-white/40 hover:text-white/70 hover:bg-white/[0.03]'
-                  } ${isAdmin ? 'text-amber-400/60 hover:text-amber-400/90' : ''}`}
+                      ? 'text-white/90 bg-white/[0.06]'
+                      : 'text-white/50 hover:text-white/80 hover:bg-white/[0.04]'
+                  } ${isAdmin ? 'text-amber-400/70 hover:text-amber-400/95' : ''}`}
                 >
                   {renderIcon(entry.label, `w-4 h-4 shrink-0 ${isAdmin ? 'text-amber-400/50' : 'opacity-50'}`)}
                   <span className="flex-1 text-left">{entry.label}</span>
@@ -520,8 +555,8 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
                           href={child.href}
                           className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-all duration-200 ${
                             active
-                              ? 'bg-white/[0.08] text-white font-medium shadow-[inset_2px_0_0_0_rgba(255,255,255,0.6)]'
-                              : 'text-white/50 hover:text-white/80 hover:bg-white/[0.04] hover:translate-x-0.5'
+                              ? 'bg-white/[0.10] text-white font-medium shadow-[inset_2px_0_0_0_rgba(255,255,255,0.7)]'
+                              : 'text-white/60 hover:text-white/90 hover:bg-white/[0.05] hover:translate-x-0.5'
                           }`}
                         >
                           {renderIcon(child.label, `w-3.5 h-3.5 shrink-0 ${active ? 'opacity-80' : 'opacity-40'}`)}
@@ -544,8 +579,8 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
               href={entry.href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all duration-200 ${
                 active
-                  ? 'bg-white/[0.08] text-white font-semibold shadow-[inset_3px_0_0_0_rgba(255,255,255,0.6)]'
-                  : 'text-white/50 hover:text-white/80 hover:bg-white/[0.04] hover:translate-x-0.5'
+                  ? 'bg-white/[0.10] text-white font-semibold shadow-[inset_3px_0_0_0_rgba(255,255,255,0.7)]'
+                  : 'text-white/60 hover:text-white/90 hover:bg-white/[0.05] hover:translate-x-0.5'
               }`}
             >
               {renderIcon(entry.label, `w-4 h-4 shrink-0 ${active ? 'opacity-90' : 'opacity-40'}`)}

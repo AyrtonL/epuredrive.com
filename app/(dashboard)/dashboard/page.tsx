@@ -80,35 +80,35 @@ export default async function DashboardPage() {
              <MaintenanceAlerts services={svcRows} cars={carRows} />
            )}
 
-           <div className="glass rounded-3xl p-8 border border-white/10">
+           <div className="glass rounded-2xl p-8 border border-white/[0.13]">
              <div className="flex items-center justify-between mb-8">
                 <h3 className="text-white font-bold tracking-tight">Fleet Status</h3>
-                <div className="text-[10px] text-white/40 uppercase tracking-[0.2em] font-bold">As of today</div>
+                <div className="text-[10px] text-white/50 uppercase tracking-[0.2em] font-bold">As of today</div>
              </div>
              <div className="grid grid-cols-3 gap-4 text-center">
-               <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+               <div className="p-4 rounded-2xl bg-emerald-500/[0.14] border border-emerald-500/30" style={{boxShadow: '0 0 20px rgba(16,185,129,0.06)'}}>
                  <div className="text-2xl font-bold text-emerald-400 mb-1">{availableCars}</div>
-                 <div className="text-[10px] text-emerald-400/60 uppercase font-black tracking-widest">Available</div>
+                 <div className="text-[10px] text-emerald-400/70 uppercase font-black tracking-widest">Available</div>
                </div>
-               <div className="p-4 rounded-2xl bg-orange-500/10 border border-orange-500/20">
+               <div className="p-4 rounded-2xl bg-orange-500/[0.14] border border-orange-500/30" style={{boxShadow: '0 0 20px rgba(249,115,22,0.06)'}}>
                  <div className="text-2xl font-bold text-orange-400 mb-1">{rentedCars}</div>
-                 <div className="text-[10px] text-orange-400/60 uppercase font-black tracking-widest">Rented</div>
+                 <div className="text-[10px] text-orange-400/70 uppercase font-black tracking-widest">Rented</div>
                </div>
-               <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+               <div className="p-4 rounded-2xl bg-red-500/[0.14] border border-red-500/30" style={{boxShadow: '0 0 20px rgba(239,68,68,0.06)'}}>
                  <div className="text-2xl font-bold text-red-400 mb-1">{maintenanceCars}</div>
-                 <div className="text-[10px] text-red-400/60 uppercase font-black tracking-widest">Maintenance</div>
+                 <div className="text-[10px] text-red-400/70 uppercase font-black tracking-widest">Maintenance</div>
                </div>
              </div>
            </div>
         </div>
 
         <div className="space-y-6">
-          <div className="glass rounded-3xl p-8 border border-white/10 flex flex-col items-center text-center">
+          <div className="glass rounded-2xl p-8 border border-white/[0.13] flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4 text-primary text-2xl font-black italic">
               é
             </div>
             <h3 className="text-white font-bold mb-1">{displayName}</h3>
-            <p className="text-white/40 text-xs mb-6 capitalize">{t?.plan || 'Free'} Plan Active</p>
+            <p className="text-white/55 text-xs mb-6 capitalize">{t?.plan || 'Free'} Plan Active</p>
             {fleetUrl ? (
               <>
                 <a href={fleetUrl} target="_blank" rel="noopener noreferrer"
@@ -133,21 +133,21 @@ export default async function DashboardPage() {
               View all →
             </Link>
           </div>
-          <div className="glass border border-white/10 rounded-3xl overflow-hidden">
+          <div className="glass border border-white/[0.13] rounded-2xl overflow-hidden">
             <div className="divide-y divide-white/[0.04]">
               {recentRows.map((r) => (
                 <div key={r.id} className="flex items-center justify-between px-6 py-3.5 hover:bg-white/[0.02] transition-colors">
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="min-w-0">
                       <div className="text-sm text-white font-medium truncate">{r.customer_name || 'Unknown'}</div>
-                      <div className="text-xs text-white/30 mt-0.5 truncate">
+                      <div className="text-xs text-white/50 mt-0.5 truncate">
                         {r.car_id ? (carMap[r.car_id] ?? `Car #${r.car_id}`) : '—'} · {r.pickup_date ?? 'TBD'} → {r.return_date ?? 'TBD'}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 ml-4">
                     {r.total_amount != null && (
-                      <span className="text-sm text-white/60 font-medium">
+                      <span className="text-sm text-white/70 font-medium">
                         ${Number(r.total_amount).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                       </span>
                     )}

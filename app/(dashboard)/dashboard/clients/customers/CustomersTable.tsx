@@ -148,7 +148,7 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <input type="text" placeholder="Search customers…" value={filter} onChange={e => { setFilter(e.target.value); setPage(1); setSelectedIds(new Set()); }}
-          className="w-full max-w-sm bg-white/5 border border-white/10 text-white placeholder:text-white/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all" />
+          className="w-full max-w-sm dash-input px-4 py-3" />
         <button onClick={handleSync} disabled={isPending}
           className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 flex-shrink-0">
           🔄 {isPending ? 'Syncing...' : 'Sync from Bookings'}
@@ -157,14 +157,14 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
       {syncMsg && <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl text-sm">{syncMsg}</div>}
 
       {filtered.length === 0 ? (
-        <p className="text-white/30 text-sm py-12 text-center">
+        <p className="empty-state">
           {filter ? 'No customers match your search.' : 'No customers yet. They are auto-created from bookings.'}
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="data-table">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/40 border-b border-white/10 bg-black/20">
+              <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/55 border-b border-white/[0.10] bg-white/[0.04]">
                 <th className="py-4 pl-4 pr-2 w-10">
                   <input type="checkbox" checked={selectedIds.size > 0 && selectedIds.size === paginated.length} onChange={toggleAll}
                     className="rounded border-white/20 bg-black/50 text-white focus:ring-1 focus:ring-white cursor-pointer" />
@@ -176,7 +176,7 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
                 <th className="py-4 text-right"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-white/[0.07]">
               {paginated.map(c => (
                 <tr key={c.id} className={`hover:bg-white/5 transition-colors group ${selectedIds.has(c.id) ? 'bg-white/5' : ''}`}>
                   <td className="py-4 pl-4 pr-2">
@@ -186,19 +186,19 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
                   <td className="py-4 pr-4">
                     <div className="text-white font-bold tracking-tight">{c.name}</div>
                     <div className="flex gap-2 mt-1">
-                      {c.email && <span className="text-white/40 text-[10px] uppercase font-bold">{c.email}</span>}
-                      {c.phone && <span className="text-white/20 text-[10px] uppercase font-bold">• {c.phone}</span>}
+                      {c.email && <span className="text-white/55 text-[10px] font-medium">{c.email}</span>}
+                      {c.phone && <span className="text-white/45 text-[10px] font-medium">· {c.phone}</span>}
                     </div>
                   </td>
                   <td className="py-4 pr-4">
                     <div className="text-emerald-400 font-black tracking-tighter text-base">${(c.ltv || 0).toLocaleString()}</div>
                   </td>
                   <td className="py-4 pr-4">
-                    <span className="bg-white/10 text-white/60 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter">
+                    <span className="bg-white/[0.08] border border-white/[0.10] text-white/70 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide">
                       {c.count || 0} trip{c.count !== 1 ? 's' : ''}
                     </span>
                   </td>
-                  <td className="py-4 pr-4 text-white/30 text-[10px] font-bold uppercase tracking-widest">
+                  <td className="py-4 pr-4 text-white/50 text-[11px] font-medium">
                     {c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}
                   </td>
                   <td className="py-4 text-right pr-4">

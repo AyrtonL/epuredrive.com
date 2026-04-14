@@ -138,12 +138,12 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
               setPage(1)
               setSelectedIds(new Set())
             }}
-            className="w-full max-w-xs bg-white/5 border border-white/10 text-white placeholder:text-white/40 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+            className="w-full max-w-xs dash-input px-4 py-2.5"
           />
           <select
             value={statusFilter}
             onChange={e => { setStatusFilter(e.target.value); setPage(1); setSelectedIds(new Set()) }}
-            className="bg-white/5 border border-white/10 text-white/70 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+            className="dash-input px-4 py-2.5 text-white/75"
           >
             <option value="" className="bg-[#0d0d0d]">All Statuses</option>
             <option value="pending" className="bg-[#0d0d0d]">Pending</option>
@@ -155,7 +155,7 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
           <select
             value={carFilter}
             onChange={e => { setCarFilter(e.target.value); setPage(1); setSelectedIds(new Set()) }}
-            className="bg-white/5 border border-white/10 text-white/70 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+            className="dash-input px-4 py-2.5 text-white/75"
           >
             <option value="" className="bg-[#0d0d0d]">All Vehicles</option>
             {cars.map(c => (
@@ -171,7 +171,7 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
               onChange={e => { setDateFrom(e.target.value); setPage(1); setSelectedIds(new Set()) }}
               placeholder="From"
               title="From date"
-              className="bg-white/5 border border-white/10 text-white/70 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all [color-scheme:dark]"
+              className="dash-input px-3 py-2.5 [color-scheme:dark]"
             />
             <span className="text-white/30 text-xs">to</span>
             <input
@@ -180,7 +180,7 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
               onChange={e => { setDateTo(e.target.value); setPage(1); setSelectedIds(new Set()) }}
               placeholder="To"
               title="To date"
-              className="bg-white/5 border border-white/10 text-white/70 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition-all [color-scheme:dark]"
+              className="dash-input px-3 py-2.5 [color-scheme:dark]"
             />
             {(dateFrom || dateTo) && (
               <button
@@ -226,15 +226,15 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
       )}
 
       {filtered.length === 0 ? (
-        <p className="text-white/30 text-sm py-12 text-center bg-white/5 rounded-2xl border border-white/5">
+        <p className="empty-state">
           {filter ? 'No bookings match your search.' : 'No bookings found. Click "Add Booking" to create one.'}
         </p>
       ) : (
         <>
-          <div className="overflow-x-auto bg-white/5 border border-white/10 rounded-2xl">
+          <div className="data-table">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/40 border-b border-white/10 bg-black/20">
+                <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/55 border-b border-white/[0.10] bg-white/[0.04]">
                   <th className="py-4 pl-6 pr-2 w-10">
                     <input 
                       type="checkbox" 
@@ -251,7 +251,7 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
                   <th className="py-4 pr-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-white/[0.07]">
                 {paginated.map((r) => (
                   <tr key={r.id} className={`hover:bg-white/5 transition-colors ${selectedIds.has(r.id) ? 'bg-white/5' : ''}`}>
                     <td className="py-4 pl-6 pr-2">
@@ -264,14 +264,14 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
                     </td>
                     <td className="py-4 pr-4">
                       <div className="font-semibold text-white tracking-wide">{r.customer_name || '—'}</div>
-                      <div className="text-white/40 text-[11px] mt-0.5">{r.customer_email || r.customer_phone}</div>
+                      <div className="text-white/55 text-[11px] mt-0.5">{r.customer_email || r.customer_phone}</div>
                     </td>
                     <td className="py-4 pr-4 text-white/80 font-medium">
                       {r.car_id ? carMap[r.car_id] ?? `Car #${r.car_id}` : '—'}
                     </td>
-                    <td className="py-4 pr-4 text-white/60 text-xs">
-                      <div><span className="text-white/30">Pick:</span> {r.pickup_date || '—'}</div>
-                      <div className="mt-0.5"><span className="text-white/30">Ret:</span> {r.return_date || '—'}</div>
+                    <td className="py-4 pr-4 text-white/70 text-xs">
+                      <div><span className="text-white/45">Pick:</span> {r.pickup_date || '—'}</div>
+                      <div className="mt-0.5"><span className="text-white/45">Ret:</span> {r.return_date || '—'}</div>
                     </td>
                     <td className="py-4 pr-4 text-white font-medium">
                       {r.total_amount != null ? `$${Number(r.total_amount).toLocaleString()}` : '—'}
@@ -284,13 +284,13 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
                     <td className="py-4 pr-6 text-right space-x-3">
                       <button
                         onClick={() => openEdit(r)}
-                        className="text-white/50 hover:text-white transition-colors text-xs font-semibold"
+                        className="text-white/65 hover:text-white transition-colors text-xs font-semibold"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(r.id)}
-                        className="text-white/30 hover:text-red-400 transition-colors text-xs font-semibold"
+                        className="text-white/45 hover:text-red-400 transition-colors text-xs font-semibold"
                       >
                         Delete
                       </button>
@@ -303,7 +303,7 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between px-2 text-sm text-white/50">
+            <div className="mt-4 flex items-center justify-between px-2 text-sm text-white/60">
               <div>
                 Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
               </div>

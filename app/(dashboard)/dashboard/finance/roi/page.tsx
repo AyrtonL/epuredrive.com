@@ -81,22 +81,22 @@ export default async function ROIPage() {
           { label: 'Business Expenses', value: fmt(generalExpenses), color: 'text-red-400/80' },
           { label: 'Fleet Net Profit', value: fmt(fleetNet), color: fleetNet >= 0 ? 'text-emerald-400' : 'text-red-400' },
         ].map((s) => (
-          <div key={s.label} className="glass border border-white/10 rounded-2xl p-4">
-            <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">{s.label}</div>
+          <div key={s.label} className="glass border border-white/[0.14] rounded-2xl p-4">
+            <div className="text-[10px] font-bold text-white/55 uppercase tracking-widest mb-2">{s.label}</div>
             <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
           </div>
         ))}
       </div>
 
       {sorted.length === 0 ? (
-        <div className="text-white/30 text-sm py-12 text-center bg-white/5 rounded-2xl border border-white/5">
+        <div className="empty-state">
           No fleet data or completed bookings found.
         </div>
       ) : (
-        <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden glass">
+        <div className="data-table rounded-2xl">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/40 border-b border-white/10 bg-black/20">
+              <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/55 border-b border-white/[0.10] bg-white/[0.04]">
                 <th className="px-6 py-4">Vehicle</th>
                 <th className="px-6 py-4">Completed Bookings</th>
                 <th className="px-6 py-4">Gross Revenue</th>
@@ -105,7 +105,7 @@ export default async function ROIPage() {
                 <th className="px-6 py-4 text-emerald-400 font-bold">Net Profit</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-white/[0.07]">
               {sorted.map((c) => {
                 const bookings = rows.filter((r) => r.car_id === c.id).length
                 const gross = revenueMap[c.id] ?? 0
@@ -131,7 +131,7 @@ export default async function ROIPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-white/50">{bookings} bookings</td>
+                    <td className="px-6 py-4 text-white/65">{bookings} bookings</td>
                     <td className="px-6 py-4 text-white font-medium">{fmt(gross)}</td>
                     <td className="px-6 py-4 text-red-400/80">
                       {maint > 0 ? `-${fmt(maint)}` : '—'}
@@ -150,8 +150,8 @@ export default async function ROIPage() {
 
           {/* General expenses footer note */}
           {generalExpenses > 0 && (
-            <div className="px-6 py-4 border-t border-white/10 bg-black/20 flex items-center justify-between">
-              <span className="text-[11px] text-white/40 uppercase tracking-widest font-bold">
+            <div className="px-6 py-4 border-t border-white/[0.10] bg-white/[0.03] flex items-center justify-between">
+              <span className="text-[11px] text-white/55 uppercase tracking-widest font-bold">
                 General Business Expenses (not per-vehicle — deducted from fleet net)
               </span>
               <span className="text-red-400/80 font-medium text-sm">-{fmt(generalExpenses)}</span>
