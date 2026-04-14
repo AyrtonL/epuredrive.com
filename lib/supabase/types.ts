@@ -36,6 +36,7 @@ export interface Tenant {
   company_phone: string | null
   agreement_clauses: string | null
   agreement_template_url: string | null
+  fuel_charge_per_level: number | null
   experience_pillars: ExperiencePillar[] | null
   how_it_works: HowItWorksStep[] | null
 }
