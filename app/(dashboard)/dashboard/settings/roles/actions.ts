@@ -22,7 +22,7 @@ export async function inviteTeamMember(
   const { tenantId } = await requireTenantId()
   const adminClient = createAdminClient()
 
-  const { error } = await adminClient.auth.admin.inviteUserByEmail(email, {
+  const { data: inviteData, error } = await adminClient.auth.admin.inviteUserByEmail(email, {
     data: { tenant_id: tenantId, role },
   })
 
@@ -31,6 +31,17 @@ export async function inviteTeamMember(
       return { success: false, error: 'An invitation has already been sent to this address.' }
     }
     return { success: false, error: 'Failed to send invitation. Please try again.' }
+  }
+
+  // Create profile row immediately so the onboarding page can identify the tenant
+  // and role when the invited user accepts and logs in for the first time.
+  const newUserId = inviteData?.user?.id
+  if (newUserId) {
+    await adminClient.from('profiles').upsert({
+      id: newUserId,
+      tenant_id: tenantId,
+      role,
+    })
   }
 
   return { success: true }
