@@ -6,6 +6,8 @@ import type { PickupLocation } from '@/lib/supabase/types'
 interface Props {
   slug: string
   locations: PickupLocation[]
+  /** When true, renders without the outer section wrapper (for embedding inside HeroSection) */
+  inline?: boolean
 }
 
 const TIME_OPTIONS = [
@@ -14,7 +16,7 @@ const TIME_OPTIONS = [
   '06:00 PM', '07:00 PM', '08:00 PM',
 ]
 
-export default function QuickSearchBar({ slug, locations }: Props) {
+export default function QuickSearchBar({ slug, locations, inline = false }: Props) {
   const [pickDate, setPickDate] = useState('')
   const [retDate, setRetDate] = useState('')
   const [pickTime, setPickTime] = useState('10:00 AM')
@@ -38,10 +40,9 @@ export default function QuickSearchBar({ slug, locations }: Props) {
   const selectCls = 'w-full bg-white/5 border border-white/5 rounded-xl px-3 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none appearance-none [color-scheme:dark]'
   const labelCls = 'block text-[8px] font-black text-white/30 uppercase tracking-widest mb-1.5'
 
-  return (
-    <section id="search" className="max-w-5xl mx-auto px-6 -mt-12 relative z-20">
-      <div className="glass border border-white/10 rounded-[2rem] p-6 sm:p-8 shadow-2xl">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
+  const inner = (
+    <div className="glass border border-white/10 rounded-[2rem] p-6 sm:p-8 shadow-2xl">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
           {/* Pickup Date */}
           <div>
             <label className={labelCls}>Pickup Date</label>
@@ -99,7 +100,14 @@ export default function QuickSearchBar({ slug, locations }: Props) {
             </button>
           </div>
         </div>
-      </div>
+    </div>
+  )
+
+  if (inline) return inner
+
+  return (
+    <section id="search" className="max-w-5xl mx-auto px-6 -mt-12 relative z-20">
+      {inner}
     </section>
   )
 }

@@ -4,7 +4,6 @@ import type { Tenant, Car } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
 import { buildFleetMetadata } from '@/lib/utils/fleet-metadata'
 import HeroSection from '@/components/sites/HeroSection'
-import QuickSearchBar from '@/components/sites/QuickSearchBar'
 import FleetPreview from '@/components/sites/FleetPreview'
 import ExperienceSection from '@/components/sites/ExperienceSection'
 import HowItWorksSection from '@/components/sites/HowItWorksSection'
@@ -53,9 +52,12 @@ export default async function TenantLandingPage({ params }: Props) {
 
   return (
     <main>
-      <HeroSection tenant={typedTenant} carCount={fleet.length} />
-
-      <QuickSearchBar slug={params.slug} locations={typedTenant.pickup_locations} />
+      <HeroSection
+        tenant={typedTenant}
+        carCount={fleet.length}
+        slug={params.slug}
+        locations={typedTenant.pickup_locations}
+      />
 
       <FleetPreview cars={fleet} slug={params.slug} />
 
