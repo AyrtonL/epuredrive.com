@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getFeatureFlags } from '@/lib/supabase/feature-flags'
 import Sidebar from '@/components/dashboard/Sidebar'
+import HelpButton from '@/components/dashboard/HelpButton'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -16,10 +17,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .single()
 
-  // Fetch feature flags for sidebar gating (only if user has a tenant)
-  const featureFlags = profile?.tenant_id
-    ? await getFeatureFlags(profile.tenant_id, ['turo_sync', 'custom_domains', 'api_access', 'webhooks'])
-    : {}
+  // Fetch tenant plan and feature flags (only if user has a tenant)
+  let plan = 'free'
+  let featureFlags: Record<string, boolean> = {}
+
+  if (profile?.tenant_id) {
+    const [{ data: tenant }, flags] = await Promise.all([
+      supabase.from('tenants').select('plan').eq('id', profile.tenant_id).single(),
+      getFeatureFlags(profile.tenant_id, ['turo_sync', 'custom_domains', 'api_access', 'webhooks']),
+    ])
+    plan = tenant?.plan ?? 'free'
+    featureFlags = flags
+  }
 
   return (
     <div className="bg-background text-primary min-h-screen selection:bg-white/30 selection:text-white">
@@ -32,6 +41,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
         </main>
       </div>
+      <HelpButton plan={plan} />
     </div>
   )
 }
