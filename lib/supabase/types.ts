@@ -6,6 +6,11 @@ export interface PickupLocation {
   maps_query: string
 }
 
+export interface ExperiencePillar {
+  title: string
+  body: string
+}
+
 export interface Tenant {
   id: string
   name: string
@@ -25,6 +30,7 @@ export interface Tenant {
   company_phone: string | null
   agreement_clauses: string | null
   agreement_template_url: string | null
+  experience_pillars: ExperiencePillar[] | null
 }
 
 export interface Car {
