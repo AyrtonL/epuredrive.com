@@ -1,48 +1,51 @@
-import type { Car, Tenant } from '@/lib/supabase/types'
+import type { Car, Tenant, ExperiencePillar } from '@/lib/supabase/types'
 
 interface Props {
   cars: Car[]
   tenant: Tenant
 }
 
-const PILLARS = [
+const DEFAULT_PILLARS: ExperiencePillar[] = [
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
     title: 'White-Glove Delivery',
     body: 'Your vehicle arrives spotless, fueled, and ready. No rental counters, no hidden queues — just a seamless handoff at your location.',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
     title: 'Any Occasion',
     body: 'Weekend escapes, corporate events, photoshoots, or simply elevating a Tuesday — our fleet adapts to every moment.',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
-      </svg>
-    ),
     title: 'Transparent Pricing',
     body: 'What you see is what you pay. No platform markups, no last-minute surprise fees — direct pricing saves you up to 25%.',
   },
 ]
 
-
+const PILLAR_ICONS = [
+  // Checkmark circle
+  <svg key="check" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>,
+  // Clock
+  <svg key="clock" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>,
+  // Banknotes
+  <svg key="cash" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+  </svg>,
+]
 
 export default function ExperienceSection({ cars, tenant }: Props) {
   const displayName = tenant.brand_name || tenant.name
 
+  const pillars =
+    tenant.experience_pillars?.length === 3
+      ? tenant.experience_pillars
+      : DEFAULT_PILLARS
+
   const validRates = cars.map(c => Number(c.daily_rate) || 0).filter(r => r > 0)
   const lowestRate = validRates.length > 0 ? Math.min(...validRates) : 0
-  const turoRate = lowestRate > 0 ? Math.round(lowestRate * 1.28) : 0 // ~28% Turo guest fee
+  const turoRate = lowestRate > 0 ? Math.round(lowestRate * 1.28) : 0
   const savings = turoRate - lowestRate
 
   const stats = [
@@ -84,10 +87,10 @@ export default function ExperienceSection({ cars, tenant }: Props) {
 
         {/* ── 3 pillars ── */}
         <div className="grid md:grid-cols-3 gap-6 mb-32">
-          {PILLARS.map((p) => (
+          {pillars.map((p, i) => (
             <div key={p.title} className="group glass border border-white/5 rounded-[2rem] p-10 hover:border-white/10 transition-all duration-500">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-8 group-hover:bg-primary/20 transition-colors">
-                {p.icon}
+                {PILLAR_ICONS[i]}
               </div>
               <h3 className="font-outfit font-black text-lg text-white mb-3 tracking-tight">{p.title}</h3>
               <p className="text-white/35 text-sm leading-relaxed">{p.body}</p>
