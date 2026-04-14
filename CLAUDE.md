@@ -45,6 +45,22 @@ After completing any task, feature, fix, or meaningful change, log it in the cor
 - This applies to all sessions — no exceptions
 - **Do NOT ask for authorization before updating Notion — just do it automatically at the end of every session**
 
+## Netlify
+
+Claude tiene acceso directo a la API de Netlify vía `NETLIFY_TOKEN` en `.env.local`.
+- Site ID: `aca8175e-457e-4e87-b38b-1c5ca1e03dc8`
+- Account slug: `ayrtonl`
+
+Para agregar/modificar env vars en producción:
+```bash
+curl -s -X POST "https://api.netlify.com/api/v1/accounts/ayrtonl/env" \
+  -H "Authorization: Bearer $(grep NETLIFY_TOKEN .env.local | cut -d= -f2-)" \
+  -H "Content-Type: application/json" \
+  -d '[{"key":"VAR_NAME","values":[{"value":"val","context":"all"}],"site_id":"aca8175e-457e-4e87-b38b-1c5ca1e03dc8"}]'
+```
+
+Después de agregar variables, hacer redeploy si es necesario. Claude debe manejar Netlify de forma autónoma sin pedir confirmación al usuario.
+
 ## Stripe
 
 Claude has direct Stripe API access via `STRIPE_SECRET_KEY` in `.env.local`. For any Stripe operation (create products, prices, coupons, etc.) use curl against the Stripe API — do NOT ask the user to do it manually.
