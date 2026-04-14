@@ -13,7 +13,48 @@
 2. **Rental ops** — Operators communicate with their end customers via éPure Drive
 3. **Support** — Inbound contact from the marketing site and operator dashboard to Ayrton
 
-All emails use Resend (`lib/email/resend.ts` → `sendEmail()`). Templates are HTML strings using the existing dark-themed `baseLayout()` pattern.
+All emails use Resend (`lib/email/resend.ts` → `sendEmail()`). Templates are HTML strings. The existing basic `baseLayout()` is replaced with a new premium layout inspired by the éPure brand advertising design language.
+
+---
+
+## Brand & Visual Design
+
+### Assets (copied to `public/assets/email/`)
+| File | Usage |
+|---|---|
+| `logo-white.png` | Logo in email headers (on dark backgrounds) |
+| `logo-black.png` | Logo on light-background variants |
+| `favicon.png` | "é" icon mark — used as a small decorative element |
+| `car-1.png` … `car-11.png` | Premium car photography for hero sections |
+
+All asset URLs in emails use the absolute base: `https://epuredrive.com/assets/email/`
+
+### Layout Design — two tiers
+
+**Tier 1 — Hero layout** (welcome, onboarding, subscription activated, team invite)
+Inspired by the éPure advertising materials (wide, cinematic format):
+- Full-width black header with the white logo centered + a car hero image beneath it (cropped to ~260px height, object-fit cover)
+- Bold italic headline over a dark card
+- Clean detail rows or step cards
+- White CTA button
+
+**Tier 2 — Compact layout** (receipts, notifications, support, cancellations)
+- Black background, dark card
+- White logo top-left (smaller, ~120px wide)
+- Headline + body + detail table
+- No car imagery (keeps it tight for transactional emails)
+
+Both tiers share the same typographic system: `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`, uppercase tracking for labels, bold italic for headlines.
+
+### Car image assignment
+| Email | Car image |
+|---|---|
+| `welcomeEmail` | `car-2.png` (white Tesla — clean, aspirational) |
+| `onboardingEmail` | `car-3.png` (black Mercedes — professional) |
+| `subscriptionActivatedEmail` | `car-1.png` (silver Alphard — premium) |
+| `subscriptionChangedEmail` | `car-5.png` (grey minivan at hotel — refined) |
+| `teamInviteEmail` | `car-4.png` (blue BMW — dynamic) |
+| All others | No car image (compact tier) |
 
 ---
 
