@@ -70,10 +70,10 @@ export default async function TenantLayout({ children, params }: Props) {
 
             <div className="flex items-center gap-8">
               <div className="hidden md:flex items-center gap-6">
-                <a href="/fleet" className="text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors">Fleet</a>
-                <a href="/#experience" className="text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors">Experience</a>
-                <a href="/#concierge" className="text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors">Concierge</a>
-                <a href="/my-booking" className="text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors">My Booking</a>
+                <a href="/fleet" className="text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors">Fleet</a>
+                <a href="/#experience" className="text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors">Experience</a>
+                <a href="/#concierge" className="text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors">Concierge</a>
+                <a href="/my-booking" className="text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors">My Booking</a>
               </div>
               <a
                 href="/fleet"

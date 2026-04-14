@@ -68,7 +68,7 @@ export default function FleetGrid({ cars, slug }: Props) {
               className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[.2em] transition-all whitespace-nowrap border ${
                 activeCategory === null
                   ? 'bg-white text-black border-white shadow-lg'
-                  : 'bg-white/5 text-white/30 border-white/5 hover:bg-white/10 hover:text-white'
+                  : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white'
               }`}
             >
               All Models
@@ -80,7 +80,7 @@ export default function FleetGrid({ cars, slug }: Props) {
                 className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[.2em] whitespace-nowrap transition-all border ${
                   activeCategory === cat
                     ? 'bg-white text-black border-white shadow-lg'
-                    : 'bg-white/5 text-white/30 border-white/5 hover:bg-white/10 hover:text-white'
+                    : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 {cat}

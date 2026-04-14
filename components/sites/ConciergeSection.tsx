@@ -97,7 +97,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-4">
                   <span className="text-lg">{item.icon}</span>
-                  <span className="text-[11px] font-black uppercase tracking-widest text-white/30">{item.label}</span>
+                  <span className="text-[11px] font-black uppercase tracking-widest text-white/60">{item.label}</span>
                 </div>
               ))}
             </div>
@@ -131,7 +131,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
               <form onSubmit={handleSubmit} className="relative z-10 space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-white/30 ml-1">Full Name *</label>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Full Name *</label>
                     <input
                       required
                       type="text"
@@ -142,7 +142,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-white/30 ml-1">Phone</label>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Phone</label>
                     <input
                       type="tel"
                       value={phone}
@@ -154,7 +154,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-white/30 ml-1">Email *</label>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Email *</label>
                   <input
                     required
                     type="email"
@@ -166,7 +166,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-white/30 ml-1">Service Type</label>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Service Type</label>
                   <select
                     value={service}
                     onChange={e => setService(e.target.value)}
@@ -182,7 +182,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
 
                 {vehicleOptions.length > 0 && (
                   <div className="space-y-2">
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-white/30 ml-1">Vehicle of Interest</label>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Vehicle of Interest</label>
                     <select
                       value={vehicle}
                       onChange={e => setVehicle(e.target.value)}
@@ -197,7 +197,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                 )}
 
                 <div className="space-y-2">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-white/30 ml-1">Message</label>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Message</label>
                   <textarea
                     rows={4}
                     value={message}

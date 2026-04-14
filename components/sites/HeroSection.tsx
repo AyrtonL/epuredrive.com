@@ -69,7 +69,7 @@ export default function HeroSection({ tenant, carCount, slug, locations }: Props
           </a>
           <a
             href="#concierge"
-            className="border border-white/10 text-white/60 font-black uppercase tracking-[.2em] text-[11px] px-10 py-4 rounded-full hover:border-white/30 hover:text-white transition-all"
+            className="border border-white/30 text-white font-black uppercase tracking-[.2em] text-[11px] px-10 py-4 rounded-full hover:border-white hover:bg-white/10 transition-all"
           >
             Contact Us
           </a>

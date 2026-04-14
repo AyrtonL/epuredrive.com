@@ -35,7 +35,7 @@ export default function FleetPreview({ cars, slug }: Props) {
         {cars.length > 6 && (
           <a
             href={`${base}/fleet`}
-            className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors border border-white/10 hover:border-white/20 px-6 py-3 rounded-full"
+            className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors border border-white/25 hover:border-white/50 px-6 py-3 rounded-full"
           >
             See More
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -101,7 +101,7 @@ export default function FleetPreview({ cars, slug }: Props) {
         <div className="mt-8 sm:hidden text-center">
           <a
             href={`${base}/fleet`}
-            className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[.2em] text-white/30 hover:text-white transition-colors border border-white/10 px-8 py-3.5 rounded-full"
+            className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors border border-white/25 hover:border-white/50 px-8 py-3.5 rounded-full"
           >
             See More
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
