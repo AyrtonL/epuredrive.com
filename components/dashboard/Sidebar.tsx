@@ -385,6 +385,7 @@ const ADMIN_NAV: NavGroup = {
 interface Props {
   email: string
   role: string | null
+  name?: string | null
   featureFlags?: Record<string, boolean>
 }
 
@@ -403,7 +404,7 @@ function hasActiveChild(pathname: string, children: NavItem[]): boolean {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export default function Sidebar({ email, role, featureFlags = {} }: Props) {
+export default function Sidebar({ email, role, name, featureFlags = {} }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState<Record<string, boolean>>({})
@@ -556,17 +557,18 @@ export default function Sidebar({ email, role, featureFlags = {} }: Props) {
 
       {/* ── User Footer ───────────────────────────────────────────────── */}
       <div className="p-5 border-t border-surfaceBorder backdrop-blur-md bg-white/[0.02]">
-        <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-3">
           {role && (
-            <div>
-              <span className={`inline-block px-2.5 py-1 text-[10px] font-bold tracking-widest rounded-full uppercase ${
-                isSuperuser
-                  ? 'text-amber-300 bg-amber-500/10 border border-amber-500/20'
-                  : 'text-primary bg-primary/10 border border-primary/20'
-              }`}>
-                {isSuperuser ? 'Admin' : role}
-              </span>
-            </div>
+            <span className={`inline-block shrink-0 px-2.5 py-1 text-[10px] font-bold tracking-widest rounded-full uppercase ${
+              isSuperuser
+                ? 'text-amber-300 bg-amber-500/10 border border-amber-500/20'
+                : 'text-primary bg-primary/10 border border-primary/20'
+            }`}>
+              {isSuperuser ? 'Admin' : role}
+            </span>
+          )}
+          {name && (
+            <span className="text-[13px] text-white/60 font-medium truncate">{name}</span>
           )}
         </div>
         <button
