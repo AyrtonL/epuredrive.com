@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import type { Car, PickupLocation } from '@/lib/supabase/types'
+import DateRangePicker from './DateRangePicker'
 
 interface Props {
   car: Car
@@ -215,33 +216,25 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
       </div>
 
       <div className="relative z-10 space-y-6">
-        {/* Date Selection Grid */}
-        <div className="grid grid-cols-1 gap-4">
+        {/* Date + Time Selection */}
+        <div className="space-y-3">
+          <DateRangePicker
+            pickDate={pickDate}
+            retDate={retDate}
+            onPickDate={setPickDate}
+            onRetDate={setRetDate}
+            disabledRanges={bookedRanges}
+          />
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="block text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Pickup</label>
-              <input type="date" value={pickDate} onChange={e => setPickDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none [color-scheme:dark]" />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Time</label>
+            <div className="space-y-1.5">
+              <label className="block text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Pickup Time</label>
               <select value={pickTime} onChange={e => setPickTime(e.target.value)}
                 className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none appearance-none">
                 {timeOptions.map(t => <option key={t} value={t} className="text-black">{t}</option>)}
               </select>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="block text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Return</label>
-              <input type="date" value={retDate} onChange={e => setRetDate(e.target.value)}
-                min={pickDate || new Date().toISOString().split('T')[0]}
-                className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none [color-scheme:dark]" />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Time</label>
+            <div className="space-y-1.5">
+              <label className="block text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Return Time</label>
               <select value={retTime} onChange={e => setRetTime(e.target.value)}
                 className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none appearance-none">
                 {timeOptions.map(t => <option key={t} value={t} className="text-black">{t}</option>)}
