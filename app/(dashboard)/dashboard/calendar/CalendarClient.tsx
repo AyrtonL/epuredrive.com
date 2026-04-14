@@ -75,7 +75,7 @@ export default function CalendarClient({
   const filterLabel = selectedCars.size === 0
     ? 'All Fleet'
     : selectedCars.size === 1
-      ? carMap[Number([...selectedCars][0])] ?? 'All Fleet'
+      ? carMap[Number(Array.from(selectedCars)[0])] ?? 'All Fleet'
       : `${selectedCars.size} vehicles`
 
   const dailyRateMap = useMemo(() => {
@@ -151,7 +151,7 @@ export default function CalendarClient({
             {/* Color dots for selected cars (up to 3) */}
             {selectedCars.size > 0 ? (
               <span className="flex items-center gap-1 shrink-0">
-                {[...selectedCars].slice(0, 3).map((id) => (
+                {Array.from(selectedCars).slice(0, 3).map((id) => (
                   <span
                     key={id}
                     className="w-2 h-2 rounded-full"

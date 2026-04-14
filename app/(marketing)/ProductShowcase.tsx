@@ -36,13 +36,13 @@ export default function ProductShowcase() {
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         {/* Header */}
         <div className="text-center mb-16">
-          <span className="text-[11px] font-bold tracking-[0.3em] text-white/25 uppercase block mb-4">
-            Product
-          </span>
+          <div className="inline-flex items-center gap-2 bg-white/[0.05] border border-white/[0.09] rounded-full px-4 py-1.5 mb-5">
+            <span className="text-[11px] font-bold tracking-[0.25em] text-white/40 uppercase">Product</span>
+          </div>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
             See it in action
           </h2>
-          <p className="text-lg text-white/35 font-light">
+          <p className="text-lg text-white/40 font-light">
             Built for operators who run lean and move fast.
           </p>
         </div>
