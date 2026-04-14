@@ -30,9 +30,16 @@ const PLAN_DEFINITIONS = [
     limits: { vehicles: 25, members: 5, integrations: true, api: false, customDomain: true },
   },
   {
+    name: 'Max',
+    slug: 'max',
+    price: 99,
+    color: 'border-amber-500/20 text-amber-400',
+    limits: { vehicles: 60, members: -1, integrations: true, api: true, customDomain: true },
+  },
+  {
     name: 'Enterprise',
     slug: 'enterprise',
-    price: 149,
+    price: 0,
     color: 'border-violet-500/20 text-violet-400',
     limits: { vehicles: -1, members: -1, integrations: true, api: true, customDomain: true },
   },
@@ -64,7 +71,7 @@ export default function PlansManager({ planCounts, tenants }: Props) {
       )}
 
       {/* Plan Cards */}
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {PLAN_DEFINITIONS.map((plan) => (
           <div key={plan.slug} className={`glass border rounded-3xl p-8 ${plan.color}`}>
             <div className="flex items-center justify-between mb-4">
@@ -105,7 +112,7 @@ export default function PlansManager({ planCounts, tenants }: Props) {
       {/* Revenue Projection */}
       <div className="glass border border-white/10 rounded-3xl p-8">
         <h3 className="text-white font-bold mb-6">Revenue Projection</h3>
-        <div className="grid grid-cols-3 gap-6 text-center">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {PLAN_DEFINITIONS.map((plan) => {
             const count = planCounts[plan.slug] ?? 0
             const mrr = count * plan.price
@@ -145,6 +152,7 @@ export default function PlansManager({ planCounts, tenants }: Props) {
                 >
                   <option value="free">Free</option>
                   <option value="pro">Pro</option>
+                  <option value="max">Max</option>
                   <option value="enterprise">Enterprise</option>
                 </select>
               ) : (
@@ -152,6 +160,7 @@ export default function PlansManager({ planCounts, tenants }: Props) {
                   onClick={() => setChangingTenant(t.id)}
                   className={`inline-block px-2.5 py-1 text-[10px] font-bold tracking-widest rounded-full uppercase border cursor-pointer hover:opacity-80 transition-opacity ${
                     t.plan === 'enterprise' ? 'text-violet-400 bg-violet-500/10 border-violet-500/20'
+                    : t.plan === 'max' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
                     : t.plan === 'pro' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20'
                     : 'text-white/40 bg-white/5 border-white/10'
                   }`}

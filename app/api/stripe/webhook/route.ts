@@ -10,6 +10,17 @@ import crypto from 'crypto'
 
 const STARTER_PRICE_ID = 'price_1TDaQ3HAH4zJnnwfasGBYtYO'
 const PRO_PRICE_ID = 'price_1TF2UnHAH4zJnnwfTwU129PO'
+const MAX_PRICE_ID = process.env.STRIPE_PRICE_MAX ?? ''
+
+function resolvePlan(priceId: string | undefined, metaPlan: string | undefined): string {
+  // Prefer the plan name set in checkout metadata (most reliable)
+  if (metaPlan && ['pro', 'max', 'enterprise'].includes(metaPlan)) return metaPlan
+  // Fall back to price ID matching
+  if (priceId === PRO_PRICE_ID) return 'pro'
+  if (MAX_PRICE_ID && priceId === MAX_PRICE_ID) return 'max'
+  if (priceId === STARTER_PRICE_ID) return 'starter'
+  return 'starter'
+}
 
 function verifySignature(rawBody: string, sigHeader: string, secret: string): void {
   const pairs = sigHeader.split(',').map(p => p.split('='))
@@ -53,10 +64,10 @@ export async function POST(request: Request) {
 
   if (type === 'checkout.session.completed') {
     const session = data.object
-    const tenantId: string | undefined = session.metadata?.tenantId
+    const tenantId: string | undefined = session.metadata?.tenantId ?? session.metadata?.tenant_id
     if (tenantId) {
       const priceId: string | undefined = session.metadata?.priceId
-      const plan = priceId === PRO_PRICE_ID ? 'pro' : 'starter'
+      const plan = resolvePlan(priceId, session.metadata?.plan)
       await patchTenant(tenantId, {
         plan,
         stripe_customer_id: session.customer,
@@ -67,10 +78,10 @@ export async function POST(request: Request) {
 
   if (type === 'customer.subscription.updated') {
     const sub = data.object
-    const tenantId: string | undefined = sub.metadata?.tenantId
+    const tenantId: string | undefined = sub.metadata?.tenantId ?? sub.metadata?.tenant_id
     if (tenantId) {
       const priceId: string | undefined = sub.items?.data?.[0]?.price?.id
-      const plan = priceId === PRO_PRICE_ID ? 'pro' : 'starter'
+      const plan = resolvePlan(priceId, sub.metadata?.plan)
       await patchTenant(tenantId, { plan })
     }
   }

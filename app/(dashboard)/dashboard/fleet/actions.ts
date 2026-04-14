@@ -12,8 +12,8 @@ async function getTenantId(): Promise<string> {
 
 const PLAN_VEHICLE_LIMITS: Record<string, number> = {
   free: 5,
-  pro: 20,
-  max: 50,
+  pro: 25,
+  max: 60,
   enterprise: Infinity,
 }
 
