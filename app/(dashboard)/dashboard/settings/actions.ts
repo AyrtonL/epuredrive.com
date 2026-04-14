@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
+import type { ExperiencePillar } from '@/lib/supabase/types'
 
 async function getTenantId(): Promise<string> {
   const { tenantId } = await requireTenantId()
@@ -63,6 +64,7 @@ export async function updateTenantBranding(data: {
   whatsapp_phone?: string | null
   business_hours?: string | null
   pickup_locations?: Array<{ label: string; address: string; note: string; fee: number; maps_query: string }>
+  experience_pillars?: ExperiencePillar[] | null
 }): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
