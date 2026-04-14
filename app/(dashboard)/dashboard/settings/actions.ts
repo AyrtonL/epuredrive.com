@@ -323,6 +323,11 @@ export async function saveCustomDomain(
 export async function updateRentalFees(data: {
   fuel_charge_per_level: number | null
 }): Promise<{ error: string | null }> {
+  if (data.fuel_charge_per_level !== null) {
+    if (!isFinite(data.fuel_charge_per_level) || data.fuel_charge_per_level < 0) {
+      return { error: 'Fuel charge must be a non-negative number.' }
+    }
+  }
   const supabase = createClient()
   const tenantId = await getTenantId()
   const { error } = await supabase.from('tenants').update(data).eq('id', tenantId)

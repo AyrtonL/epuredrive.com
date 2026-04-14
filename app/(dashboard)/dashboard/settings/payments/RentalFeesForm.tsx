@@ -15,6 +15,10 @@ export default function RentalFeesForm({ initialValue }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const parsed = value === '' ? null : parseFloat(value)
+    if (parsed !== null && (isNaN(parsed) || parsed < 0)) {
+      setMsg('Error: must be a positive number')
+      return
+    }
     startTransition(async () => {
       const result = await updateRentalFees({ fuel_charge_per_level: parsed })
       setMsg(result.error ? `Error: ${result.error}` : 'Saved')

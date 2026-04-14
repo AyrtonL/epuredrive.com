@@ -47,7 +47,7 @@ export function calcCarStats(
   }
 
   const utilization = Math.min(100, Math.round((rentedDays / totalDays) * 100))
-  return { utilization, idleDays: totalDays - rentedDays, miles, revenue }
+  return { utilization, idleDays: Math.max(0, totalDays - rentedDays), miles, revenue }
 }
 
 export function calcFleetSummary(cars: CarStats[]): FleetSummary {
