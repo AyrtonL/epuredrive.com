@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import { DayPicker, type DateRange } from 'react-day-picker'
 import 'react-day-picker/style.css'
 
@@ -29,17 +30,31 @@ export default function DateRangePicker({
   pickDate, retDate, onPickDate, onRetDate, disabledRanges,
 }: Props) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [popupStyle, setPopupStyle] = useState<CSSProperties>({})
+  const [mounted, setMounted] = useState(false)
+  const triggerRef = useRef<HTMLDivElement>(null)
+  const popupRef = useRef<HTMLDivElement>(null)
 
-  // Close on outside click
+  useEffect(() => { setMounted(true) }, [])
+
+  // Close on outside click (checks both trigger and popup)
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      const target = e.target as Node
+      const outsideTrigger = !triggerRef.current?.contains(target)
+      const outsidePopup = !popupRef.current?.contains(target)
+      if (outsideTrigger && outsidePopup) setOpen(false)
     }
     if (open) document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  // Close on scroll so popup doesn't drift
+  useEffect(() => {
+    if (!open) return
+    const handler = () => setOpen(false)
+    window.addEventListener('scroll', handler, true)
+    return () => window.removeEventListener('scroll', handler, true)
   }, [open])
 
   const today = new Date()
@@ -84,13 +99,28 @@ export default function DateRangePicker({
     })
   }
 
+  function toggleCalendar() {
+    if (open) { setOpen(false); return }
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect()
+      setPopupStyle({
+        position: 'fixed',
+        top: rect.bottom + 8,
+        left: rect.left,
+        minWidth: Math.max(rect.width, 320),
+        zIndex: 9999,
+      })
+    }
+    setOpen(true)
+  }
+
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative" ref={triggerRef}>
       {/* Trigger row */}
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={() => setOpen(v => !v)}
+          onClick={toggleCalendar}
           className="text-left bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none hover:border-white/10 transition-colors"
         >
           <span className="block text-[9px] font-black text-white/30 uppercase tracking-widest mb-0.5">
@@ -102,7 +132,7 @@ export default function DateRangePicker({
         </button>
         <button
           type="button"
-          onClick={() => setOpen(v => !v)}
+          onClick={toggleCalendar}
           className="text-left bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none hover:border-white/10 transition-colors"
         >
           <span className="block text-[9px] font-black text-white/30 uppercase tracking-widest mb-0.5">
@@ -114,9 +144,9 @@ export default function DateRangePicker({
         </button>
       </div>
 
-      {/* Calendar popup */}
-      {open && (
-        <div className="absolute z-50 top-full mt-3 left-0 bg-[#0d0d0d] border border-white/10 rounded-3xl shadow-2xl p-5 overflow-hidden min-w-[320px]">
+      {/* Calendar popup — rendered via portal so it floats above all page content */}
+      {open && mounted && createPortal(
+        <div ref={popupRef} style={popupStyle} className="bg-[#0d0d0d] border border-white/10 rounded-3xl shadow-2xl p-5 overflow-hidden min-w-[320px]">
           <style>{`
             .rdp-root {
               --rdp-accent-color: rgba(255,255,255,0.15);
@@ -232,7 +262,8 @@ export default function DateRangePicker({
               Clear
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

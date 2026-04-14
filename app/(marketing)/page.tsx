@@ -328,7 +328,7 @@ export default function HomePage() {
                   <span className="text-amber-400/60 text-xs">&#10003;</span> Up to 60 vehicles
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-amber-400/60 text-xs">&#10003;</span> Custom domain
+                  <span className="text-amber-400/60 text-xs">&#10003;</span> Unlimited team members
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-amber-400/60 text-xs">&#10003;</span> API access
