@@ -89,14 +89,37 @@ export default function ConciergeSection({ tenant, cars }: Props) {
               Whether you&apos;re planning a special occasion, need a corporate fleet, or want to consign your vehicle — our team responds within the hour.
             </p>
 
-            <div className="space-y-6">
+            <div className="space-y-5">
               {[
-                { icon: '⚡', label: 'Response within 1 hour' },
-                { icon: '🔒', label: 'Your details stay private' },
-                { icon: '✦', label: 'Tailored to your needs' },
+                {
+                  label: 'Response within 1 hour',
+                  icon: (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                    </svg>
+                  ),
+                },
+                {
+                  label: 'Your details stay private',
+                  icon: (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                  ),
+                },
+                {
+                  label: 'Tailored to your needs',
+                  icon: (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                    </svg>
+                  ),
+                },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-4">
-                  <span className="text-lg">{item.icon}</span>
+                  <div className="w-9 h-9 rounded-2xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center text-white/50 flex-shrink-0">
+                    {item.icon}
+                  </div>
                   <span className="text-[11px] font-black uppercase tracking-widest text-white/60">{item.label}</span>
                 </div>
               ))}
@@ -104,7 +127,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
           </div>
 
           {/* ── Right: form ── */}
-          <div className="glass border border-white/10 rounded-[2rem] p-10 shadow-2xl relative overflow-hidden">
+          <div className="glass border border-white/[0.13] rounded-[2rem] p-10 shadow-2xl relative overflow-hidden" style={{boxShadow: '0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)'}}>
             <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none" />
 
             {formState === 'success' ? (
@@ -138,7 +161,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                       value={name}
                       onChange={e => setName(e.target.value)}
                       placeholder="Your name"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3.5 text-xs text-white placeholder-white/15 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+                      className="w-full bg-white/[0.06] border border-white/[0.12] rounded-2xl px-4 py-3.5 text-xs text-white placeholder-white/25 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -148,7 +171,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                       value={phone}
                       onChange={e => setPhone(e.target.value)}
                       placeholder="+1 (305) 000-0000"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3.5 text-xs text-white placeholder-white/15 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+                      className="w-full bg-white/[0.06] border border-white/[0.12] rounded-2xl px-4 py-3.5 text-xs text-white placeholder-white/25 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all"
                     />
                   </div>
                 </div>
@@ -161,7 +184,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3.5 text-xs text-white placeholder-white/15 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+                    className="w-full bg-white/[0.06] border border-white/[0.12] rounded-2xl px-4 py-3.5 text-xs text-white placeholder-white/25 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all"
                   />
                 </div>
 
@@ -170,7 +193,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                   <select
                     value={service}
                     onChange={e => setService(e.target.value)}
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all appearance-none"
+                    className="w-full bg-white/[0.06] border border-white/[0.12] rounded-2xl px-4 py-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all appearance-none"
                   >
                     {SERVICE_OPTIONS.map(o => (
                       <option key={o.value} value={o.value} className="text-black bg-white">
@@ -186,7 +209,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                     <select
                       value={vehicle}
                       onChange={e => setVehicle(e.target.value)}
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all appearance-none"
+                      className="w-full bg-white/[0.06] border border-white/[0.12] rounded-2xl px-4 py-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all appearance-none"
                     >
                       <option value="" className="text-black bg-white">Any / Not sure yet</option>
                       {vehicleOptions.map(v => (
@@ -203,7 +226,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                     value={message}
                     onChange={e => setMessage(e.target.value)}
                     placeholder="Tell us about the occasion, dates, or anything else we should know..."
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3.5 text-xs text-white placeholder-white/15 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all resize-none"
+                    className="w-full bg-white/[0.06] border border-white/[0.12] rounded-2xl px-4 py-3.5 text-xs text-white placeholder-white/25 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all resize-none"
                   />
                 </div>
 

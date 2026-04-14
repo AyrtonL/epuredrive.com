@@ -74,7 +74,7 @@ export default function ExperienceSection({ cars, tenant }: Props) {
         {/* ── 3 pillars ── */}
         <div className="grid md:grid-cols-3 gap-6 mb-32">
           {pillars.map((p, i) => (
-            <div key={p.title} className="group glass border border-white/5 rounded-[2rem] p-10 hover:border-white/10 transition-all duration-500">
+            <div key={p.title} className="group glass border border-white/[0.09] rounded-[2rem] p-10 hover:border-white/[0.16] transition-all duration-500">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-8 group-hover:bg-primary/20 transition-colors">
                 {PILLAR_ICONS[i]}
               </div>
@@ -148,7 +148,7 @@ export default function ExperienceSection({ cars, tenant }: Props) {
                   href={`https://www.google.com/maps/search/?api=1&query=${loc.maps_query}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group glass border border-white/5 rounded-[2rem] p-8 hover:border-white/15 transition-all duration-500 block"
+                  className="group glass border border-white/[0.09] rounded-[2rem] p-8 hover:border-white/[0.18] transition-all duration-500 block"
                 >
                   <div className="flex items-start justify-between mb-6">
                     <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">

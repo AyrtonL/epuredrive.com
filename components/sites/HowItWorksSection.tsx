@@ -38,7 +38,7 @@ export default function HowItWorksSection({ tenant }: Props) {
           {steps.map((step, i) => (
             <div
               key={i}
-              className="group glass border border-white/5 rounded-[2rem] p-10 hover:border-white/10 transition-all duration-500 flex flex-col"
+              className="group glass border border-white/[0.09] rounded-[2rem] p-10 hover:border-white/[0.16] transition-all duration-500 flex flex-col"
             >
               {/* Step number bubble */}
               <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8 group-hover:bg-primary/20 transition-colors">

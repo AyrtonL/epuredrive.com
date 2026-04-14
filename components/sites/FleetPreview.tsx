@@ -50,7 +50,7 @@ export default function FleetPreview({ cars, slug }: Props) {
           <a
             key={car.id}
             href={`${base}/${car.id}`}
-            className="group relative rounded-[2rem] overflow-hidden border border-white/5 hover:border-white/15 transition-all duration-700 bg-white/[0.02]"
+            className="group relative rounded-[2rem] overflow-hidden border border-white/[0.09] hover:border-white/20 transition-all duration-700 bg-white/[0.03]"
             style={{ animation: `fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards ${i * 0.1}s`, opacity: 0 }}
           >
             {/* Image */}
@@ -60,7 +60,7 @@ export default function FleetPreview({ cars, slug }: Props) {
                 alt={`${car.make} ${car.model}`}
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#040404] via-transparent to-transparent opacity-80" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#040404] via-[#040404]/40 to-transparent" />
             </div>
 
             {/* Badge */}

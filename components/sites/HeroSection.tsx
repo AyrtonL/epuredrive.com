@@ -31,15 +31,16 @@ export default function HeroSection({ tenant, carCount, slug, locations }: Props
       </div>
 
       <div className="relative z-10 w-full max-w-5xl mx-auto px-6 text-center pt-16 pb-24">
-        <p className="text-[10px] font-black uppercase tracking-[.5em] text-primary/60 mb-6 animate-fade-in">
-          {displayName}
-        </p>
+        <div className="inline-flex items-center gap-2.5 bg-white/[0.07] border border-white/[0.12] rounded-full px-4 py-2 mb-8 animate-fade-in">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary/70 flex-shrink-0" />
+          <span className="text-[10px] font-black uppercase tracking-[.3em] text-white/60">{displayName}</span>
+        </div>
 
         <h1 className="font-outfit font-black text-5xl sm:text-6xl lg:text-7xl text-white leading-[0.95] tracking-tight mb-6 animate-fade-in animation-delay-100">
           {tagline}
         </h1>
 
-        <p className="text-white/40 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed mb-10 animate-fade-in animation-delay-200">
+        <p className="text-white/50 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed mb-10 animate-fade-in animation-delay-200">
           {description}
         </p>
 
