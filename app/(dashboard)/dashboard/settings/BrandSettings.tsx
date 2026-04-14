@@ -411,7 +411,7 @@ export default function BrandSettings({ tenant }: Props) {
       {/* ── Experience Section Pillars ── */}
       <div className="glass border border-white/10 rounded-3xl p-6 space-y-5">
         <h3 className="text-white font-bold text-sm uppercase tracking-widest opacity-50">Experience Section</h3>
-        <p className="text-white/30 text-xs -mt-3">The 3 pillars shown on your public site under "The Experience". Keep them short and relevant to your brand.</p>
+        <p className="text-white/30 text-xs -mt-3">The 3 pillars shown on your public site under &ldquo;The Experience&rdquo;. Keep them short and relevant to your brand.</p>
         {pillars.map((pillar, i) => (
           <div key={i} className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 space-y-3">
             <div className="text-[10px] font-black text-white/25 uppercase tracking-widest">Pillar {i + 1}</div>
