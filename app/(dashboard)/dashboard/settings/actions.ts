@@ -319,3 +319,13 @@ export async function saveCustomDomain(
   revalidatePath('/dashboard/settings/domain')
   return { error: null }
 }
+
+export async function updateRentalFees(data: {
+  fuel_charge_per_level: number | null
+}): Promise<{ error: string | null }> {
+  const supabase = createClient()
+  const tenantId = await getTenantId()
+  const { error } = await supabase.from('tenants').update(data).eq('id', tenantId)
+  revalidatePath('/dashboard/settings/payments')
+  return { error: error?.message ?? null }
+}

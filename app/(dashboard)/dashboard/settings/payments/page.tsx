@@ -2,9 +2,15 @@ import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import { getConnectAccountStatus } from './actions'
 import ConnectButton from './ConnectButton'
+import RentalFeesForm from './RentalFeesForm'
 
 export default async function PaymentsPage({ searchParams }: { searchParams: Promise<{ connected?: string }> }) {
-  await requireTenantId()
+  const { supabase, tenantId } = await requireTenantId()
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('fuel_charge_per_level')
+    .eq('id', tenantId)
+    .single()
   const params = await searchParams
   const status = await getConnectAccountStatus()
   const justConnected = params.connected === 'true'
@@ -100,6 +106,23 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
             ? 'No invoices yet. Invoices will appear here once customers make payments.'
             : 'Connect your Stripe account to start accepting payments and generating invoices.'}
         </p>
+      </div>
+
+      {/* Rental Fees */}
+      <div className="glass border border-white/10 rounded-3xl p-8 lg:p-10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2.5 rounded-xl bg-yellow-500/10 text-yellow-400">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-white font-black italic tracking-tight uppercase">Rental Fees</h3>
+            <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Fuel & Charges</p>
+          </div>
+        </div>
+        <RentalFeesForm initialValue={tenant?.fuel_charge_per_level ?? null} />
       </div>
     </div>
   )
