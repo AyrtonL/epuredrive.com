@@ -116,24 +116,101 @@ export default function DateRangePicker({
 
       {/* Calendar popup */}
       {open && (
-        <div className="absolute z-50 top-full mt-2 left-0 bg-[#111] border border-white/10 rounded-2xl shadow-2xl p-4 overflow-hidden">
+        <div className="absolute z-50 top-full mt-3 left-0 bg-[#0d0d0d] border border-white/10 rounded-3xl shadow-2xl p-5 overflow-hidden min-w-[320px]">
           <style>{`
             .rdp-root {
-              --rdp-accent-color: var(--color-primary, #3B82F6);
-              --rdp-background-color: rgba(255,255,255,0.08);
+              --rdp-accent-color: rgba(255,255,255,0.15);
+              --rdp-background-color: rgba(255,255,255,0.06);
               --rdp-day-font: inherit;
-              color: rgba(255,255,255,0.8);
+              --rdp-range_start-color: white;
+              --rdp-range_end-color: white;
+              --rdp-selected-color: black;
+              color: rgba(255,255,255,0.75);
+              font-size: 0.8rem;
             }
-            .rdp-day_button:hover:not([disabled]) { background: rgba(255,255,255,0.1); }
+            .rdp-root * { box-sizing: border-box; }
+            .rdp-month_caption {
+              color: white;
+              font-size: 0.7rem;
+              font-weight: 900;
+              letter-spacing: 0.12em;
+              text-transform: uppercase;
+              margin-bottom: 16px;
+              padding-bottom: 12px;
+              border-bottom: 1px solid rgba(255,255,255,0.06);
+            }
+            .rdp-weekday {
+              color: rgba(255,255,255,0.2);
+              font-size: 0.6rem;
+              font-weight: 800;
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
+              padding-bottom: 8px;
+            }
+            .rdp-day_button {
+              width: 36px;
+              height: 36px;
+              border-radius: 10px;
+              font-size: 0.78rem;
+              font-weight: 600;
+              transition: background 0.15s, color 0.15s;
+            }
+            .rdp-day_button:hover:not([disabled]) {
+              background: rgba(255,255,255,0.08);
+              color: white;
+            }
+            .rdp-selected .rdp-day_button {
+              background: white !important;
+              color: black !important;
+              font-weight: 800;
+              border-radius: 10px;
+            }
+            .rdp-range_middle .rdp-day_button {
+              background: rgba(255,255,255,0.07) !important;
+              color: rgba(255,255,255,0.85) !important;
+              border-radius: 0 !important;
+            }
+            .rdp-range_start .rdp-day_button {
+              background: white !important;
+              color: black !important;
+              border-radius: 10px 0 0 10px !important;
+              font-weight: 800;
+            }
+            .rdp-range_end .rdp-day_button {
+              background: white !important;
+              color: black !important;
+              border-radius: 0 10px 10px 0 !important;
+              font-weight: 800;
+            }
+            .rdp-range_start.rdp-range_end .rdp-day_button {
+              border-radius: 10px !important;
+            }
             .rdp-day[aria-disabled="true"] .rdp-day_button {
-              color: rgba(255,255,255,0.15);
+              color: rgba(255,255,255,0.12);
               text-decoration: line-through;
               cursor: not-allowed;
             }
-            .rdp-month_caption { color: rgba(255,255,255,0.6); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
-            .rdp-weekday { color: rgba(255,255,255,0.3); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
-            .rdp-nav button { color: rgba(255,255,255,0.4); }
-            .rdp-nav button:hover { color: white; }
+            .rdp-today:not(.rdp-selected) .rdp-day_button {
+              color: white;
+              border: 1px solid rgba(255,255,255,0.2);
+            }
+            .rdp-nav button {
+              color: rgba(255,255,255,0.3);
+              background: none;
+              border: none;
+              width: 28px;
+              height: 28px;
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: background 0.15s, color 0.15s;
+            }
+            .rdp-nav button:hover {
+              color: white;
+              background: rgba(255,255,255,0.08);
+            }
+            .rdp-outside .rdp-day_button { opacity: 0; pointer-events: none; }
           `}</style>
           <DayPicker
             mode="range"
@@ -143,13 +220,18 @@ export default function DateRangePicker({
             defaultMonth={pickDate ? toDate(pickDate) : today}
             showOutsideDays={false}
           />
-          <button
-            type="button"
-            onClick={() => { onPickDate(''); onRetDate(''); }}
-            className="w-full text-center text-[10px] font-bold text-white/25 hover:text-white/50 uppercase tracking-widest mt-1 py-1 transition-colors"
-          >
-            Clear dates
-          </button>
+          <div className="border-t border-white/5 mt-1 pt-3 flex justify-between items-center">
+            <span className="text-[10px] text-white/20 uppercase tracking-widest font-bold">
+              {pickDate && retDate ? 'Range selected' : pickDate ? 'Select return date' : 'Select pickup date'}
+            </span>
+            <button
+              type="button"
+              onClick={() => { onPickDate(''); onRetDate(''); }}
+              className="text-[10px] font-bold text-white/25 hover:text-white/60 uppercase tracking-widest transition-colors"
+            >
+              Clear
+            </button>
+          </div>
         </div>
       )}
     </div>

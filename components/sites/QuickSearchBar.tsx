@@ -2,12 +2,18 @@
 
 import { useState } from 'react'
 import type { PickupLocation } from '@/lib/supabase/types'
+import DateRangePicker from './DateRangePicker'
 
 interface Props {
   slug: string
   locations: PickupLocation[]
   /** When true, renders without the outer section wrapper (for embedding inside HeroSection) */
   inline?: boolean
+  initialPickDate?: string
+  initialRetDate?: string
+  initialPickTime?: string
+  initialRetTime?: string
+  initialLocation?: string
 }
 
 const TIME_OPTIONS = [
@@ -16,12 +22,17 @@ const TIME_OPTIONS = [
   '06:00 PM', '07:00 PM', '08:00 PM',
 ]
 
-export default function QuickSearchBar({ slug, locations, inline = false }: Props) {
-  const [pickDate, setPickDate] = useState('')
-  const [retDate, setRetDate] = useState('')
-  const [pickTime, setPickTime] = useState('10:00 AM')
-  const [retTime, setRetTime] = useState('10:00 AM')
-  const [location, setLocation] = useState(locations[0]?.label || '')
+export default function QuickSearchBar({
+  slug, locations, inline = false,
+  initialPickDate = '', initialRetDate = '',
+  initialPickTime = '10:00 AM', initialRetTime = '10:00 AM',
+  initialLocation,
+}: Props) {
+  const [pickDate, setPickDate] = useState(initialPickDate)
+  const [retDate, setRetDate] = useState(initialRetDate)
+  const [pickTime, setPickTime] = useState(initialPickTime)
+  const [retTime, setRetTime] = useState(initialRetTime)
+  const [location, setLocation] = useState(initialLocation || locations[0]?.label || '')
 
   const handleSearch = () => {
     const params = new URLSearchParams()
@@ -42,12 +53,17 @@ export default function QuickSearchBar({ slug, locations, inline = false }: Prop
 
   const inner = (
     <div className="bg-white/[0.08] backdrop-blur-xl border border-white/15 rounded-[2rem] p-6 sm:p-8 shadow-2xl">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
-          {/* Pickup Date */}
-          <div>
-            <label className={labelCls}>Pickup Date</label>
-            <input type="date" value={pickDate} onChange={e => setPickDate(e.target.value)}
-              className={selectCls} />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
+          {/* Date Range Picker — spans 2 cols */}
+          <div className="col-span-2 md:col-span-2">
+            <label className={labelCls}>Dates</label>
+            <DateRangePicker
+              pickDate={pickDate}
+              retDate={retDate}
+              onPickDate={setPickDate}
+              onRetDate={setRetDate}
+              disabledRanges={[]}
+            />
           </div>
 
           {/* Pickup Time */}
@@ -56,13 +72,6 @@ export default function QuickSearchBar({ slug, locations, inline = false }: Prop
             <select value={pickTime} onChange={e => setPickTime(e.target.value)} className={selectCls}>
               {TIME_OPTIONS.map(t => <option key={t} value={t} className="text-black">{t}</option>)}
             </select>
-          </div>
-
-          {/* Return Date */}
-          <div>
-            <label className={labelCls}>Return Date</label>
-            <input type="date" value={retDate} onChange={e => setRetDate(e.target.value)}
-              min={pickDate} className={selectCls} />
           </div>
 
           {/* Return Time */}
@@ -89,17 +98,17 @@ export default function QuickSearchBar({ slug, locations, inline = false }: Prop
                 placeholder="Pickup location" className={selectCls} />
             )}
           </div>
-
-          {/* Search Button */}
-          <div>
-            <button
-              onClick={handleSearch}
-              className="w-full bg-white text-black font-black uppercase tracking-[.15em] text-[11px] py-4 rounded-xl hover:bg-primary hover:text-white hover:scale-[1.02] active:scale-95 transition-all shadow-lg"
-            >
-              Search Fleet
-            </button>
-          </div>
         </div>
+
+      {/* Search Button — full width below */}
+      <div className="mt-4">
+        <button
+          onClick={handleSearch}
+          className="w-full bg-white text-black font-black uppercase tracking-[.15em] text-[11px] py-4 rounded-xl hover:bg-black hover:text-white hover:scale-[1.01] active:scale-95 transition-all shadow-lg border border-transparent hover:border-white/20"
+        >
+          Search Fleet
+        </button>
+      </div>
     </div>
   )
 

@@ -4,6 +4,7 @@ import type { Tenant, Car } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
 import FleetGrid from '@/components/sites/FleetGrid'
 import BackLink from '@/components/sites/FleetBackLink'
+import QuickSearchBar from '@/components/sites/QuickSearchBar'
 
 interface Props {
   params: { slug: string }
@@ -82,38 +83,49 @@ export default async function FleetSubPage({ params, searchParams }: Props) {
 
   return (
     <main>
-      <div className="max-w-6xl mx-auto px-6 pt-16 pb-8">
+      {/* Header */}
+      <div className="max-w-6xl mx-auto px-6 pt-12 pb-6">
         <BackLink slug={params.slug} />
-        <div className="text-center">
-          <p className="text-[10px] font-black uppercase tracking-[.4em] text-primary/60 mb-4">Complete Collection</p>
-          <h1 className="text-4xl sm:text-5xl font-outfit font-black text-white tracking-tight mb-4">
+
+        <div className="text-center mb-8">
+          <p className="text-[10px] font-black uppercase tracking-[.4em] text-primary/60 mb-3">Complete Collection</p>
+          <h1 className="text-4xl sm:text-5xl font-outfit font-black text-white tracking-tight mb-3">
             Our Fleet
           </h1>
-          {hasDateSearch ? (
-            <div className="flex flex-col items-center gap-3">
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 border border-primary/20">
-                <svg className="w-3.5 h-3.5 text-primary/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
-                  {formatDate(pickupDate!)} — {formatDate(returnDate!)}
-                  {searchParams.pickTime ? ` · ${searchParams.pickTime}` : ''}
-                </span>
-              </div>
-              <p className="text-white/40 text-sm">
-                {fleet.length > 0
-                  ? `${fleet.length} vehicle${fleet.length === 1 ? '' : 's'} available for your dates`
-                  : `No vehicles available for the selected dates`}
-              </p>
-            </div>
-          ) : (
-            <p className="text-white/40 text-base max-w-xl mx-auto">
-              {fleet.length > 0
-                ? `${fleet.length} vehicle${fleet.length === 1 ? '' : 's'} available from ${displayName}`
-                : `No vehicles currently available from ${displayName}`}
-            </p>
-          )}
+          <p className="text-white/30 text-sm">
+            {fleet.length > 0
+              ? `${fleet.length} vehicle${fleet.length === 1 ? '' : 's'} available from ${displayName}`
+              : `No vehicles currently available from ${displayName}`}
+          </p>
         </div>
+
+        {/* Quick Search Bar */}
+        <div className="mb-6">
+          <QuickSearchBar
+            slug={params.slug}
+            locations={typedTenant.pickup_locations}
+            inline
+            initialPickDate={searchParams.pickup || ''}
+            initialRetDate={searchParams.return || ''}
+            initialPickTime={searchParams.pickTime || '10:00 AM'}
+            initialRetTime={searchParams.retTime || '10:00 AM'}
+            initialLocation={searchParams.location || ''}
+          />
+        </div>
+
+        {/* Active date filter badge */}
+        {hasDateSearch && (
+          <div className="flex justify-center mb-2">
+            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/5 border border-white/10">
+              <svg className="w-3.5 h-3.5 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                Showing availability: {formatDate(pickupDate!)} — {formatDate(returnDate!)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       <FleetGrid

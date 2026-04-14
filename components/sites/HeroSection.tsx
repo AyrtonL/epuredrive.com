@@ -63,7 +63,7 @@ export default function HeroSection({ tenant, carCount, slug, locations }: Props
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in animation-delay-500">
           <a
             href="#fleet"
-            className="bg-white text-black font-black uppercase tracking-[.2em] text-[11px] px-10 py-4 rounded-full hover:bg-primary hover:text-white hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/5"
+            className="bg-white text-black font-black uppercase tracking-[.2em] text-[11px] px-10 py-4 rounded-full hover:bg-black hover:text-white hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/5 border border-transparent hover:border-white/20"
           >
             Browse Fleet
           </a>

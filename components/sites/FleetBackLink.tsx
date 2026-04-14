@@ -1,14 +1,14 @@
 'use client'
 
+import { usePathname } from 'next/navigation'
+
 interface Props {
   slug: string
 }
 
 export default function FleetBackLink({ slug }: Props) {
-  const href =
-    typeof window !== 'undefined' && !window.location.pathname.startsWith('/sites/')
-      ? '/'
-      : `/sites/${slug}`
+  const pathname = usePathname()
+  const href = pathname.startsWith('/sites/') ? `/sites/${slug}` : '/'
 
   return (
     <a

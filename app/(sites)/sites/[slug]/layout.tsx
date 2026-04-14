@@ -77,7 +77,7 @@ export default async function TenantLayout({ children, params }: Props) {
               </div>
               <a
                 href="/fleet"
-                className="bg-white text-black font-black uppercase tracking-widest text-[10px] px-8 py-3.5 rounded-full hover:bg-primary hover:text-white hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/5"
+                className="bg-white text-black font-black uppercase tracking-widest text-[10px] px-8 py-3.5 rounded-full hover:bg-black hover:text-white hover:border hover:border-white/20 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/5"
               >
                 Reserve Now
               </a>
