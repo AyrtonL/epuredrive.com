@@ -10,6 +10,8 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { sendEmail } from '@/lib/email/resend'
+import { teamInviteEmail } from '@/lib/email/templates/platform'
 
 const ALLOWED_ROLES = ['admin', 'finance', 'staff'] as const
 type Role = (typeof ALLOWED_ROLES)[number]
@@ -55,17 +57,23 @@ export async function POST(request: Request) {
 
   const supabase = createAdminClient()
 
-  // 1 — Send invitation email via Supabase Auth Admin API
+  // 1 — Generate invite link (does NOT auto-send Supabase's default email)
   // tenant_id in user_metadata lets the roles page identify pending (unaccepted) invites
-  const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
-    data: { full_name: name || '', role, tenant_id: tenantId },
+  const { data: linkData, error: inviteError } = await supabase.auth.admin.generateLink({
+    type: 'invite',
+    email,
+    options: {
+      data: { full_name: name || '', role, tenant_id: tenantId },
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://epuredrive.com'}/dashboard`,
+    },
   })
 
-  if (inviteError) {
-    return NextResponse.json({ error: inviteError.message }, { status: 400 })
+  if (inviteError || !linkData) {
+    return NextResponse.json({ error: inviteError?.message ?? 'Failed to generate invite' }, { status: 400 })
   }
 
-  const newUserId = inviteData.user?.id
+  const newUserId = linkData.user?.id
+  const inviteUrl = (linkData as any).properties?.action_link as string | undefined
 
   // 2 — Create profile row with tenant + role set before first login
   if (newUserId && tenantId) {
@@ -75,6 +83,29 @@ export async function POST(request: Request) {
       full_name: name || null,
       role,
     })
+  }
+
+  // 3 — Send branded invite email
+  if (inviteUrl) {
+    const { data: inviterProfile } = await supabaseUser
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single()
+
+    const { data: tenantData } = await supabase
+      .from('tenants')
+      .select('brand_name, name')
+      .eq('id', tenantId)
+      .single()
+
+    const companyName = tenantData?.brand_name || tenantData?.name || 'the team'
+    const invitedBy = inviterProfile?.full_name || user.email || 'Your team admin'
+
+    await sendEmail({
+      to: email,
+      ...teamInviteEmail({ invitedBy, companyName, role, inviteUrl }),
+    }).catch(() => {}) // non-blocking
   }
 
   return NextResponse.json({ success: true, userId: newUserId })
