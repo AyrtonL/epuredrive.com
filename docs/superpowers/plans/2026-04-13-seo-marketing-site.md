@@ -465,11 +465,11 @@ Replace the existing metadata export (lines 3–8) with:
 export const metadata: Metadata = {
   title: 'Terms & Conditions — éPure Drive',
   description:
-    'Read the full terms and conditions for renting a vehicle with éPure Drive in Miami, Aventura, and South Florida.',
+    'Read the full terms and conditions for renting a vehicle with éPure Drive in Miami and South Florida.',
   alternates: { canonical: 'https://epuredrive.com/terms' },
   openGraph: {
     title: 'Terms & Conditions — éPure Drive',
-    description: 'Read the full terms and conditions for renting a vehicle with éPure Drive in Miami, Aventura, and South Florida.',
+    description: 'Read the full terms and conditions for renting a vehicle with éPure Drive in Miami and South Florida.',
     url: 'https://epuredrive.com/terms',
   },
 }
