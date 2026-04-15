@@ -65,7 +65,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
       pickup_time: formData.pickup_time || '10:00',
       return_date: formData.return_date || null,
       return_time: formData.return_time || '10:00',
-      pickup_location: formData.pickup_location || 'Aventura',
+      pickup_location: formData.pickup_location || null,
       return_location: formData.return_location || null,
       total_amount: Number(formData.total_amount) || null,
       security_deposit: formData.security_deposit ? Number(formData.security_deposit) : null,
@@ -217,7 +217,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Pickup Location</label>
               <input
-                type="text" placeholder="e.g. Aventura, Miami Airport..."
+                type="text" placeholder="e.g. Downtown, Miami Airport..."
                 value={formData.pickup_location || ''}
                 onChange={e => setFormData({...formData, pickup_location: e.target.value})}
                 className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"

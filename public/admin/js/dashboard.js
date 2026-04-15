@@ -829,7 +829,7 @@ function openEdit(id) {
   document.getElementById('f-pickup-time').value  = r.pickup_time || '10:00';
   document.getElementById('f-return').value       = r.return_date;
   document.getElementById('f-return-time').value  = r.return_time  || '10:00';
-  document.getElementById('f-location').value = r.pickup_location || 'Aventura';
+  document.getElementById('f-location').value = r.pickup_location || '';
   document.getElementById('f-amount').value   = r.total_amount || '';
   document.getElementById('f-status').value   = r.status;
   document.getElementById('f-source').value   = r.source || 'admin';
@@ -1033,7 +1033,7 @@ function showDetail(r) {
     <div class="detail-row"><span>Pickup</span>${fmtDateLong(r.pickup_date)} at ${r.pickup_time || '10:00'}</div>
     <div class="detail-row"><span>Return</span>${fmtDateLong(r.return_date)} at ${r.return_time || '10:00'}</div>
     <div class="detail-row"><span>Duration</span>${days} day${days !== 1 ? 's' : ''}</div>
-    <div class="detail-row"><span>Location</span>${esc(r.pickup_location || 'Aventura')}</div>
+    <div class="detail-row"><span>Location</span>${esc(r.pickup_location || '—')}</div>
     <div class="detail-row"><span>Total</span><strong>${r.total_amount ? '$' + Number(r.total_amount).toLocaleString() : '—'}</strong></div>
     <div class="detail-row"><span>Status</span><span class="badge ${statusMap[r.status] || 'badge-gray'}">${r.status}</span></div>
     <div class="detail-row"><span>Source</span><span class="source-badge source-${r.source}">${r.source}</span></div>

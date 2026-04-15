@@ -382,7 +382,7 @@ export default function BrandSettings({ tenant }: Props) {
                 <div className="space-y-1">
                   <label className={labelCls}>Address</label>
                   <input type="text" value={loc.address} onChange={e => updateLocation(i, 'address', e.target.value)}
-                    placeholder="e.g. Aventura, FL" className={inputCls} />
+                    placeholder="e.g. Miami, FL" className={inputCls} />
                 </div>
                 <div className="space-y-1">
                   <label className={labelCls}>Delivery Fee ($)</label>
@@ -400,7 +400,7 @@ export default function BrandSettings({ tenant }: Props) {
                 <div className="space-y-1">
                   <label className={labelCls}>Google Maps Query</label>
                   <input type="text" value={loc.maps_query} onChange={e => updateLocation(i, 'maps_query', e.target.value)}
-                    placeholder="e.g. Aventura+Mall,+FL" className={inputCls} />
+                    placeholder="e.g. Miami+Beach,+FL" className={inputCls} />
                 </div>
               </div>
             </div>

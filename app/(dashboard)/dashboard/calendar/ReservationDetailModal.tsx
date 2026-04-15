@@ -118,7 +118,7 @@ export default function ReservationDetailModal({ reservation: r, cars, dailyRate
             ['Pickup', `${r.pickup_date || '—'} at ${r.pickup_time || '10:00'}`],
             ['Return', `${r.return_date || '—'} at ${r.return_time || '10:00'}`],
             ['Duration', `${days} day${days !== 1 ? 's' : ''}`],
-            ['Location', r.pickup_location || 'Aventura'],
+            ['Location', r.pickup_location || '—'],
             ['Total', <strong key="tot" className="text-white">{r.total_amount ? `$${Number(r.total_amount).toLocaleString()}` : '—'}</strong>],
             ['Source', <span key="src" className="text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded bg-white/10 text-white/60">{r.source || 'admin'}</span>],
           ].map(([label, value], i) => (
