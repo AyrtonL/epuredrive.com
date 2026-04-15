@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import SupportModal from '@/components/dashboard/SupportModal'
 
 // ── SVG Icon Components ────────────────────────────────────────────────────────
 
@@ -444,6 +445,7 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
   const router = useRouter()
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [supportOpen, setSupportOpen] = useState(false)
 
   const isSuperuser = role === 'superuser'
 
@@ -607,8 +609,19 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
           )}
         </div>
         <button
+          onClick={() => setSupportOpen(true)}
+          className="mt-4 flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-white/30
+                     hover:text-white/60 hover:bg-white/[0.03] transition-all text-xs font-medium"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round"
+              d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>
+          </svg>
+          Support
+        </button>
+        <button
           onClick={handleLogout}
-          className="mt-4 w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
+          className="mt-1 w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
         >
           <IconLogout className="w-4 h-4" />
           <span className="text-[13px] font-medium">Log out</span>
@@ -663,6 +676,8 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
         </button>
         {navContent}
       </aside>
+
+      <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
     </>
   )
 }
