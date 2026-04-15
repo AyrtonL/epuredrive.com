@@ -2,13 +2,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Terms & Conditions — éPure Drive',
+  title: 'Terms of Service — éPure Drive',
   description:
-    'Read the full terms and conditions for renting a vehicle with éPure Drive in Miami, Aventura, and South Florida.',
+    'Terms of Service for the éPure Drive software platform — account, subscription, acceptable use, tenant responsibilities, and limitation of liability.',
   alternates: { canonical: 'https://epuredrive.com/terms' },
   openGraph: {
-    title: 'Terms & Conditions — éPure Drive',
-    description: 'Read the full terms and conditions for renting a vehicle with éPure Drive in Miami, Aventura, and South Florida.',
+    title: 'Terms of Service — éPure Drive',
+    description:
+      'Terms of Service for the éPure Drive software platform — account, subscription, acceptable use, tenant responsibilities, and limitation of liability.',
     url: 'https://epuredrive.com/terms',
   },
 }
@@ -34,10 +35,10 @@ export default function TermsPage() {
             Legal
           </span>
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">
-            Terms &amp; Conditions
+            Terms of Service
           </h1>
           <p className="text-white/40 text-sm">
-            Last updated: March 2026 · éPure Drive / Route 305 Rental Car · Aventura, Florida
+            Last updated: April 2026 · éPure LLC
           </p>
         </div>
       </section>
@@ -46,209 +47,200 @@ export default function TermsPage() {
       <section className="py-16">
         <div className="max-w-3xl mx-auto px-6 space-y-12">
 
+          {/* Intro */}
+          <div className="bg-white/[0.03] border border-white/[0.06] border-l-2 border-l-white/20 rounded-r-lg p-4 text-sm text-white/50 leading-relaxed">
+            These Terms of Service (&ldquo;Terms&rdquo;) govern your access to and use of the éPure Drive software platform provided by <strong className="text-white/70">éPure LLC</strong> (&ldquo;éPure&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;). éPure Drive is a software-as-a-service platform that enables rental businesses (&ldquo;Tenants&rdquo;) to manage their fleet, bookings, customers, and operations. <strong className="text-white/70">éPure does not own, rent, insure, or operate vehicles.</strong> All rental transactions and vehicle-related obligations are between each Tenant and its own customers. By creating an account or using the Service, you agree to these Terms.
+          </div>
+
           {/* TOC */}
           <nav className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
             <h3 className="text-[11px] font-bold tracking-[0.2em] text-white/40 uppercase mb-4">
               Table of Contents
             </h3>
             <ol className="list-decimal list-inside space-y-1.5 text-sm text-white/50">
-              <li><a href="#eligibility" className="hover:text-white transition-colors">Eligibility &amp; Requirements</a></li>
-              <li><a href="#reservation" className="hover:text-white transition-colors">Reservations &amp; Booking</a></li>
-              <li><a href="#pricing" className="hover:text-white transition-colors">Pricing &amp; Fees</a></li>
-              <li><a href="#insurance" className="hover:text-white transition-colors">Insurance &amp; Coverage</a></li>
-              <li><a href="#vehicle-use" className="hover:text-white transition-colors">Vehicle Use &amp; Prohibited Uses</a></li>
-              <li><a href="#damage" className="hover:text-white transition-colors">Damage, Loss &amp; Liability</a></li>
-              <li><a href="#fuel" className="hover:text-white transition-colors">Fuel Policy</a></li>
-              <li><a href="#mileage" className="hover:text-white transition-colors">Mileage Policy</a></li>
-              <li><a href="#cancellation" className="hover:text-white transition-colors">Cancellation &amp; Modifications</a></li>
-              <li><a href="#tolls" className="hover:text-white transition-colors">Tolls &amp; Traffic Violations</a></li>
-              <li><a href="#privacy-data" className="hover:text-white transition-colors">Personal Data &amp; Privacy</a></li>
-              <li><a href="#governing" className="hover:text-white transition-colors">Governing Law &amp; Dispute Resolution</a></li>
+              <li><a href="#definitions" className="hover:text-white transition-colors">Definitions</a></li>
+              <li><a href="#account" className="hover:text-white transition-colors">Account &amp; Eligibility</a></li>
+              <li><a href="#service" className="hover:text-white transition-colors">The Service</a></li>
+              <li><a href="#plans" className="hover:text-white transition-colors">Plans, Billing &amp; Refunds</a></li>
+              <li><a href="#tenant" className="hover:text-white transition-colors">Tenant Responsibilities</a></li>
+              <li><a href="#acceptable-use" className="hover:text-white transition-colors">Acceptable Use</a></li>
+              <li><a href="#end-user-data" className="hover:text-white transition-colors">End User Data</a></li>
+              <li><a href="#ip" className="hover:text-white transition-colors">Intellectual Property</a></li>
+              <li><a href="#availability" className="hover:text-white transition-colors">Service Availability &amp; Support</a></li>
+              <li><a href="#disclaimers" className="hover:text-white transition-colors">Disclaimers &amp; Limitation of Liability</a></li>
+              <li><a href="#indemnification" className="hover:text-white transition-colors">Indemnification</a></li>
+              <li><a href="#termination" className="hover:text-white transition-colors">Termination</a></li>
+              <li><a href="#governing" className="hover:text-white transition-colors">Governing Law &amp; Disputes</a></li>
             </ol>
           </nav>
 
           {/* 1 */}
-          <div id="eligibility" className="scroll-mt-24">
-            <SectionHeading num={1}>Eligibility &amp; Requirements</SectionHeading>
+          <div id="definitions" className="scroll-mt-24">
+            <SectionHeading num={1}>Definitions</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>To rent a vehicle with éPure Drive, you must meet <strong className="text-white/70">all</strong> of the following requirements at the time of rental:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>Be <strong className="text-white/70">at least 21 years of age</strong> (25+ required for vehicles valued over $75,000).</li>
-                <li>Hold a <strong className="text-white/70">valid driver&apos;s license</strong> in good standing. Foreign licenses are accepted with an International Driving Permit (IDP).</li>
-                <li>Provide a <strong className="text-white/70">valid credit or debit card</strong> in the renter&apos;s name for the security deposit.</li>
-                <li>Have <strong className="text-white/70">valid personal auto insurance</strong> that covers rented vehicles, OR purchase our coverage at the time of rental.</li>
-                <li>Present a <strong className="text-white/70">valid government-issued photo ID</strong>.</li>
+              <ul className="list-disc pl-5 space-y-2">
+                <li><strong className="text-white/70">&ldquo;Service&rdquo;</strong> — the éPure Drive software platform, including the website, dashboard, APIs, and any related tools or features provided by éPure LLC.</li>
+                <li><strong className="text-white/70">&ldquo;Tenant&rdquo;</strong> — a business or individual that creates an account to use the Service to operate a rental business.</li>
+                <li><strong className="text-white/70">&ldquo;End User&rdquo;</strong> — a customer of a Tenant whose data is collected or stored by the Tenant through the Service (for example, a renter, driver, or guest).</li>
+                <li><strong className="text-white/70">&ldquo;Subscription&rdquo;</strong> — a recurring paid plan granting the Tenant access to the Service.</li>
+                <li><strong className="text-white/70">&ldquo;Content&rdquo;</strong> — any data, text, images, documents, or other materials uploaded to or created via the Service.</li>
               </ul>
-              <div className="bg-white/[0.03] border border-white/[0.06] border-l-2 border-l-white/20 rounded-r-lg p-4 mt-4">
-                Additional drivers must also meet all eligibility requirements and be listed on the Rental Agreement prior to operating the vehicle. An additional driver fee of <strong className="text-white/70">$50 per rental period</strong> may apply.
-              </div>
             </div>
           </div>
 
           {/* 2 */}
-          <div id="reservation" className="scroll-mt-24">
-            <SectionHeading num={2}>Reservations &amp; Booking</SectionHeading>
+          <div id="account" className="scroll-mt-24">
+            <SectionHeading num={2}>Account &amp; Eligibility</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>All reservations are subject to vehicle availability. A reservation confirmation does not guarantee a specific vehicle but guarantees the vehicle class/category booked. éPure Drive reserves the right to substitute a vehicle of equal or greater value at no additional charge.</p>
-              <p>Reservations can be made via our website, WhatsApp, or email. A <strong className="text-white/70">security deposit</strong> is required at the time of vehicle handoff. No payment is required to place a reservation.</p>
-              <p>By completing a reservation, you confirm that you have read and agree to these Terms &amp; Conditions in their entirety.</p>
+              <p>To use the Service, you must be at least 18 years old and legally capable of entering into a binding contract. If you register on behalf of a business, you represent that you are authorized to bind that business to these Terms.</p>
+              <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account. You must notify us immediately at <a href="mailto:info@epuredrive.com" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">info@epuredrive.com</a> if you suspect any unauthorized access.</p>
+              <p>You must provide accurate, complete, and current information and keep it up to date. We may suspend or terminate accounts that contain false, misleading, or incomplete information.</p>
             </div>
           </div>
 
           {/* 3 */}
-          <div id="pricing" className="scroll-mt-24">
-            <SectionHeading num={3}>Pricing &amp; Fees</SectionHeading>
+          <div id="service" className="scroll-mt-24">
+            <SectionHeading num={3}>The Service</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>Our rental rates are as listed on the vehicle detail page at the time of booking. All prices are in US Dollars. The following additional charges may apply:</p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse mt-2">
-                  <thead>
-                    <tr className="border-b border-white/10">
-                      <th className="text-left text-[11px] uppercase tracking-wider text-white/40 font-semibold py-2 pr-4">Fee / Charge</th>
-                      <th className="text-left text-[11px] uppercase tracking-wider text-white/40 font-semibold py-2 pr-4">Amount</th>
-                      <th className="text-left text-[11px] uppercase tracking-wider text-white/40 font-semibold py-2">Notes</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-white/50">
-                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Florida State Tax</td><td className="py-2 pr-4">9.5%</td><td className="py-2">Applied to rental subtotal</td></tr>
-                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Airport Delivery (MIA/FLL)</td><td className="py-2 pr-4">$120</td><td className="py-2">Each way; Aventura pickup is free</td></tr>
-                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Additional Driver</td><td className="py-2 pr-4">$50</td><td className="py-2">Per rental period</td></tr>
-                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Premium Insurance Coverage</td><td className="py-2 pr-4">$149/day</td><td className="py-2">Reduces deductible to $0</td></tr>
-                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Prepaid Fuel Option</td><td className="py-2 pr-4">$95</td><td className="py-2">Return at any fuel level</td></tr>
-                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Mileage Overage</td><td className="py-2 pr-4">$0.25/mile</td><td className="py-2">Beyond included miles</td></tr>
-                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Cleaning Fee</td><td className="py-2 pr-4">$75–$250</td><td className="py-2">Excessively dirty condition</td></tr>
-                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Smoking/Vaping Fee</td><td className="py-2 pr-4">$350</td><td className="py-2">Evidence of smoking inside vehicle</td></tr>
-                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Late Return Fee</td><td className="py-2 pr-4">1 day rate</td><td className="py-2">Per day beyond due-in date</td></tr>
-                    <tr><td className="py-2 pr-4">Key Replacement</td><td className="py-2 pr-4">At cost</td><td className="py-2">Typically $200–$600</td></tr>
-                  </tbody>
-                </table>
+              <p>éPure provides a software platform that enables Tenants to manage fleet inventory, reservations, rental agreements, customer records, payments, invoices, digital signatures, and related operational workflows. The Service may include integrations with third-party providers (for example, Stripe for payment processing).</p>
+              <p>The Service is provided on a subscription basis. Features available to a Tenant depend on the plan selected and may change over time as we add, improve, or retire functionality. We will make reasonable efforts to communicate material changes in advance.</p>
+              <div className="bg-white/[0.03] border border-white/[0.06] border-l-2 border-l-white/20 rounded-r-lg p-4 mt-4">
+                <strong className="text-white/70">éPure is a software provider only.</strong> We do not own vehicles, rent vehicles, hold vehicle insurance, collect security deposits, or act as a party to any rental agreement between a Tenant and its End Users.
               </div>
-              <p>All charges are subject to a final audit. The security deposit will be returned within <strong className="text-white/70">3–5 business days</strong> of vehicle return, pending inspection.</p>
             </div>
           </div>
 
           {/* 4 */}
-          <div id="insurance" className="scroll-mt-24">
-            <SectionHeading num={4}>Insurance &amp; Coverage</SectionHeading>
+          <div id="plans" className="scroll-mt-24">
+            <SectionHeading num={4}>Plans, Billing &amp; Refunds</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>éPure Drive vehicles are insured by the owner (Route 305 Rental Car). Renters must provide one of the following:</p>
-              <ol className="list-decimal pl-5 space-y-2">
-                <li><strong className="text-white/70">Personal auto insurance</strong> — must be a USA-based policy that extends to rental vehicles.</li>
-                <li><strong className="text-white/70">Credit card rental protection</strong> — coverage provided by your credit card issuer as secondary coverage.</li>
-                <li><strong className="text-white/70">éPure Drive Coverage</strong> — purchased at the time of rental:
-                  <ul className="list-disc pl-5 mt-1 space-y-1">
-                    <li><em>Standard Coverage:</em> Deductible: $1,000 (vehicles under $35k) / $2,500 (vehicles $35k+).</li>
-                    <li><em>Premium Coverage:</em> $149/day. Reduces deductible to $0.</li>
-                  </ul>
-                </li>
-              </ol>
-              <div className="bg-red-500/[0.06] border border-red-500/20 border-l-2 border-l-red-500/50 rounded-r-lg p-4 mt-4">
-                <strong className="text-red-400">No Insurance / Declined Coverage:</strong> If you decline to provide valid insurance and decline to purchase our coverage, you assume <strong className="text-white/70">full and unlimited personal liability</strong> for any damage, injuries, and property damage — regardless of fault.
-              </div>
-              <p>Coverage is automatically <strong className="text-white/70">voided</strong> if any prohibited use occurs (see Section 5), if you fail to report an accident promptly, or if you provide false information.</p>
+              <p>Subscriptions are billed in advance on a monthly or annual basis, depending on the plan selected at signup. Fees are listed on our <Link href="/pricing" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">pricing page</Link> and are exclusive of any applicable taxes, which you are responsible for paying.</p>
+              <p>Payments are processed by <strong className="text-white/70">Stripe, Inc.</strong> By providing your payment information, you authorize us (via Stripe) to charge the applicable fees to your payment method on a recurring basis until your Subscription is cancelled.</p>
+              <p>You may cancel your Subscription at any time from your dashboard. Cancellation will take effect at the end of the current billing period; you retain access to paid features until that date.</p>
+              <p><strong className="text-white/70">Fees are non-refundable</strong> except where required by law. We do not provide pro-rated refunds for partial billing periods, unused features, or early cancellation.</p>
+              <p>We may change our pricing at any time. Price changes will be communicated at least <strong className="text-white/70">30 days in advance</strong> and will take effect at the start of your next billing period. Continued use of the Service after a price change constitutes acceptance of the new price.</p>
+              <p>If a payment fails, we may suspend or downgrade your account until the balance is resolved. Accounts more than 30 days past due may be terminated.</p>
             </div>
           </div>
 
           {/* 5 */}
-          <div id="vehicle-use" className="scroll-mt-24">
-            <SectionHeading num={5}>Vehicle Use &amp; Prohibited Uses</SectionHeading>
+          <div id="tenant" className="scroll-mt-24">
+            <SectionHeading num={5}>Tenant Responsibilities</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>The Vehicle must be operated only by Authorized Drivers listed on the Rental Agreement. The following uses are <strong className="text-white/70">strictly prohibited</strong> and will result in immediate termination, forfeiture of the security deposit, and void of all insurance coverage:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>Operation by anyone not listed as an Authorized Driver.</li>
-                <li>Operating under the influence of alcohol, prescription drugs, or controlled substances.</li>
-                <li>Use for any illegal purpose or in violation of any law.</li>
-                <li>Use for hire (rideshare, taxi, delivery, etc.) or towing.</li>
-                <li>Participation in any race, speed test, or contest.</li>
-                <li>Teaching anyone to drive.</li>
-                <li>Transporting hazardous, flammable, or illegal materials.</li>
-                <li>Operation outside the State of Florida without prior written approval.</li>
-                <li>Driving on unpaved, off-road, or flooded roads.</li>
-                <li>Carrying more passengers than the Vehicle has seat belts.</li>
-                <li>Odometer tampering or disconnection.</li>
-                <li>Smoking, vaping, or using e-cigarettes inside the Vehicle.</li>
-                <li>Transporting animals without prior written approval.</li>
+              <p>Tenants are solely responsible for all aspects of their own rental business, including but not limited to:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Ownership, registration, maintenance, and roadworthiness of all vehicles.</li>
+                <li>Obtaining and maintaining all required <strong className="text-white/70">licenses, permits, and insurance</strong> (commercial auto, liability, and any other coverage required by law or prudent business practice).</li>
+                <li>All agreements, contracts, pricing, deposits, fees, damages, and disputes with their End Users.</li>
+                <li>Compliance with all applicable federal, state, and local laws — including rental, consumer protection, tax collection, data protection, anti-discrimination, and accessibility laws.</li>
+                <li>The accuracy, legality, and appropriateness of all Content uploaded to or stored within the Service (including fleet listings, pricing, photos, and rental agreement templates).</li>
+                <li>Obtaining any required consents from their End Users to collect, store, or process End User data via the Service.</li>
               </ul>
-            </div>
-          </div>
-
-          {/* 6 */}
-          <div id="damage" className="scroll-mt-24">
-            <SectionHeading num={6}>Damage, Loss &amp; Liability</SectionHeading>
-            <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>You are responsible for all damage to the Vehicle during the rental period, regardless of fault or cause, including acts of nature, weather, terrain, and vandalism.</p>
-              <p>In the event of an accident or damage:</p>
-              <ol className="list-decimal pl-5 space-y-1.5">
-                <li>Stop immediately and ensure the safety of all parties.</li>
-                <li>Call 911 if there are injuries or significant property damage.</li>
-                <li>Contact éPure Drive immediately via WhatsApp at <strong className="text-white/70">(786) 209-6770</strong>.</li>
-                <li>Do not admit fault or make any statements regarding liability.</li>
-                <li>Document the scene with photos and obtain witness information.</li>
-                <li>File a police report if required by law.</li>
-              </ol>
-              <p>In addition to repair costs and administrative fees, you may be liable for <strong className="text-white/70">loss of use</strong> — calculated at the daily rental rate for each day the vehicle is unavailable while being repaired.</p>
-            </div>
-          </div>
-
-          {/* 7 */}
-          <div id="fuel" className="scroll-mt-24">
-            <SectionHeading num={7}>Fuel Policy</SectionHeading>
-            <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>Vehicles are provided with a <strong className="text-white/70">full tank of fuel</strong> and must be returned with a full tank. If the Vehicle is returned with less fuel, a <strong className="text-white/70">refueling fee of $15 per gallon</strong> (or current market rate, whichever is higher) plus a service fee of $35 will be charged.</p>
-              <p>If you purchase the <strong className="text-white/70">Prepaid Fuel Option</strong> ($95), you may return the Vehicle at any fuel level. No refund is issued for unused fuel.</p>
-            </div>
-          </div>
-
-          {/* 8 */}
-          <div id="mileage" className="scroll-mt-24">
-            <SectionHeading num={8}>Mileage Policy</SectionHeading>
-            <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>Each rental includes a mileage allowance as stated in the Rental Agreement. Miles driven beyond the included allowance will be billed at <strong className="text-white/70">$0.25 per mile</strong>.</p>
-              <p>If the odometer is found to have been tampered with, mileage charges will be estimated based on route and usage history, and you will be liable for the maximum estimated overage plus a $500 tampering fee.</p>
-            </div>
-          </div>
-
-          {/* 9 */}
-          <div id="cancellation" className="scroll-mt-24">
-            <SectionHeading num={9}>Cancellation &amp; Modifications</SectionHeading>
-            <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>éPure Drive offers <strong className="text-white/70">free cancellation</strong> for reservations cancelled at least <strong className="text-white/70">48 hours before the scheduled pickup time</strong>. Cancellations made within 48 hours may be subject to a cancellation fee equal to <strong className="text-white/70">one day&apos;s rental rate</strong>.</p>
-              <p>To cancel or modify a reservation, contact us via WhatsApp at <strong className="text-white/70">(786) 209-6770</strong> or email <strong className="text-white/70">info@epuredrive.com</strong>.</p>
               <div className="bg-white/[0.03] border border-white/[0.06] border-l-2 border-l-white/20 rounded-r-lg p-4 mt-4">
-                Early returns: If you return the vehicle before the agreed due-in date, no refund will be issued for unused rental days unless otherwise agreed in writing at the time of booking.
+                <strong className="text-white/70">éPure disclaims all responsibility</strong> for any rental-related activity, vehicle condition, accident, injury, loss, or dispute arising between a Tenant and its End Users. The Tenant is the sole counterparty in all rental transactions.
               </div>
             </div>
           </div>
 
-          {/* 10 */}
-          <div id="tolls" className="scroll-mt-24">
-            <SectionHeading num={10}>Tolls &amp; Traffic Violations</SectionHeading>
+          {/* 6 */}
+          <div id="acceptable-use" className="scroll-mt-24">
+            <SectionHeading num={6}>Acceptable Use</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>You are solely responsible for all tolls, parking citations, red-light camera fees, speed camera fees, and any other fines incurred during your rental period.</p>
-              <p>Florida operates a cashless toll system (SunPass) on many roads. Unpaid tolls may result in a fine plus an <strong className="text-white/70">administrative fee of $25 per toll transaction</strong>.</p>
-              <p>If we receive a violation notice related to your rental, you authorize us to charge the full amount of the fine plus a $35 administrative processing fee to your payment method on file.</p>
+              <p>You agree not to use the Service to:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Violate any applicable law, regulation, or third-party right.</li>
+                <li>Upload, store, or transmit content that is unlawful, fraudulent, defamatory, obscene, discriminatory, or infringing.</li>
+                <li>Attempt to gain unauthorized access to the Service, other accounts, or any underlying infrastructure.</li>
+                <li>Reverse-engineer, decompile, scrape, or otherwise extract source code or non-public data from the Service.</li>
+                <li>Interfere with, disrupt, or overload the Service (for example, by sending excessive requests or distributing malware).</li>
+                <li>Resell, sublicense, or white-label the Service without éPure&apos;s prior written consent.</li>
+                <li>Use the Service to send unsolicited commercial messages or to engage in deceptive marketing.</li>
+              </ul>
+              <p>Violations may result in immediate suspension or termination of your account without refund.</p>
+            </div>
+          </div>
+
+          {/* 7 */}
+          <div id="end-user-data" className="scroll-mt-24">
+            <SectionHeading num={7}>End User Data</SectionHeading>
+            <div className="text-sm text-white/50 leading-relaxed space-y-3">
+              <p>When a Tenant uses the Service to collect, store, or process information about its End Users, the <strong className="text-white/70">Tenant is the data controller</strong> and <strong className="text-white/70">éPure acts only as a data processor</strong> on the Tenant&apos;s behalf.</p>
+              <p>Tenants must:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Have a lawful basis to collect and process End User data.</li>
+                <li>Provide their End Users with a privacy notice that explains how data is used, stored, and shared.</li>
+                <li>Honor End User rights (access, rectification, deletion, portability) as required by applicable law (for example, GDPR, CCPA).</li>
+                <li>Not upload sensitive categories of data (such as payment card numbers, government ID numbers, or health data) beyond what is strictly necessary to operate their rental business.</li>
+              </ul>
+              <p>éPure will process End User data only as described in our <Link href="/privacy" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">Privacy Policy</Link> and in accordance with the Tenant&apos;s instructions.</p>
+            </div>
+          </div>
+
+          {/* 8 */}
+          <div id="ip" className="scroll-mt-24">
+            <SectionHeading num={8}>Intellectual Property</SectionHeading>
+            <div className="text-sm text-white/50 leading-relaxed space-y-3">
+              <p>The Service, including its software, design, trademarks, logos, and documentation, is owned by éPure LLC and is protected by intellectual property laws. We grant you a limited, non-exclusive, non-transferable, revocable license to use the Service in accordance with these Terms.</p>
+              <p>You retain ownership of the Content you upload to the Service. By uploading Content, you grant éPure a worldwide, royalty-free license to host, store, process, display, and transmit that Content solely as necessary to provide the Service and to operate, maintain, and improve it.</p>
+              <p>We welcome feedback and suggestions. If you send us feedback, you grant us a perpetual, irrevocable, royalty-free license to use it without restriction or compensation.</p>
+            </div>
+          </div>
+
+          {/* 9 */}
+          <div id="availability" className="scroll-mt-24">
+            <SectionHeading num={9}>Service Availability &amp; Support</SectionHeading>
+            <div className="text-sm text-white/50 leading-relaxed space-y-3">
+              <p>We strive to keep the Service available at all times, but we do not guarantee uninterrupted access. The Service may be temporarily unavailable due to scheduled maintenance, infrastructure issues, third-party provider outages, or events beyond our reasonable control.</p>
+              <p>Support is provided via <a href="mailto:info@epuredrive.com" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">info@epuredrive.com</a> and via the in-app support form. Response times and support scope depend on your plan.</p>
+            </div>
+          </div>
+
+          {/* 10 */}
+          <div id="disclaimers" className="scroll-mt-24">
+            <SectionHeading num={10}>Disclaimers &amp; Limitation of Liability</SectionHeading>
+            <div className="text-sm text-white/50 leading-relaxed space-y-3">
+              <p className="uppercase text-white/60 text-xs tracking-wider">Disclaimer of Warranties</p>
+              <p>The Service is provided <strong className="text-white/70">&ldquo;as is&rdquo;</strong> and <strong className="text-white/70">&ldquo;as available&rdquo;</strong> without warranties of any kind, whether express, implied, or statutory. To the maximum extent permitted by law, éPure disclaims all warranties, including warranties of merchantability, fitness for a particular purpose, title, non-infringement, and any warranty arising from course of dealing or usage of trade.</p>
+              <p>We do not warrant that the Service will be uninterrupted, error-free, secure, or free of viruses or harmful code, nor that any defects will be corrected.</p>
+              <p className="uppercase text-white/60 text-xs tracking-wider mt-6">Limitation of Liability</p>
+              <p>To the maximum extent permitted by law, éPure and its officers, employees, and affiliates shall not be liable for any indirect, incidental, special, consequential, exemplary, or punitive damages, including loss of profits, revenue, data, goodwill, or business opportunities, arising out of or in connection with the Service or these Terms.</p>
+              <p>Our total aggregate liability to you for any claim arising out of or relating to these Terms or the Service shall not exceed the <strong className="text-white/70">greater of (a) the fees you paid to éPure in the twelve (12) months preceding the claim, or (b) one hundred US Dollars ($100)</strong>.</p>
+              <p>éPure is not liable for any loss, damage, injury, accident, or dispute arising from any rental activity between a Tenant and its End Users, or from any vehicle owned or operated by a Tenant.</p>
             </div>
           </div>
 
           {/* 11 */}
-          <div id="privacy-data" className="scroll-mt-24">
-            <SectionHeading num={11}>Personal Data &amp; Privacy</SectionHeading>
+          <div id="indemnification" className="scroll-mt-24">
+            <SectionHeading num={11}>Indemnification</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>We collect personal information necessary to process your rental. This information is used solely for rental operations and may be disclosed to law enforcement when required by law.</p>
-              <p>Vehicles may be equipped with GPS tracking and event data recorders. By renting the Vehicle, you consent to monitoring of the vehicle&apos;s location and operational data.</p>
-              <p>Before returning the Vehicle, please <strong className="text-white/70">delete all personal data</strong> from the vehicle&apos;s infotainment system (paired phones, navigation history, contacts).</p>
-              <p>For full details, see our <Link href="/privacy" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">Privacy Policy</Link>.</p>
+              <p>You agree to indemnify, defend, and hold harmless éPure LLC and its officers, employees, and affiliates from and against any and all claims, liabilities, damages, losses, costs, and expenses (including reasonable attorneys&apos; fees) arising out of or related to:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Your use of the Service or any Content you upload.</li>
+                <li>Your violation of these Terms or of any applicable law.</li>
+                <li>Any rental activity, agreement, or dispute between you and your End Users.</li>
+                <li>Any claim that your use of the Service infringed a third-party right.</li>
+              </ul>
             </div>
           </div>
 
           {/* 12 */}
-          <div id="governing" className="scroll-mt-24">
-            <SectionHeading num={12}>Governing Law &amp; Dispute Resolution</SectionHeading>
+          <div id="termination" className="scroll-mt-24">
+            <SectionHeading num={12}>Termination</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>This Agreement is governed by the laws of the <strong className="text-white/70">State of Florida</strong>. Any disputes arising from this Agreement shall be resolved exclusively in the state or federal courts of <strong className="text-white/70">Miami-Dade County or Broward County, Florida</strong>.</p>
-              <p>If any provision of these Terms is found to be invalid or unenforceable, the remaining provisions will continue in full force and effect.</p>
+              <p>You may terminate your account at any time from your dashboard or by contacting <a href="mailto:info@epuredrive.com" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">info@epuredrive.com</a>. We may suspend or terminate your account immediately if you breach these Terms, if payment fails, or if we reasonably believe continued use poses a risk to the Service or to other users.</p>
+              <p>Upon termination, your right to access the Service ends immediately. We will retain your Content for a reasonable period (typically <strong className="text-white/70">30 days</strong>) to allow you to export it, after which we may permanently delete it. Certain provisions of these Terms (including Intellectual Property, Disclaimers, Limitation of Liability, Indemnification, and Governing Law) survive termination.</p>
+            </div>
+          </div>
+
+          {/* 13 */}
+          <div id="governing" className="scroll-mt-24">
+            <SectionHeading num={13}>Governing Law &amp; Disputes</SectionHeading>
+            <div className="text-sm text-white/50 leading-relaxed space-y-3">
+              <p>These Terms are governed by the laws of the <strong className="text-white/70">State of Florida, USA</strong>, without regard to its conflict-of-law principles. You and éPure agree to submit to the exclusive jurisdiction of the state and federal courts located in <strong className="text-white/70">Miami-Dade County, Florida</strong> for any dispute arising out of or relating to these Terms or the Service.</p>
+              <p>You agree to first contact us in good faith to resolve any dispute informally before commencing any legal action. Reach us at <a href="mailto:info@epuredrive.com" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">info@epuredrive.com</a>.</p>
+              <p>We may update these Terms from time to time. Material changes will be communicated by email or via an in-app notice at least <strong className="text-white/70">14 days</strong> before they take effect. Continued use of the Service after changes take effect constitutes acceptance of the updated Terms.</p>
               <div className="bg-white/[0.03] border border-white/[0.06] border-l-2 border-l-white/20 rounded-r-lg p-4 mt-4">
-                We encourage you to contact us first to resolve any concerns before pursuing legal action. We are available 24/7 via WhatsApp at <strong className="text-white/70">(786) 209-6770</strong>.
+                Questions about these Terms? Contact us at <a href="mailto:info@epuredrive.com" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">info@epuredrive.com</a>.
               </div>
             </div>
           </div>
@@ -256,8 +248,8 @@ export default function TermsPage() {
           {/* Last updated */}
           <div className="pt-8 border-t border-white/[0.06]">
             <p className="text-xs text-white/20">
-              Last updated: March 2026 · éPure Drive / Route 305 Rental Car · Aventura, Florida ·{' '}
-              Questions? <a href="https://wa.me/15615461461" className="text-white/30 hover:text-white transition-colors">Contact us on WhatsApp</a>
+              Last updated: April 2026 · éPure LLC ·{' '}
+              <a href="mailto:info@epuredrive.com" className="text-white/30 hover:text-white transition-colors">info@epuredrive.com</a>
             </p>
           </div>
         </div>

@@ -3,11 +3,13 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — éPure Drive',
-  description: 'Privacy Policy for éPure Drive — how we collect, use, and protect your personal information.',
+  description:
+    'Privacy Policy for the éPure Drive software platform — what we collect, how we use it, sub-processors, and your rights under GDPR and CCPA.',
   alternates: { canonical: 'https://epuredrive.com/privacy' },
   openGraph: {
     title: 'Privacy Policy — éPure Drive',
-    description: 'Privacy Policy for éPure Drive — how we collect, use, and protect your personal information.',
+    description:
+      'Privacy Policy for the éPure Drive software platform — what we collect, how we use it, sub-processors, and your rights under GDPR and CCPA.',
     url: 'https://epuredrive.com/privacy',
   },
 }
@@ -36,7 +38,7 @@ export default function PrivacyPage() {
             Privacy Policy
           </h1>
           <p className="text-white/40 text-sm">
-            Last updated: March 2026 · éPure Drive / Route 305 Rental Car · Aventura, Florida
+            Last updated: April 2026 · éPure LLC
           </p>
         </div>
       </section>
@@ -47,215 +49,212 @@ export default function PrivacyPage() {
 
           {/* Intro */}
           <div className="bg-white/[0.03] border border-white/[0.06] border-l-2 border-l-white/20 rounded-r-lg p-4 text-sm text-white/50 leading-relaxed">
-            This Privacy Policy explains how éPure Drive (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) collects, uses, and protects your personal information when you visit our website or rent a vehicle from us. By using our services, you agree to the practices described below.
+            This Privacy Policy explains how <strong className="text-white/70">éPure LLC</strong> (&ldquo;éPure&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) collects, uses, and protects personal information when you visit <Link href="/" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">epuredrive.com</Link>, create an account, or use the éPure Drive software platform (the &ldquo;Service&rdquo;). éPure Drive is a software-as-a-service platform for rental businesses. This policy applies to information we collect <strong className="text-white/70">directly</strong> as the data controller. Information that our customers (&ldquo;Tenants&rdquo;) upload to the Service about their own customers is governed by the Tenant&apos;s own privacy policy; in that context éPure acts only as a data processor.
           </div>
 
           {/* TOC */}
           <nav className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
             <h3 className="text-[11px] font-bold tracking-[0.2em] text-white/40 uppercase mb-4">
-              Contents
+              Table of Contents
             </h3>
             <ol className="list-decimal list-inside space-y-1.5 text-sm text-white/50">
-              <li><a href="#information-we-collect" className="hover:text-white transition-colors">Information We Collect</a></li>
-              <li><a href="#sensitive-data" className="hover:text-white transition-colors">Sensitive Information</a></li>
-              <li><a href="#vehicle-gps" className="hover:text-white transition-colors">Vehicle Telematics &amp; GPS</a></li>
-              <li><a href="#how-we-use" className="hover:text-white transition-colors">How We Use Your Information</a></li>
-              <li><a href="#third-parties" className="hover:text-white transition-colors">Third-Party Services</a></li>
-              <li><a href="#data-retention" className="hover:text-white transition-colors">Data Retention</a></li>
-              <li><a href="#security" className="hover:text-white transition-colors">Data Security</a></li>
+              <li><a href="#scope" className="hover:text-white transition-colors">Scope &amp; Our Role</a></li>
+              <li><a href="#what-we-collect" className="hover:text-white transition-colors">Information We Collect</a></li>
+              <li><a href="#end-user-data" className="hover:text-white transition-colors">End User Data Stored by Tenants</a></li>
+              <li><a href="#how-we-use" className="hover:text-white transition-colors">How We Use Information</a></li>
+              <li><a href="#legal-basis" className="hover:text-white transition-colors">Legal Basis for Processing</a></li>
               <li><a href="#cookies" className="hover:text-white transition-colors">Cookies &amp; Analytics</a></li>
-              <li><a href="#your-choices" className="hover:text-white transition-colors">Your Privacy Choices</a></li>
-              <li><a href="#your-rights" className="hover:text-white transition-colors">Your Rights</a></li>
-              <li><a href="#international" className="hover:text-white transition-colors">International Users &amp; Data Transfers</a></li>
-              <li><a href="#external-links" className="hover:text-white transition-colors">External Links</a></li>
+              <li><a href="#sub-processors" className="hover:text-white transition-colors">Sub-processors</a></li>
+              <li><a href="#sharing" className="hover:text-white transition-colors">Data Sharing &amp; Disclosure</a></li>
+              <li><a href="#retention" className="hover:text-white transition-colors">Data Retention</a></li>
+              <li><a href="#security" className="hover:text-white transition-colors">Data Security</a></li>
+              <li><a href="#transfers" className="hover:text-white transition-colors">International Transfers</a></li>
+              <li><a href="#rights" className="hover:text-white transition-colors">Your Rights (GDPR &amp; CCPA)</a></li>
               <li><a href="#children" className="hover:text-white transition-colors">Children&apos;s Privacy</a></li>
-              <li><a href="#changes" className="hover:text-white transition-colors">Changes to This Policy</a></li>
-              <li><a href="#contact" className="hover:text-white transition-colors">Contact Us</a></li>
+              <li><a href="#changes" className="hover:text-white transition-colors">Changes &amp; Contact</a></li>
             </ol>
           </nav>
 
           {/* 1 */}
-          <div id="information-we-collect" className="scroll-mt-24">
-            <SectionHeading num={1}>Information We Collect</SectionHeading>
+          <div id="scope" className="scroll-mt-24">
+            <SectionHeading num={1}>Scope &amp; Our Role</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>We collect information you provide directly when making a reservation or contacting us:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li><strong className="text-white/70">Identity:</strong> Full name, date of birth.</li>
-                <li><strong className="text-white/70">Contact:</strong> Email address, phone number.</li>
-                <li><strong className="text-white/70">Driver&apos;s License:</strong> Issuing state or country, license number.</li>
-                <li><strong className="text-white/70">Passport:</strong> Number and issuing country (international drivers only).</li>
-                <li><strong className="text-white/70">Payment:</strong> Credit or debit card details, processed securely through Stripe. We do not store full card numbers.</li>
-                <li><strong className="text-white/70">Booking details:</strong> Pick-up/return dates and times, location, vehicle selected, add-ons chosen.</li>
-                <li><strong className="text-white/70">Communications:</strong> Messages sent via WhatsApp, email, or our website contact form.</li>
+              <p>This Privacy Policy applies to personal data that we collect as a <strong className="text-white/70">data controller</strong>, such as:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Visitors to our public website.</li>
+                <li>Tenants who register for an account and use the Service.</li>
+                <li>People who contact us (for example, via email or support forms).</li>
               </ul>
-              <p>We also collect at the time of vehicle handover:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li><strong className="text-white/70">Pick-up photos:</strong> Photographs of your driver&apos;s license, passport (if applicable), and the vehicle&apos;s condition.</li>
-                <li><strong className="text-white/70">Drop-off photos:</strong> Photographs of the vehicle&apos;s condition upon return.</li>
-              </ul>
-              <p>We also collect limited technical data automatically when you visit our website:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>IP address, browser type, device type, and operating system.</li>
-                <li>Pages visited and time spent on our website.</li>
-                <li>Referring URL (the page that brought you to our site).</li>
-              </ul>
+              <p>When Tenants use the Service to collect or store information about their own customers (&ldquo;End Users&rdquo;), the Tenant is the data controller for that information and éPure acts as a <strong className="text-white/70">data processor</strong> on the Tenant&apos;s behalf. End Users with questions about how a Tenant handles their data should contact the Tenant directly.</p>
             </div>
           </div>
 
           {/* 2 */}
-          <div id="sensitive-data" className="scroll-mt-24">
-            <SectionHeading num={2}>Sensitive Information</SectionHeading>
+          <div id="what-we-collect" className="scroll-mt-24">
+            <SectionHeading num={2}>Information We Collect</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>The following categories are considered sensitive and handled with additional care:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li><strong className="text-white/70">Driver&apos;s license number</strong> — collected solely to verify driving eligibility.</li>
-                <li><strong className="text-white/70">Passport number</strong> — collected from international drivers only to verify identity.</li>
-                <li><strong className="text-white/70">Date of birth</strong> — collected to verify minimum age requirement.</li>
-                <li><strong className="text-white/70">Payment card data</strong> — transmitted directly to Stripe; we never see or store full card numbers.</li>
-              </ul>
-              <p>We use sensitive information exclusively for processing your rental. It is <strong className="text-white/70">not</strong> used for profiling and is <strong className="text-white/70">not</strong> sold or shared with third parties for commercial purposes.</p>
+              <p><strong className="text-white/70">Account information:</strong> name, email address, business name, password hash, and role (for example, admin, staff).</p>
+              <p><strong className="text-white/70">Billing information:</strong> subscription plan, invoice history, and the last four digits of your payment card. Full card details are handled by Stripe and are never stored on our servers.</p>
+              <p><strong className="text-white/70">Usage data:</strong> pages visited, features used, timestamps, IP address, browser type, device type, and operating system. This data helps us understand how the Service is used and improve it.</p>
+              <p><strong className="text-white/70">Support communications:</strong> messages you send us via email, chat, or support forms, along with any attachments.</p>
+              <p><strong className="text-white/70">Cookies &amp; similar technologies:</strong> see Section 6.</p>
             </div>
           </div>
 
           {/* 3 */}
-          <div id="vehicle-gps" className="scroll-mt-24">
-            <SectionHeading num={3}>Vehicle Telematics &amp; GPS</SectionHeading>
+          <div id="end-user-data" className="scroll-mt-24">
+            <SectionHeading num={3}>End User Data Stored by Tenants</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>All vehicles in our fleet are equipped with GPS tracking devices. This data is used exclusively for:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li><strong className="text-white/70">Stolen vehicle recovery.</strong></li>
-                <li><strong className="text-white/70">Unauthorized use detection</strong> — to verify the vehicle is operated within the agreed rental territory.</li>
-                <li><strong className="text-white/70">Emergency assistance</strong> — location data may be shared with emergency services in the event of an accident.</li>
-              </ul>
-              <div className="bg-white/[0.03] border border-white/[0.06] border-l-2 border-l-white/20 rounded-r-lg p-4 mt-4">
-                GPS data is <strong className="text-white/70">not</strong> used for routine monitoring of your movements or shared with third parties for commercial purposes. Location history is retained only as long as necessary to resolve any disputes.
-              </div>
+              <p>Tenants may upload or store information about their End Users via the Service, such as customer names, contact details, driver&apos;s license information, rental history, and signed rental agreements.</p>
+              <p>éPure processes this information solely on the instructions of the Tenant and only as necessary to provide the Service. We do not sell, rent, or use End User data for our own marketing purposes.</p>
+              <p>If you are an End User and want to exercise a right over your data (access, correction, deletion, etc.), please contact the Tenant that collected your data. We will cooperate with the Tenant to honor valid requests.</p>
             </div>
           </div>
 
           {/* 4 */}
           <div id="how-we-use" className="scroll-mt-24">
-            <SectionHeading num={4}>How We Use Your Information</SectionHeading>
+            <SectionHeading num={4}>How We Use Information</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
               <p>We use the information we collect to:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>Process and confirm your vehicle reservation.</li>
-                <li>Verify driver eligibility and identity at pick-up.</li>
-                <li>Document vehicle condition at pick-up and drop-off.</li>
-                <li>Process payments and issue receipts.</li>
-                <li>Communicate with you about your booking.</li>
-                <li>Respond to your questions or support requests.</li>
-                <li>Detect and prevent fraud or unauthorized use.</li>
-                <li>Comply with legal obligations.</li>
-                <li>Improve our website and services based on aggregated, anonymized usage data.</li>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Provide, operate, and maintain the Service.</li>
+                <li>Process subscriptions, payments, and invoices.</li>
+                <li>Send transactional emails (welcome, billing, password reset, support replies, product notices).</li>
+                <li>Respond to support requests and troubleshoot issues.</li>
+                <li>Monitor usage, prevent abuse, and secure the Service.</li>
+                <li>Improve the Service and develop new features.</li>
+                <li>Comply with legal obligations and enforce our <Link href="/terms" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">Terms of Service</Link>.</li>
               </ul>
-              <p>We do <strong className="text-white/70">not</strong> sell, rent, or trade your personal information to third parties for marketing purposes.</p>
+              <p>We do not sell your personal data. We do not use your data to train third-party AI models.</p>
             </div>
           </div>
 
           {/* 5 */}
-          <div id="third-parties" className="scroll-mt-24">
-            <SectionHeading num={5}>Third-Party Services</SectionHeading>
+          <div id="legal-basis" className="scroll-mt-24">
+            <SectionHeading num={5}>Legal Basis for Processing</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>To operate our business, we share limited data with the following trusted service providers:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li><strong className="text-white/70">Stripe</strong> — payment processing.</li>
-                <li><strong className="text-white/70">Supabase</strong> — secure cloud database hosted in the United States.</li>
-                <li><strong className="text-white/70">Netlify</strong> — website hosting and serverless backend functions.</li>
-                <li><strong className="text-white/70">Google</strong> — analytics and web fonts.</li>
-                <li><strong className="text-white/70">WhatsApp / Meta</strong> — if you contact us via WhatsApp, your messages are subject to Meta&apos;s privacy policy.</li>
-                <li><strong className="text-white/70">Law enforcement</strong> — we may disclose personal information when required by applicable law, court order, or governmental authority.</li>
+              <p>Where applicable law (such as the EU or UK GDPR) requires us to identify a legal basis, we rely on the following:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li><strong className="text-white/70">Contract:</strong> to provide the Service, process payments, and fulfill our obligations under the Terms of Service.</li>
+                <li><strong className="text-white/70">Legitimate interests:</strong> to secure the Service, prevent fraud, improve our product, and run our business — balanced against your interests and rights.</li>
+                <li><strong className="text-white/70">Consent:</strong> for non-essential cookies and analytics, and for any optional marketing communications.</li>
+                <li><strong className="text-white/70">Legal obligation:</strong> to comply with accounting, tax, and other legal requirements.</li>
               </ul>
             </div>
           </div>
 
           {/* 6 */}
-          <div id="data-retention" className="scroll-mt-24">
-            <SectionHeading num={6}>Data Retention</SectionHeading>
+          <div id="cookies" className="scroll-mt-24">
+            <SectionHeading num={6}>Cookies &amp; Analytics</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>We retain your personal information for as long as necessary:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li><strong className="text-white/70">Reservation records</strong> (including photos) are kept for a minimum of <strong className="text-white/70">5 years</strong>.</li>
-                <li><strong className="text-white/70">Payment records</strong> are retained as required by Stripe and financial regulations.</li>
-                <li><strong className="text-white/70">GPS/telematics data</strong> is retained for the rental duration plus up to 90 days.</li>
-                <li><strong className="text-white/70">Newsletter subscriptions</strong> are retained until you unsubscribe.</li>
+              <p>We use cookies and similar technologies for the following purposes:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li><strong className="text-white/70">Essential cookies:</strong> required to operate the Service (for example, to keep you signed in). These cannot be disabled.</li>
+                <li><strong className="text-white/70">Analytics cookies:</strong> we use Google Analytics 4 to understand how visitors use our website (pages, sessions, events). Analytics are loaded only after you grant consent via our cookie banner.</li>
+                <li><strong className="text-white/70">Preference cookies:</strong> to remember your preferences (for example, cookie consent choice).</li>
               </ul>
-              <p>When data is no longer required, it is securely deleted or anonymized.</p>
+              <p>You can manage your cookie preferences at any time through the cookie banner on our website or through your browser settings.</p>
             </div>
           </div>
 
           {/* 7 */}
-          <div id="security" className="scroll-mt-24">
-            <SectionHeading num={7}>Data Security</SectionHeading>
+          <div id="sub-processors" className="scroll-mt-24">
+            <SectionHeading num={7}>Sub-processors</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>We implement industry-standard measures to protect your information:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>All data transmitted is encrypted via HTTPS (TLS).</li>
-                <li>Payment data is handled exclusively by Stripe using PCI-DSS compliant infrastructure.</li>
-                <li>Database access is restricted by role-based access controls.</li>
-                <li>Sensitive credentials are stored as encrypted environment variables.</li>
-              </ul>
-              <p>While we take every reasonable precaution, no method of transmission over the internet is 100% secure.</p>
+              <p>We rely on a small set of trusted third-party providers to operate the Service. These sub-processors may process personal data on our behalf, and only for the purposes described below:</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse mt-2">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="text-left text-[11px] uppercase tracking-wider text-white/40 font-semibold py-2 pr-4">Provider</th>
+                      <th className="text-left text-[11px] uppercase tracking-wider text-white/40 font-semibold py-2 pr-4">Purpose</th>
+                      <th className="text-left text-[11px] uppercase tracking-wider text-white/40 font-semibold py-2">Location</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-white/50">
+                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Supabase</td><td className="py-2 pr-4">Database, authentication, file storage</td><td className="py-2">USA</td></tr>
+                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Stripe</td><td className="py-2 pr-4">Payment processing, subscription billing</td><td className="py-2">USA / EU</td></tr>
+                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Resend</td><td className="py-2 pr-4">Transactional email delivery</td><td className="py-2">USA / EU</td></tr>
+                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Netlify</td><td className="py-2 pr-4">Website &amp; application hosting, CDN</td><td className="py-2">Global</td></tr>
+                    <tr className="border-b border-white/[0.04]"><td className="py-2 pr-4">Upstash</td><td className="py-2 pr-4">Rate limiting, caching</td><td className="py-2">Global</td></tr>
+                    <tr><td className="py-2 pr-4">Google Analytics</td><td className="py-2 pr-4">Website usage analytics (with consent)</td><td className="py-2">Global</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>We enter into data processing agreements with each sub-processor and require them to apply appropriate security and confidentiality safeguards. We may update this list from time to time.</p>
             </div>
           </div>
 
           {/* 8 */}
-          <div id="cookies" className="scroll-mt-24">
-            <SectionHeading num={8}>Cookies &amp; Analytics</SectionHeading>
+          <div id="sharing" className="scroll-mt-24">
+            <SectionHeading num={8}>Data Sharing &amp; Disclosure</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>Our website uses a small number of cookies and local storage entries:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li><strong className="text-white/70">Language preference</strong> — stores your selected language.</li>
-                <li><strong className="text-white/70">Session cookie</strong> — if you access the admin panel, a secure session token is stored by Supabase Auth.</li>
-                <li><strong className="text-white/70">Google Analytics</strong> — we use Google Analytics to understand how visitors use our website. You can opt out using the Google Analytics Opt-out Browser Add-on.</li>
+              <p>We do not sell your personal data. We share personal data only in the following limited circumstances:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li><strong className="text-white/70">With sub-processors</strong> listed in Section 7, strictly to operate the Service.</li>
+                <li><strong className="text-white/70">With your consent</strong> — for example, if you explicitly authorize an integration with a third-party tool.</li>
+                <li><strong className="text-white/70">To comply with legal obligations</strong> — such as valid subpoenas, court orders, or government requests.</li>
+                <li><strong className="text-white/70">To protect rights and safety</strong> — for example, to investigate fraud, abuse, or security incidents.</li>
+                <li><strong className="text-white/70">In a business transfer</strong> — if éPure is involved in a merger, acquisition, or sale of assets, your data may be transferred as part of that transaction, subject to this Privacy Policy.</li>
               </ul>
-              <p><strong className="text-white/70">Do Not Track (DNT):</strong> We respect browser Do Not Track signals.</p>
             </div>
           </div>
 
           {/* 9 */}
-          <div id="your-choices" className="scroll-mt-24">
-            <SectionHeading num={9}>Your Privacy Choices</SectionHeading>
+          <div id="retention" className="scroll-mt-24">
+            <SectionHeading num={9}>Data Retention</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li><strong className="text-white/70">Newsletter opt-out:</strong> Every newsletter includes an unsubscribe link.</li>
-                <li><strong className="text-white/70">Cookies:</strong> You can disable cookies through your browser settings.</li>
-                <li><strong className="text-white/70">Do Not Track:</strong> Enable the DNT setting in your browser.</li>
-                <li><strong className="text-white/70">Data access or deletion:</strong> You may request a copy of your personal data or ask for its deletion at any time (subject to legal retention obligations).</li>
+              <p>We retain personal data for as long as necessary to provide the Service and to comply with our legal obligations.</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li><strong className="text-white/70">Account data:</strong> retained for the life of the account and for a reasonable period after account closure to allow recovery and to comply with legal/accounting obligations.</li>
+                <li><strong className="text-white/70">Billing records:</strong> retained for at least <strong className="text-white/70">seven (7) years</strong> to comply with US tax and accounting rules.</li>
+                <li><strong className="text-white/70">Support communications:</strong> retained for as long as needed to resolve issues and improve support quality.</li>
+                <li><strong className="text-white/70">Analytics data:</strong> retained in aggregated form; individual records are deleted in line with the analytics provider&apos;s retention settings.</li>
               </ul>
+              <p>You may request deletion of your account and associated data at any time, subject to the legal retention periods above.</p>
             </div>
           </div>
 
           {/* 10 */}
-          <div id="your-rights" className="scroll-mt-24">
-            <SectionHeading num={10}>Your Rights</SectionHeading>
+          <div id="security" className="scroll-mt-24">
+            <SectionHeading num={10}>Data Security</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>Depending on your location, you may have the following rights:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li><strong className="text-white/70">Access:</strong> Request a copy of the personal data we hold about you.</li>
-                <li><strong className="text-white/70">Correction:</strong> Ask us to correct inaccurate or incomplete data.</li>
-                <li><strong className="text-white/70">Deletion:</strong> Request deletion of your personal data.</li>
-                <li><strong className="text-white/70">Portability:</strong> Receive your data in a structured, machine-readable format.</li>
-                <li><strong className="text-white/70">Objection:</strong> Object to certain types of processing.</li>
+              <p>We apply technical and organizational measures designed to protect personal data against unauthorized access, alteration, disclosure, or destruction. These measures include:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Encryption in transit (TLS) and at rest.</li>
+                <li>Row-level security on the database.</li>
+                <li>Authentication, session management, and role-based access control.</li>
+                <li>Rate limiting and abuse detection.</li>
+                <li>Restricted administrative access on a need-to-know basis.</li>
               </ul>
-              <p>To exercise any of these rights, contact us at <a href="mailto:info@epuredrive.com" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">info@epuredrive.com</a>. We will respond within 30 days.</p>
+              <p>No system is perfectly secure. If we become aware of a data breach that affects your personal data, we will notify you as required by applicable law.</p>
             </div>
           </div>
 
           {/* 11 */}
-          <div id="international" className="scroll-mt-24">
-            <SectionHeading num={11}>International Users &amp; Data Transfers</SectionHeading>
+          <div id="transfers" className="scroll-mt-24">
+            <SectionHeading num={11}>International Transfers</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>éPure Drive is based in Aventura, Florida, United States. When you use our services from outside the US, your personal information is transferred to and processed in the United States.</p>
-              <p>Data protection laws in the United States may differ from those in your home country. By using our services, you acknowledge and consent to this transfer.</p>
+              <p>éPure is based in the United States. If you access the Service from outside the US, your information may be transferred to, stored, and processed in the US and other countries where our sub-processors operate. Where required, we rely on appropriate transfer mechanisms (such as Standard Contractual Clauses) to protect your data.</p>
             </div>
           </div>
 
           {/* 12 */}
-          <div id="external-links" className="scroll-mt-24">
-            <SectionHeading num={12}>External Links</SectionHeading>
+          <div id="rights" className="scroll-mt-24">
+            <SectionHeading num={12}>Your Rights (GDPR &amp; CCPA)</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>Our website may contain links to third-party websites. We have no control over the content or privacy practices of those sites and are not responsible for their privacy policies.</p>
+              <p>Depending on your location, you may have the following rights over your personal data:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li><strong className="text-white/70">Access</strong> — obtain a copy of the personal data we hold about you.</li>
+                <li><strong className="text-white/70">Correction</strong> — request that inaccurate or incomplete data be corrected.</li>
+                <li><strong className="text-white/70">Deletion</strong> — request that we delete your personal data, subject to legal retention requirements.</li>
+                <li><strong className="text-white/70">Restriction</strong> — request that we limit the processing of your data.</li>
+                <li><strong className="text-white/70">Portability</strong> — receive your data in a structured, machine-readable format.</li>
+                <li><strong className="text-white/70">Objection</strong> — object to processing based on legitimate interests.</li>
+                <li><strong className="text-white/70">Withdraw consent</strong> — where processing is based on consent, withdraw it at any time.</li>
+                <li><strong className="text-white/70">Non-discrimination</strong> — we will not discriminate against you for exercising any privacy right.</li>
+              </ul>
+              <p>To exercise any of these rights, email us at <a href="mailto:info@epuredrive.com" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">info@epuredrive.com</a>. We may ask you to verify your identity before responding. You also have the right to lodge a complaint with your local data protection authority.</p>
             </div>
           </div>
 
@@ -263,40 +262,29 @@ export default function PrivacyPage() {
           <div id="children" className="scroll-mt-24">
             <SectionHeading num={13}>Children&apos;s Privacy</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>Our services are intended for adults only. We do not knowingly collect personal information from anyone under the age of 21. If you believe we have inadvertently collected such information, please contact us immediately.</p>
+              <p>The Service is not directed to children under the age of 16, and we do not knowingly collect personal data from children. If you believe a child has provided us with personal information, please contact us and we will delete it.</p>
             </div>
           </div>
 
           {/* 14 */}
           <div id="changes" className="scroll-mt-24">
-            <SectionHeading num={14}>Changes to This Policy</SectionHeading>
+            <SectionHeading num={14}>Changes &amp; Contact</SectionHeading>
             <div className="text-sm text-white/50 leading-relaxed space-y-3">
-              <p>We may update this Privacy Policy from time to time. When we make material changes, we will update the &ldquo;Last updated&rdquo; date at the top of this page.</p>
-              <p>Continued use of our services after any changes constitutes your acceptance of the updated policy.</p>
-            </div>
-          </div>
-
-          {/* 15 */}
-          <div id="contact" className="scroll-mt-24">
-            <SectionHeading num={15}>Contact Us</SectionHeading>
-            <div className="text-sm text-white/50 leading-relaxed space-y-3">
+              <p>We may update this Privacy Policy from time to time. Material changes will be communicated via email or via an in-app notice at least <strong className="text-white/70">14 days</strong> before they take effect. The &ldquo;Last updated&rdquo; date at the top of this page will always reflect the latest revision.</p>
               <p>For any questions, concerns, or data requests regarding this Privacy Policy:</p>
               <ul className="list-disc pl-5 space-y-1.5">
-                <li><strong className="text-white/70">Business:</strong> éPure Drive / Route 305 Rental Car</li>
-                <li><strong className="text-white/70">Address:</strong> 19707 Turnberry Way, Aventura, FL 33180</li>
+                <li><strong className="text-white/70">Business:</strong> éPure LLC</li>
                 <li><strong className="text-white/70">Phone:</strong> +1 (561) 546-1461</li>
                 <li><strong className="text-white/70">Email:</strong> <a href="mailto:info@epuredrive.com" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">info@epuredrive.com</a></li>
               </ul>
-              <p className="mt-4">
-                See also our <Link href="/terms" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">Terms &amp; Conditions</Link>.
-              </p>
+              <p className="mt-4">See also our <Link href="/terms" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">Terms of Service</Link>.</p>
             </div>
           </div>
 
           {/* Last updated */}
           <div className="pt-8 border-t border-white/[0.06]">
             <p className="text-xs text-white/20">
-              Last updated: March 2026 · éPure Drive / Route 305 Rental Car · Aventura, Florida
+              Last updated: April 2026 · éPure LLC
             </p>
           </div>
         </div>
