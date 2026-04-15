@@ -32,17 +32,17 @@ export default function ContactSection() {
           Contact
         </p>
         <h2 className="text-3xl font-black text-white mb-4 tracking-tight">
-          Let's talk.
+          Let&apos;s talk.
         </h2>
         <p className="text-white/50 text-sm mb-10 leading-relaxed">
           Interested in Enterprise, a partnership, or just want to learn more?
-          Send us a message and we'll be in touch within 1–2 business days.
+          Send us a message and we&apos;ll be in touch within 1–2 business days.
         </p>
 
         {status === 'success' ? (
           <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-8 text-center">
             <p className="text-white font-bold text-lg mb-2">Message received.</p>
-            <p className="text-white/40 text-sm">We'll be in touch shortly.</p>
+            <p className="text-white/40 text-sm">We&apos;ll be in touch shortly.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
