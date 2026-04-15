@@ -1,9 +1,7 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import dynamic from 'next/dynamic'
-
-const SignatureCanvas = dynamic(() => import('react-signature-canvas'), { ssr: false }) as any
+import { useEffect, useRef, useState } from 'react'
+import SignatureCanvas from 'react-signature-canvas'
 
 interface Car {
   make: string
@@ -97,9 +95,18 @@ export default function AgreementSigner({
 }: Props) {
   const sigRef = useRef<any>(null)
   const agreementRef = useRef<HTMLDivElement>(null)
+  const sigContainerRef = useRef<HTMLDivElement>(null)
   const [step, setStep] = useState<'view' | 'sign' | 'submitting' | 'done'>('view')
   const [error, setError] = useState<string | null>(null)
   const [sigEmpty, setSigEmpty] = useState(true)
+  const [canvasSize, setCanvasSize] = useState<{ w: number; h: number } | null>(null)
+
+  useEffect(() => {
+    if (step !== 'sign') return
+    const el = sigContainerRef.current
+    if (!el) return
+    setCanvasSize({ w: Math.max(el.clientWidth, 300), h: 160 })
+  }, [step])
 
   const alreadySigned = !!reservation.agreement_signed_at
 
@@ -506,14 +513,24 @@ export default function AgreementSigner({
                   <p className="text-xs text-gray-500 mb-3">
                     Draw your signature in the box below. By signing you agree to all terms above.
                   </p>
-                  <div className="border-2 rounded-xl overflow-hidden bg-white" style={{ borderColor: accentColor }}>
-                    <SignatureCanvas
-                      ref={sigRef}
-                      canvasProps={{ className: 'w-full block', height: 160 }}
-                      backgroundColor="white"
-                      clearOnResize={false}
-                      onEnd={() => setSigEmpty(sigRef.current?.isEmpty?.() ?? true)}
-                    />
+                  <div
+                    ref={sigContainerRef}
+                    className="border-2 rounded-xl overflow-hidden bg-white"
+                    style={{ borderColor: accentColor }}
+                  >
+                    {canvasSize && (
+                      <SignatureCanvas
+                        ref={sigRef}
+                        canvasProps={{
+                          width: canvasSize.w,
+                          height: canvasSize.h,
+                          className: 'block',
+                        }}
+                        backgroundColor="white"
+                        clearOnResize={false}
+                        onEnd={() => setSigEmpty(sigRef.current?.isEmpty?.() ?? true)}
+                      />
+                    )}
                   </div>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs text-gray-400">
