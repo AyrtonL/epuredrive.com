@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import ProductShowcase from './ProductShowcase'
+import ContactSection from '@/components/marketing/ContactSection'
 import JsonLd from '@/components/JsonLd'
 import {
   buildOrganizationSchema,
@@ -474,6 +475,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ─────────────────── Contact ─────────────────── */}
+      <ContactSection />
 
       <JsonLd schema={buildOrganizationSchema()} />
       <JsonLd schema={buildWebSiteSchema()} />
