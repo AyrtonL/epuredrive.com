@@ -6,6 +6,8 @@
 
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendEmail } from '@/lib/email/resend'
+import { welcomeEmail, onboardingEmail } from '@/lib/email/templates/platform'
 
 export async function POST(request: Request) {
   let body: unknown
@@ -77,6 +79,15 @@ export async function POST(request: Request) {
     } catch (err: unknown) {
       console.error('[create-tenant] Netlify domain alias failed:', err instanceof Error ? err.message : err)
     }
+  }
+
+  if (email) {
+    const operatorName = company || email.split('@')[0] || 'there'
+    // Fire both emails in parallel, non-blocking
+    Promise.allSettled([
+      sendEmail({ to: email, ...welcomeEmail({ operatorName }) }),
+      sendEmail({ to: email, ...onboardingEmail({ operatorName }) }),
+    ]).catch(() => {}) // intentional fire-and-forget
   }
 
   return NextResponse.json({ tenantId, slug })
