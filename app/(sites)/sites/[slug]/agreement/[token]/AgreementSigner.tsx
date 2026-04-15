@@ -139,8 +139,9 @@ export default function AgreementSigner({
         throw new Error(data.error || 'Failed to submit agreement')
       }
 
-      // 2. Generate PDF client-side and upload
-      await generateAndUploadPDF(signatureDataUrl)
+      // 2. Generate PDF client-side and upload — best-effort, non-blocking.
+      // Signing already succeeded server-side; don't block the UI on html2canvas.
+      void generateAndUploadPDF(signatureDataUrl)
 
       setStep('done')
     } catch (err: unknown) {
