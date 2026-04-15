@@ -4,12 +4,12 @@
 
 @layer base {
   :root {
-    /* Brand tokens */
-    --brand-bg: #0b0d14;
+    /* Brand tokens (per éPure brand guidelines) */
+    --brand-bg: #000000;
     --brand-text: #ffffff;
-    --brand-surface: #141620;
+    --brand-surface: #2B2B2B;
     --brand-border: rgba(255, 255, 255, 0.13);
-    --brand-muted: #C8C8C8;
+    --brand-muted: #ACACAC;
     --brand-accent: #ffffff;
     /* Tenant-overridable color tokens (defaults for dashboard/marketing) */
     --color-primary: #ffffff;
@@ -35,7 +35,7 @@
     height: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #0a0c11;
+    background: #000000;
   }
   ::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.13);

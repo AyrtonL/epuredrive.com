@@ -181,7 +181,7 @@ export default function CalendarClient({
 
           {/* Dropdown panel */}
           {filterOpen && (
-            <div className="absolute top-full left-0 mt-2 w-72 z-50 rounded-2xl border border-white/[0.13] bg-[#141620] shadow-[0_16px_48px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.07)] overflow-hidden">
+            <div className="absolute top-full left-0 mt-2 w-72 z-50 rounded-2xl border border-white/[0.13] bg-[#2B2B2B] shadow-[0_16px_48px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.07)] overflow-hidden">
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white/45">Filter by vehicle</span>
@@ -480,7 +480,7 @@ export default function CalendarClient({
 
           /* ── Popover ("+N more") ── */
           .fc .fc-popover {
-            background: #141620 !important;
+            background: #2B2B2B !important;
             border: 1px solid rgba(255,255,255,0.13) !important;
             border-radius: 0.75rem !important;
             box-shadow: 0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.07) !important;

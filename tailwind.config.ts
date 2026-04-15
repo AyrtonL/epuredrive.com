@@ -8,15 +8,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // éPure Drive brand palette
-        background: '#0b0d14',
-        surface: '#1a1c26',
-        surfaceHover: '#22253200',
+        // éPure Drive brand palette (per brand guidelines)
+        background: '#000000',
+        surface: '#2B2B2B',
+        surfaceHover: '#3A3A3A',
         surfaceBorder: 'rgba(255, 255, 255, 0.13)',
         primary: 'var(--color-primary)',
         accent: 'var(--color-accent)',
         muted: '#ACACAC',
         // Brand gray scale
+        charcoal: '#565656',
+        grey: '#818181',
+        silver: '#ACACAC',
+        dustGrey: '#D7D7D7',
         gray1: '#565656',
         gray2: '#818181',
         gray3: '#ACACAC',
