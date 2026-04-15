@@ -6,6 +6,8 @@
 
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendEmail } from '@/lib/email/resend'
+import { subscriptionActivatedEmail, subscriptionChangedEmail } from '@/lib/email/templates/platform'
 
 const VALID_PLANS = ['free', 'starter', 'pro', 'enterprise', 'suspended'] as const
 const ALLOWED_FIELDS = ['plan', 'notes', 'owner_name', 'owner_email', 'owner_phone'] as const
@@ -63,6 +65,57 @@ export async function POST(request: Request) {
   const { error: patchError } = await supabase.from('tenants').update(safe).eq('id', tenantId)
   if (patchError) {
     return NextResponse.json({ error: 'Update failed' }, { status: 500 })
+  }
+
+  // Fire plan change email if plan was updated
+  if (safe.plan) {
+    Promise.resolve().then(async () => {
+      try {
+        const { data: tenant } = await supabase
+          .from('tenants')
+          .select('brand_name, name, plan')
+          .eq('id', tenantId)
+          .single()
+
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('tenant_id', tenantId)
+
+        if (!profiles?.length || !tenant) return
+
+        const emailResults = await Promise.allSettled(
+          profiles.map(p => supabase.auth.admin.getUserById(p.id))
+        )
+        const emails: string[] = []
+        for (const r of emailResults) {
+          if (r.status === 'fulfilled' && r.value.data?.user?.email) {
+            emails.push(r.value.data.user.email)
+          }
+        }
+
+        const tenantName = tenant.brand_name || tenant.name || 'Your Fleet'
+        const newPlan = safe.plan as string
+        const previousPlan = tenant.plan ?? 'free'
+
+        // If activating from free/suspended, send activation email; otherwise send change email
+        const isPaidPlan = ['starter', 'pro', 'max', 'enterprise'].includes(newPlan)
+        const wasInactive = ['free', 'suspended', 'deactivated'].includes(previousPlan)
+
+        await Promise.allSettled(
+          emails.map(email =>
+            sendEmail({
+              to: email,
+              ...(isPaidPlan && wasInactive
+                ? subscriptionActivatedEmail({ operatorName: tenantName, plan: newPlan })
+                : subscriptionChangedEmail({ operatorName: tenantName, previousPlan, newPlan })),
+            })
+          )
+        )
+      } catch {
+        // non-critical
+      }
+    })
   }
 
   return NextResponse.json({ ok: true })
