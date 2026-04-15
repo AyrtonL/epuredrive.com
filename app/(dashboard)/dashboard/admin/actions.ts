@@ -199,6 +199,36 @@ export async function assignUserTenant(
   return { error: null }
 }
 
+// ── Support Ticket Actions ─────────────────────────────────────────────────────
+
+export async function updateSupportTicketStatus(
+  ticketId: string,
+  status: 'open' | 'in_progress' | 'closed'
+): Promise<{ error: string | null }> {
+  const { supabase, userId } = await requireSuperuserAction()
+
+  const { data: ticket } = await supabase
+    .from('support_tickets')
+    .select('ticket_number, status')
+    .eq('id', ticketId)
+    .single()
+
+  const { error } = await supabase
+    .from('support_tickets')
+    .update({ status })
+    .eq('id', ticketId)
+
+  if (error) return { error: error.message }
+
+  await log(
+    supabase, 'info', 'admin',
+    `Support ticket ${ticket?.ticket_number}: ${ticket?.status ?? 'open'} → ${status}`,
+    null, userId
+  )
+  revalidatePath('/dashboard/admin/support')
+  return { error: null }
+}
+
 // ── Feature Flag Actions ───────────────────────────────────────────────────────
 
 export async function toggleFeatureFlag(

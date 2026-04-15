@@ -412,6 +412,7 @@ const ADMIN_NAV: NavGroup = {
     { label: 'Platform Stats', href: '/dashboard/admin/stats' },
     { label: 'Plans & Billing', href: '/dashboard/admin/plans' },
     { label: 'All Users', href: '/dashboard/admin/users' },
+    { label: 'Support Tickets', href: '/dashboard/admin/support' },
     { label: 'Feature Flags', href: '/dashboard/admin/flags' },
     { label: 'System Logs', href: '/dashboard/admin/logs' },
   ],
