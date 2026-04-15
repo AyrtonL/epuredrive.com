@@ -238,6 +238,26 @@ export function bookingRejectedCustomerEmail(params: {
   }
 }
 
+export function reviewRequestCustomerEmail(params: {
+  customerName: string
+  tenantName: string
+  carName: string
+  tenantSlug: string
+  reviewUrl?: string
+}): { subject: string; html: string } {
+  const href = params.reviewUrl || `https://${params.tenantSlug}.epuredrive.com`
+  return {
+    subject: `How was your rental with ${params.tenantName}?`,
+    html: compactLayout({
+      subheadline: params.tenantName,
+      headline: 'How was your trip?',
+      body: `Hi ${params.customerName}, we hope you enjoyed the <strong>${params.carName}</strong>. Your feedback helps ${params.tenantName} and future renters. It only takes a minute.`,
+      cta: { label: 'Leave a Review', href },
+      note: 'Thanks for choosing us — we hope to see you again soon.',
+    }),
+  }
+}
+
 export function maintenanceDueEmail(params: {
   tenantName: string
   vehicles: Array<{

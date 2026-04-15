@@ -1,0 +1,99 @@
+/**
+ * POST /api/cron/review-requests
+ * Sends a review-request email to customers one day after their rental return_date.
+ * Call daily via cron.
+ * Requires: Authorization: Bearer <CRON_SECRET>
+ */
+import { NextRequest, NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { sendEmail } from '@/lib/email/resend'
+import { reviewRequestCustomerEmail } from '@/lib/email/templates/rentals'
+
+export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get('authorization')
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const supabase = createAdminClient()
+
+  // Target: reservations whose return_date is 1-14 days ago, agreement signed,
+  // not cancelled, and we haven't already sent a review email for.
+  const today = new Date()
+  const endDate = new Date(today)
+  endDate.setDate(today.getDate() - 1) // yesterday
+  const startDate = new Date(today)
+  startDate.setDate(today.getDate() - 14) // up to 14 days back (catch-up window)
+
+  const endStr = endDate.toISOString().split('T')[0]
+  const startStr = startDate.toISOString().split('T')[0]
+
+  const { data: reservations, error } = await supabase
+    .from('reservations')
+    .select('id, tenant_id, car_id, customer_name, customer_email, return_date, status, agreement_signed_at, review_email_sent_at')
+    .is('review_email_sent_at', null)
+    .not('customer_email', 'is', null)
+    .not('agreement_signed_at', 'is', null)
+    .gte('return_date', startStr)
+    .lte('return_date', endStr)
+    .neq('status', 'cancelled')
+    .limit(500)
+
+  if (error) {
+    console.error('[cron/review-requests]', error.message)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  if (!reservations?.length) {
+    return NextResponse.json({ sent: 0 })
+  }
+
+  // Bulk fetch car + tenant data
+  const carIds = Array.from(new Set(reservations.map(r => r.car_id).filter(Boolean)))
+  const tenantIds = Array.from(new Set(reservations.map(r => r.tenant_id).filter(Boolean)))
+
+  const [{ data: cars }, { data: tenants }] = await Promise.all([
+    carIds.length
+      ? supabase.from('cars').select('id, make, model, model_full').in('id', carIds as number[])
+      : Promise.resolve({ data: [] as Array<{ id: number; make: string | null; model: string | null; model_full: string | null }> }),
+    tenantIds.length
+      ? supabase.from('tenants').select('id, brand_name, name, slug').in('id', tenantIds as string[])
+      : Promise.resolve({ data: [] as Array<{ id: string; brand_name: string | null; name: string | null; slug: string | null }> }),
+  ])
+
+  const carMap = new Map((cars ?? []).map(c => [c.id, `${c.make ?? ''} ${c.model_full || c.model || ''}`.trim() || 'Vehicle']))
+  const tenantMap = new Map((tenants ?? []).map(t => [t.id, t]))
+
+  let sent = 0
+
+  for (const r of reservations) {
+    if (!r.customer_email || !r.tenant_id) continue
+    const tenant = tenantMap.get(r.tenant_id)
+    if (!tenant) continue
+
+    const tenantName = tenant.brand_name || tenant.name || 'Your rental company'
+    const tenantSlug = tenant.slug || ''
+    const carName = carMap.get(r.car_id ?? -1) ?? 'Vehicle'
+
+    const res = await sendEmail({
+      to: r.customer_email,
+      ...reviewRequestCustomerEmail({
+        customerName: r.customer_name || 'there',
+        tenantName,
+        carName,
+        tenantSlug,
+      }),
+    }).catch(() => null)
+
+    if (res) {
+      await supabase
+        .from('reservations')
+        .update({ review_email_sent_at: new Date().toISOString() })
+        .eq('id', r.id)
+      sent += 1
+    }
+  }
+
+  return NextResponse.json({ sent, candidates: reservations.length })
+}

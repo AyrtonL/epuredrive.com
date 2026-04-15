@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getFeatureFlags } from '@/lib/supabase/feature-flags'
 import Sidebar from '@/components/dashboard/Sidebar'
 import HelpButton from '@/components/dashboard/HelpButton'
+import { notifyInviterOnFirstLogin } from '@/lib/team/invite-notifier'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -13,9 +14,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, tenant_id, full_name')
+    .select('role, tenant_id, full_name, invited_by_user_id, invite_accepted_notified_at')
     .eq('id', user.id)
     .single()
+
+  if (profile?.invited_by_user_id && !profile?.invite_accepted_notified_at) {
+    notifyInviterOnFirstLogin({
+      memberUserId: user.id,
+      memberEmail: user.email ?? '',
+      memberName: profile.full_name ?? '',
+      inviterUserId: profile.invited_by_user_id,
+      role: profile.role ?? 'staff',
+      tenantId: profile.tenant_id ?? '',
+    }).catch(() => {})
+  }
 
   // Fetch tenant plan and feature flags (only if user has a tenant)
   let plan = 'free'

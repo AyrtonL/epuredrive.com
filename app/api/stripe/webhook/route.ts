@@ -141,7 +141,7 @@ export async function POST(request: Request) {
     if (tenantId) {
       const priceId: string | undefined = sub.items?.data?.[0]?.price?.id
       const plan = resolvePlan(priceId, sub.metadata?.plan)
-      await patchTenant(tenantId, { plan })
+      await patchTenant(tenantId, { plan, plan_limit_warning_last_count: null })
       // Send subscription changed email
       const emailsUpd = await getOperatorEmailsForTenant(tenantId)
       const nameUpd = await getTenantName(tenantId)

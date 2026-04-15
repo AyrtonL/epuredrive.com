@@ -82,6 +82,8 @@ export async function POST(request: Request) {
       tenant_id: tenantId,
       full_name: name || null,
       role,
+      invited_by_user_id: user.id,
+      invite_accepted_notified_at: null,
     })
   }
 

@@ -215,6 +215,58 @@ export function passwordResetEmail(params: {
   }
 }
 
+export function planLimitWarningEmail(params: {
+  operatorName: string
+  plan: string
+  currentCount: number
+  limit: number
+}): { subject: string; html: string } {
+  const planName = params.plan.charAt(0).toUpperCase() + params.plan.slice(1)
+  const remaining = Math.max(params.limit - params.currentCount, 0)
+  const isAtLimit = remaining === 0
+  return {
+    subject: isAtLimit
+      ? `You've reached your ${planName} plan limit — éPure Drive`
+      : `You're close to your ${planName} plan limit — éPure Drive`,
+    html: heroLayout({
+      subheadline: isAtLimit ? 'Plan Limit Reached' : 'Plan Limit Warning',
+      headline: isAtLimit
+        ? `You've hit ${params.limit} vehicles.`
+        : `${remaining} vehicle${remaining === 1 ? '' : 's'} remaining.`,
+      body: `${params.operatorName ? `Hi ${params.operatorName}, ` : ''}your ${planName} plan includes <strong>${params.limit} vehicles</strong>, and you're currently using <strong>${params.currentCount}</strong>.<br/><br/>
+             ${isAtLimit
+               ? 'To add more vehicles to your fleet, upgrade your plan — takes less than a minute.'
+               : 'Upgrade now to avoid interruptions when adding new vehicles.'}`,
+      cta: { label: 'Upgrade Plan', href: `${APP_URL}/dashboard/settings/billing` },
+      carImageUrl: CAR(3),
+    }),
+  }
+}
+
+export function teamInviteAcceptedEmail(params: {
+  inviterName: string
+  memberName: string
+  memberEmail: string
+  role: string
+  companyName: string
+}): { subject: string; html: string } {
+  const roleName = params.role.charAt(0).toUpperCase() + params.role.slice(1)
+  return {
+    subject: `${params.memberName || params.memberEmail} joined ${params.companyName} on éPure Drive`,
+    html: compactLayout({
+      subheadline: 'Team Update',
+      headline: 'Invitation accepted.',
+      body: `${params.inviterName ? `Hi ${params.inviterName}, ` : ''}<strong>${params.memberName || params.memberEmail}</strong> has accepted your invitation and joined <strong>${params.companyName}</strong>.`,
+      details: [
+        { label: 'Name', value: params.memberName || '—' },
+        { label: 'Email', value: params.memberEmail },
+        { label: 'Role', value: roleName },
+      ],
+      cta: { label: 'Manage Team', href: `${APP_URL}/dashboard/settings/roles` },
+    }),
+  }
+}
+
 export function passwordChangedEmail(params: {
   when: string
 }): { subject: string; html: string } {

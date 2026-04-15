@@ -39,6 +39,7 @@ export interface Tenant {
   fuel_charge_per_level: number | null
   experience_pillars: ExperiencePillar[] | null
   how_it_works: HowItWorksStep[] | null
+  plan_limit_warning_last_count: number | null
 }
 
 export interface Car {
@@ -111,6 +112,8 @@ export interface Reservation {
   // damage report
   damage_checkin: string | null
   damage_checkout: string | null
+  // review request email tracking
+  review_email_sent_at: string | null
 }
 
 export interface Customer {
@@ -179,4 +182,6 @@ export interface Profile {
   role: string | null
   tenant_id: string | null
   created_at?: string
+  invited_by_user_id: string | null
+  invite_accepted_notified_at: string | null
 }

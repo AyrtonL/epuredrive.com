@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import { sendEmail } from '@/lib/email/resend'
 import { teamInviteEmail } from '@/lib/email/templates/platform'
@@ -23,6 +24,10 @@ export async function inviteTeamMember(
 
   const { tenantId } = await requireTenantId()
   const adminClient = createAdminClient()
+
+  const userClient = createClient()
+  const { data: { user: inviter } } = await userClient.auth.getUser()
+  const invitedByUserId = inviter?.id ?? null
 
   const { data: linkData, error: inviteError } = await adminClient.auth.admin.generateLink({
     type: 'invite',
@@ -50,6 +55,8 @@ export async function inviteTeamMember(
       id: newUserId,
       tenant_id: tenantId,
       role,
+      invited_by_user_id: invitedByUserId,
+      invite_accepted_notified_at: null,
     })
   }
 
