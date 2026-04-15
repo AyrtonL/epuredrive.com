@@ -15,6 +15,32 @@ import {
   bookingCancelledCustomerEmail,
   bookingRejectedCustomerEmail,
 } from '@/lib/email/templates'
+import type { TenantBrand } from '@/lib/email/templates/_layout'
+
+const TENANT_BRAND_COLUMNS =
+  'name, brand_name, slug, logo_url, owner_email, owner_phone, company_phone, whatsapp_phone, company_address'
+
+interface TenantBrandRow {
+  name: string | null
+  brand_name: string | null
+  slug: string | null
+  logo_url: string | null
+  owner_email: string | null
+  owner_phone: string | null
+  company_phone: string | null
+  whatsapp_phone: string | null
+  company_address: string | null
+}
+
+function rowToBrand(row: TenantBrandRow | null): TenantBrand {
+  return {
+    name: row?.brand_name || row?.name || 'Your Rental Company',
+    logoUrl: row?.logo_url ?? null,
+    email: row?.owner_email ?? null,
+    phone: row?.company_phone || row?.whatsapp_phone || row?.owner_phone || null,
+    address: row?.company_address ?? null,
+  }
+}
 
 async function getTenantId(): Promise<string> {
   const { tenantId } = await requireTenantId()
@@ -49,6 +75,11 @@ async function getCarName(supabase: ReturnType<typeof createClient>, carId: numb
 async function getTenantName(supabase: ReturnType<typeof createClient>, tenantId: string): Promise<string> {
   const { data } = await supabase.from('tenants').select('brand_name, name').eq('id', tenantId).single()
   return data?.brand_name || data?.name || 'Your Fleet'
+}
+
+async function getTenantBrand(supabase: ReturnType<typeof createClient>, tenantId: string): Promise<TenantBrand> {
+  const { data } = await supabase.from('tenants').select(TENANT_BRAND_COLUMNS).eq('id', tenantId).single()
+  return rowToBrand(data as TenantBrandRow | null)
 }
 
 export async function createReservation(
@@ -132,22 +163,17 @@ export async function updateReservation(
         }
         // Also notify the customer
         if (prevReservation!.customer_email) {
-          const tenantRow = await supabase
-            .from('tenants')
-            .select('whatsapp_phone, owner_email')
-            .eq('id', reservationTenantId)
-            .single()
-            .then(r => r.data)
+          const brand = await getTenantBrand(supabase, reservationTenantId)
 
           await sendEmail({
             to: prevReservation!.customer_email,
+            fromName: brand.name,
+            replyTo: brand.email ?? undefined,
             ...bookingCancelledCustomerEmail({
               customerName: prevReservation!.customer_name || 'Customer',
-              tenantName,
+              brand,
               carName,
               pickupDate: prevReservation!.pickup_date || 'N/A',
-              tenantPhone: (tenantRow as { whatsapp_phone?: string | null; owner_email?: string | null } | null)?.whatsapp_phone ?? null,
-              tenantEmail: (tenantRow as { whatsapp_phone?: string | null; owner_email?: string | null } | null)?.owner_email ?? null,
             }),
           })
         }
@@ -161,28 +187,23 @@ export async function updateReservation(
   if (!error && data.status === 'confirmed' && prevReservation?.customer_email) {
     Promise.resolve().then(async () => {
       try {
-        const [carName, tenantName] = await Promise.all([
+        const [carName, brand] = await Promise.all([
           getCarName(supabase, prevReservation!.car_id ?? null),
-          getTenantName(supabase, tenantId),
+          getTenantBrand(supabase, tenantId),
         ])
-        const { data: tenantRow } = await supabase
-          .from('tenants')
-          .select('whatsapp_phone, owner_email')
-          .eq('id', tenantId)
-          .single()
 
         await sendEmail({
           to: prevReservation!.customer_email!,
+          fromName: brand.name,
+          replyTo: brand.email ?? undefined,
           ...bookingConfirmedCustomerEmail({
             customerName: prevReservation!.customer_name || 'Customer',
-            tenantName,
+            brand,
             carName,
             pickupDate: prevReservation!.pickup_date || 'TBD',
             returnDate: prevReservation!.return_date || 'TBD',
             pickupLocation: prevReservation!.pickup_location || 'To be confirmed',
             reservationId: prevReservation!.id,
-            tenantPhone: (tenantRow as { whatsapp_phone?: string | null; owner_email?: string | null } | null)?.whatsapp_phone ?? null,
-            tenantEmail: (tenantRow as { whatsapp_phone?: string | null; owner_email?: string | null } | null)?.owner_email ?? null,
           }),
         })
       } catch (e) {
@@ -195,23 +216,24 @@ export async function updateReservation(
   if (!error && data.status === 'rejected' && prevReservation?.customer_email) {
     Promise.resolve().then(async () => {
       try {
-        const [carName, tenantName] = await Promise.all([
-          getCarName(supabase, prevReservation!.car_id ?? null),
-          getTenantName(supabase, tenantId),
-        ])
+        const carName = await getCarName(supabase, prevReservation!.car_id ?? null)
         const { data: tenantRow } = await supabase
           .from('tenants')
-          .select('slug')
+          .select(TENANT_BRAND_COLUMNS)
           .eq('id', tenantId)
           .single()
+        const brand = rowToBrand(tenantRow as TenantBrandRow | null)
+        const tenantSlug = (tenantRow as TenantBrandRow | null)?.slug || ''
 
         await sendEmail({
           to: prevReservation!.customer_email!,
+          fromName: brand.name,
+          replyTo: brand.email ?? undefined,
           ...bookingRejectedCustomerEmail({
             customerName: prevReservation!.customer_name || 'Customer',
-            tenantName,
+            brand,
             carName,
-            tenantSlug: (tenantRow as { slug?: string | null } | null)?.slug || '',
+            tenantSlug,
           }),
         })
       } catch (e) {
@@ -249,14 +271,14 @@ export async function sendAgreement(reservationId: number): Promise<{ error: str
 
   if (updateError) return { error: updateError.message }
 
-  const { data: tenant } = await supabase
+  const { data: tenantRow } = await supabase
     .from('tenants')
-    .select('name, brand_name, slug')
+    .select(TENANT_BRAND_COLUMNS)
     .eq('id', tenantId)
     .single()
 
-  const tenantName = tenant?.brand_name || tenant?.name || 'Your Rental Company'
-  const tenantSlug = tenant?.slug || ''
+  const brand = rowToBrand(tenantRow as TenantBrandRow | null)
+  const tenantSlug = (tenantRow as TenantBrandRow | null)?.slug || ''
   const carName = await getCarName(supabase, reservation.car_id ?? null)
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${tenantSlug}.epuredrive.com`
@@ -265,9 +287,11 @@ export async function sendAgreement(reservationId: number): Promise<{ error: str
   try {
     await sendEmail({
       to: reservation.customer_email,
+      fromName: brand.name,
+      replyTo: brand.email ?? undefined,
       ...agreementRequestEmail({
         customerName: reservation.customer_name || 'Renter',
-        tenantName,
+        brand,
         carName,
         pickupDate: reservation.pickup_date || '',
         returnDate: reservation.return_date || '',

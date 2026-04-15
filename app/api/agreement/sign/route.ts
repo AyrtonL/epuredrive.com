@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     // Find the reservation by token
     const { data: reservation, error: fetchError } = await supabase
       .from('reservations')
-      .select('*, tenants(name, brand_name, slug, logo_url, company_address, company_phone)')
+      .select('*, tenants(name, brand_name, slug, logo_url, company_address, company_phone, owner_email, owner_phone, whatsapp_phone)')
       .eq('agreement_token', token)
       .single()
 
@@ -76,8 +76,25 @@ export async function POST(req: NextRequest) {
       .eq('id', reservation.car_id)
       .maybeSingle()
 
-    const tenant = (reservation as any).tenants
+    const tenant = (reservation as any).tenants as {
+      name?: string | null
+      brand_name?: string | null
+      slug?: string | null
+      logo_url?: string | null
+      company_address?: string | null
+      company_phone?: string | null
+      owner_email?: string | null
+      owner_phone?: string | null
+      whatsapp_phone?: string | null
+    } | null
     const tenantName = tenant?.brand_name || tenant?.name || 'Your rental company'
+    const brand = {
+      name: tenantName,
+      logoUrl: tenant?.logo_url ?? null,
+      email: tenant?.owner_email ?? null,
+      phone: tenant?.company_phone || tenant?.whatsapp_phone || tenant?.owner_phone || null,
+      address: tenant?.company_address ?? null,
+    }
     const carName = car ? `${car.make} ${car.model_full || car.model}` : 'Vehicle'
 
     // Send emails (fire and forget — don't block response)
@@ -90,13 +107,14 @@ export async function POST(req: NextRequest) {
           promises.push(
             sendEmail({
               to: reservation.customer_email,
+              fromName: brand.name,
+              replyTo: brand.email ?? undefined,
               ...agreementSignedCustomerEmail({
                 customerName: reservation.customer_name || 'Renter',
-                tenantName,
+                brand,
                 carName,
                 pickupDate: reservation.pickup_date || '',
                 returnDate: reservation.return_date || '',
-                tenantSlug: tenant?.slug || '',
               }),
             })
           )

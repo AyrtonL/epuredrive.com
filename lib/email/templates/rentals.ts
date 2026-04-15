@@ -1,7 +1,9 @@
 // lib/email/templates/rentals.ts
-import { compactLayout } from './_layout'
+import { compactLayout, tenantCompactLayout, type TenantBrand } from './_layout'
 
 const APP_URL = 'https://epuredrive.com'
+
+export type { TenantBrand }
 
 // ─── Operator-facing (internal notifications) ──────────────────────────────
 
@@ -114,7 +116,7 @@ export function newInquiryEmail(params: {
 
 export function agreementRequestEmail(params: {
   customerName: string
-  tenantName: string
+  brand: TenantBrand
   carName: string
   pickupDate: string
   returnDate: string
@@ -123,11 +125,12 @@ export function agreementRequestEmail(params: {
   const fmt = (d: string) =>
     d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'
   return {
-    subject: `Please Sign Your Rental Agreement — ${params.tenantName}`,
-    html: compactLayout({
+    subject: `Please Sign Your Rental Agreement — ${params.brand.name}`,
+    html: tenantCompactLayout({
+      brand: params.brand,
       subheadline: 'Action Required',
       headline: 'Sign your rental agreement.',
-      body: `Hi ${params.customerName}, your rental is almost confirmed. Please review and sign the agreement to complete your booking with <strong>${params.tenantName}</strong>.`,
+      body: `Hi ${params.customerName}, your rental is almost confirmed. Please review and sign the agreement to complete your booking with <strong>${params.brand.name}</strong>.`,
       details: [
         { label: 'Vehicle', value: params.carName },
         { label: 'Pickup', value: fmt(params.pickupDate) },
@@ -141,49 +144,46 @@ export function agreementRequestEmail(params: {
 
 export function agreementSignedCustomerEmail(params: {
   customerName: string
-  tenantName: string
+  brand: TenantBrand
   carName: string
   pickupDate: string
   returnDate: string
-  tenantSlug: string
 }): { subject: string; html: string } {
   const fmt = (d: string) =>
     d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'
   return {
-    subject: `Your Rental Agreement is Signed — ${params.tenantName}`,
-    html: compactLayout({
-      subheadline: params.tenantName,
+    subject: `Your Rental Agreement is Signed — ${params.brand.name}`,
+    html: tenantCompactLayout({
+      brand: params.brand,
       headline: 'Agreement signed.',
-      body: `Hi ${params.customerName}, your rental agreement with <strong>${params.tenantName}</strong> has been signed. Please keep this email for your records.`,
+      body: `Hi ${params.customerName}, your rental agreement with <strong>${params.brand.name}</strong> has been signed. Please keep this email for your records.`,
       details: [
         { label: 'Vehicle', value: params.carName },
         { label: 'Pickup', value: fmt(params.pickupDate) },
         { label: 'Return', value: fmt(params.returnDate) },
         { label: 'Signed', value: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) },
       ],
-      note: 'If you have questions about your rental, please contact the rental company directly.',
+      note: `If you have questions about your rental, please contact ${params.brand.name} directly.`,
     }),
   }
 }
 
 export function bookingConfirmedCustomerEmail(params: {
   customerName: string
-  tenantName: string
+  brand: TenantBrand
   carName: string
   pickupDate: string
   returnDate: string
   pickupLocation: string
   reservationId: number
-  tenantPhone?: string | null
-  tenantEmail?: string | null
 }): { subject: string; html: string } {
-  const contactLine = [params.tenantPhone, params.tenantEmail].filter(Boolean).join(' · ')
+  const contactLine = [params.brand.phone, params.brand.email].filter(Boolean).join(' · ')
   return {
-    subject: `Your booking is confirmed — ${params.tenantName}`,
-    html: compactLayout({
-      subheadline: params.tenantName,
+    subject: `Your booking is confirmed — ${params.brand.name}`,
+    html: tenantCompactLayout({
+      brand: params.brand,
       headline: 'Booking confirmed.',
-      body: `Hi ${params.customerName}, your reservation is confirmed. See you soon!`,
+      body: `Hi ${params.customerName}, your reservation with <strong>${params.brand.name}</strong> is confirmed. See you soon!`,
       details: [
         { label: 'Ref #', value: `#${params.reservationId}` },
         { label: 'Vehicle', value: params.carName },
@@ -191,26 +191,24 @@ export function bookingConfirmedCustomerEmail(params: {
         { label: 'Return', value: params.returnDate },
         { label: 'Location', value: params.pickupLocation || 'To be confirmed' },
       ],
-      note: contactLine ? `Questions? Contact ${params.tenantName}: ${contactLine}` : undefined,
+      note: contactLine ? `Questions? Contact ${params.brand.name}: ${contactLine}` : undefined,
     }),
   }
 }
 
 export function bookingCancelledCustomerEmail(params: {
   customerName: string
-  tenantName: string
+  brand: TenantBrand
   carName: string
   pickupDate: string
-  tenantPhone?: string | null
-  tenantEmail?: string | null
 }): { subject: string; html: string } {
-  const contactLine = [params.tenantPhone, params.tenantEmail].filter(Boolean).join(' · ')
+  const contactLine = [params.brand.phone, params.brand.email].filter(Boolean).join(' · ')
   return {
-    subject: `Your booking has been cancelled — ${params.tenantName}`,
-    html: compactLayout({
-      subheadline: params.tenantName,
+    subject: `Your booking has been cancelled — ${params.brand.name}`,
+    html: tenantCompactLayout({
+      brand: params.brand,
       headline: 'Booking cancelled.',
-      body: `Hi ${params.customerName}, your reservation for the <strong>${params.carName}</strong> on ${params.pickupDate} has been cancelled.`,
+      body: `Hi ${params.customerName}, your reservation with <strong>${params.brand.name}</strong> for the <strong>${params.carName}</strong> on ${params.pickupDate} has been cancelled.`,
       note: contactLine
         ? `Please reach out if you have questions: ${contactLine}`
         : 'Please reach out if you have questions.',
@@ -220,16 +218,16 @@ export function bookingCancelledCustomerEmail(params: {
 
 export function bookingRejectedCustomerEmail(params: {
   customerName: string
-  tenantName: string
+  brand: TenantBrand
   carName: string
   tenantSlug: string
 }): { subject: string; html: string } {
   return {
-    subject: `Your booking request — ${params.tenantName}`,
-    html: compactLayout({
-      subheadline: params.tenantName,
+    subject: `Your booking request — ${params.brand.name}`,
+    html: tenantCompactLayout({
+      brand: params.brand,
       headline: 'Unable to accommodate.',
-      body: `Hi ${params.customerName}, unfortunately we're unable to accommodate your request for the <strong>${params.carName}</strong> at this time. We apologize for any inconvenience.`,
+      body: `Hi ${params.customerName}, unfortunately <strong>${params.brand.name}</strong> is unable to accommodate your request for the <strong>${params.carName}</strong> at this time. We apologize for any inconvenience.`,
       cta: {
         label: 'Browse Available Vehicles',
         href: `https://${params.tenantSlug}.epuredrive.com`,
@@ -240,20 +238,20 @@ export function bookingRejectedCustomerEmail(params: {
 
 export function reviewRequestCustomerEmail(params: {
   customerName: string
-  tenantName: string
+  brand: TenantBrand
   carName: string
   tenantSlug: string
   reviewUrl?: string
 }): { subject: string; html: string } {
   const href = params.reviewUrl || `https://${params.tenantSlug}.epuredrive.com`
   return {
-    subject: `How was your rental with ${params.tenantName}?`,
-    html: compactLayout({
-      subheadline: params.tenantName,
+    subject: `How was your rental with ${params.brand.name}?`,
+    html: tenantCompactLayout({
+      brand: params.brand,
       headline: 'How was your trip?',
-      body: `Hi ${params.customerName}, we hope you enjoyed the <strong>${params.carName}</strong>. Your feedback helps ${params.tenantName} and future renters. It only takes a minute.`,
+      body: `Hi ${params.customerName}, we hope you enjoyed the <strong>${params.carName}</strong>. Your feedback helps <strong>${params.brand.name}</strong> and future renters. It only takes a minute.`,
       cta: { label: 'Leave a Review', href },
-      note: 'Thanks for choosing us — we hope to see you again soon.',
+      note: `Thanks for choosing ${params.brand.name} — we hope to see you again soon.`,
     }),
   }
 }

@@ -245,12 +245,10 @@ function makeCases(): TestCase[] {
       build: () =>
         newBookingEmail({
           customerName: 'John Renter',
-          customerEmail: 'john@example.com',
-          customerPhone: '+1 (305) 555-0101',
           carName: 'Tesla Model 3',
           pickupDate: 'April 20, 2026',
           returnDate: 'April 25, 2026',
-          reservationId: 1042,
+          totalAmount: 1250,
           tenantName: 'Sample Rentals',
         }),
     },

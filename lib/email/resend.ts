@@ -7,9 +7,15 @@ export interface SendEmailParams {
   subject: string
   html: string
   replyTo?: string
+  /** Display name shown in the "From" header. The verified sender address stays the same. */
+  fromName?: string
 }
 
-export async function sendEmail({ to, subject, html, replyTo }: SendEmailParams) {
+function sanitizeFromName(name: string): string {
+  return name.replace(/["\\<>\n\r]/g, '').trim().slice(0, 60)
+}
+
+export async function sendEmail({ to, subject, html, replyTo, fromName }: SendEmailParams) {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) {
     console.warn('[email] RESEND_API_KEY not set — skipping email send')
@@ -17,9 +23,11 @@ export async function sendEmail({ to, subject, html, replyTo }: SendEmailParams)
   }
 
   const resend = new Resend(apiKey)
+  const safeName = fromName ? sanitizeFromName(fromName) : ''
+  const from = safeName ? `${safeName} <${FROM_EMAIL}>` : FROM_EMAIL
 
   const { error } = await resend.emails.send({
-    from: FROM_EMAIL,
+    from,
     to: Array.isArray(to) ? to : [to],
     subject,
     html,

@@ -58,8 +58,24 @@ export async function POST(request: NextRequest) {
       ? supabase.from('cars').select('id, make, model, model_full').in('id', carIds as number[])
       : Promise.resolve({ data: [] as Array<{ id: number; make: string | null; model: string | null; model_full: string | null }> }),
     tenantIds.length
-      ? supabase.from('tenants').select('id, brand_name, name, slug').in('id', tenantIds as string[])
-      : Promise.resolve({ data: [] as Array<{ id: string; brand_name: string | null; name: string | null; slug: string | null }> }),
+      ? supabase
+          .from('tenants')
+          .select('id, brand_name, name, slug, logo_url, owner_email, owner_phone, company_phone, whatsapp_phone, company_address')
+          .in('id', tenantIds as string[])
+      : Promise.resolve({
+          data: [] as Array<{
+            id: string
+            brand_name: string | null
+            name: string | null
+            slug: string | null
+            logo_url: string | null
+            owner_email: string | null
+            owner_phone: string | null
+            company_phone: string | null
+            whatsapp_phone: string | null
+            company_address: string | null
+          }>,
+        }),
   ])
 
   const carMap = new Map((cars ?? []).map(c => [c.id, `${c.make ?? ''} ${c.model_full || c.model || ''}`.trim() || 'Vehicle']))
@@ -72,15 +88,23 @@ export async function POST(request: NextRequest) {
     const tenant = tenantMap.get(r.tenant_id)
     if (!tenant) continue
 
-    const tenantName = tenant.brand_name || tenant.name || 'Your rental company'
     const tenantSlug = tenant.slug || ''
     const carName = carMap.get(r.car_id ?? -1) ?? 'Vehicle'
+    const brand = {
+      name: tenant.brand_name || tenant.name || 'Your rental company',
+      logoUrl: tenant.logo_url ?? null,
+      email: tenant.owner_email ?? null,
+      phone: tenant.company_phone || tenant.whatsapp_phone || tenant.owner_phone || null,
+      address: tenant.company_address ?? null,
+    }
 
     const res = await sendEmail({
       to: r.customer_email,
+      fromName: brand.name,
+      replyTo: brand.email ?? undefined,
       ...reviewRequestCustomerEmail({
         customerName: r.customer_name || 'there',
-        tenantName,
+        brand,
         carName,
         tenantSlug,
       }),
