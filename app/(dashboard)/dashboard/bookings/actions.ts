@@ -7,7 +7,14 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import type { Reservation } from '@/lib/supabase/types'
 import { sendEmail } from '@/lib/email/resend'
-import { newBookingEmail, bookingCancelledEmail, agreementRequestEmail } from '@/lib/email/templates'
+import {
+  newBookingEmail,
+  bookingCancelledEmail,
+  agreementRequestEmail,
+  bookingConfirmedCustomerEmail,
+  bookingCancelledCustomerEmail,
+  bookingRejectedCustomerEmail,
+} from '@/lib/email/templates'
 
 async function getTenantId(): Promise<string> {
   const { tenantId } = await requireTenantId()
@@ -90,9 +97,9 @@ export async function updateReservation(
   const supabase = createClient()
   const tenantId = await getTenantId()
 
-  // Fetch current reservation before update (for cancellation notification)
+  // Fetch current reservation before update (for status change notifications)
   let prevReservation: Reservation | null = null
-  if (data.status === 'cancelled') {
+  if (data.status === 'cancelled' || data.status === 'confirmed' || data.status === 'rejected') {
     const { data: prev } = await supabase.from('reservations').select('*').eq('id', id).eq('tenant_id', tenantId).single()
     prevReservation = prev
   }
@@ -107,12 +114,12 @@ export async function updateReservation(
   if (!error && data.status === 'cancelled' && prevReservation) {
     Promise.resolve().then(async () => {
       try {
-        const tenantId = prevReservation!.tenant_id
-        if (!tenantId) return
+        const reservationTenantId = prevReservation!.tenant_id
+        if (!reservationTenantId) return
         const [emails, carName, tenantName] = await Promise.all([
-          getOperatorEmails(supabase, tenantId),
+          getOperatorEmails(supabase, reservationTenantId),
           getCarName(supabase, prevReservation!.car_id ?? null),
-          getTenantName(supabase, tenantId),
+          getTenantName(supabase, reservationTenantId),
         ])
         if (emails.length > 0) {
           const { subject, html } = bookingCancelledEmail({
@@ -123,8 +130,92 @@ export async function updateReservation(
           })
           await sendEmail({ to: emails, subject, html })
         }
+        // Also notify the customer
+        if (prevReservation!.customer_email) {
+          const tenantRow = await supabase
+            .from('tenants')
+            .select('whatsapp_phone, owner_email')
+            .eq('id', reservationTenantId)
+            .single()
+            .then(r => r.data)
+
+          await sendEmail({
+            to: prevReservation!.customer_email,
+            ...bookingCancelledCustomerEmail({
+              customerName: prevReservation!.customer_name || 'Customer',
+              tenantName,
+              carName,
+              pickupDate: prevReservation!.pickup_date || 'N/A',
+              tenantPhone: (tenantRow as { whatsapp_phone?: string | null; owner_email?: string | null } | null)?.whatsapp_phone ?? null,
+              tenantEmail: (tenantRow as { whatsapp_phone?: string | null; owner_email?: string | null } | null)?.owner_email ?? null,
+            }),
+          })
+        }
       } catch (e) {
         console.error('[notify] Cancellation email failed:', e)
+      }
+    })
+  }
+
+  // Confirmed → notify customer
+  if (!error && data.status === 'confirmed' && prevReservation?.customer_email) {
+    Promise.resolve().then(async () => {
+      try {
+        const [carName, tenantName] = await Promise.all([
+          getCarName(supabase, prevReservation!.car_id ?? null),
+          getTenantName(supabase, tenantId),
+        ])
+        const { data: tenantRow } = await supabase
+          .from('tenants')
+          .select('whatsapp_phone, owner_email')
+          .eq('id', tenantId)
+          .single()
+
+        await sendEmail({
+          to: prevReservation!.customer_email!,
+          ...bookingConfirmedCustomerEmail({
+            customerName: prevReservation!.customer_name || 'Customer',
+            tenantName,
+            carName,
+            pickupDate: prevReservation!.pickup_date || 'TBD',
+            returnDate: prevReservation!.return_date || 'TBD',
+            pickupLocation: prevReservation!.pickup_location || 'To be confirmed',
+            reservationId: prevReservation!.id,
+            tenantPhone: (tenantRow as { whatsapp_phone?: string | null; owner_email?: string | null } | null)?.whatsapp_phone ?? null,
+            tenantEmail: (tenantRow as { whatsapp_phone?: string | null; owner_email?: string | null } | null)?.owner_email ?? null,
+          }),
+        })
+      } catch (e) {
+        console.error('[notify] Confirmed customer email failed:', e)
+      }
+    })
+  }
+
+  // Rejected → notify customer
+  if (!error && data.status === 'rejected' && prevReservation?.customer_email) {
+    Promise.resolve().then(async () => {
+      try {
+        const [carName, tenantName] = await Promise.all([
+          getCarName(supabase, prevReservation!.car_id ?? null),
+          getTenantName(supabase, tenantId),
+        ])
+        const { data: tenantRow } = await supabase
+          .from('tenants')
+          .select('slug')
+          .eq('id', tenantId)
+          .single()
+
+        await sendEmail({
+          to: prevReservation!.customer_email!,
+          ...bookingRejectedCustomerEmail({
+            customerName: prevReservation!.customer_name || 'Customer',
+            tenantName,
+            carName,
+            tenantSlug: (tenantRow as { slug?: string | null } | null)?.slug || '',
+          }),
+        })
+      } catch (e) {
+        console.error('[notify] Rejected customer email failed:', e)
       }
     })
   }
