@@ -506,12 +506,13 @@ export default function AgreementSigner({
                   <p className="text-xs text-gray-500 mb-3">
                     Draw your signature in the box below. By signing you agree to all terms above.
                   </p>
-                  <div className="border-2 border-gray-300 rounded-xl overflow-hidden bg-white" style={{ borderColor: sigEmpty ? undefined : accentColor }}>
+                  <div className="border-2 rounded-xl overflow-hidden bg-white" style={{ borderColor: accentColor }}>
                     <SignatureCanvas
                       ref={sigRef}
-                      canvasProps={{ className: 'w-full', height: 160 }}
+                      canvasProps={{ className: 'w-full block', height: 160 }}
                       backgroundColor="white"
-                      onBegin={() => setSigEmpty(false)}
+                      clearOnResize={false}
+                      onEnd={() => setSigEmpty(sigRef.current?.isEmpty?.() ?? true)}
                     />
                   </div>
                   <div className="flex items-center justify-between mt-2">
