@@ -96,13 +96,15 @@ export async function updateTenantBranding(data: {
       h.length !== 3 ||
       h.some(
         (item) =>
+          typeof item.icon !== 'string' ||
           typeof item.title !== 'string' ||
           typeof item.body !== 'string' ||
+          item.icon.length > 4 ||
           item.title.length > 60 ||
           item.body.length > 200
       )
     ) {
-      return { error: 'Invalid how it works steps: must be exactly 3 items, each with a title (≤60 chars) and body (≤200 chars).' }
+      return { error: 'Invalid how it works steps: must be exactly 3 items, each with an icon (≤4 chars), title (≤60 chars) and body (≤200 chars).' }
     }
   }
 

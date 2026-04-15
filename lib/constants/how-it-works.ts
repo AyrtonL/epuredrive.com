@@ -8,13 +8,13 @@ export const DEFAULT_HOW_IT_WORKS: HowItWorksStep[] = [
   },
   {
     icon: '02',
-    title: 'Book Instantly',
-    body: 'Submit your dates online. No phone tag, no waiting — your reservation is confirmed in minutes.',
+    title: 'Book Online',
+    body: 'Submit your dates in a few clicks. We confirm your reservation quickly and send you everything you need.',
   },
   {
     icon: '03',
-    title: 'We Deliver',
-    body: 'Your vehicle arrives clean, fueled, and ready at your location. Keys in hand, zero hassle.',
+    title: 'Pick Up & Go',
+    body: 'Meet us at the pickup point or request delivery. Your vehicle is clean, fueled, and ready when you are.',
   },
 ]
 
@@ -63,6 +63,27 @@ export const HOW_IT_WORKS_TEMPLATES: { id: string; label: string; steps: HowItWo
         icon: '03',
         title: 'Fleet on Demand',
         body: 'Vehicles arrive on time, every time. Trusted by corporate teams and event coordinators.',
+      },
+    ],
+  },
+  {
+    id: 'pickup',
+    label: 'Pickup & Go',
+    steps: [
+      {
+        icon: '01',
+        title: 'Pick Your Car',
+        body: 'Browse the fleet and reserve the vehicle you want in a few clicks — no back-and-forth, no phone calls.',
+      },
+      {
+        icon: '02',
+        title: 'Sign & Pay',
+        body: 'Review the rental agreement online, sign digitally, and handle the deposit before you arrive.',
+      },
+      {
+        icon: '03',
+        title: 'Pick Up at Our Office',
+        body: 'Swing by our location at the agreed time. Quick walk-around, keys in hand, and you are on your way.',
       },
     ],
   },
