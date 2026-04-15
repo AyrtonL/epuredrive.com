@@ -43,10 +43,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Subject and message are required' }, { status: 400 })
   }
 
-  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL
-  if (!adminEmail) {
-    return NextResponse.json({ error: 'Support not configured' }, { status: 500 })
-  }
+  const adminEmail =
+    process.env.SUPPORT_NOTIFY_EMAIL ||
+    process.env.ADMIN_NOTIFY_EMAIL ||
+    'support@epuredrive.com'
 
   const [profileResult, tenantResult] = await Promise.all([
     supabase.from('profiles').select('full_name').eq('id', user.id).single(),
@@ -57,11 +57,31 @@ export async function POST(request: NextRequest) {
   const tenantName = tenantResult.data?.brand_name || tenantResult.data?.name || 'Unknown'
   const plan = tenantResult.data?.plan || 'unknown'
 
+  const { data: ticket, error: ticketError } = await supabase
+    .from('support_tickets')
+    .insert({
+      tenant_id: tenantId,
+      user_id: user.id,
+      operator_name: operatorName,
+      operator_email: user.email,
+      subject,
+      message,
+    })
+    .select('ticket_number')
+    .single()
+
+  if (ticketError || !ticket) {
+    return NextResponse.json({ error: 'Failed to create ticket' }, { status: 500 })
+  }
+
+  const ticketNumber = ticket.ticket_number
+
   await Promise.allSettled([
     sendEmail({
       to: adminEmail,
       replyTo: user.email,
       ...dashboardSupportAdminEmail({
+        ticketNumber,
         operatorName,
         operatorEmail: user.email,
         tenantName,
@@ -73,9 +93,9 @@ export async function POST(request: NextRequest) {
     }),
     sendEmail({
       to: user.email,
-      ...dashboardSupportConfirmEmail({ operatorName, subject }),
+      ...dashboardSupportConfirmEmail({ ticketNumber, operatorName, subject }),
     }),
   ])
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, ticketNumber })
 }

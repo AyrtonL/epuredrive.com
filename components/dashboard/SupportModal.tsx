@@ -10,6 +10,7 @@ interface Props {
 export default function SupportModal({ isOpen, onClose }: Props) {
   const [form, setForm] = useState({ subject: '', message: '' })
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [ticketNumber, setTicketNumber] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -21,12 +22,15 @@ export default function SupportModal({ isOpen, onClose }: Props) {
         body: JSON.stringify(form),
       })
       if (res.ok) {
+        const data = (await res.json()) as { ticketNumber?: string }
+        setTicketNumber(data.ticketNumber ?? null)
         setStatus('success')
         setTimeout(() => {
           setStatus('idle')
+          setTicketNumber(null)
           setForm({ subject: '', message: '' })
           onClose()
-        }, 2000)
+        }, 4000)
       } else {
         setStatus('error')
       }
@@ -70,7 +74,12 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               </svg>
             </div>
             <p className="text-white font-bold">Request sent!</p>
-            <p className="text-white/40 text-sm mt-1">We&apos;ll reply within 24 hours.</p>
+            {ticketNumber && (
+              <p className="text-white/80 text-xs font-mono tracking-wider mt-3">
+                Case <span className="text-white font-bold">{ticketNumber}</span>
+              </p>
+            )}
+            <p className="text-white/40 text-sm mt-2">We&apos;ll reply within 24 hours.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">

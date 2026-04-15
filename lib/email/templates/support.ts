@@ -40,6 +40,7 @@ export function enterpriseInquiryConfirmEmail(params: {
 }
 
 export function dashboardSupportAdminEmail(params: {
+  ticketNumber: string
   operatorName: string
   operatorEmail: string
   tenantName: string
@@ -49,11 +50,12 @@ export function dashboardSupportAdminEmail(params: {
   message: string
 }): { subject: string; html: string } {
   return {
-    subject: `[Support] ${params.subject} — ${params.tenantName}`,
+    subject: `[${params.ticketNumber}] ${params.subject} — ${params.tenantName}`,
     html: compactLayout({
-      subheadline: 'Support Request',
+      subheadline: `Support Request · ${params.ticketNumber}`,
       headline: 'Dashboard support request.',
       details: [
+        { label: 'Ticket', value: params.ticketNumber },
         { label: 'From', value: params.operatorName },
         { label: 'Email', value: params.operatorEmail },
         { label: 'Company', value: params.tenantName },
@@ -68,15 +70,16 @@ export function dashboardSupportAdminEmail(params: {
 }
 
 export function dashboardSupportConfirmEmail(params: {
+  ticketNumber: string
   operatorName: string
   subject: string
 }): { subject: string; html: string } {
   return {
-    subject: `Support request received — éPure Drive`,
+    subject: `Support request received [${params.ticketNumber}] — éPure Drive`,
     html: compactLayout({
-      subheadline: 'Support',
+      subheadline: `Support · ${params.ticketNumber}`,
       headline: 'We got your request.',
-      body: `Hi ${params.operatorName}, we received your support request: "<strong>${params.subject}</strong>". We typically reply within 24 hours.`,
+      body: `Hi ${params.operatorName}, we received your support request: "<strong>${params.subject}</strong>". Your case number is <strong>${params.ticketNumber}</strong> — please reference it in any follow-up. We typically reply within 24 hours.`,
       note: 'For urgent issues, reply to this email directly.',
     }),
   }
