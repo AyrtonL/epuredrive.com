@@ -3,7 +3,7 @@
 const APP_URL = 'https://epuredrive.com'
 const ASSETS = `${APP_URL}/assets/email`
 export const LOGO_BLACK = `${ASSETS}/logo-black.png`
-export const CAR = (n: number) => `${ASSETS}/car-${n}.png`
+export const CAR = (n: number) => `${ASSETS}/car-${n}.jpg`
 
 function wrapper(inner: string): string {
   return `<!DOCTYPE html>
