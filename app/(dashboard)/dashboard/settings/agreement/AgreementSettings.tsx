@@ -2,12 +2,15 @@
 
 import { useState, useTransition, useRef } from 'react'
 import { saveAgreementSettings, uploadAgreementTemplate } from './actions'
+import AgreementPreviewModal from './AgreementPreviewModal'
 
 interface Props {
   tenant: {
     name?: string | null
     brand_name?: string | null
     plan?: string | null
+    logo_url?: string | null
+    primary_color?: string | null
     company_address?: string | null
     company_phone?: string | null
     agreement_clauses?: string | null
@@ -23,6 +26,7 @@ export default function AgreementSettings({ tenant }: Props) {
   const [clauses, setClauses] = useState(tenant?.agreement_clauses || '')
   const [templateUrl, setTemplateUrl] = useState(tenant?.agreement_template_url || '')
   const [uploading, setUploading] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const isMax = tenant?.plan === 'max' || tenant?.plan === 'enterprise'
@@ -62,7 +66,7 @@ export default function AgreementSettings({ tenant }: Props) {
           <textarea
             value={companyAddress}
             onChange={e => setCompanyAddress(e.target.value)}
-            placeholder={'e.g. 19707 Turnberry Way\nAventura, Florida 33180'}
+            placeholder={'e.g. 123 Main St\nMiami, Florida 33101'}
             rows={3}
             className={`${inputCls} resize-none`}
           />
@@ -181,7 +185,18 @@ export default function AgreementSettings({ tenant }: Props) {
         )}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={() => setPreviewOpen(true)}
+          className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          Preview
+        </button>
         <button
           type="submit"
           disabled={isPending}
@@ -190,6 +205,20 @@ export default function AgreementSettings({ tenant }: Props) {
           {isPending ? 'Saving...' : 'Save Agreement Settings'}
         </button>
       </div>
+
+      <AgreementPreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        tenant={{
+          name: tenant?.name || null,
+          brand_name: tenant?.brand_name || null,
+          logo_url: tenant?.logo_url || null,
+          primary_color: tenant?.primary_color || null,
+          company_address: companyAddress.trim() || null,
+          company_phone: companyPhone.trim() || null,
+          agreement_clauses: clauses.trim() || null,
+        }}
+      />
     </form>
   )
 }

@@ -8,7 +8,7 @@ export default async function AgreementSettingsPage() {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('name, brand_name, plan, company_address, company_phone, agreement_clauses, agreement_template_url')
+    .select('name, brand_name, plan, logo_url, primary_color, company_address, company_phone, agreement_clauses, agreement_template_url')
     .eq('id', tenantId)
     .single()
 
