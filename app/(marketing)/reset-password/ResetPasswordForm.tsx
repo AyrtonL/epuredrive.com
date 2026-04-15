@@ -56,6 +56,9 @@ export default function ResetPasswordForm() {
       return
     }
 
+    // Fire branded "password changed" security notification (non-blocking)
+    fetch('/api/auth/password-changed', { method: 'POST' }).catch(() => {})
+
     setSuccess(true)
     setLoading(false)
     setTimeout(() => router.push('/dashboard'), 2000)

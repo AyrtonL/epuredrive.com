@@ -198,3 +198,36 @@ export function teamInviteEmail(params: {
     }),
   }
 }
+
+export function passwordResetEmail(params: {
+  resetUrl: string
+}): { subject: string; html: string } {
+  return {
+    subject: 'Reset your éPure Drive password',
+    html: heroLayout({
+      subheadline: 'Password Reset',
+      headline: 'Reset your password.',
+      body: `We received a request to reset the password for your éPure Drive account. Click the button below to choose a new one.<br/><br/>
+             <span style="font-size:11px;color:#aaa;">This link expires in 1 hour. If you didn't request this, you can safely ignore this email — your password will stay the same.</span>`,
+      cta: { label: 'Reset Password', href: params.resetUrl },
+      carImageUrl: CAR(6),
+    }),
+  }
+}
+
+export function passwordChangedEmail(params: {
+  when: string
+}): { subject: string; html: string } {
+  return {
+    subject: 'Your éPure Drive password was changed',
+    html: compactLayout({
+      subheadline: 'Security Notice',
+      headline: 'Password updated.',
+      body: 'The password for your éPure Drive account was just changed. If this was you, no further action is needed.',
+      details: [
+        { label: 'When', value: params.when },
+      ],
+      note: `If you didn't make this change, your account may be compromised. Reset your password immediately at ${APP_URL}/forgot-password and contact us at info@epuredrive.com.`,
+    }),
+  }
+}
