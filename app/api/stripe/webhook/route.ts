@@ -7,6 +7,14 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import crypto from 'crypto'
+import { sendEmail } from '@/lib/email/resend'
+import {
+  subscriptionActivatedEmail,
+  subscriptionChangedEmail,
+  subscriptionCancelledEmail,
+  paymentReceiptEmail,
+  paymentFailedEmail,
+} from '@/lib/email/templates/platform'
 
 const STARTER_PRICE_ID = 'price_1TDaQ3HAH4zJnnwfasGBYtYO'
 const PRO_PRICE_ID = 'price_1TF2UnHAH4zJnnwfTwU129PO'
@@ -62,6 +70,37 @@ export async function POST(request: Request) {
     await supabase.from('tenants').update(patch).eq('id', tenantId)
   }
 
+  async function getOperatorEmailsForTenant(tenantId: string): Promise<string[]> {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('tenant_id', tenantId)
+
+    if (!profiles?.length) return []
+    const results = await Promise.allSettled(
+      profiles.map((p: { id: string }) => supabase.auth.admin.getUserById(p.id))
+    )
+    const emails: string[] = []
+    for (const r of results) {
+      if (r.status === 'fulfilled') {
+        const email = r.value.data?.user?.email
+        if (email) emails.push(email)
+      }
+    }
+    return emails
+  }
+
+  async function getTenantName(tenantId: string): Promise<string> {
+    const { data } = await supabase
+      .from('tenants')
+      .select('brand_name, name')
+      .eq('id', tenantId)
+      .single()
+    return (data as { brand_name?: string; name?: string } | null)?.brand_name ||
+      (data as { brand_name?: string; name?: string } | null)?.name ||
+      'Your Fleet'
+  }
+
   if (type === 'checkout.session.completed') {
     const session = data.object
     const tenantId: string | undefined = session.metadata?.tenantId ?? session.metadata?.tenant_id
@@ -73,6 +112,26 @@ export async function POST(request: Request) {
         stripe_customer_id: session.customer,
         stripe_subscription_id: session.subscription,
       })
+      // Send subscription activated email
+      const emails = await getOperatorEmailsForTenant(tenantId)
+      const tenantName = await getTenantName(tenantId)
+      const billingDate = session.current_period_end
+        ? new Date(session.current_period_end * 1000).toLocaleDateString('en-US', {
+            month: 'long', day: 'numeric', year: 'numeric',
+          })
+        : undefined
+      Promise.allSettled(
+        emails.map(email =>
+          sendEmail({
+            to: email,
+            ...subscriptionActivatedEmail({
+              operatorName: tenantName,
+              plan,
+              billingDate,
+            }),
+          })
+        )
+      ).catch(() => {})
     }
   }
 
@@ -83,6 +142,22 @@ export async function POST(request: Request) {
       const priceId: string | undefined = sub.items?.data?.[0]?.price?.id
       const plan = resolvePlan(priceId, sub.metadata?.plan)
       await patchTenant(tenantId, { plan })
+      // Send subscription changed email
+      const emailsUpd = await getOperatorEmailsForTenant(tenantId)
+      const nameUpd = await getTenantName(tenantId)
+      const previousPlan = sub.metadata?.previousPlan ?? 'free'
+      Promise.allSettled(
+        emailsUpd.map(email =>
+          sendEmail({
+            to: email,
+            ...subscriptionChangedEmail({
+              operatorName: nameUpd,
+              previousPlan,
+              newPlan: plan,
+            }),
+          })
+        )
+      ).catch(() => {})
     }
   }
 
@@ -90,7 +165,90 @@ export async function POST(request: Request) {
     const sub = data.object
     const tenantId: string | undefined = sub.metadata?.tenantId
     if (tenantId) {
+      const priceId: string | undefined = sub.items?.data?.[0]?.price?.id
+      const plan = resolvePlan(priceId, sub.metadata?.plan)
       await patchTenant(tenantId, { plan: 'suspended' })
+      // Send subscription cancelled email
+      const emailsDel = await getOperatorEmailsForTenant(tenantId)
+      const nameDel = await getTenantName(tenantId)
+      Promise.allSettled(
+        emailsDel.map(email =>
+          sendEmail({
+            to: email,
+            ...subscriptionCancelledEmail({ operatorName: nameDel, plan: plan ?? 'pro' }),
+          })
+        )
+      ).catch(() => {})
+    }
+  }
+
+  if (type === 'invoice.payment_succeeded') {
+    const invoice = data.object as any
+    const customerId: string | undefined = invoice.customer
+    if (customerId) {
+      const { data: tenantRow } = await supabase
+        .from('tenants')
+        .select('id, brand_name, name, plan')
+        .eq('stripe_customer_id', customerId)
+        .single()
+
+      if (tenantRow) {
+        const emailsInv = await getOperatorEmailsForTenant((tenantRow as any).id)
+        const amountCents: number = invoice.amount_paid ?? 0
+        const amount = `$${(amountCents / 100).toFixed(2)}`
+        const billingDate = new Date(((invoice.created ?? Date.now() / 1000)) * 1000)
+          .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        const last4: string | undefined =
+          invoice.payment_intent?.payment_method?.card?.last4 ?? undefined
+        Promise.allSettled(
+          emailsInv.map(email =>
+            sendEmail({
+              to: email,
+              ...paymentReceiptEmail({
+                operatorName: (tenantRow as any).brand_name || (tenantRow as any).name,
+                plan: (tenantRow as any).plan ?? 'starter',
+                amount,
+                billingDate,
+                last4,
+              }),
+            })
+          )
+        ).catch(() => {})
+      }
+    }
+  }
+
+  if (type === 'invoice.payment_failed') {
+    const invoice = data.object as any
+    const customerId: string | undefined = invoice.customer
+    if (customerId) {
+      const { data: tenantRow } = await supabase
+        .from('tenants')
+        .select('id, brand_name, name')
+        .eq('stripe_customer_id', customerId)
+        .single()
+
+      if (tenantRow) {
+        const emailsFail = await getOperatorEmailsForTenant((tenantRow as any).id)
+        const amountCents: number = invoice.amount_due ?? 0
+        const amount = `$${(amountCents / 100).toFixed(2)}`
+        const reason: string | undefined =
+          invoice.last_finalization_error?.message ??
+          invoice.payment_intent?.last_payment_error?.message ??
+          undefined
+        Promise.allSettled(
+          emailsFail.map(email =>
+            sendEmail({
+              to: email,
+              ...paymentFailedEmail({
+                operatorName: (tenantRow as any).brand_name || (tenantRow as any).name,
+                amount,
+                reason,
+              }),
+            })
+          )
+        ).catch(() => {})
+      }
     }
   }
 
