@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import AgreementSigner from './AgreementSigner'
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default async function AgreementPage({ params }: Props) {
-  const supabase = createClient()
+  const supabase = createAdminClient()
 
   // Fetch reservation by token
   const { data: reservation } = await supabase
