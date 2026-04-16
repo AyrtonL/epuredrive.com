@@ -49,12 +49,17 @@ export default function DateRangePicker({
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
-  // Close on scroll so popup doesn't drift
+  // Reposition popup on window scroll (fixed position, so just update coords)
   useEffect(() => {
     if (!open) return
-    const handler = () => setOpen(false)
-    window.addEventListener('scroll', handler, true)
-    return () => window.removeEventListener('scroll', handler, true)
+    const handler = () => {
+      if (triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect()
+        setPopupStyle(prev => ({ ...prev, top: rect.bottom + 8, left: rect.left }))
+      }
+    }
+    window.addEventListener('scroll', handler, { passive: true })
+    return () => window.removeEventListener('scroll', handler)
   }, [open])
 
   const today = new Date()
@@ -127,21 +132,21 @@ export default function DateRangePicker({
       >
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           <div>
-            <span className={`block text-[9px] font-black uppercase tracking-widest mb-0.5 ${waitingForReturn ? 'text-white/20' : 'text-white/30'}`}>
+            <span className={`block text-[9px] font-black uppercase tracking-widest mb-0.5 ${waitingForReturn ? 'text-white/30' : 'text-white/40'}`}>
               Pickup
             </span>
-            <span className={pickDate ? 'text-white' : 'text-white/25'}>
+            <span className={pickDate ? 'text-white font-semibold' : 'text-white/40'}>
               {formatDisplay(pickDate)}
             </span>
           </div>
-          <svg className="w-3.5 h-3.5 text-white/15 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <svg className="w-3.5 h-3.5 text-white/20 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
           <div className="text-right">
-            <span className={`block text-[9px] font-black uppercase tracking-widest mb-0.5 ${waitingForReturn ? 'text-primary/60' : 'text-white/30'}`}>
+            <span className={`block text-[9px] font-black uppercase tracking-widest mb-0.5 ${waitingForReturn ? 'text-primary/70' : 'text-white/40'}`}>
               Return
             </span>
-            <span className={retDate ? 'text-white' : waitingForReturn ? 'text-primary/40' : 'text-white/25'}>
+            <span className={retDate ? 'text-white font-semibold' : waitingForReturn ? 'text-primary/50 animate-pulse' : 'text-white/40'}>
               {waitingForReturn ? 'Select...' : formatDisplay(retDate)}
             </span>
           </div>
