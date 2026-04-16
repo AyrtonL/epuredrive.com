@@ -121,9 +121,57 @@ function IconTeam({ className }: { className?: string }) {
 
 function IconTuro({ className }: { className?: string }) {
   return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 2c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8zm-2 4v2H8v4h2v2h4v-2h2v-4h-2V8h-4z" />
+    </svg>
+  )
+}
+
+function IconQuickBooks({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M8 8v8h2v-3h2a3 3 0 000-6H8zm2 1.5h2a1.5 1.5 0 010 3h-2v-3z" />
+      <path d="M14 16V8h2v3h-2" stroke="currentColor" strokeWidth="0" />
+      <rect x="14" y="8" width="2" height="8" rx="0.5" />
+    </svg>
+  )
+}
+
+function IconSquare({ className }: { className?: string }) {
+  return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-      <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <rect x="8" y="8" width="8" height="8" rx="1" />
+    </svg>
+  )
+}
+
+function IconStripe({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 1.5c4.69 0 8.5 3.81 8.5 8.5s-3.81 8.5-8.5 8.5S3.5 16.69 3.5 12 7.31 3.5 12 3.5zM11.2 8c-2.08 0-3.2 1.1-3.2 2.4 0 1.86 2.12 2.18 3.24 2.68.66.3.96.56.96 1.02 0 .54-.52.9-1.36.9-.96 0-1.92-.44-2.64-1.02l-.8 1.44C8.32 16.18 9.6 16.7 10.88 16.7c2.16 0 3.32-1.12 3.32-2.5 0-1.86-2.12-2.22-3.24-2.72-.66-.28-.96-.52-.96-.96 0-.44.44-.82 1.2-.82.8 0 1.56.32 2.2.76l.72-1.4C13.28 8.38 12.2 8 11.2 8z" />
+    </svg>
+  )
+}
+
+function IconSecurity({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" />
+      <path d="M7 11V7a5 5 0 0110 0v4" />
+      <circle cx="12" cy="16" r="1" />
+    </svg>
+  )
+}
+
+function IconSupportTickets({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h16a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z" />
+      <path d="M4 12h16a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4a2 2 0 012-2z" />
+      <line x1="6" y1="8" x2="6.01" y2="8" />
+      <line x1="6" y1="16" x2="6.01" y2="16" />
     </svg>
   )
 }
@@ -318,13 +366,18 @@ const ICONS: Record<string, (props: { className?: string }) => React.ReactNode> 
   Customers: IconCustomers,
   Consignments: IconConsignments,
   Team: IconTeam,
+  // Integration brand icons
   Turo: IconTuro,
+  QuickBooks: IconQuickBooks,
+  Square: IconSquare,
+  Stripe: IconStripe,
   // Settings sub-pages
   General: IconGeneral,
   'Payments & Invoices': IconPayments,
   'Billing & Plans': IconBilling,
   'Team & Roles': IconRoles,
   Notifications: IconNotifications,
+  Security: IconSecurity,
   'Rental Agreement': IconAgreement,
   'Custom Domain': IconDomain,
   'API & Webhooks': IconAPI,
@@ -333,6 +386,7 @@ const ICONS: Record<string, (props: { className?: string }) => React.ReactNode> 
   'Platform Stats': IconPlatformStats,
   'Plans & Billing': IconPlans,
   'All Users': IconAllUsers,
+  'Support Tickets': IconSupportTickets,
   'Feature Flags': IconFeatureFlags,
   'System Logs': IconSystemLogs,
   // Group icons (used for section headers)
