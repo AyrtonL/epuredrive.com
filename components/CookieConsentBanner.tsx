@@ -41,7 +41,14 @@ export default function CookieConsentBanner() {
     <div className="fixed bottom-0 inset-x-0 z-[200] p-4 sm:p-6 pointer-events-none">
       <div className="max-w-2xl mx-auto bg-[#111] border border-white/10 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-2xl pointer-events-auto">
         <p className="text-white/60 text-sm leading-relaxed flex-1">
-          We use cookies to analyze traffic and improve your experience.{' '}
+          We use cookies to analyze traffic and improve your experience. See our{' '}
+          <a
+            href="/cookies"
+            className="text-white/80 underline underline-offset-2 hover:text-white transition-colors"
+          >
+            Cookie Policy
+          </a>{' '}
+          and{' '}
           <a
             href="/privacy"
             className="text-white/80 underline underline-offset-2 hover:text-white transition-colors"

@@ -153,7 +153,7 @@ export default function PrivacyPage() {
                 <li><strong className="text-white/70">Analytics cookies:</strong> we use Google Analytics 4 to understand how visitors use our website (pages, sessions, events). Analytics are loaded only after you grant consent via our cookie banner.</li>
                 <li><strong className="text-white/70">Preference cookies:</strong> to remember your preferences (for example, cookie consent choice).</li>
               </ul>
-              <p>You can manage your cookie preferences at any time through the cookie banner on our website or through your browser settings.</p>
+              <p>You can manage your cookie preferences at any time through the cookie banner on our website or through your browser settings. For a detailed list of all cookies we use, see our <Link href="/cookies" className="text-white/60 hover:text-white underline underline-offset-2 transition-colors">Cookie Policy</Link>.</p>
             </div>
           </div>
 

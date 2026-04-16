@@ -33,7 +33,11 @@ export default function CookieConsent() {
       <div className="glass border border-white/10 rounded-[1.5rem] p-5 shadow-2xl backdrop-blur-2xl">
         <p className="text-[11px] text-white/50 leading-relaxed mb-4">
           We use cookies to improve your browsing experience and analyze site traffic.
-          By continuing, you agree to our use of cookies.
+          See our{' '}
+          <a href="/cookies" className="text-white/70 underline underline-offset-2 hover:text-white transition-colors">
+            Cookie Policy
+          </a>
+          .
         </p>
         <div className="flex items-center gap-3">
           <button
