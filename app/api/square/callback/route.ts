@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { exchangeSquareCode } from '@/lib/square/oauth'
+import { exchangeSquareCode, verifyState } from '@/lib/square/oauth'
 import { getSquareClient } from '@/lib/square/client'
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code')
-  const state = request.nextUrl.searchParams.get('state') // tenantId
+  const state = request.nextUrl.searchParams.get('state')
 
   if (!code || !state) {
     return NextResponse.redirect(new URL('/dashboard/settings/payments?error=missing_params', request.url))
   }
 
-  const tenantId = state
+  const tenantId = verifyState(state)
+  if (!tenantId) {
+    return NextResponse.redirect(new URL('/dashboard/settings/payments?error=invalid_state', request.url))
+  }
 
   try {
     const tokens = await exchangeSquareCode(code)

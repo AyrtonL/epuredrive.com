@@ -16,12 +16,16 @@ function verifySquareWebhook(
 ): boolean {
   if (!signature) return false
 
-  const hmac = crypto
-    .createHmac('sha256', signatureKey)
-    .update(notificationUrl + body)
-    .digest('base64')
-
-  return hmac === signature
+  const expected = Buffer.from(
+    crypto
+      .createHmac('sha256', signatureKey)
+      .update(notificationUrl + body)
+      .digest('base64'),
+    'base64'
+  )
+  const actual = Buffer.from(signature, 'base64')
+  if (expected.length !== actual.length) return false
+  return crypto.timingSafeEqual(expected, actual)
 }
 
 export async function POST(request: NextRequest) {

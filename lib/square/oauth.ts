@@ -1,10 +1,42 @@
+import crypto from 'crypto'
+
 const SQUARE_BASE_URL = process.env.SQUARE_ENVIRONMENT === 'production'
   ? 'https://connect.squareup.com'
   : 'https://connect.squareupsandbox.com'
 
 /**
+ * Sign the OAuth state param so the callback can verify it wasn't forged.
+ * Format: `tenantId.hmacHex`
+ */
+function signState(tenantId: string): string {
+  const secret = process.env.SQUARE_APPLICATION_SECRET
+  if (!secret) throw new Error('SQUARE_APPLICATION_SECRET not configured')
+  const sig = crypto.createHmac('sha256', secret).update(tenantId).digest('hex')
+  return `${tenantId}.${sig}`
+}
+
+/**
+ * Verify and extract tenantId from a signed state param.
+ * Returns the tenantId or null if the signature is invalid.
+ */
+export function verifyState(state: string): string | null {
+  const dotIdx = state.lastIndexOf('.')
+  if (dotIdx === -1) return null
+  const tenantId = state.slice(0, dotIdx)
+  const sig = state.slice(dotIdx + 1)
+  const secret = process.env.SQUARE_APPLICATION_SECRET
+  if (!secret) return null
+  const expected = crypto.createHmac('sha256', secret).update(tenantId).digest('hex')
+  const expectedBuf = Buffer.from(expected, 'hex')
+  const actualBuf = Buffer.from(sig, 'hex')
+  if (expectedBuf.length !== actualBuf.length) return null
+  if (!crypto.timingSafeEqual(expectedBuf, actualBuf)) return null
+  return tenantId
+}
+
+/**
  * Generate Square OAuth authorization URL.
- * State param contains the tenantId for the callback.
+ * State param is HMAC-signed to prevent forgery.
  */
 export function getSquareAuthorizationUrl(tenantId: string): string {
   const clientId = process.env.SQUARE_APPLICATION_ID
@@ -17,7 +49,7 @@ export function getSquareAuthorizationUrl(tenantId: string): string {
     client_id: clientId,
     scope: 'PAYMENTS_WRITE PAYMENTS_READ ORDERS_WRITE ORDERS_READ MERCHANT_PROFILE_READ',
     session: 'false',
-    state: tenantId,
+    state: signState(tenantId),
     redirect_uri: redirectUri,
   })
 

@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getSquareClient } from '@/lib/square/client'
 import { refreshSquareToken } from '@/lib/square/oauth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import crypto from 'crypto'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export async function POST(request: NextRequest) {
   let body: unknown
@@ -42,6 +36,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid rental duration' }, { status: 400 })
   }
 
+  const supabase = createAdminClient()
+
   // Fetch car
   const { data: car } = await supabase
     .from('cars')
@@ -72,8 +68,7 @@ export async function POST(request: NextRequest) {
       const refreshed = await refreshSquareToken(tenant.square_refresh_token)
       accessToken = refreshed.access_token
       // Update tokens in DB
-      const adminSupabase = createAdminClient()
-      await adminSupabase.from('tenants').update({
+      await supabase.from('tenants').update({
         square_access_token: refreshed.access_token,
         square_refresh_token: refreshed.refresh_token,
         square_token_expires_at: refreshed.expires_at,
