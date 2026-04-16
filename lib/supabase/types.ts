@@ -40,6 +40,9 @@ export interface Tenant {
   experience_pillars: ExperiencePillar[] | null
   how_it_works: HowItWorksStep[] | null
   plan_limit_warning_last_count: number | null
+  square_merchant_id: string | null
+  square_location_id: string | null
+  payment_processor: string | null  // 'stripe' | 'square'
 }
 
 export interface Car {
@@ -114,6 +117,9 @@ export interface Reservation {
   damage_checkout: string | null
   // review request email tracking
   review_email_sent_at: string | null
+  // payment IDs
+  stripe_payment_id: string | null
+  square_payment_id: string | null
 }
 
 export interface Customer {
@@ -184,6 +190,17 @@ export interface Profile {
   created_at?: string
   invited_by_user_id: string | null
   invite_accepted_notified_at: string | null
+}
+
+export interface TaxSetting {
+  id: string
+  tenant_id: string
+  name: string
+  rate: number        // decimal, e.g. 0.07 = 7%
+  applies_to: string  // 'all' | 'rental' | 'service' | 'addon'
+  is_active: boolean
+  created_at: string
+  updated_at: string
 }
 
 export interface WebhookEndpoint {
