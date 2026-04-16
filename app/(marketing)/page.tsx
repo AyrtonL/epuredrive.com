@@ -72,7 +72,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 py-32 text-center z-10">
           <div className="inline-flex items-center gap-2.5 bg-white/[0.06] border border-white/[0.12] rounded-full px-4 py-2 mb-8 animate-fade-in">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
-            <span className="text-[11px] font-bold tracking-[0.25em] text-white/55 uppercase">
+            <span className="text-[11px] font-bold tracking-[0.25em] text-grey uppercase">
               Miami-based · Premium Fleet Platform
             </span>
           </div>
@@ -83,7 +83,7 @@ export default function HomePage() {
             <span className="text-gradient">In minutes.</span>
           </h1>
 
-          <p className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto mb-14 animate-fade-in-up animation-delay-100 font-light leading-relaxed">
+          <p className="text-lg md:text-xl text-grey max-w-2xl mx-auto mb-14 animate-fade-in-up animation-delay-100 font-light leading-relaxed">
             The all-in-one platform for car rental operators. Manage your fleet,
             accept bookings online, and give your customers a premium experience
             — without the complexity.
@@ -98,7 +98,7 @@ export default function HomePage() {
             </Link>
             <Link
               href="/login"
-              className="text-white/50 text-sm font-medium hover:text-white transition-colors underline-offset-4 hover:underline"
+              className="text-grey text-sm font-medium hover:text-white transition-colors underline-offset-4 hover:underline"
             >
               Sign in to dashboard →
             </Link>
@@ -107,7 +107,7 @@ export default function HomePage() {
           {/* Trust signals */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8 animate-fade-in-up animation-delay-300">
             {['No credit card required', 'Free forever to start', 'Setup in 5 minutes'].map((t) => (
-              <span key={t} className="flex items-center gap-1.5 text-[12px] text-white/30">
+              <span key={t} className="flex items-center gap-1.5 text-[12px] text-charcoal">
                 <svg className="w-3 h-3 text-white/25 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
@@ -129,7 +129,7 @@ export default function HomePage() {
             {['Turo', 'Stripe', 'iCal', 'Google Calendar', 'WhatsApp'].map((name) => (
               <span
                 key={name}
-                className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-full px-4 py-1.5 text-sm font-medium text-white/35 hover:text-white/60 hover:border-white/[0.14] hover:bg-white/[0.07] transition-all cursor-default select-none"
+                className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-full px-4 py-1.5 text-sm font-medium text-charcoal hover:text-silver hover:border-white/[0.14] hover:bg-white/[0.07] transition-all cursor-default select-none"
               >
                 {name}
               </span>
@@ -147,12 +147,12 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 relative z-10">
           <div className="text-center mb-24">
             <div className="inline-flex items-center gap-2 bg-white/[0.05] border border-white/[0.09] rounded-full px-4 py-1.5 mb-5">
-              <span className="text-[11px] font-bold tracking-[0.25em] text-white/40 uppercase">Platform</span>
+              <span className="text-[11px] font-bold tracking-[0.25em] text-charcoal uppercase">Platform</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-5 tracking-tight">
               Fleet management, bookings,<br />and payments — one dashboard.
             </h2>
-            <p className="text-lg text-white/40 font-light max-w-xl mx-auto">
+            <p className="text-lg text-charcoal font-light max-w-xl mx-auto">
               Stop juggling spreadsheets, texts, and calendar apps. Run your rental business from one place.
             </p>
           </div>
@@ -168,20 +168,20 @@ export default function HomePage() {
               >
                 {/* Text side */}
                 <div className="flex-1 min-w-0">
-                  <div className="w-11 h-11 rounded-xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center text-white/55 mb-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                  <div className="w-11 h-11 rounded-xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center text-grey mb-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                     {feature.icon}
                   </div>
                   <h3 className="text-3xl md:text-4xl font-bold text-white mb-5 tracking-tight leading-tight whitespace-pre-line">
                     {feature.title}
                   </h3>
-                  <p className="text-white/50 leading-relaxed mb-8 font-light text-lg">
+                  <p className="text-grey leading-relaxed mb-8 font-light text-lg">
                     {feature.description}
                   </p>
                   <ul className="space-y-3">
                     {feature.bullets.map((bullet) => (
-                      <li key={bullet} className="flex items-center gap-3 text-white/60 text-sm">
+                      <li key={bullet} className="flex items-center gap-3 text-silver text-sm">
                         <span className="w-5 h-5 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                          <svg className="w-3 h-3 text-white/55" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <svg className="w-3 h-3 text-grey" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         </span>
@@ -226,12 +226,12 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 relative z-10">
           <div className="text-center mb-20 animate-fade-in">
             <div className="inline-flex items-center gap-2 bg-white/[0.05] border border-white/[0.09] rounded-full px-4 py-1.5 mb-5">
-              <span className="text-[11px] font-bold tracking-[0.25em] text-white/40 uppercase">Pricing</span>
+              <span className="text-[11px] font-bold tracking-[0.25em] text-charcoal uppercase">Pricing</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-5 tracking-tight">
               Simple pricing
             </h2>
-            <p className="text-lg text-white/40 font-light">
+            <p className="text-lg text-charcoal font-light">
               Start free. Upgrade when you demand more.
             </p>
           </div>
@@ -240,38 +240,38 @@ export default function HomePage() {
             {/* ── Starter ── */}
             <div className="glass rounded-2xl p-8 text-left relative overflow-hidden group hover:border-white/15 transition-all duration-500 flex flex-col">
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/10 to-transparent" />
-              <div className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-6">
+              <div className="text-[11px] font-bold text-charcoal uppercase tracking-widest mb-6">
                 Starter
               </div>
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">$0</span>
               </div>
-              <div className="text-white/30 text-sm mb-8">forever</div>
+              <div className="text-charcoal text-sm mb-8">forever</div>
 
-              <ul className="space-y-3 text-sm text-white/50 mb-10 font-light flex-1">
+              <ul className="space-y-3 text-sm text-grey mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> 1 branded fleet page
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Up to 5 vehicles
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> {'{slug}'}.epuredrive.com
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Live availability calendar
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Booking management
                 </li>
               </ul>
@@ -297,32 +297,32 @@ export default function HomePage() {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">$49</span>
               </div>
-              <div className="text-white/30 text-sm mb-8">/ month + taxes</div>
+              <div className="text-charcoal text-sm mb-8">/ month + taxes</div>
 
-              <ul className="space-y-3 text-sm text-white/50 mb-10 font-light flex-1">
+              <ul className="space-y-3 text-sm text-grey mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Everything in Starter
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Up to 25 vehicles
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Full brand customization
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Stripe payments
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Unlimited team members
                 </li>
               </ul>
@@ -345,9 +345,9 @@ export default function HomePage() {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">$99</span>
               </div>
-              <div className="text-white/30 text-sm mb-8">/ month + taxes</div>
+              <div className="text-charcoal text-sm mb-8">/ month + taxes</div>
 
-              <ul className="space-y-3 text-sm text-white/50 mb-10 font-light flex-1">
+              <ul className="space-y-3 text-sm text-grey mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
@@ -386,45 +386,45 @@ export default function HomePage() {
             {/* ── Enterprise ── */}
             <div className="glass rounded-2xl p-8 text-left relative overflow-hidden group hover:border-white/15 transition-all duration-500 flex flex-col">
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/10 to-transparent" />
-              <div className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-6">
+              <div className="text-[11px] font-bold text-charcoal uppercase tracking-widest mb-6">
                 Enterprise
               </div>
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">Custom</span>
               </div>
-              <div className="text-white/30 text-sm mb-8">tailored pricing + taxes</div>
+              <div className="text-charcoal text-sm mb-8">tailored pricing + taxes</div>
 
-              <ul className="space-y-3 text-sm text-white/50 mb-10 font-light flex-1">
+              <ul className="space-y-3 text-sm text-grey mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Everything in Max
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Unlimited vehicles
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Multi-location management
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> White-label branding
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Dedicated account manager
                 </li>
               </ul>
 
               <a
                 href="mailto:info@epuredrive.com?subject=Enterprise%20Inquiry"
-                className="block text-center bg-white/[0.06] text-white/60 font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/10 hover:text-white transition-colors border border-white/10 mt-auto"
+                className="block text-center bg-white/[0.06] text-silver font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/10 hover:text-white transition-colors border border-white/10 mt-auto"
               >
                 Contact us
               </a>
@@ -447,12 +447,12 @@ export default function HomePage() {
             <div className="rounded-3xl bg-gradient-to-b from-white/[0.05] to-transparent px-8 py-16 md:px-16">
               <span className="inline-flex items-center gap-2 bg-white/[0.06] border border-white/[0.10] rounded-full px-4 py-1.5 mb-8">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[11px] font-bold tracking-[0.25em] text-white/50 uppercase">Ready to launch</span>
+                <span className="text-[11px] font-bold tracking-[0.25em] text-grey uppercase">Ready to launch</span>
               </span>
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">
                 Launch your rental business<br />online today.
               </h2>
-              <p className="text-white/40 mb-10 font-light text-lg max-w-lg mx-auto">
+              <p className="text-charcoal mb-10 font-light text-lg max-w-lg mx-auto">
                 Join rental operators who manage their fleet, bookings, and customers
                 on éPure Drive. Set up in 5 minutes — no credit card required.
               </p>

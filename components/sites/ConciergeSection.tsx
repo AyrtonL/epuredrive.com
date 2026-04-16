@@ -83,9 +83,9 @@ export default function ConciergeSection({ tenant, cars }: Props) {
             <p className="text-[10px] font-black uppercase tracking-[.4em] text-primary/60 mb-4">Concierge</p>
             <h2 className="font-outfit font-black text-5xl sm:text-6xl text-white leading-none tracking-tight mb-6">
               Let us craft<br />
-              <span className="italic text-white/30">your experience.</span>
+              <span className="italic text-charcoal">your experience.</span>
             </h2>
-            <p className="text-white/40 text-base leading-relaxed mb-12 max-w-md">
+            <p className="text-charcoal text-base leading-relaxed mb-12 max-w-md">
               Whether you&apos;re planning a special occasion, need a corporate fleet, or want to consign your vehicle — our team responds within the hour.
             </p>
 
@@ -117,10 +117,10 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                 },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-4">
-                  <div className="w-9 h-9 rounded-2xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center text-white/50 flex-shrink-0">
+                  <div className="w-9 h-9 rounded-2xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center text-grey flex-shrink-0">
                     {item.icon}
                   </div>
-                  <span className="text-[11px] font-black uppercase tracking-widest text-white/60">{item.label}</span>
+                  <span className="text-[11px] font-black uppercase tracking-widest text-silver">{item.label}</span>
                 </div>
               ))}
             </div>
@@ -139,13 +139,13 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                 </div>
                 <div>
                   <h3 className="font-outfit font-black text-2xl text-white mb-2 tracking-tight">Inquiry Received</h3>
-                  <p className="text-white/40 text-sm leading-relaxed max-w-xs">
+                  <p className="text-charcoal text-sm leading-relaxed max-w-xs">
                     We&apos;ve logged your request and opened WhatsApp for immediate contact. We&apos;ll follow up within the hour.
                   </p>
                 </div>
                 <button
                   onClick={reset}
-                  className="text-[10px] font-black uppercase tracking-widest text-white/30 hover:text-white transition-colors border-b border-white/10 pb-0.5"
+                  className="text-[10px] font-black uppercase tracking-widest text-charcoal hover:text-white transition-colors border-b border-white/10 pb-0.5"
                 >
                   Submit another inquiry
                 </button>
@@ -154,7 +154,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
               <form onSubmit={handleSubmit} className="relative z-10 space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Full Name *</label>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-silver ml-1">Full Name *</label>
                     <input
                       required
                       type="text"
@@ -165,7 +165,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Phone</label>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-silver ml-1">Phone</label>
                     <input
                       type="tel"
                       value={phone}
@@ -177,7 +177,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Email *</label>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-silver ml-1">Email *</label>
                   <input
                     required
                     type="email"
@@ -189,7 +189,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Service Type</label>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-silver ml-1">Service Type</label>
                   <select
                     value={service}
                     onChange={e => setService(e.target.value)}
@@ -205,7 +205,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
 
                 {vehicleOptions.length > 0 && (
                   <div className="space-y-2">
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Vehicle of Interest</label>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-silver ml-1">Vehicle of Interest</label>
                     <select
                       value={vehicle}
                       onChange={e => setVehicle(e.target.value)}
@@ -220,7 +220,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                 )}
 
                 <div className="space-y-2">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-white/60 ml-1">Message</label>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-silver ml-1">Message</label>
                   <textarea
                     rows={4}
                     value={message}

@@ -12,25 +12,25 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-6">
             <a
               href="/features"
-              className="text-sm text-white/40 hover:text-white transition-colors hidden sm:block"
+              className="text-sm text-charcoal hover:text-white transition-colors hidden sm:block"
             >
               Features
             </a>
             <a
               href="/#product"
-              className="text-sm text-white/40 hover:text-white transition-colors hidden sm:block"
+              className="text-sm text-charcoal hover:text-white transition-colors hidden sm:block"
             >
               Product
             </a>
             <a
               href="/#pricing"
-              className="text-sm text-white/40 hover:text-white transition-colors hidden sm:block"
+              className="text-sm text-charcoal hover:text-white transition-colors hidden sm:block"
             >
               Pricing
             </a>
             <a
               href="/login"
-              className="text-sm text-white/50 hover:text-white transition-colors"
+              className="text-sm text-grey hover:text-white transition-colors"
             >
               Sign in
             </a>

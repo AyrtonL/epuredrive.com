@@ -28,13 +28,13 @@ export default function ContactSection() {
   return (
     <section id="contact" className="py-24 px-6 border-t border-white/[0.06]">
       <div className="max-w-2xl mx-auto">
-        <p className="text-[10px] font-black tracking-[0.3em] uppercase text-white/30 mb-4">
+        <p className="text-[10px] font-black tracking-[0.3em] uppercase text-charcoal mb-4">
           Contact
         </p>
         <h2 className="text-3xl font-black text-white mb-4 tracking-tight">
           Let&apos;s talk.
         </h2>
-        <p className="text-white/50 text-sm mb-10 leading-relaxed">
+        <p className="text-grey text-sm mb-10 leading-relaxed">
           Interested in Enterprise, a partnership, or just want to learn more?
           Send us a message and we&apos;ll be in touch within 1–2 business days.
         </p>
@@ -42,13 +42,13 @@ export default function ContactSection() {
         {status === 'success' ? (
           <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-8 text-center">
             <p className="text-white font-bold text-lg mb-2">Message received.</p>
-            <p className="text-white/40 text-sm">We&apos;ll be in touch shortly.</p>
+            <p className="text-charcoal text-sm">We&apos;ll be in touch shortly.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/30 mb-2">
+                <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-charcoal mb-2">
                   Name *
                 </label>
                 <input
@@ -63,7 +63,7 @@ export default function ContactSection() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/30 mb-2">
+                <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-charcoal mb-2">
                   Email *
                 </label>
                 <input
@@ -81,7 +81,7 @@ export default function ContactSection() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/30 mb-2">
+                <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-charcoal mb-2">
                   Company
                 </label>
                 <input
@@ -95,7 +95,7 @@ export default function ContactSection() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/30 mb-2">
+                <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-charcoal mb-2">
                   Inquiry Type
                 </label>
                 <select
@@ -115,7 +115,7 @@ export default function ContactSection() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-white/30 mb-2">
+              <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-charcoal mb-2">
                 Message *
               </label>
               <textarea

@@ -23,9 +23,9 @@ export default function HowItWorksSection({ tenant }: Props) {
           <p className="text-[10px] font-black uppercase tracking-[.4em] text-primary/60 mb-4">How It Works</p>
           <h2 className="font-outfit font-black text-5xl sm:text-6xl text-white leading-none tracking-tight mb-6">
             From browse<br />
-            <span className="italic text-white/30">to keys in hand.</span>
+            <span className="italic text-charcoal">to keys in hand.</span>
           </h2>
-          <p className="text-white/40 text-base leading-relaxed max-w-md">
+          <p className="text-charcoal text-base leading-relaxed max-w-md">
             Renting with {tenant.brand_name || tenant.name} is designed to be effortless — here&apos;s what to expect.
           </p>
         </div>

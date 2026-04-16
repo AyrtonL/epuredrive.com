@@ -54,9 +54,9 @@ export default function ExperienceSection({ cars, tenant }: Props) {
           <p className="text-[10px] font-black uppercase tracking-[.4em] text-primary/60 mb-4">The Experience</p>
           <h2 className="font-outfit font-black text-5xl sm:text-6xl text-white leading-none tracking-tight mb-6">
             Beyond the<br />
-            <span className="italic text-white/30">ordinary rental.</span>
+            <span className="italic text-charcoal">ordinary rental.</span>
           </h2>
-          <p className="text-white/40 text-base leading-relaxed max-w-lg">
+          <p className="text-charcoal text-base leading-relaxed max-w-lg">
             {displayName} redefines what it means to rent. Every interaction is curated — from the first message to the final mile.
           </p>
         </div>
@@ -79,7 +79,7 @@ export default function ExperienceSection({ cars, tenant }: Props) {
                 {PILLAR_ICONS[i]}
               </div>
               <h3 className="font-outfit font-black text-lg text-white mb-3 tracking-tight">{p.title}</h3>
-              <p className="text-white/35 text-sm leading-relaxed">{p.body}</p>
+              <p className="text-charcoal text-sm leading-relaxed">{p.body}</p>
             </div>
           ))}
         </div>
@@ -98,22 +98,22 @@ export default function ExperienceSection({ cars, tenant }: Props) {
                 <div className="absolute top-4 right-4">
                   <span className="text-[8px] font-black uppercase tracking-widest bg-primary/20 text-primary border border-primary/30 rounded-full px-3 py-1">Best Value</span>
                 </div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-4">Direct Booking</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-charcoal mb-4">Direct Booking</p>
                 <div className="flex items-baseline gap-1 mb-2">
                   <span className="font-outfit font-black text-4xl text-white italic tracking-tighter">${lowestRate}</span>
-                  <span className="text-[10px] text-white/30 font-black uppercase">/day</span>
+                  <span className="text-[10px] text-charcoal font-black uppercase">/day</span>
                 </div>
-                <p className="text-[10px] text-white/30 font-black uppercase tracking-widest">No platform fees</p>
+                <p className="text-[10px] text-charcoal font-black uppercase tracking-widest">No platform fees</p>
               </div>
 
               {/* Turo equivalent */}
               <div className="glass border border-white/5 rounded-[2rem] p-8 opacity-60">
-                <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-4">Turo Platform</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-charcoal mb-4">Turo Platform</p>
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="font-outfit font-black text-4xl text-white/50 italic tracking-tighter line-through">${turoRate}</span>
+                  <span className="font-outfit font-black text-4xl text-grey italic tracking-tighter line-through">${turoRate}</span>
                   <span className="text-[10px] text-white/20 font-black uppercase">/day</span>
                 </div>
-                <p className="text-[10px] text-white/30 font-black uppercase tracking-widest">~28% guest service fee</p>
+                <p className="text-[10px] text-charcoal font-black uppercase tracking-widest">~28% guest service fee</p>
               </div>
 
               {/* Savings */}
@@ -123,7 +123,7 @@ export default function ExperienceSection({ cars, tenant }: Props) {
                   <span className="font-outfit font-black text-4xl text-primary italic tracking-tighter">${savings}</span>
                   <span className="text-[10px] text-primary/60 font-black uppercase">/day</span>
                 </div>
-                <p className="text-[10px] text-white/30 font-black uppercase tracking-widest">Direct advantage</p>
+                <p className="text-[10px] text-charcoal font-black uppercase tracking-widest">Direct advantage</p>
               </div>
             </div>
 
@@ -152,7 +152,7 @@ export default function ExperienceSection({ cars, tenant }: Props) {
                 >
                   <div className="flex items-start justify-between mb-6">
                     <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
-                      <svg className="w-5 h-5 text-white/40 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <svg className="w-5 h-5 text-charcoal group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                       </svg>
@@ -162,7 +162,7 @@ export default function ExperienceSection({ cars, tenant }: Props) {
                     </span>
                   </div>
                   <h4 className="font-outfit font-black text-lg text-white mb-1 tracking-tight">{loc.label}</h4>
-                  <p className="text-[11px] text-white/30 font-bold mb-2">{loc.address}</p>
+                  <p className="text-[11px] text-charcoal font-bold mb-2">{loc.address}</p>
                   <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">{loc.note}</p>
 
                   <div className="mt-6 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/20 group-hover:text-primary/60 transition-colors">
