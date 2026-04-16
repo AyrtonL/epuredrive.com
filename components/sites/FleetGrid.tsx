@@ -1,6 +1,5 @@
 'use client'
 import { useState, useMemo } from 'react'
-import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import type { Car, PickupLocation } from '@/lib/supabase/types'
 
@@ -21,8 +20,9 @@ function resolveImageUrl(url: string | null): string {
 export default function FleetGrid({ cars, slug }: Props) {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const pathname = usePathname()
-  const base = pathname.startsWith('/sites/') ? `/sites/${slug}` : ''
+  const base = typeof window !== 'undefined' && !window.location.pathname.startsWith('/sites/')
+    ? ''
+    : `/sites/${slug}`
 
   const categories = useMemo(() => {
     const seen = new Set<string>()

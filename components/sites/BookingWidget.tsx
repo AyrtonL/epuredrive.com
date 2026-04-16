@@ -182,11 +182,11 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
       const result = await res.json().catch(() => ({})) as { reservationId?: number }
       // Redirect to confirmation page if we have a slug (public site context)
       if (typeof window !== 'undefined') {
+        const onDirectPath = window.location.pathname.startsWith('/sites/')
         const pathParts = window.location.pathname.split('/')
-        // Detect slug from /sites/[slug]/... or subdomain routing
         const siteIdx = pathParts.indexOf('sites')
         const slug = siteIdx >= 0 ? pathParts[siteIdx + 1] : null
-        const basePath = slug ? `/sites/${slug}` : ''
+        const basePath = onDirectPath && slug ? `/sites/${slug}` : ''
         const confirmUrl = `${basePath}/booking-confirmation?id=${result.reservationId ?? ''}&car=${encodeURIComponent(car.make + ' ' + (car.model_full || car.model))}`
         window.location.href = confirmUrl
         return
