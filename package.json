@@ -21,6 +21,7 @@
     "@types/react-signature-canvas": "^1.0.7",
     "html2canvas": "^1.4.1",
     "imapflow": "^1.0.0",
+    "intuit-oauth": "^4.2.3",
     "jspdf": "^4.2.1",
     "next": "14.2.35",
     "react": "^18",
@@ -28,6 +29,7 @@
     "react-dom": "^18.3.1",
     "react-signature-canvas": "^1.1.0-alpha.2",
     "resend": "^6.10.0",
+    "square": "^44.0.1",
     "stripe": "^22.0.1"
   },
   "devDependencies": {

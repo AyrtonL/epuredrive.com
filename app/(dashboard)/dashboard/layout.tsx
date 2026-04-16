@@ -36,7 +36,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (profile?.tenant_id) {
     const [{ data: tenant }, flags] = await Promise.all([
       supabase.from('tenants').select('plan').eq('id', profile.tenant_id).single(),
-      getFeatureFlags(profile.tenant_id, ['turo_sync', 'custom_domains', 'api_access', 'webhooks']),
+      getFeatureFlags(profile.tenant_id, ['turo_sync', 'quickbooks_sync', 'custom_domains', 'api_access', 'webhooks']),
     ])
     plan = tenant?.plan ?? 'free'
     featureFlags = flags

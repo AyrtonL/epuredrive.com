@@ -387,7 +387,10 @@ const NAV: NavEntry[] = [
   },
   {
     label: 'Integrations',
-    children: [{ label: 'Turo', href: '/dashboard/integrations/turo' }],
+    children: [
+      { label: 'Turo', href: '/dashboard/integrations/turo' },
+      { label: 'QuickBooks', href: '/dashboard/integrations/quickbooks' },
+    ],
   },
   {
     label: 'Settings',
@@ -455,6 +458,7 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
   const flagHiddenItems = useMemo(() => {
     const items: string[] = []
     if (!featureFlags['turo_sync']) items.push('Turo')
+    if (!featureFlags['quickbooks_sync']) items.push('QuickBooks')
     if (!featureFlags['custom_domains']) items.push('Custom Domain')
     if (!featureFlags['api_access'] && !featureFlags['webhooks']) items.push('API & Webhooks')
     return items
