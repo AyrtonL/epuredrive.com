@@ -32,6 +32,8 @@ export default function DateRangePicker({
   const [open, setOpen] = useState(false)
   const [popupStyle, setPopupStyle] = useState<CSSProperties>({})
   const [mounted, setMounted] = useState(false)
+  // Tracks which field the user is actively setting: 'pick' or 'ret'
+  const [activeField, setActiveField] = useState<'pick' | 'ret'>('pick')
   const triggerRef = useRef<HTMLDivElement>(null)
   const popupRef = useRef<HTMLDivElement>(null)
 
@@ -81,14 +83,17 @@ export default function DateRangePicker({
     if (!range) {
       onPickDate('')
       onRetDate('')
+      setActiveField('pick')
       return
     }
     if (range.from) onPickDate(toStr(range.from))
     if (range.to) {
       onRetDate(toStr(range.to))
+      setActiveField('pick') // reset for next interaction
       setOpen(false) // close after full range selected
     } else {
       onRetDate('')
+      setActiveField('ret') // user just picked the start — now picking end
     }
   }
 
@@ -99,8 +104,15 @@ export default function DateRangePicker({
     })
   }
 
-  function toggleCalendar() {
+  function openCalendar(field: 'pick' | 'ret') {
     if (open) { setOpen(false); return }
+    // If user clicks Return and pickup is already set, go straight to return selection
+    if (field === 'ret' && pickDate && !retDate) {
+      setActiveField('ret')
+    } else if (field === 'pick') {
+      // Clicking pickup resets the range so user starts fresh
+      setActiveField('pick')
+    }
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect()
       setPopupStyle({
@@ -120,8 +132,8 @@ export default function DateRangePicker({
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={toggleCalendar}
-          className="text-left bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none hover:border-white/10 transition-colors"
+          onClick={() => openCalendar('pick')}
+          className={`text-left bg-white/5 border rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none hover:border-white/10 transition-colors ${open && activeField === 'pick' ? 'border-primary/40 bg-primary/5' : 'border-white/5'}`}
         >
           <span className="block text-[9px] font-black text-white/30 uppercase tracking-widest mb-0.5">
             Pickup
@@ -132,8 +144,8 @@ export default function DateRangePicker({
         </button>
         <button
           type="button"
-          onClick={toggleCalendar}
-          className="text-left bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none hover:border-white/10 transition-colors"
+          onClick={() => openCalendar('ret')}
+          className={`text-left bg-white/5 border rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none hover:border-white/10 transition-colors ${open && activeField === 'ret' ? 'border-primary/40 bg-primary/5' : 'border-white/5'}`}
         >
           <span className="block text-[9px] font-black text-white/30 uppercase tracking-widest mb-0.5">
             Return
@@ -251,8 +263,8 @@ export default function DateRangePicker({
             showOutsideDays={false}
           />
           <div className="border-t border-white/5 mt-1 pt-3 flex justify-between items-center">
-            <span className="text-[10px] text-white/20 uppercase tracking-widest font-bold">
-              {pickDate && retDate ? 'Range selected' : pickDate ? 'Select return date' : 'Select pickup date'}
+            <span className={`text-[10px] uppercase tracking-widest font-bold ${pickDate && !retDate ? 'text-primary/60' : 'text-white/20'}`}>
+              {pickDate && retDate ? 'Range selected' : pickDate ? '← Now select return date' : '← Select pickup date'}
             </span>
             <button
               type="button"
