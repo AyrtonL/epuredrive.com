@@ -111,6 +111,11 @@ export default function DateRangePicker({
 
   function toggleCalendar() {
     if (open) { setOpen(false); return }
+    // When reopening with a complete range, clear retDate so the user
+    // can pick a new return date without the calendar closing immediately
+    if (pickDate && retDate) {
+      onRetDate('')
+    }
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect()
       setPopupStyle({
@@ -160,12 +165,18 @@ export default function DateRangePicker({
         <div ref={popupRef} style={popupStyle} className="z-[9999] bg-[#0d0d0d] border border-white/10 rounded-3xl shadow-2xl p-5 overflow-hidden min-w-[320px]">
           <style>{`
             .rdp-root {
-              --rdp-accent-color: rgba(255,255,255,0.15);
+              --rdp-accent-color: rgba(255,255,255,0.2);
+              --rdp-accent-background-color: rgba(255,255,255,0.2);
               --rdp-background-color: rgba(255,255,255,0.06);
               --rdp-day-font: inherit;
               --rdp-range_start-color: white;
               --rdp-range_end-color: white;
+              --rdp-range_start-background: white;
+              --rdp-range_end-background: white;
+              --rdp-range_middle-background-color: rgba(255,255,255,0.18);
+              --rdp-range_middle-color: #fff;
               --rdp-selected-color: black;
+              --rdp-selected-font: inherit;
               color: rgba(255,255,255,0.9);
               font-size: 0.8rem;
             }
@@ -181,7 +192,7 @@ export default function DateRangePicker({
               border-bottom: 1px solid rgba(255,255,255,0.06);
             }
             .rdp-weekday {
-              color: rgba(255,255,255,0.2);
+              color: rgba(255,255,255,0.35);
               font-size: 0.6rem;
               font-weight: 800;
               text-transform: uppercase;
@@ -197,7 +208,7 @@ export default function DateRangePicker({
               transition: background 0.15s, color 0.15s;
             }
             .rdp-day_button:hover:not([disabled]) {
-              background: rgba(255,255,255,0.08);
+              background: rgba(255,255,255,0.12);
               color: white;
             }
             .rdp-selected .rdp-day_button {
@@ -206,18 +217,22 @@ export default function DateRangePicker({
               font-weight: 800;
               border-radius: 10px;
             }
-            .rdp-range_middle .rdp-day_button {
-              background: rgba(255,255,255,0.15) !important;
-              color: white !important;
+            .rdp-range_middle .rdp-day_button,
+            .rdp-selected.rdp-range_middle .rdp-day_button {
+              background: rgba(255,255,255,0.18) !important;
+              color: #ffffff !important;
+              font-weight: 700;
               border-radius: 0 !important;
             }
-            .rdp-range_start .rdp-day_button {
+            .rdp-range_start .rdp-day_button,
+            .rdp-selected.rdp-range_start .rdp-day_button {
               background: white !important;
               color: black !important;
               border-radius: 10px 0 0 10px !important;
               font-weight: 800;
             }
-            .rdp-range_end .rdp-day_button {
+            .rdp-range_end .rdp-day_button,
+            .rdp-selected.rdp-range_end .rdp-day_button {
               background: white !important;
               color: black !important;
               border-radius: 0 10px 10px 0 !important;
@@ -227,16 +242,16 @@ export default function DateRangePicker({
               border-radius: 10px !important;
             }
             .rdp-day[aria-disabled="true"] .rdp-day_button {
-              color: rgba(255,255,255,0.2);
+              color: rgba(255,255,255,0.25);
               text-decoration: line-through;
               cursor: not-allowed;
             }
             .rdp-today:not(.rdp-selected) .rdp-day_button {
               color: white;
-              border: 1px solid rgba(255,255,255,0.2);
+              border: 1px solid rgba(255,255,255,0.3);
             }
             .rdp-nav button {
-              color: rgba(255,255,255,0.3);
+              color: rgba(255,255,255,0.4);
               background: none;
               border: none;
               width: 28px;
@@ -249,7 +264,7 @@ export default function DateRangePicker({
             }
             .rdp-nav button:hover {
               color: white;
-              background: rgba(255,255,255,0.08);
+              background: rgba(255,255,255,0.1);
             }
             .rdp-outside .rdp-day_button { opacity: 0; pointer-events: none; }
           `}</style>
