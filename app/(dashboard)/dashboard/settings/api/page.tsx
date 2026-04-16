@@ -1,6 +1,9 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import { getFeatureFlags } from '@/lib/supabase/feature-flags'
 import PageHeader from '@/components/dashboard/PageHeader'
+import { listWebhookEndpoints, listDeliveries } from './actions'
+import WebhookEndpointsList from './WebhookEndpointsList'
+import DeliveryLog from './DeliveryLog'
 
 export default async function APIPage() {
   const { tenantId } = await requireTenantId()
@@ -9,6 +12,9 @@ export default async function APIPage() {
 
   const apiEnabled = flags['api_access']
   const webhooksEnabled = flags['webhooks']
+
+  const endpoints = await listWebhookEndpoints()
+  const deliveries = await listDeliveries()
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 animate-fade-in pb-32">
@@ -86,61 +92,12 @@ export default async function APIPage() {
       </div>
 
       {/* Webhooks */}
-      <div className={`glass border rounded-3xl p-8 relative overflow-hidden ${webhooksEnabled ? 'border-white/10' : 'border-white/[0.04]'}`}>
-        {!webhooksEnabled && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
-            <div className="text-center">
-              <div className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest inline-block mb-3">
-                Feature Not Enabled
-              </div>
-              <p className="text-white/40 text-sm max-w-xs">Webhooks are not enabled for your organization. Contact your administrator.</p>
-            </div>
-          </div>
-        )}
+      <WebhookEndpointsList initialEndpoints={endpoints} webhooksEnabled={webhooksEnabled} />
 
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 01-3.46 0" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-white font-bold">Webhooks</h3>
-              <p className="text-white/30 text-xs">Receive real-time notifications for fleet events</p>
-            </div>
-          </div>
-          <button className="bg-white text-black px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-white/90 transition-all">
-            Add Endpoint
-          </button>
-        </div>
-
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-            <svg className="w-6 h-6 text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            </svg>
-          </div>
-          <p className="text-white/30 text-sm">No webhook endpoints configured.</p>
-          <p className="text-white/20 text-xs mt-1">Add an endpoint to receive booking, payment, and fleet events.</p>
-        </div>
-
-        <div className="mt-4">
-          <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-3">Available Events</div>
-          <div className="flex flex-wrap gap-2">
-            {[
-              'booking.created', 'booking.updated', 'booking.cancelled',
-              'payment.received', 'vehicle.status_changed', 'maintenance.due',
-              'team.member_added', 'customer.created',
-            ].map((evt) => (
-              <span key={evt} className="text-[10px] px-2.5 py-1 rounded-full bg-white/5 text-white/30 border border-white/5 font-mono">
-                {evt}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Delivery Log */}
+      {webhooksEnabled && endpoints.length > 0 && (
+        <DeliveryLog initialDeliveries={deliveries} />
+      )}
 
       {/* API Documentation Link */}
       <div className="glass border border-white/[0.06] rounded-3xl p-8 text-center">
