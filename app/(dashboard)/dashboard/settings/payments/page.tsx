@@ -1,4 +1,5 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
+import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
 import PageHeader from '@/components/dashboard/PageHeader'
 import { getConnectAccountStatus, getRecentPayments } from './actions'
 import ConnectButton from './ConnectButton'
@@ -21,6 +22,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
   const status = await getConnectAccountStatus()
   const payments = status.chargesEnabled ? await getRecentPayments() : []
   const justConnected = params.connected === 'true'
+  const squareEnabled = await isFeatureEnabled(tenantId, 'square_payments')
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 animate-fade-in pb-32">
@@ -35,7 +37,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
         </div>
       )}
 
-      {params.square_connected === 'true' && (
+      {squareEnabled && params.square_connected === 'true' && (
         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm px-5 py-4 rounded-2xl flex items-center gap-3">
           <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -115,7 +117,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
       </div>
 
       {/* Square Integration */}
-      <div className="glass border border-white/10 rounded-3xl p-8 lg:p-10 relative overflow-hidden group">
+      {squareEnabled && <div className="glass border border-white/10 rounded-3xl p-8 lg:p-10 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-emerald-500/10 transition-all duration-700" />
 
         <div className="relative z-10">
@@ -158,10 +160,10 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
             />
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Payment Processor Toggle */}
-      {status.chargesEnabled && tenant?.square_merchant_id && (
+      {squareEnabled && status.chargesEnabled && tenant?.square_merchant_id && (
         <div className="glass border border-white/10 rounded-3xl p-8 lg:p-10">
           <PaymentProcessorToggle
             current={tenant?.payment_processor || 'stripe'}
