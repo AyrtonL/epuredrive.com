@@ -1,5 +1,5 @@
 'use client'
-import { useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import type { Car } from '@/lib/supabase/types'
 
@@ -15,11 +15,13 @@ function resolveImageUrl(url: string | null): string {
 }
 
 export default function FleetPreview({ cars, slug }: Props) {
-  // On subdomain routing the browser path starts at "/", not "/sites/slug"
-  const base = useMemo(() => {
-    if (typeof window === 'undefined') return `/sites/${slug}`
-    return window.location.pathname.startsWith('/sites/') ? `/sites/${slug}` : ''
-  }, [])
+  const [base, setBase] = useState('')
+
+  useEffect(() => {
+    if (window.location.pathname.startsWith('/sites/')) {
+      setBase(`/sites/${slug}`)
+    }
+  }, [slug])
   const featured = cars.slice(0, 6)
 
   if (featured.length === 0) return null

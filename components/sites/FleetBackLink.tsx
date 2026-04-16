@@ -1,12 +1,19 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+
 interface Props {
   slug: string
 }
 
 export default function FleetBackLink({ slug }: Props) {
-  const onDirectPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/sites/')
-  const href = onDirectPath ? `/sites/${slug}` : '/'
+  const [href, setHref] = useState('/')
+
+  useEffect(() => {
+    if (window.location.pathname.startsWith('/sites/')) {
+      setHref(`/sites/${slug}`)
+    }
+  }, [slug])
 
   return (
     <a
