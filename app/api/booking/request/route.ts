@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email/resend'
+import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 
 const rateLimitStore = new Map<string, number[]>()
 
@@ -146,6 +147,17 @@ export async function POST(request: NextRequest) {
       html: buildTenantEmail({ customerName, customerEmail, vehicleName, tenantName, pickupDate, returnDate, pickupTime, returnTime, pickupLocation, total, reservationId }),
     }).catch((err) => console.error('[booking] tenant email failed:', err))
   }
+
+  dispatchWebhookEvent(data.tenant_id as string, 'booking.created', {
+    reservation_id: reservationId,
+    car_id: data.car_id,
+    customer_name: customerName,
+    customer_email: customerEmail,
+    pickup_date: pickupDate,
+    return_date: returnDate,
+    total_amount: data.total_amount ?? null,
+    source: 'website',
+  }).catch((err) => console.error('[booking] webhook dispatch failed:', err))
 
   return NextResponse.json({ success: true, reservationId })
 }

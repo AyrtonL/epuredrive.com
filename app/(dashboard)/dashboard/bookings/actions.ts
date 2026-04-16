@@ -7,6 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import type { Reservation } from '@/lib/supabase/types'
 import { sendEmail } from '@/lib/email/resend'
+import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 import {
   newBookingEmail,
   bookingCancelledEmail,
@@ -93,6 +94,16 @@ export async function createReservation(
   revalidatePath('/dashboard/bookings')
 
   if (!error) {
+    dispatchWebhookEvent(tenantId, 'booking.created', {
+      reservation_id: null, // we don't have the ID from insert without .select()
+      car_id: data.car_id ?? null,
+      customer_name: data.customer_name ?? null,
+      customer_email: data.customer_email ?? null,
+      pickup_date: data.pickup_date ?? null,
+      return_date: data.return_date ?? null,
+      source: 'dashboard',
+    }).catch((err) => console.error('[bookings] webhook dispatch failed:', err))
+
     // Send notification email (fire-and-forget)
     Promise.resolve().then(async () => {
       try {
@@ -143,6 +154,13 @@ export async function updateReservation(
   revalidatePath('/dashboard/bookings')
 
   if (!error && data.status === 'cancelled' && prevReservation) {
+    dispatchWebhookEvent(tenantId, 'booking.cancelled', {
+      reservation_id: id,
+      car_id: prevReservation?.car_id ?? null,
+      customer_name: prevReservation?.customer_name ?? null,
+      customer_email: prevReservation?.customer_email ?? null,
+    }).catch((err) => console.error('[bookings] webhook dispatch failed:', err))
+
     Promise.resolve().then(async () => {
       try {
         const reservationTenantId = prevReservation!.tenant_id
@@ -185,6 +203,14 @@ export async function updateReservation(
 
   // Confirmed → notify customer
   if (!error && data.status === 'confirmed' && prevReservation?.customer_email) {
+    dispatchWebhookEvent(tenantId, 'booking.updated', {
+      reservation_id: id,
+      status: 'confirmed',
+      car_id: prevReservation?.car_id ?? null,
+      customer_name: prevReservation?.customer_name ?? null,
+      customer_email: prevReservation?.customer_email ?? null,
+    }).catch((err) => console.error('[bookings] webhook dispatch failed:', err))
+
     Promise.resolve().then(async () => {
       try {
         const [carName, brand] = await Promise.all([
@@ -214,6 +240,13 @@ export async function updateReservation(
 
   // Rejected → notify customer
   if (!error && data.status === 'rejected' && prevReservation?.customer_email) {
+    dispatchWebhookEvent(tenantId, 'booking.updated', {
+      reservation_id: id,
+      status: 'rejected',
+      car_id: prevReservation?.car_id ?? null,
+      customer_name: prevReservation?.customer_name ?? null,
+    }).catch((err) => console.error('[bookings] webhook dispatch failed:', err))
+
     Promise.resolve().then(async () => {
       try {
         const carName = await getCarName(supabase, prevReservation!.car_id ?? null)

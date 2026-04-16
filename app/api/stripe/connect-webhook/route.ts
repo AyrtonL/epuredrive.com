@@ -10,6 +10,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe'
 import crypto from 'crypto'
 import { sendEmail } from '@/lib/email/resend'
+import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 import {
   newBookingEmail,
   bookingConfirmedCustomerEmail,
@@ -144,6 +145,16 @@ export async function POST(request: Request) {
       console.error('[connect-webhook] Failed to create reservation:', insertError.message)
       return new Response('Reservation insert failed', { status: 500 })
     }
+
+    dispatchWebhookEvent(tenantId, 'payment.received', {
+      reservation_id: reservation.id,
+      car_id: carId,
+      amount: totalDollars,
+      currency: 'usd',
+      payment_intent: paymentIntentId,
+      customer_email: customerEmail,
+      customer_name: customerName,
+    }).catch((err) => console.error('[connect-webhook] webhook dispatch failed:', err))
 
     // ── Send emails (fire-and-forget) ──
 
