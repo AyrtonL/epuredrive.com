@@ -32,8 +32,6 @@ export default function DateRangePicker({
   const [open, setOpen] = useState(false)
   const [popupStyle, setPopupStyle] = useState<CSSProperties>({})
   const [mounted, setMounted] = useState(false)
-  // Tracks which field the user is actively setting: 'pick' or 'ret'
-  const [activeField, setActiveField] = useState<'pick' | 'ret'>('pick')
   const triggerRef = useRef<HTMLDivElement>(null)
   const popupRef = useRef<HTMLDivElement>(null)
 
@@ -79,21 +77,21 @@ export default function DateRangePicker({
         }
       : undefined
 
+  // Whether the user has picked the start date and is now choosing the end
+  const waitingForReturn = open && pickDate && !retDate
+
   function handleSelect(range: DateRange | undefined) {
     if (!range) {
       onPickDate('')
       onRetDate('')
-      setActiveField('pick')
       return
     }
     if (range.from) onPickDate(toStr(range.from))
     if (range.to) {
       onRetDate(toStr(range.to))
-      setActiveField('pick') // reset for next interaction
       setOpen(false) // close after full range selected
     } else {
       onRetDate('')
-      setActiveField('ret') // user just picked the start — now picking end
     }
   }
 
@@ -104,15 +102,8 @@ export default function DateRangePicker({
     })
   }
 
-  function openCalendar(field: 'pick' | 'ret') {
+  function toggleCalendar() {
     if (open) { setOpen(false); return }
-    // If user clicks Return and pickup is already set, go straight to return selection
-    if (field === 'ret' && pickDate && !retDate) {
-      setActiveField('ret')
-    } else if (field === 'pick') {
-      // Clicking pickup resets the range so user starts fresh
-      setActiveField('pick')
-    }
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect()
       setPopupStyle({
@@ -128,33 +119,34 @@ export default function DateRangePicker({
 
   return (
     <div className="relative" ref={triggerRef}>
-      {/* Trigger row */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => openCalendar('pick')}
-          className={`text-left bg-white/5 border rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none hover:border-white/10 transition-colors ${open && activeField === 'pick' ? 'border-primary/40 bg-primary/5' : 'border-white/5'}`}
-        >
-          <span className="block text-[9px] font-black text-white/30 uppercase tracking-widest mb-0.5">
-            Pickup
-          </span>
-          <span className={pickDate ? 'text-white' : 'text-white/25'}>
-            {formatDisplay(pickDate)}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => openCalendar('ret')}
-          className={`text-left bg-white/5 border rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none hover:border-white/10 transition-colors ${open && activeField === 'ret' ? 'border-primary/40 bg-primary/5' : 'border-white/5'}`}
-        >
-          <span className="block text-[9px] font-black text-white/30 uppercase tracking-widest mb-0.5">
-            Return
-          </span>
-          <span className={retDate ? 'text-white' : 'text-white/25'}>
-            {formatDisplay(retDate)}
-          </span>
-        </button>
-      </div>
+      {/* Single trigger — opens one calendar for both dates */}
+      <button
+        type="button"
+        onClick={toggleCalendar}
+        className={`w-full text-left bg-white/5 border rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none hover:border-white/10 transition-colors ${open ? 'border-primary/40 bg-primary/5' : 'border-white/5'}`}
+      >
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <div>
+            <span className={`block text-[9px] font-black uppercase tracking-widest mb-0.5 ${waitingForReturn ? 'text-white/20' : 'text-white/30'}`}>
+              Pickup
+            </span>
+            <span className={pickDate ? 'text-white' : 'text-white/25'}>
+              {formatDisplay(pickDate)}
+            </span>
+          </div>
+          <svg className="w-3.5 h-3.5 text-white/15 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+          <div className="text-right">
+            <span className={`block text-[9px] font-black uppercase tracking-widest mb-0.5 ${waitingForReturn ? 'text-primary/60' : 'text-white/30'}`}>
+              Return
+            </span>
+            <span className={retDate ? 'text-white' : waitingForReturn ? 'text-primary/40' : 'text-white/25'}>
+              {waitingForReturn ? 'Select...' : formatDisplay(retDate)}
+            </span>
+          </div>
+        </div>
+      </button>
 
       {/* Calendar popup — rendered via portal so it floats above all page content */}
       {open && mounted && createPortal(
@@ -264,7 +256,7 @@ export default function DateRangePicker({
           />
           <div className="border-t border-white/5 mt-1 pt-3 flex justify-between items-center">
             <span className={`text-[10px] uppercase tracking-widest font-bold ${pickDate && !retDate ? 'text-primary/60' : 'text-white/20'}`}>
-              {pickDate && retDate ? 'Range selected' : pickDate ? '← Now select return date' : '← Select pickup date'}
+              {pickDate && retDate ? 'Range selected' : pickDate ? 'Now tap return date' : 'Tap your pickup date'}
             </span>
             <button
               type="button"
