@@ -67,6 +67,35 @@ const sections = [
     ),
   },
   {
+    id: 'transaction-fees',
+    title: 'Transaction Fees',
+    content: (
+      <>
+        <p>When a Tenant accepts online payments from End Users through the Service via Stripe Connect, éPure charges a <strong className="text-white">transaction fee</strong> on each successful payment. This fee is automatically deducted from the payment before the remaining amount is deposited into the Tenant&apos;s connected Stripe account.</p>
+        <p>Transaction fee rates vary by Subscription plan:</p>
+        <div className="glass rounded-xl p-4 mt-2 mb-2">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[10px] uppercase tracking-widest text-white/40 font-bold">
+                <th className="text-left pb-2">Plan</th>
+                <th className="text-right pb-2">Transaction Fee</th>
+              </tr>
+            </thead>
+            <tbody className="text-charcoal">
+              <tr className="border-t border-white/[0.06]"><td className="py-2 text-white font-medium">Free / Starter</td><td className="py-2 text-right">8%</td></tr>
+              <tr className="border-t border-white/[0.06]"><td className="py-2 text-white font-medium">Pro</td><td className="py-2 text-right">5%</td></tr>
+              <tr className="border-t border-white/[0.06]"><td className="py-2 text-white font-medium">Max</td><td className="py-2 text-right">2%</td></tr>
+              <tr className="border-t border-white/[0.06]"><td className="py-2 text-white font-medium">Enterprise</td><td className="py-2 text-right">Custom</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Transaction fees are in addition to any fees charged by Stripe for payment processing (typically 2.9% + $0.30 per transaction). Stripe&apos;s processing fees are deducted separately by Stripe and are subject to Stripe&apos;s own terms.</p>
+        <p>éPure reserves the right to adjust transaction fee rates with at least <strong className="text-white">30 days&apos; notice</strong>. Upgrading your plan takes effect immediately, and the lower transaction fee rate applies to all payments processed after the upgrade.</p>
+        <p>Tenants who do not use the integrated online payment system (for example, those who collect payments directly outside the Service) are not subject to transaction fees.</p>
+      </>
+    ),
+  },
+  {
     id: 'tenant',
     title: 'Tenant Responsibilities',
     content: (

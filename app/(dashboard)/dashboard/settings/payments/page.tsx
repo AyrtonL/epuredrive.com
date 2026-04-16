@@ -1,18 +1,23 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
-import { getConnectAccountStatus } from './actions'
+import { getConnectAccountStatus, getRecentPayments } from './actions'
 import ConnectButton from './ConnectButton'
 import RentalFeesForm from './RentalFeesForm'
+import RecentPayments from './RecentPayments'
 
 export default async function PaymentsPage({ searchParams }: { searchParams: Promise<{ connected?: string }> }) {
   const { supabase, tenantId } = await requireTenantId()
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('fuel_charge_per_level')
+    .select('fuel_charge_per_level, plan')
     .eq('id', tenantId)
     .single()
+
+  const plan = tenant?.plan || 'free'
+  const feeRate = ['max', 'enterprise'].includes(plan) ? 2 : plan === 'pro' ? 5 : 8
   const params = await searchParams
   const status = await getConnectAccountStatus()
+  const payments = status.chargesEnabled ? await getRecentPayments() : []
   const justConnected = params.connected === 'true'
 
   return (
@@ -98,15 +103,66 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
         </div>
       </div>
 
-      {/* Invoices Placeholder */}
-      <div className="glass border border-white/[0.06] rounded-3xl p-8">
-        <h3 className="text-white font-bold mb-4">Recent Invoices</h3>
-        <p className="text-white/30 text-sm">
-          {status.chargesEnabled
-            ? 'No invoices yet. Invoices will appear here once customers make payments.'
-            : 'Connect your Stripe account to start accepting payments and generating invoices.'}
-        </p>
-      </div>
+      {/* Transaction Fee Info */}
+      {status.chargesEnabled && (
+        <div className="glass border border-white/[0.06] rounded-3xl p-8 lg:p-10">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 rounded-xl bg-violet-500/10 text-violet-400">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-white font-black italic tracking-tight uppercase">Transaction Fee</h3>
+              <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Per Online Payment</p>
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/5 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-white font-bold text-2xl">{feeRate}%</p>
+                <p className="text-white/40 text-xs mt-0.5">Your current rate ({plan.charAt(0).toUpperCase() + plan.slice(1)} plan)</p>
+              </div>
+              {feeRate > 2 && (
+                <a href="/dashboard/settings/billing"
+                  className="px-4 py-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 text-[10px] font-bold uppercase tracking-widest hover:bg-violet-500/20 transition-colors">
+                  Upgrade to lower fee
+                </a>
+              )}
+            </div>
+
+            <div className="space-y-2 pt-4 border-t border-white/5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-white/40">Free / Starter</span>
+                <span className={plan === 'free' || plan === 'starter' ? 'text-white font-bold' : 'text-white/40'}>8%</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-white/40">Pro</span>
+                <span className={plan === 'pro' ? 'text-white font-bold' : 'text-white/40'}>5%</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-white/40">Max</span>
+                <span className={plan === 'max' ? 'text-white font-bold' : 'text-white/40'}>2%</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-white/40">Enterprise</span>
+                <span className={plan === 'enterprise' ? 'text-white font-bold' : 'text-white/40'}>Custom</span>
+              </div>
+            </div>
+
+            <p className="text-white/30 text-[11px] mt-4 leading-relaxed">
+              This fee is automatically deducted from each online payment before funds are deposited to your Stripe account.
+              Stripe&apos;s own processing fee (2.9% + $0.30) applies separately.
+              See our <a href="/terms#transaction-fees" className="text-violet-400 hover:text-violet-300 underline underline-offset-2">Terms of Service</a> for details.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Recent Payments */}
+      <RecentPayments payments={payments} chargesEnabled={status.chargesEnabled} />
 
       {/* Rental Fees */}
       <div className="glass border border-white/10 rounded-3xl p-8 lg:p-10">

@@ -80,3 +80,55 @@ export async function getConnectAccountStatus(): Promise<{
     detailsSubmitted: account.details_submitted ?? false,
   }
 }
+
+export interface RecentPayment {
+  id: string
+  amount: number
+  fee: number
+  net: number
+  currency: string
+  status: string
+  customerEmail: string | null
+  description: string | null
+  created: number
+}
+
+export async function getRecentPayments(): Promise<RecentPayment[]> {
+  const stripe = getStripe()
+  if (!stripe) return []
+
+  const { supabase, tenantId } = await requireTenantId()
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('stripe_account_id')
+    .eq('id', tenantId)
+    .single()
+
+  if (!tenant?.stripe_account_id) return []
+
+  try {
+    const charges = await stripe.charges.list(
+      { limit: 20, expand: ['data.balance_transaction'] },
+      { stripeAccount: tenant.stripe_account_id }
+    )
+
+    return charges.data.map(charge => {
+      const bt = charge.balance_transaction as { fee?: number; net?: number } | null
+      return {
+        id: charge.id,
+        amount: charge.amount,
+        fee: bt?.fee ?? 0,
+        net: bt?.net ?? charge.amount,
+        currency: charge.currency,
+        status: charge.status,
+        customerEmail: charge.receipt_email ?? charge.billing_details?.email ?? null,
+        description: charge.description ?? null,
+        created: charge.created,
+      }
+    })
+  } catch (err) {
+    console.error('[payments] Failed to fetch charges:', err)
+    return []
+  }
+}

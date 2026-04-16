@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, brand_name, stripe_account_id, slug')
+    .select('id, name, brand_name, stripe_account_id, slug, plan')
     .eq('id', tenantId)
     .single()
 
@@ -71,6 +71,11 @@ export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const carName = `${car.make} ${car.model}`
   const tenantName = tenant.brand_name || tenant.name
+
+  // Platform transaction fee by plan tier
+  const plan = tenant.plan || 'free'
+  const feeRate = ['max', 'enterprise'].includes(plan) ? 0.02 : plan === 'pro' ? 0.05 : 0.08
+  const applicationFeeCents = Math.round(totalCents * feeRate)
 
   const session = await stripe.checkout.sessions.create(
     {
@@ -89,6 +94,9 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
+      payment_intent_data: {
+        application_fee_amount: applicationFeeCents,
+      },
       customer_email: customerEmail,
       metadata: {
         tenant_id: tenantId,

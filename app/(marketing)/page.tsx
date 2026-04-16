@@ -246,7 +246,8 @@ export default function HomePage() {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">$0</span>
               </div>
-              <div className="text-charcoal text-sm mb-8">forever</div>
+              <div className="text-charcoal text-sm mb-1">forever</div>
+              <div className="text-charcoal/60 text-[11px] mb-8">8% transaction fee on online payments</div>
 
               <ul className="space-y-3 text-sm text-grey mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
@@ -297,7 +298,8 @@ export default function HomePage() {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">$49</span>
               </div>
-              <div className="text-charcoal text-sm mb-8">/ month + taxes</div>
+              <div className="text-charcoal text-sm mb-1">/ month + taxes</div>
+              <div className="text-charcoal/60 text-[11px] mb-8">5% transaction fee on online payments</div>
 
               <ul className="space-y-3 text-sm text-grey mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
@@ -345,7 +347,8 @@ export default function HomePage() {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">$99</span>
               </div>
-              <div className="text-charcoal text-sm mb-8">/ month + taxes</div>
+              <div className="text-charcoal text-sm mb-1">/ month + taxes</div>
+              <div className="text-amber-400/40 text-[11px] mb-8">2% transaction fee on online payments</div>
 
               <ul className="space-y-3 text-sm text-grey mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
@@ -392,7 +395,8 @@ export default function HomePage() {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">Custom</span>
               </div>
-              <div className="text-charcoal text-sm mb-8">tailored pricing + taxes</div>
+              <div className="text-charcoal text-sm mb-1">tailored pricing + taxes</div>
+              <div className="text-charcoal/60 text-[11px] mb-8">Custom transaction fee</div>
 
               <ul className="space-y-3 text-sm text-grey mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
