@@ -92,9 +92,11 @@ export default function DateRangePicker({
       return
     }
     if (range.from) onPickDate(toStr(range.from))
-    if (range.to) {
+    // react-day-picker v9 may return from===to on first click (single-day "range")
+    const sameDay = range.from && range.to && toStr(range.from) === toStr(range.to)
+    if (range.to && !sameDay) {
       onRetDate(toStr(range.to))
-      setOpen(false) // close after full range selected
+      setOpen(false) // close only after a real range is selected
     } else {
       onRetDate('')
     }
@@ -164,7 +166,7 @@ export default function DateRangePicker({
               --rdp-range_start-color: white;
               --rdp-range_end-color: white;
               --rdp-selected-color: black;
-              color: rgba(255,255,255,0.75);
+              color: rgba(255,255,255,0.9);
               font-size: 0.8rem;
             }
             .rdp-root * { box-sizing: border-box; }
@@ -205,8 +207,8 @@ export default function DateRangePicker({
               border-radius: 10px;
             }
             .rdp-range_middle .rdp-day_button {
-              background: rgba(255,255,255,0.07) !important;
-              color: rgba(255,255,255,0.85) !important;
+              background: rgba(255,255,255,0.15) !important;
+              color: white !important;
               border-radius: 0 !important;
             }
             .rdp-range_start .rdp-day_button {
@@ -225,7 +227,7 @@ export default function DateRangePicker({
               border-radius: 10px !important;
             }
             .rdp-day[aria-disabled="true"] .rdp-day_button {
-              color: rgba(255,255,255,0.12);
+              color: rgba(255,255,255,0.2);
               text-decoration: line-through;
               cursor: not-allowed;
             }
