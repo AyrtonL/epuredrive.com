@@ -1,4 +1,5 @@
 // components/CarCard.tsx
+import Image from 'next/image'
 import type { Car } from '@/lib/supabase/types'
 
 interface Props {
@@ -19,11 +20,13 @@ export default function CarCard({ car, slug }: Props) {
       href={`/sites/${slug}/${car.id}`}
       className="group block bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all hover:-translate-y-1"
     >
-      <div className="aspect-[16/9] overflow-hidden bg-white/5">
-        <img
+      <div className="aspect-[16/9] overflow-hidden bg-white/5 relative">
+        <Image
           src={resolveImageUrl(car.image_url)}
           alt={`${car.make} ${car.model}`}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
       </div>
       <div className="p-5">

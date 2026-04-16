@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import type { Tenant, PickupLocation } from '@/lib/supabase/types'
 import QuickSearchBar from './QuickSearchBar'
 
@@ -19,10 +20,13 @@ export default function HeroSection({ tenant, carCount, slug, locations }: Props
     <section className="relative min-h-screen flex items-center justify-center">
       {/* Background image + overlays — clipped independently so the calendar popup can escape */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <img
+        <Image
           src={bgImage}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
         />
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#040404]/75 via-[#040404]/55 to-[#040404]" />

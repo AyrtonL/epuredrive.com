@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Image from 'next/image'
 import type { Car, PickupLocation } from '@/lib/supabase/types'
 import BookingWidget from './BookingWidget'
 
@@ -35,10 +36,13 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, wh
            {/* Overlays */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/car:opacity-100 transition-opacity duration-1000 pointer-events-none" />
           
-          <img
+          <Image
             src={resolveImageUrl(gallery[activeIndex] ?? null)}
             alt={`${car.make} ${car.model}`}
-            className="w-full h-full object-cover transition-transform duration-2000 group-hover/car:scale-110"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover transition-transform duration-2000 group-hover/car:scale-110"
           />
 
           {/* Floating Specs Overlay (Mobile & Desktop) */}
@@ -74,11 +78,11 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, wh
               <button
                 key={i}
                 onClick={() => setActiveIndex(i)}
-                className={`flex-shrink-0 w-28 aspect-[4/3] rounded-2xl overflow-hidden bg-white/5 border transition-all duration-500 hover:scale-105 active:scale-95 ${
+                className={`relative flex-shrink-0 w-28 aspect-[4/3] rounded-2xl overflow-hidden bg-white/5 border transition-all duration-500 hover:scale-105 active:scale-95 ${
                   activeIndex === i ? 'border-primary shadow-lg shadow-primary/20 scale-110' : 'border-white/5 opacity-30 hover:opacity-100'
                 }`}
               >
-                <img src={resolveImageUrl(img)} alt="" className="w-full h-full object-cover" />
+                <Image src={resolveImageUrl(img)} alt="" fill sizes="112px" className="object-cover" />
               </button>
             ))}
           </div>

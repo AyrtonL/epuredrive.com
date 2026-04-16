@@ -40,6 +40,8 @@ export async function POST(request: Request) {
     'metadata[priceId]': priceId,
     'subscription_data[metadata][tenantId]': tenantId,
     'subscription_data[metadata][priceId]': priceId,
+    'automatic_tax[enabled]': 'true',
+    'tax_id_collection[enabled]': 'true',
   })
   if (email) params.set('customer_email', email)
 

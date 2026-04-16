@@ -5,12 +5,12 @@ import Image from 'next/image'
 export const metadata: Metadata = {
   title: 'Features — Car Rental Management Software | éPure Drive',
   description:
-    'Fleet management, online bookings, branded fleet pages, digital agreements, Stripe payments, team roles, and financial reporting — all in one platform for car rental businesses.',
+    'Fleet management, online bookings, branded fleet pages, digital agreements, Stripe & Square payments, QuickBooks sync, tax management, team roles, and financial reporting — all in one platform for car rental businesses.',
   alternates: { canonical: 'https://epuredrive.com/features' },
   openGraph: {
     title: 'Features — Car Rental Management Software | éPure Drive',
     description:
-      'Everything car rental operators need to manage their fleet, accept bookings, and grow their business.',
+      'Everything car rental operators need to manage their fleet, accept bookings, track finances, and grow their business.',
     url: 'https://epuredrive.com/features',
   },
 }
@@ -50,7 +50,7 @@ const HERO_FEATURES = [
       </svg>
     ),
     title: 'Online Payments',
-    description: 'Accept payments via Stripe Checkout. Customers pay securely — you get paid directly to your Stripe account.',
+    description: 'Accept payments via Stripe or Square. Choose your processor, customers pay securely — you get paid directly.',
   },
   {
     icon: (
@@ -98,10 +98,12 @@ const DETAILED_SECTIONS = [
       { name: 'Fleet Performance', detail: 'Per-car utilization rate, idle days, miles driven, and revenue with color-coded indicators.' },
       { name: 'Fuel Tracking', detail: 'Record fuel levels at pickup and return. Auto-detect discrepancies and suggest charges.' },
       { name: 'ROI Dashboard', detail: 'See which vehicles earn the most and which are underperforming — data-driven fleet decisions.' },
-      { name: 'Stripe Integration', detail: 'All payments flow through Stripe. View transaction history and manage payouts.' },
+      { name: 'Tax Management', detail: 'Configure tax rates, filter by date range, view quarterly tax reports, and export to CSV.' },
+      { name: 'Payments (Stripe + Square)', detail: 'Choose your payment processor. View transaction history and manage payouts from either platform.' },
+      { name: 'QuickBooks Sync', detail: 'Connect QuickBooks Online to automatically sync transactions and keep your books up to date.' },
     ],
-    screenshot: '/assets/screenshots/site-fleet.png',
-    alt: 'Financial reports and fleet performance dashboard',
+    screenshot: '/assets/screenshots/dash-taxes.png',
+    alt: 'Financial reports, tax management, and fleet performance dashboard',
   },
   {
     badge: 'Customer Experience',
@@ -251,6 +253,8 @@ export default function FeaturesPage() {
           <div className="flex flex-wrap items-center justify-center gap-4">
             {[
               { name: 'Stripe', desc: 'Payments & payouts' },
+              { name: 'Square', desc: 'Payments & POS' },
+              { name: 'QuickBooks', desc: 'Accounting sync' },
               { name: 'WhatsApp', desc: 'Customer messaging' },
               { name: 'Turo', desc: 'Booking sync' },
               { name: 'iCal', desc: 'Calendar sync' },

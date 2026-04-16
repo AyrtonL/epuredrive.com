@@ -126,7 +126,7 @@ export default function HomePage() {
             Works with the tools you already use
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            {['Turo', 'Stripe', 'iCal', 'Google Calendar', 'WhatsApp'].map((name) => (
+            {['Turo', 'Stripe', 'Square', 'QuickBooks', 'iCal', 'Google Calendar', 'WhatsApp'].map((name) => (
               <span
                 key={name}
                 className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-full px-4 py-1.5 text-sm font-medium text-charcoal hover:text-silver hover:border-white/[0.14] hover:bg-white/[0.07] transition-all cursor-default select-none"
@@ -320,7 +320,12 @@ export default function HomePage() {
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Stripe payments
+                  </span> Online payments (Stripe + Square)
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  </span> Tax management & reports
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
@@ -369,12 +374,12 @@ export default function HomePage() {
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> API access
+                  </span> QuickBooks sync
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Priority help & assistance
+                  </span> API access & priority support
                 </li>
               </ul>
 
@@ -422,7 +427,7 @@ export default function HomePage() {
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Dedicated account manager
+                  </span> QuickBooks + dedicated account manager
                 </li>
               </ul>
 

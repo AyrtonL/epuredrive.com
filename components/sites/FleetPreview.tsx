@@ -1,5 +1,6 @@
 'use client'
 import { useMemo } from 'react'
+import Image from 'next/image'
 import type { Car } from '@/lib/supabase/types'
 
 interface Props {
@@ -54,11 +55,13 @@ export default function FleetPreview({ cars, slug }: Props) {
             style={{ animation: `fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards ${i * 0.1}s`, opacity: 0 }}
           >
             {/* Image */}
-            <div className="aspect-[16/10] overflow-hidden">
-              <img
+            <div className="aspect-[16/10] overflow-hidden relative">
+              <Image
                 src={resolveImageUrl(car.image_url)}
                 alt={`${car.make} ${car.model}`}
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-1000 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#040404] via-[#040404]/40 to-transparent" />
             </div>
