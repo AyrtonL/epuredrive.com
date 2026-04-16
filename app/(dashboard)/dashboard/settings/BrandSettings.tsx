@@ -5,6 +5,7 @@ import { updateTenantBranding, uploadLogo, uploadHeroImage } from './actions'
 import type { PickupLocation, ExperiencePillar, HowItWorksStep } from '@/lib/supabase/types'
 import { DEFAULT_EXPERIENCE_PILLARS } from '@/lib/constants/experience-pillars'
 import { DEFAULT_HOW_IT_WORKS, HOW_IT_WORKS_TEMPLATES } from '@/lib/constants/how-it-works'
+import { LANDING_TEMPLATES } from '@/lib/constants/landing-templates'
 
 interface Props {
   tenant: {
@@ -31,6 +32,7 @@ const EMPTY_LOCATION: PickupLocation = { label: '', address: '', note: '', fee: 
 export default function BrandSettings({ tenant }: Props) {
   const [isPending, startTransition] = useTransition()
   const [msg, setMsg] = useState('')
+  const [confirmTemplate, setConfirmTemplate] = useState<string | null>(null)
 
   // Brand identity
   const [brandName, setBrandName] = useState(tenant?.brand_name || tenant?.name || '')
@@ -133,6 +135,65 @@ export default function BrandSettings({ tenant }: Props) {
           {msg}
         </div>
       )}
+
+      {/* ── Landing Page Templates ── */}
+      <div className="glass border border-white/10 rounded-3xl p-6 space-y-5">
+        <div>
+          <h3 className="text-white font-bold text-sm uppercase tracking-widest opacity-50">Landing Page Templates</h3>
+          <p className="text-white/30 text-xs mt-1">Quick-start your public site with a pre-built template. You can customize everything after applying.</p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {LANDING_TEMPLATES.map(tpl => (
+            <button
+              key={tpl.id}
+              type="button"
+              onClick={() => setConfirmTemplate(tpl.id)}
+              className={`text-left p-4 rounded-2xl border transition-all duration-300 ${
+                confirmTemplate === tpl.id
+                  ? 'border-white/30 bg-white/10'
+                  : 'border-white/[0.07] bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.05]'
+              }`}
+            >
+              <div className="text-xs font-black text-white uppercase tracking-widest mb-1">{tpl.label}</div>
+              <p className="text-[10px] text-white/30 leading-relaxed">{tpl.description}</p>
+            </button>
+          ))}
+        </div>
+
+        {confirmTemplate && (() => {
+          const tpl = LANDING_TEMPLATES.find(t => t.id === confirmTemplate)
+          if (!tpl) return null
+          return (
+            <div className="flex items-center gap-3 p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5">
+              <p className="text-xs text-amber-200/80 flex-1">
+                Apply <span className="font-bold">{tpl.label}</span>? This will overwrite your tagline, description, experience pillars, and how-it-works steps.
+              </p>
+              <button
+                type="button"
+                onClick={() => setConfirmTemplate(null)}
+                className="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white/70 transition-colors px-3 py-2"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTagline(tpl.tagline)
+                  setDescription(tpl.siteDescription)
+                  setPillars(tpl.pillars)
+                  setHowItWorks(tpl.howItWorks)
+                  setConfirmTemplate(null)
+                  setMsg(`"${tpl.label}" template applied. Review the fields below and hit Save when ready.`)
+                }}
+                className="bg-white text-black text-[10px] font-black uppercase tracking-widest px-5 py-2 rounded-xl hover:bg-white/90 transition-all"
+              >
+                Apply
+              </button>
+            </div>
+          )
+        })()}
+      </div>
 
       {/* ── Setup Checklist ── */}
       {!isComplete && (
