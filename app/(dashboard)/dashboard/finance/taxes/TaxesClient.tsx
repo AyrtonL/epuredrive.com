@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Transaction, TaxSetting } from '@/lib/supabase/types'
 
@@ -18,23 +18,20 @@ function pct(n: number) {
   return `${(n * 100).toFixed(2)}%`
 }
 
-function daysAgo(n: number) {
+function localToday() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function localDaysAgo(n: number) {
   const d = new Date()
   d.setDate(d.getDate() - n)
-  return d.toISOString().split('T')[0]
-}
-
-function today() {
-  return new Date().toISOString().split('T')[0]
-}
-
-function quarterLabel(q: number, year: number) {
-  return `Q${q} ${year}`
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 export default function TaxesClient({ transactions, taxSettings: initialSettings, tenantId }: Props) {
   const [dateFrom, setDateFrom] = useState(`${new Date().getFullYear()}-01-01`)
-  const [dateTo, setDateTo] = useState(today())
+  const [dateTo, setDateTo] = useState(localToday())
   const [settings, setSettings] = useState<TaxSetting[]>(initialSettings)
   const [showSettings, setShowSettings] = useState(false)
   const [editingRate, setEditingRate] = useState<TaxSetting | null>(null)
@@ -42,13 +39,14 @@ export default function TaxesClient({ transactions, taxSettings: initialSettings
   const [newRate, setNewRate] = useState('')
   const [newAppliesTo, setNewAppliesTo] = useState('all')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const presets = [
-    { label: 'This Year', from: `${new Date().getFullYear()}-01-01`, to: today() },
+  const presets = useMemo(() => [
+    { label: 'This Year', from: `${new Date().getFullYear()}-01-01`, to: localToday() },
     { label: 'Last Year', from: `${new Date().getFullYear() - 1}-01-01`, to: `${new Date().getFullYear() - 1}-12-31` },
-    { label: 'Last 90 days', from: daysAgo(90), to: today() },
-    { label: 'Last 30 days', from: daysAgo(30), to: today() },
-  ]
+    { label: 'Last 90 days', from: localDaysAgo(90), to: localToday() },
+    { label: 'Last 30 days', from: localDaysAgo(30), to: localToday() },
+  ], [])
 
   // Filter transactions by date range
   const filtered = useMemo(() => {
@@ -81,7 +79,7 @@ export default function TaxesClient({ transactions, taxSettings: initialSettings
   // Actual tax expenses recorded (transactions categorized as tax)
   const taxExpenses = useMemo(() => {
     return expenses.filter(r =>
-      activeRates.some(rate => (r.category ?? '').toLowerCase().includes(rate.name.toLowerCase()))
+      activeRates.some(rate => (r.category ?? '').toLowerCase() === rate.name.toLowerCase())
     )
   }, [expenses, activeRates])
   const totalTaxPaid = taxExpenses.reduce((s, r) => s + (Number(r.amount) || 0), 0)
@@ -100,7 +98,7 @@ export default function TaxesClient({ transactions, taxSettings: initialSettings
         entry.revenue += amt
       } else {
         entry.expenses += amt
-        if (activeRates.some(rate => (r.category ?? '').toLowerCase().includes(rate.name.toLowerCase()))) {
+        if (activeRates.some(rate => (r.category ?? '').toLowerCase() === rate.name.toLowerCase())) {
           entry.taxPaid += amt
         }
       }
@@ -126,7 +124,7 @@ export default function TaxesClient({ transactions, taxSettings: initialSettings
         entry.income += amt
       } else {
         entry.expenses += amt
-        if (activeRates.some(rate => (r.category ?? '').toLowerCase().includes(rate.name.toLowerCase()))) {
+        if (activeRates.some(rate => (r.category ?? '').toLowerCase() === rate.name.toLowerCase())) {
           entry.tax += amt
         }
       }
@@ -136,60 +134,97 @@ export default function TaxesClient({ transactions, taxSettings: initialSettings
   }, [filtered, activeRates])
 
   // ---- CRUD operations for tax settings ----
+  const clearError = useCallback(() => setError(null), [])
+
   async function addRate() {
     if (!newName.trim() || !newRate.trim()) return
     const rateVal = parseFloat(newRate) / 100
     if (isNaN(rateVal) || rateVal <= 0 || rateVal > 1) return
     setSaving(true)
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('tax_settings')
-      .insert({ tenant_id: tenantId, name: newName.trim(), rate: rateVal, applies_to: newAppliesTo })
-      .select()
-      .single()
-    if (!error && data) {
+    setError(null)
+    try {
+      const supabase = createClient()
+      const { data, error: dbError } = await supabase
+        .from('tax_settings')
+        .insert({ tenant_id: tenantId, name: newName.trim(), rate: rateVal, applies_to: newAppliesTo })
+        .select()
+        .single()
+      if (dbError) {
+        setError(`Failed to add tax rate: ${dbError.message}`)
+        return
+      }
       setSettings(prev => [...prev, data as TaxSetting])
       setNewName('')
       setNewRate('')
       setNewAppliesTo('all')
+    } catch {
+      setError('An unexpected error occurred while saving.')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   async function toggleRate(id: string, isActive: boolean) {
-    const supabase = createClient()
-    const { error } = await supabase
-      .from('tax_settings')
-      .update({ is_active: !isActive })
-      .eq('id', id)
-    if (!error) {
+    setError(null)
+    try {
+      const supabase = createClient()
+      const { error: dbError } = await supabase
+        .from('tax_settings')
+        .update({ is_active: !isActive })
+        .eq('id', id)
+      if (dbError) {
+        setError(`Failed to update tax rate: ${dbError.message}`)
+        return
+      }
       setSettings(prev => prev.map(s => s.id === id ? { ...s, is_active: !isActive } : s))
+    } catch {
+      setError('An unexpected error occurred.')
     }
   }
 
   async function deleteRate(id: string) {
-    const supabase = createClient()
-    const { error } = await supabase
-      .from('tax_settings')
-      .delete()
-      .eq('id', id)
-    if (!error) {
+    setError(null)
+    try {
+      const supabase = createClient()
+      const { error: dbError } = await supabase
+        .from('tax_settings')
+        .delete()
+        .eq('id', id)
+      if (dbError) {
+        setError(`Failed to delete tax rate: ${dbError.message}`)
+        return
+      }
       setSettings(prev => prev.filter(s => s.id !== id))
+    } catch {
+      setError('An unexpected error occurred.')
     }
   }
 
   async function updateRate(setting: TaxSetting) {
-    setSaving(true)
-    const supabase = createClient()
-    const { error } = await supabase
-      .from('tax_settings')
-      .update({ name: setting.name, rate: setting.rate, applies_to: setting.applies_to })
-      .eq('id', setting.id)
-    if (!error) {
-      setSettings(prev => prev.map(s => s.id === setting.id ? setting : s))
-      setEditingRate(null)
+    const rate = Number(setting.rate)
+    if (!setting.name.trim() || isNaN(rate) || rate <= 0 || rate > 1) {
+      setError('Invalid rate: name is required and rate must be between 0% and 100%.')
+      return
     }
-    setSaving(false)
+    setSaving(true)
+    setError(null)
+    try {
+      const supabase = createClient()
+      const { error: dbError } = await supabase
+        .from('tax_settings')
+        .update({ name: setting.name.trim(), rate, applies_to: setting.applies_to })
+        .eq('id', setting.id)
+      if (dbError) {
+        setError(`Failed to update tax rate: ${dbError.message}`)
+        return
+      }
+      setSettings(prev => prev.map(s => s.id === setting.id ? { ...setting, name: setting.name.trim(), rate } : s))
+      setEditingRate(null)
+    } catch {
+      setError('An unexpected error occurred while saving.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   // CSV Export
@@ -206,14 +241,24 @@ export default function TaxesClient({ transactions, taxSettings: initialSettings
       .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
       .join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
+    a.href = url
     a.download = `tax-report-${dateFrom}_to_${dateTo}.csv`
     a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   return (
     <div className="space-y-6 pb-12">
+
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+          <p className="text-red-400 text-sm">{error}</p>
+          <button onClick={clearError} className="text-red-400/60 hover:text-red-400 text-xs font-bold ml-4">Dismiss</button>
+        </div>
+      )}
 
       {/* Date Range Controls */}
       <div className="glass border border-white/10 rounded-3xl p-6">
@@ -313,7 +358,7 @@ export default function TaxesClient({ transactions, taxSettings: initialSettings
                   const diff = data.taxPaid - data.estimated
                   return (
                     <tr key={key} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3 px-3 text-white/70 font-bold">{key.replace('-', ' ')}</td>
+                      <td className="py-3 px-3 text-white/70 font-bold">{key.replaceAll('-', ' ')}</td>
                       <td className="py-3 px-3 text-right text-emerald-400">{fmt(data.revenue)}</td>
                       <td className="py-3 px-3 text-right text-red-400">{fmt(data.expenses)}</td>
                       <td className="py-3 px-3 text-right text-amber-400">{fmt(data.taxPaid)}</td>
