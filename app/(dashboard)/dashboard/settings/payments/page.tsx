@@ -2,14 +2,16 @@ import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import { getConnectAccountStatus, getRecentPayments } from './actions'
 import ConnectButton from './ConnectButton'
+import SquareConnectButton from './SquareConnectButton'
+import PaymentProcessorToggle from './PaymentProcessorToggle'
 import RentalFeesForm from './RentalFeesForm'
 import RecentPayments from './RecentPayments'
 
-export default async function PaymentsPage({ searchParams }: { searchParams: Promise<{ connected?: string }> }) {
+export default async function PaymentsPage({ searchParams }: { searchParams: Promise<{ connected?: string; square_connected?: string; error?: string }> }) {
   const { supabase, tenantId } = await requireTenantId()
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('fuel_charge_per_level, plan')
+    .select('fuel_charge_per_level, plan, square_merchant_id, square_location_id, payment_processor, stripe_account_id')
     .eq('id', tenantId)
     .single()
 
@@ -30,6 +32,15 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           Stripe account connected successfully. You can now accept online payments.
+        </div>
+      )}
+
+      {params.square_connected === 'true' && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm px-5 py-4 rounded-2xl flex items-center gap-3">
+          <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Square account connected successfully.
         </div>
       )}
 
@@ -102,6 +113,63 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
           </div>
         </div>
       </div>
+
+      {/* Square Integration */}
+      <div className="glass border border-white/10 rounded-3xl p-8 lg:p-10 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-emerald-500/10 transition-all duration-700" />
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 rounded-xl bg-white/5 text-white">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4.5 2A2.5 2.5 0 0 0 2 4.5v15A2.5 2.5 0 0 0 4.5 22h15a2.5 2.5 0 0 0 2.5-2.5v-15A2.5 2.5 0 0 0 19.5 2h-15Zm3 6h9a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-white font-black italic tracking-tight uppercase">Square Integration</h3>
+              <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">In-Person & Online Payments</p>
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/5 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-white">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M4.5 2A2.5 2.5 0 0 0 2 4.5v15A2.5 2.5 0 0 0 4.5 22h15a2.5 2.5 0 0 0 2.5-2.5v-15A2.5 2.5 0 0 0 19.5 2h-15Zm3 6h9a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-white font-bold text-sm">Square Connect</div>
+                {tenant?.square_merchant_id ? (
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="text-xs text-emerald-400 font-medium">Connected — accepting payments</span>
+                  </div>
+                ) : (
+                  <div className="text-xs text-white/40">Accept in-person and online payments via Square.</div>
+                )}
+              </div>
+            </div>
+
+            <SquareConnectButton
+              connected={!!tenant?.square_merchant_id}
+              merchantId={tenant?.square_merchant_id ?? null}
+              locationId={tenant?.square_location_id ?? null}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Processor Toggle */}
+      {status.chargesEnabled && tenant?.square_merchant_id && (
+        <div className="glass border border-white/10 rounded-3xl p-8 lg:p-10">
+          <PaymentProcessorToggle
+            current={tenant?.payment_processor || 'stripe'}
+            stripeConnected={status.chargesEnabled}
+            squareConnected={!!tenant?.square_merchant_id}
+          />
+        </div>
+      )}
 
       {/* Transaction Fee Info */}
       {status.chargesEnabled && (
