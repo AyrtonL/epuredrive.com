@@ -12,9 +12,9 @@ import {
 } from '@/lib/utils/jsonld'
 
 export const metadata: Metadata = {
-  title: 'éPure Drive — Premium Fleet Software for Car Rental Businesses',
+  title: 'éPure Drive — Fleet Management Software for Car Rental Businesses',
   description:
-    'A Miami-based SaaS platform built for the modern car rental industry. Streamline operations, elevate the customer journey.',
+    'Manage your fleet, accept online bookings, and launch a branded rental site — all from one dashboard. Free to start. Built for independent car rental operators.',
 }
 
 const SPLIT_FEATURES = [
@@ -26,8 +26,8 @@ const SPLIT_FEATURES = [
     ),
     title: 'Your branded fleet page,\nlive in minutes.',
     description:
-      'A premium public page showcasing your vehicles — with real-time availability, pricing, and your brand. No code, no developer, no waiting.',
-    bullets: ['Custom domain support', 'Live availability calendar', 'Auto-syncs with your inventory'],
+      'Launch a professional rental site showcasing your vehicles — with real-time availability, pricing, and your brand. No code, no developer, no waiting.',
+    bullets: ['Custom subdomain included', 'Live availability calendar', 'Auto-syncs with your inventory'],
     screenshot: '/assets/screenshots/site-fleet.png',
     alt: 'Tenant branded fleet site',
   },
@@ -78,14 +78,15 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-5xl sm:text-6xl md:text-8xl font-extrabold text-white leading-[1.0] mb-8 tracking-tight animate-fade-in-up">
-            Smart technology.
+            Your fleet. Online.
             <br />
-            <span className="text-gradient">Premium experience.</span>
+            <span className="text-gradient">In minutes.</span>
           </h1>
 
           <p className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto mb-14 animate-fade-in-up animation-delay-100 font-light leading-relaxed">
-            éPure Drive streamlines operations, elevates the customer journey,
-            and sets a new standard for how rental businesses are run.
+            The all-in-one platform for car rental operators. Manage your fleet,
+            accept bookings online, and give your customers a premium experience
+            — without the complexity.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-5 justify-center animate-fade-in-up animation-delay-200">
@@ -149,10 +150,10 @@ export default function HomePage() {
               <span className="text-[11px] font-bold tracking-[0.25em] text-white/40 uppercase">Platform</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-5 tracking-tight">
-              Your fleet. Your brand. Your numbers.
+              Fleet management, bookings,<br />and payments — one dashboard.
             </h2>
             <p className="text-lg text-white/40 font-light max-w-xl mx-auto">
-              One platform built end-to-end for rental operators.
+              Stop juggling spreadsheets, texts, and calendar apps. Run your rental business from one place.
             </p>
           </div>
 
@@ -449,11 +450,11 @@ export default function HomePage() {
                 <span className="text-[11px] font-bold tracking-[0.25em] text-white/50 uppercase">Ready to launch</span>
               </span>
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-                Ready to elevate your<br />rental business?
+                Launch your rental business<br />online today.
               </h2>
               <p className="text-white/40 mb-10 font-light text-lg max-w-lg mx-auto">
-                Join operators running their fleet on éPure Drive. Get started in 5
-                minutes — no credit card required.
+                Join rental operators who manage their fleet, bookings, and customers
+                on éPure Drive. Set up in 5 minutes — no credit card required.
               </p>
               <Link
                 href="/sign-up"

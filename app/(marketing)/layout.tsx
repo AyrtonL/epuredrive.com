@@ -11,7 +11,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
 
           <div className="flex items-center gap-6">
             <a
-              href="/#features"
+              href="/features"
               className="text-sm text-white/40 hover:text-white transition-colors hidden sm:block"
             >
               Features

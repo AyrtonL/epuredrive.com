@@ -22,9 +22,9 @@ export default function MarketingFooter() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <a href="/#features" className="text-sm text-white/35 hover:text-white transition-colors">
+                <Link href="/features" className="text-sm text-white/35 hover:text-white transition-colors">
                   Features
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="/#pricing" className="text-sm text-white/35 hover:text-white transition-colors">
