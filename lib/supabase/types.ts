@@ -185,3 +185,28 @@ export interface Profile {
   invited_by_user_id: string | null
   invite_accepted_notified_at: string | null
 }
+
+export interface WebhookEndpoint {
+  id: number
+  tenant_id: string
+  url: string
+  description: string | null
+  secret: string
+  events: string[]
+  active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface WebhookDelivery {
+  id: number
+  endpoint_id: number
+  tenant_id: string
+  event_type: string
+  payload: Record<string, unknown>
+  status_code: number | null
+  response_body: string | null
+  error_message: string | null
+  attempt: number
+  delivered_at: string
+}
