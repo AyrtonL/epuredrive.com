@@ -54,9 +54,17 @@ export async function POST(request: NextRequest) {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, brand_name, stripe_account_id, slug, plan')
+    .select('id, name, brand_name, stripe_account_id, slug, plan, payment_processor')
     .eq('id', tenantId)
     .single()
+
+  // Route to Square if that's the tenant's payment processor
+  if (tenant?.payment_processor === 'square') {
+    return NextResponse.json(
+      { error: 'This operator uses Square for payments', processor: 'square' },
+      { status: 422 }
+    )
+  }
 
   if (!tenant?.stripe_account_id) {
     return NextResponse.json({ error: 'Online payments are not available for this operator' }, { status: 400 })
@@ -97,6 +105,7 @@ export async function POST(request: NextRequest) {
       payment_intent_data: {
         application_fee_amount: applicationFeeCents,
       },
+      automatic_tax: { enabled: true },
       customer_email: customerEmail,
       metadata: {
         tenant_id: tenantId,
