@@ -10,6 +10,7 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  NPM_VERSION = "11"
   NPM_FLAGS = "--no-audit"
 
 [[plugins]]
