@@ -1,5 +1,6 @@
 // app/sites/[slug]/layout.tsx
 import type React from 'react'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Tenant } from '@/lib/supabase/types'
@@ -57,7 +58,7 @@ export default async function TenantLayout({ children, params }: Props) {
             <div className="flex items-center gap-4 group/logo cursor-pointer">
               <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover/logo:border-primary/50 transition-all duration-500">
                 {(tenant as Tenant).logo_url ? (
-                  <img src={(tenant as Tenant).logo_url!} alt={displayName} className="w-6 h-6 object-contain" />
+                  <Image src={(tenant as Tenant).logo_url!} alt={displayName} width={24} height={24} className="w-6 h-6 object-contain" />
                 ) : (
                   <span className="font-outfit font-black text-xl text-primary tracking-tighter">É</span>
                 )}

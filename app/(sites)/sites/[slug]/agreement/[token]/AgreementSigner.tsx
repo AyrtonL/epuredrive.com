@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import SignatureCanvas from 'react-signature-canvas'
 import AgreementDocument, {
   type AgreementCar,
@@ -251,7 +252,7 @@ export default function AgreementSigner({
         {/* ── Banner ── */}
         <div className="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-4 border-l-4" style={{ borderColor: accentColor }}>
           {tenant.logo_url && (
-            <img src={tenant.logo_url} alt={tenantName} className="h-10 object-contain" />
+            <Image src={tenant.logo_url} alt={tenantName} width={100} height={40} className="h-10 w-auto object-contain" />
           )}
           <div>
             <h1 className="font-bold text-gray-900">{tenantName} — Rental Agreement</h1>

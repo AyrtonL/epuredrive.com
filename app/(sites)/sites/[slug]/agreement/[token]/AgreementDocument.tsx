@@ -1,6 +1,7 @@
 'use client'
 
 import type React from 'react'
+import Image from 'next/image'
 
 export interface AgreementCar {
   make: string
@@ -98,7 +99,7 @@ export default function AgreementDocument({
         <div className="flex justify-between items-start">
           <div>
             {tenant.logo_url && (
-              <img src={tenant.logo_url} alt={tenantName} className="h-14 object-contain mb-3" />
+              <Image src={tenant.logo_url} alt={tenantName} width={120} height={56} className="h-14 w-auto object-contain mb-3" />
             )}
             <div className="font-black text-xl text-gray-900 tracking-wide">{tenantName}</div>
             {tenant.company_address && (

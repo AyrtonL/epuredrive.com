@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import Image from 'next/image'
 import { uploadCarImage, deleteCarImage } from './upload-actions'
 
 const MAX_IMAGES = 10
@@ -73,7 +74,7 @@ export default function ImageUploader({ images, onChange }: Props) {
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
           {images.map((url, idx) => (
             <div key={url} className="relative group aspect-[4/3] rounded-xl overflow-hidden border border-white/10">
-              <img src={url} alt={`Car photo ${idx + 1}`} className="w-full h-full object-cover" />
+              <Image src={url} alt={`Car photo ${idx + 1}`} fill className="object-cover" />
               {idx === 0 && (
                 <div className="absolute top-1.5 left-1.5 bg-black/70 text-[9px] font-bold text-white px-1.5 py-0.5 rounded uppercase tracking-wider">
                   Cover

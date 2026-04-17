@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useRef } from 'react'
+import Image from 'next/image'
 import { updateTenantBranding, uploadLogo, uploadHeroImage } from './actions'
 import type { PickupLocation, ExperiencePillar, HowItWorksStep } from '@/lib/supabase/types'
 import { DEFAULT_EXPERIENCE_PILLARS } from '@/lib/constants/experience-pillars'
@@ -277,7 +278,7 @@ export default function BrandSettings({ tenant }: Props) {
           <div className="flex items-center gap-4">
             {logoUrl ? (
               <div className="relative group">
-                <img src={logoUrl} alt="Logo" className="w-16 h-16 object-contain rounded-xl border border-white/10 bg-white/5 p-1" />
+                <Image src={logoUrl} alt="Logo" width={64} height={64} className="w-16 h-16 object-contain rounded-xl border border-white/10 bg-white/5 p-1" />
                 <button type="button" onClick={() => setLogoUrl('')}
                   className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   x
@@ -358,7 +359,7 @@ export default function BrandSettings({ tenant }: Props) {
           <label className={labelCls}>Hero Background Image</label>
           {heroImageUrl && (
             <div className="relative group rounded-2xl overflow-hidden border border-white/10 mb-2">
-              <img src={heroImageUrl} alt="Hero" className="w-full h-40 object-cover" />
+              <Image src={heroImageUrl} alt="Hero" width={600} height={160} className="w-full h-40 object-cover" />
               <button type="button" onClick={() => setHeroImageUrl('')}
                 className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 x
