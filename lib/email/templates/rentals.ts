@@ -63,6 +63,7 @@ export function agreementSignedOperatorEmail(params: {
   pickupDate: string
   returnDate: string
   reservationId: number
+  bookingCode?: string
 }): { subject: string; html: string } {
   const fmt = (d: string) =>
     d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'
@@ -176,6 +177,7 @@ export function bookingConfirmedCustomerEmail(params: {
   returnDate: string
   pickupLocation: string
   reservationId: number
+  bookingCode?: string
 }): { subject: string; html: string } {
   const contactLine = [params.brand.phone, params.brand.email].filter(Boolean).join(' · ')
   return {
@@ -185,7 +187,7 @@ export function bookingConfirmedCustomerEmail(params: {
       headline: 'Booking confirmed.',
       body: `Hi ${params.customerName}, your reservation with <strong>${params.brand.name}</strong> is confirmed. See you soon!`,
       details: [
-        { label: 'Ref #', value: `#${params.reservationId}` },
+        { label: 'Ref #', value: params.bookingCode || `#${params.reservationId}` },
         { label: 'Vehicle', value: params.carName },
         { label: 'Pickup', value: params.pickupDate },
         { label: 'Return', value: params.returnDate },

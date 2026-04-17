@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email/resend'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
+import { generateBookingCode } from '@/lib/booking-code'
 
 const rateLimitStore = new Map<string, number[]>()
 
@@ -93,6 +94,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid car' }, { status: 400 })
   }
 
+  const bookingCode = generateBookingCode()
+
   const { data: inserted, error } = await supabase
     .from('reservations')
     .insert({
@@ -110,8 +113,9 @@ export async function POST(request: NextRequest) {
       status: 'pending',
       source: 'website',
       notes: typeof data.notes === 'string' ? data.notes.trim().slice(0, 2000) : null,
+      booking_code: bookingCode,
     })
-    .select('id')
+    .select('id, booking_code')
     .single()
 
   if (error || !inserted) {
@@ -119,6 +123,7 @@ export async function POST(request: NextRequest) {
   }
 
   const reservationId = inserted.id
+  const resBookingCode = inserted.booking_code as string
   const tenantName = tenant.brand_name || tenant.name
   const vehicleName = `${car.make} ${car.model_full || car.model}`
   const customerName = String(data.customer_name).trim()
@@ -134,7 +139,7 @@ export async function POST(request: NextRequest) {
   sendEmail({
     to: customerEmail,
     subject: `Reservation Request Received — ${vehicleName}`,
-    html: buildCustomerEmail({ customerName, vehicleName, tenantName, pickupDate, returnDate, pickupTime, returnTime, pickupLocation, total, reservationId }),
+    html: buildCustomerEmail({ customerName, vehicleName, tenantName, pickupDate, returnDate, pickupTime, returnTime, pickupLocation, total, bookingCode: resBookingCode }),
   }).catch((err) => console.error('[booking] customer email failed:', err))
 
   // Send notification email to tenant owner (non-blocking)
@@ -144,7 +149,7 @@ export async function POST(request: NextRequest) {
     sendEmail({
       to: tenantNotifyEmail,
       subject: `New Booking Request — ${vehicleName} from ${customerName}`,
-      html: buildTenantEmail({ customerName, customerEmail, vehicleName, tenantName, pickupDate, returnDate, pickupTime, returnTime, pickupLocation, total, reservationId }),
+      html: buildTenantEmail({ customerName, customerEmail, vehicleName, tenantName, pickupDate, returnDate, pickupTime, returnTime, pickupLocation, total, bookingCode: resBookingCode }),
     }).catch((err) => console.error('[booking] tenant email failed:', err))
   }
 
@@ -159,7 +164,7 @@ export async function POST(request: NextRequest) {
     source: 'website',
   }).catch((err) => console.error('[booking] webhook dispatch failed:', err))
 
-  return NextResponse.json({ success: true, reservationId })
+  return NextResponse.json({ success: true, reservationId, bookingCode: resBookingCode })
 }
 
 function buildCustomerEmail(p: {
@@ -172,7 +177,7 @@ function buildCustomerEmail(p: {
   returnTime: string
   pickupLocation: string
   total: string
-  reservationId: number
+  bookingCode: string
 }): string {
   return `
 <!DOCTYPE html>
@@ -195,7 +200,7 @@ function buildCustomerEmail(p: {
           <!-- Details box -->
           <table width="100%" style="background:rgba(255,255,255,0.04);border-radius:16px;border:1px solid rgba(255,255,255,0.06);margin-bottom:24px">
             <tr><td style="padding:24px">
-              ${detailRow('Ref #', `#${p.reservationId}`)}
+              ${detailRow('Ref #', p.bookingCode)}
               ${detailRow('Vehicle', p.vehicleName)}
               ${detailRow('Pickup', `${p.pickupDate}${p.pickupTime ? ' at ' + p.pickupTime : ''}`)}
               ${detailRow('Return', `${p.returnDate}${p.returnTime ? ' at ' + p.returnTime : ''}`)}
@@ -229,7 +234,7 @@ function buildTenantEmail(p: {
   returnTime: string
   pickupLocation: string
   total: string
-  reservationId: number
+  bookingCode: string
 }): string {
   return `
 <!DOCTYPE html>
@@ -246,7 +251,7 @@ function buildTenantEmail(p: {
         <tr><td style="padding:32px 40px">
           <table width="100%" style="background:rgba(255,255,255,0.04);border-radius:16px;border:1px solid rgba(255,255,255,0.06);margin-bottom:24px">
             <tr><td style="padding:24px">
-              ${detailRow('Ref #', `#${p.reservationId}`)}
+              ${detailRow('Ref #', p.bookingCode)}
               ${detailRow('Customer', p.customerName)}
               ${detailRow('Email', p.customerEmail)}
               ${detailRow('Vehicle', p.vehicleName)}

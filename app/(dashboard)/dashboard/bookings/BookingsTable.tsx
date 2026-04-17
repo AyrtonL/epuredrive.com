@@ -47,6 +47,7 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
       const textMatch = !q ||
         r.customer_name?.toLowerCase().includes(q) ||
         r.customer_email?.toLowerCase().includes(q) ||
+        r.booking_code?.toLowerCase().includes(q) ||
         carMap[r.car_id ?? -1]?.toLowerCase().includes(q)
       const statusMatch = !statusFilter || r.status === statusFilter
       const carMatch = !carFilter || String(r.car_id) === carFilter
@@ -92,10 +93,10 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
     if (selectedIds.size === 0) return
     const ids = Array.from(selectedIds)
     const rows = reservations.filter(r => ids.includes(r.id))
-    const header = ['ID','Customer','Email','Phone','Vehicle','Pickup','Return','Total','Status']
+    const header = ['Ref #','Customer','Email','Phone','Vehicle','Pickup','Return','Total','Status']
     const csv = [header, ...rows.map(r => [
-      r.id, r.customer_name, r.customer_email || '', r.customer_phone || '',
-      carMap[r.car_id ?? -1] || '', r.pickup_date, r.return_date, 
+      r.booking_code, r.customer_name, r.customer_email || '', r.customer_phone || '',
+      carMap[r.car_id ?? -1] || '', r.pickup_date, r.return_date,
       r.total_amount || 0, r.status
     ])].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\\n')
     
@@ -243,6 +244,7 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
                       onChange={toggleAll}
                     />
                   </th>
+                  <th className="py-4 pr-4">Ref #</th>
                   <th className="py-4 pr-4">Customer</th>
                   <th className="py-4 pr-4">Car</th>
                   <th className="py-4 pr-4">Dates</th>
@@ -261,6 +263,9 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
                         checked={selectedIds.has(r.id)}
                         onChange={() => toggleOne(r.id)}
                       />
+                    </td>
+                    <td className="py-4 pr-4">
+                      <span className="font-mono text-xs text-white/70 bg-white/5 px-2 py-0.5 rounded">{r.booking_code}</span>
                     </td>
                     <td className="py-4 pr-4">
                       <div className="font-semibold text-white tracking-wide">{r.customer_name || '—'}</div>

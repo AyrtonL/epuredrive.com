@@ -22,6 +22,7 @@ export interface AgreementTenantInfo {
 
 export interface AgreementReservation {
   id: number
+  booking_code?: string
   customer_name: string | null
   customer_email: string | null
   customer_phone: string | null
@@ -110,7 +111,7 @@ export default function AgreementDocument({
           <div className="text-right">
             <div className="text-2xl font-black uppercase tracking-widest text-gray-900">Rental Agreement</div>
             <div className="text-xs text-gray-500 mt-2 space-y-1">
-              <div>Agreement #: <strong>RA-{reservation.id.toString().padStart(4, '0')}</strong></div>
+              <div>Agreement #: <strong>{reservation.booking_code || `RA-${reservation.id.toString().padStart(4, '0')}`}</strong></div>
               <div>Date: <strong>{new Date().toLocaleDateString('en-US')}</strong></div>
               {days && <div>Period: <strong>{days} day{days !== 1 ? 's' : ''}</strong></div>}
             </div>

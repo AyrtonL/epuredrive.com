@@ -3,6 +3,7 @@ import type { Reservation } from '@/lib/supabase/types'
 
 const makeRes = (overrides: Partial<Reservation> = {}): Reservation => ({
   id: 1,
+  booking_code: 'E-TEST01',
   car_id: 1,
   status: 'completed',
   pickup_date: '2026-04-01',

@@ -153,6 +153,7 @@ export async function POST(req: NextRequest) {
                     pickupDate: reservation.pickup_date || '',
                     returnDate: reservation.return_date || '',
                     reservationId: reservation.id,
+                    bookingCode: reservation.booking_code ?? undefined,
                   }),
                 })
               )

@@ -72,6 +72,7 @@ export interface Car {
 
 export interface Reservation {
   id: number
+  booking_code: string
   car_id: number | null
   customer_name: string | null
   customer_email: string | null

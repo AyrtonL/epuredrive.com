@@ -8,6 +8,7 @@ import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import type { Reservation } from '@/lib/supabase/types'
 import { sendEmail } from '@/lib/email/resend'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
+import { generateBookingCode } from '@/lib/booking-code'
 import {
   newBookingEmail,
   bookingCancelledEmail,
@@ -84,13 +85,13 @@ async function getTenantBrand(supabase: ReturnType<typeof createClient>, tenantI
 }
 
 export async function createReservation(
-  data: Omit<Reservation, 'id' | 'tenant_id' | 'created_at'>
+  data: Omit<Reservation, 'id' | 'tenant_id' | 'created_at' | 'booking_code'>
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
   const { error } = await supabase
     .from('reservations')
-    .insert({ ...data, tenant_id: tenantId })
+    .insert({ ...data, tenant_id: tenantId, booking_code: generateBookingCode() })
   revalidatePath('/dashboard/bookings')
 
   if (!error) {
@@ -230,6 +231,7 @@ export async function updateReservation(
             returnDate: prevReservation!.return_date || 'TBD',
             pickupLocation: prevReservation!.pickup_location || 'To be confirmed',
             reservationId: prevReservation!.id,
+            bookingCode: prevReservation!.booking_code,
           }),
         })
       } catch (e) {
