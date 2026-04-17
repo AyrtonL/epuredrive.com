@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
+import { createInAppNotification } from '@/lib/notifications/create'
 import { maintenanceDueEmail } from '@/lib/email/templates/rentals'
 
 export async function POST(request: NextRequest) {
@@ -109,6 +110,16 @@ export async function POST(request: NextRequest) {
       )
     )
     sent += emails.length
+
+    // In-app notification per tenant
+    const overdueCount = vehicles.filter((v: { isOverdue: boolean }) => v.isOverdue).length
+    const dueCount = vehicles.length - overdueCount
+    createInAppNotification({
+      tenantId,
+      event: 'maintenance_due',
+      title: 'Maintenance Alert',
+      body: `${overdueCount > 0 ? `${overdueCount} overdue` : ''}${overdueCount > 0 && dueCount > 0 ? ', ' : ''}${dueCount > 0 ? `${dueCount} upcoming` : ''} service${vehicles.length > 1 ? 's' : ''}`,
+    }).catch(() => {})
   }
 
   return NextResponse.json({ sent, tenantsAlerted: byTenant.size })

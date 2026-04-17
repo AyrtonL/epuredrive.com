@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { teamInviteAcceptedEmail } from '@/lib/email/templates/platform'
+import { createInAppNotification } from '@/lib/notifications/create'
 
 interface NotifyParams {
   memberUserId: string
@@ -48,4 +49,15 @@ export async function notifyInviterOnFirstLogin(params: NotifyParams): Promise<v
       companyName,
     }),
   }).catch(() => {})
+
+  // In-app notification
+  if (params.tenantId) {
+    createInAppNotification({
+      tenantId: params.tenantId,
+      event: 'team_invite_accepted',
+      title: 'Team Member Joined',
+      body: `${params.memberName || params.memberEmail} accepted the invite as ${params.role}`,
+      metadata: { member_email: params.memberEmail, role: params.role },
+    }).catch(() => {})
+  }
 }

@@ -3,6 +3,7 @@ import PageHeader from '@/components/dashboard/PageHeader'
 import UpgradeButton from './UpgradeButton'
 import DeactivateButton from './DeactivateButton'
 import SubscribeTracker from './SubscribeTracker'
+import InvoiceHistory from './InvoiceHistory'
 
 export default async function BillingPage({
   searchParams,
@@ -113,19 +114,7 @@ export default async function BillingPage({
       </div>
 
       {/* Invoice History */}
-      <div className="glass border border-white/10 rounded-3xl p-8">
-        <h3 className="text-white font-bold mb-6">Invoice History</h3>
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-            <svg className="w-6 h-6 text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="1" y="4" width="22" height="16" rx="2" />
-              <line x1="1" y1="10" x2="23" y2="10" />
-            </svg>
-          </div>
-          <p className="text-white/30 text-sm">No invoices yet.</p>
-          <p className="text-white/20 text-xs mt-1">Invoices will appear here once you upgrade to a paid plan.</p>
-        </div>
-      </div>
+      <InvoiceHistory />
 
       {/* Danger Zone */}
       <div className="glass border border-red-500/20 rounded-3xl p-8">

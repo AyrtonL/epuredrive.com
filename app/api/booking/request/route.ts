@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email/resend'
+import { createInAppNotification } from '@/lib/notifications/create'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 import { generateBookingCode } from '@/lib/booking-code'
 
@@ -152,6 +153,15 @@ export async function POST(request: NextRequest) {
       html: buildTenantEmail({ customerName, customerEmail, vehicleName, tenantName, pickupDate, returnDate, pickupTime, returnTime, pickupLocation, total, bookingCode: resBookingCode }),
     }).catch((err) => console.error('[booking] tenant email failed:', err))
   }
+
+  // In-app notification
+  createInAppNotification({
+    tenantId: data.tenant_id as string,
+    event: 'new_booking',
+    title: 'New Booking Request',
+    body: `${customerName} requested ${vehicleName} for ${pickupDate} → ${returnDate}`,
+    metadata: { reservation_id: reservationId, car_id: data.car_id, source: 'website' },
+  }).catch(() => {})
 
   dispatchWebhookEvent(data.tenant_id as string, 'booking.created', {
     reservation_id: reservationId,

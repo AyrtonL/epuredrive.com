@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import crypto from 'crypto'
 import { sendEmail } from '@/lib/email/resend'
+import { createInAppNotification } from '@/lib/notifications/create'
 import {
   subscriptionActivatedEmail,
   subscriptionChangedEmail,
@@ -214,6 +215,14 @@ export async function POST(request: Request) {
             })
           )
         ).catch(() => {})
+
+        // In-app notification
+        createInAppNotification({
+          tenantId: (tenantRow as any).id,
+          event: 'payment_received',
+          title: 'Payment Received',
+          body: `${amount} payment processed for your ${(tenantRow as any).plan ?? 'subscription'} plan`,
+        }).catch(() => {})
       }
     }
   }

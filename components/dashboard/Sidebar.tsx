@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import SupportModal from '@/components/dashboard/SupportModal'
+import NotificationBell from '@/components/dashboard/NotificationBell'
 
 // ── SVG Icon Components ────────────────────────────────────────────────────────
 
@@ -577,7 +578,10 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
         <div className="relative z-10 w-9 h-9 rounded-lg overflow-hidden shrink-0 shadow-[0_0_12px_rgba(255,255,255,0.15)]">
           <Image src="/favicon.svg" alt="éPure" width={36} height={36} className="w-full h-full" />
         </div>
-        <span className="relative z-10 text-white font-semibold text-sm tracking-wide">éPure Drive</span>
+        <span className="relative z-10 text-white font-semibold text-sm tracking-wide flex-1">éPure Drive</span>
+        <div className="relative z-10">
+          <NotificationBell />
+        </div>
       </div>
 
       {/* ── Navigation ────────────────────────────────────────────────── */}

@@ -8,6 +8,7 @@ import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import type { Reservation } from '@/lib/supabase/types'
 import { sendEmail } from '@/lib/email/resend'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
+import { createInAppNotification } from '@/lib/notifications/create'
 import { generateBookingCode } from '@/lib/booking-code'
 import {
   newBookingEmail,
@@ -128,6 +129,15 @@ export async function createReservation(
         console.error('[notify] New booking email failed:', e)
       }
     })
+
+    // In-app notification (fire-and-forget)
+    createInAppNotification({
+      tenantId,
+      event: 'new_booking',
+      title: 'New Booking',
+      body: `${data.customer_name || 'A customer'} booked ${data.pickup_date || ''} → ${data.return_date || ''}`,
+      metadata: { car_id: data.car_id, customer_name: data.customer_name },
+    }).catch(() => {})
   }
 
   return { error: error?.message ?? null }
@@ -200,6 +210,14 @@ export async function updateReservation(
         console.error('[notify] Cancellation email failed:', e)
       }
     })
+
+    createInAppNotification({
+      tenantId,
+      event: 'booking_cancelled',
+      title: 'Booking Cancelled',
+      body: `${prevReservation.customer_name || 'A customer'} cancelled their reservation for ${prevReservation.pickup_date || 'N/A'}`,
+      metadata: { reservation_id: id, car_id: prevReservation.car_id },
+    }).catch(() => {})
   }
 
   // Confirmed → notify customer
