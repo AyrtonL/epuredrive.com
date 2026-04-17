@@ -64,6 +64,11 @@ export default function NotificationBell() {
   // Supabase Realtime subscription
   useEffect(() => {
     const supabase = createClient()
+
+    // Remove any stale channel with the same name (singleton client may cache it)
+    const existing = supabase.getChannels().find(c => c.topic === 'realtime:notifications-realtime')
+    if (existing) supabase.removeChannel(existing)
+
     const channel = supabase
       .channel('notifications-realtime')
       .on(
