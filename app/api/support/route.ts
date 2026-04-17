@@ -6,8 +6,12 @@ import {
   dashboardSupportAdminEmail,
   dashboardSupportConfirmEmail,
 } from '@/lib/email/templates/support'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, 'support', { windowMs: 600_000, max: 5 })
+  if (limited) return limited
+
   // Must be an authenticated operator
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()

@@ -7,16 +7,19 @@
  * which has the same functionality with auth already enforced by requireTenantId().
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/resend'
 import { teamInviteEmail } from '@/lib/email/templates/platform'
+import { rateLimit } from '@/lib/rate-limit'
 
 const ALLOWED_ROLES = ['admin', 'finance', 'staff'] as const
 type Role = (typeof ALLOWED_ROLES)[number]
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, 'team-invite', { windowMs: 600_000, max: 10 })
+  if (limited) return limited
   // Verify the caller is authenticated and belongs to the supplied tenantId
   const supabaseUser = createClient()
   const { data: { user } } = await supabaseUser.auth.getUser()

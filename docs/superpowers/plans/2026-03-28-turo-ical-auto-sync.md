@@ -73,7 +73,7 @@ Create `netlify/functions/sync-ical-cron.js` with the following content:
 // Env vars required:
 //   SUPABASE_SERVICE_ROLE_KEY — service_role key from Supabase → Settings → API
 
-const SUPABASE_URL = 'https://brwzjwbpguiignrxvjdc.supabase.co';
+const SUPABASE_URL = '${SUPABASE_URL}';
 
 // ── Supabase REST helpers ─────────────────────────────────────────────────────
 

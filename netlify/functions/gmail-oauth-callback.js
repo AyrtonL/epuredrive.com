@@ -5,7 +5,7 @@
 //   GOOGLE_CLIENT_SECRET
 //   SUPABASE_SERVICE_ROLE_KEY
 
-const SUPABASE_URL  = 'https://brwzjwbpguiignrxvjdc.supabase.co';
+const SUPABASE_URL  = process.env.SUPABASE_URL;
 const TOKEN_URL     = 'https://oauth2.googleapis.com/token';
 const REDIRECT_URI  = 'https://epuredrive.com/.netlify/functions/gmail-oauth-callback';
 const DASHBOARD_URL = '/admin/dashboard.html?gmail=connected#turo';
@@ -32,7 +32,7 @@ exports.handler = async (event) => {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const serviceKey   = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!clientId || !clientSecret || !serviceKey) {
+  if (!SUPABASE_URL || !clientId || !clientSecret || !serviceKey) {
     console.error('[gmail-oauth-callback] Missing env vars');
     return { statusCode: 302, headers: { Location: ERROR_URL }, body: '' };
   }

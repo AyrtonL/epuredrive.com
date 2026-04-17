@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getStripe } from '@/lib/stripe'
+import { rateLimit } from '@/lib/rate-limit'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +9,8 @@ const supabase = createClient(
 )
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, 'checkout', { windowMs: 60_000, max: 10 })
+  if (limited) return limited
   let body: unknown
   try {
     body = await request.json()

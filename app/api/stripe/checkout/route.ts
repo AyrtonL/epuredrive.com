@@ -4,9 +4,12 @@
  * Requires: STRIPE_SECRET_KEY
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, 'stripe-checkout', { windowMs: 60_000, max: 10 })
+  if (limited) return limited
   let body: unknown
   try {
     body = await request.json()

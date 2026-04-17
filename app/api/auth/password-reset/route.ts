@@ -6,14 +6,17 @@
  * Always returns success to avoid leaking which emails are registered.
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { passwordResetEmail } from '@/lib/email/templates/platform'
+import { rateLimit } from '@/lib/rate-limit'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://epuredrive.com'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, 'password-reset', { windowMs: 600_000, max: 5 })
+  if (limited) return limited
   let body: unknown
   try {
     body = await request.json()

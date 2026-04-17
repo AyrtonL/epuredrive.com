@@ -2,11 +2,26 @@
    éPure Drive — Admin Dashboard
    ============================================= */
 
-const SUPABASE_URL = 'https://brwzjwbpguiignrxvjdc.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_krEuIpNhJVcADIUyBXYy9g_fiXrXzV9';
+// Public anon credentials — loaded from env-injected meta tags or fallback config endpoint.
+// These are NOT secrets; Row Level Security (RLS) enforces data access rules.
+const SUPABASE_URL = document.querySelector('meta[name="sb-url"]')?.content
+  || 'https://brwzjwbpguiignrxvjdc.supabase.co';
+const SUPABASE_KEY = document.querySelector('meta[name="sb-key"]')?.content
+  || 'sb_publishable_krEuIpNhJVcADIUyBXYy9g_fiXrXzV9';
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ---- XSS Protection ----
+function esc(str) {
+  if (str == null) return '';
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(String(str)));
+  return d.innerHTML;
+}
+function safeHTML(html) {
+  return typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(html) : html;
+}
 
 // ---- Constants ----
 let CAR_COLORS  = {};   // populated from DB by loadCars()
@@ -699,7 +714,7 @@ function renderTable(resetPage = false) {
   }
 
   const statusMap = { pending:'badge-yellow', confirmed:'badge-blue', active:'badge-green', completed:'badge-gray', cancelled:'badge-red' };
-  tbody.innerHTML = page.map(r => {
+  tbody.innerHTML = safeHTML(page.map(r => {
     const days = dateDiff(r.pickup_date, r.return_date);
     return `
       <tr>
@@ -722,7 +737,7 @@ function renderTable(resetPage = false) {
           <button class="btn-icon danger write-action" onclick="deleteReservation('${r.id}', this)" title="Delete" aria-label="Delete reservation">🗑️</button>
         </td>
       </tr>`;
-  }).join('');
+  }).join(''));
 
   renderPagination(list.length, currentPage, totalPages);
 }
@@ -1024,21 +1039,21 @@ function showDetail(r) {
     }
   }
 
-  document.getElementById('detail-content').innerHTML = `
+  document.getElementById('detail-content').innerHTML = safeHTML(`
     ${lateFeeHtml}
     <div class="detail-row"><span>Customer</span><strong>${esc(r.customer_name)}</strong></div>
     <div class="detail-row"><span>Email</span>${r.customer_email ? `<a href="mailto:${esc(r.customer_email)}">${esc(r.customer_email)}</a>` : '—'}</div>
     <div class="detail-row"><span>Phone</span>${r.customer_phone ? `<a href="tel:${esc(r.customer_phone)}">${esc(r.customer_phone)}</a>` : '—'}</div>
-    <div class="detail-row"><span>Vehicle</span><strong><span class="car-dot-inline" style="background:${CAR_COLORS[r.car_id]}"></span>${CAR_NAMES[r.car_id]}</strong></div>
-    <div class="detail-row"><span>Pickup</span>${fmtDateLong(r.pickup_date)} at ${r.pickup_time || '10:00'}</div>
-    <div class="detail-row"><span>Return</span>${fmtDateLong(r.return_date)} at ${r.return_time || '10:00'}</div>
+    <div class="detail-row"><span>Vehicle</span><strong><span class="car-dot-inline" style="background:${CAR_COLORS[r.car_id]}"></span>${esc(CAR_NAMES[r.car_id])}</strong></div>
+    <div class="detail-row"><span>Pickup</span>${fmtDateLong(r.pickup_date)} at ${esc(r.pickup_time || '10:00')}</div>
+    <div class="detail-row"><span>Return</span>${fmtDateLong(r.return_date)} at ${esc(r.return_time || '10:00')}</div>
     <div class="detail-row"><span>Duration</span>${days} day${days !== 1 ? 's' : ''}</div>
     <div class="detail-row"><span>Location</span>${esc(r.pickup_location || '—')}</div>
     <div class="detail-row"><span>Total</span><strong>${r.total_amount ? '$' + Number(r.total_amount).toLocaleString() : '—'}</strong></div>
-    <div class="detail-row"><span>Status</span><span class="badge ${statusMap[r.status] || 'badge-gray'}">${r.status}</span></div>
-    <div class="detail-row"><span>Source</span><span class="source-badge source-${r.source}">${r.source}</span></div>
+    <div class="detail-row"><span>Status</span><span class="badge ${statusMap[r.status] || 'badge-gray'}">${esc(r.status)}</span></div>
+    <div class="detail-row"><span>Source</span><span class="source-badge source-${esc(r.source)}">${esc(r.source)}</span></div>
     ${r.notes ? `<div class="detail-row"><span>Notes</span><em style="color:var(--muted-2)">${esc(r.notes)}</em></div>` : ''}
-  `;
+  `);
   document.getElementById('detail-actions').innerHTML = `
     <button class="btn btn-outline" onclick="closeModal('detail-modal')">Close</button>
     <button class="btn btn-outline" style="font-size:0.8rem;" onclick="copyPortalLink('${r.id}')">
@@ -1352,7 +1367,7 @@ function switchFeedInputMode(mode) {
 function populateFeedCarDropdown() {
   const sel = document.getElementById('feed-car');
   if (!sel) return;
-  sel.innerHTML = allCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  sel.innerHTML = safeHTML(allCars.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join(''));
 }
 
 function setCarFilter(val) {
@@ -1690,7 +1705,7 @@ function renderConsignments() {
     return;
   }
 
-  grid.innerHTML = allConsignments.map(con => {
+  grid.innerHTML = safeHTML(allConsignments.map(con => {
     const ownerPct   = parseFloat(con.owner_percentage) || 70;
     const epurePct   = 100 - ownerPct;
     const color      = CAR_COLORS[con.car_id] || '#666';
@@ -1765,7 +1780,7 @@ function renderConsignments() {
 
         ${con.notes ? `<div style="margin-top:0.75rem;padding:0.6rem;background:var(--surface-2);border-radius:8px;font-size:0.75rem;color:var(--muted-2);">${esc(con.notes)}</div>` : ''}
       </div>`;
-  }).join('');
+  }).join(''));
 }
 
 function renderExpensesTable() {
@@ -1788,11 +1803,11 @@ function renderExpensesTable() {
     return;
   }
 
-  tbody.innerHTML = list.map(e => {
+  tbody.innerHTML = safeHTML(list.map(e => {
     const isCompany = !e.car_id;
     const vehicleCell = isCompany
       ? `<span style="font-size:0.78rem;background:var(--surface-3);color:var(--muted-2);padding:2px 8px;border-radius:20px;">Company</span>`
-      : `<span class="car-dot-inline" style="background:${CAR_COLORS[e.car_id] || '#666'}"></span>${CAR_NAMES[e.car_id] || '—'}`;
+      : `<span class="car-dot-inline" style="background:${CAR_COLORS[e.car_id] || '#666'}"></span>${esc(CAR_NAMES[e.car_id] || '—')}`;
     return `
     <tr>
       <td>${fmtDate(e.expense_date)}</td>
@@ -1805,7 +1820,7 @@ function renderExpensesTable() {
         <button class="btn-icon danger write-action" onclick="deleteExpense('${e.id}', this)" title="Delete" aria-label="Delete expense">🗑️</button>
       </td>
     </tr>`;
-  }).join('');
+  }).join(''));
 }
 
 async function importExpensesCSV() {
@@ -2003,7 +2018,7 @@ function renderCustomers() {
     return;
   }
 
-  tbody.innerHTML = list.map(c => {
+  tbody.innerHTML = safeHTML(list.map(c => {
     const bookings = allReservations.filter(r =>
       (c.email && r.customer_email && r.customer_email.toLowerCase() === c.email.toLowerCase()) ||
       (c.phone && r.customer_phone && r.customer_phone === c.phone) ||
@@ -2024,7 +2039,7 @@ function renderCustomers() {
           <button class="btn-icon danger write-action" onclick="deleteCustomer('${c.id}', this)" title="Delete" aria-label="Delete customer">🗑️</button>
         </td>
       </tr>`;
-  }).join('');
+  }).join(''));
 }
 
 function openAddCustomer() {
@@ -2088,7 +2103,7 @@ function renderROIFleetCards() {
 
   const today = new Date();
 
-  container.innerHTML = allCars.map(car => {
+  container.innerHTML = safeHTML(allCars.map(car => {
     const revs = allReservations.filter(r => r.car_id === car.id && ['completed','confirmed','active'].includes(r.status));
     const totalRevenue = revs.reduce((s, r) => s + (parseFloat(r.total_amount) || 0), 0);
 
@@ -2151,7 +2166,7 @@ function renderROIFleetCards() {
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join(''));
 }
 
 function _loanPayment(price, down, aprPct, months) {
@@ -2337,27 +2352,27 @@ function renderTransactionsTable(fromVal, toVal) {
     return;
   }
 
-  tbody.innerHTML = list.map(t => {
+  tbody.innerHTML = safeHTML(list.map(t => {
     const isIncome  = t.type === 'income';
     const typeColor = isIncome ? '#34D399' : '#F87171';
     const typeBg    = isIncome ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
     const sign      = isIncome ? '+' : '-';
-    const car       = t.car_id ? `<span class="car-dot-inline" style="background:${CAR_COLORS[t.car_id]||'#666'}"></span>${CAR_NAMES[t.car_id]||'—'}` : '<span style="font-size:0.78rem;color:var(--muted);">Company</span>';
+    const car       = t.car_id ? `<span class="car-dot-inline" style="background:${CAR_COLORS[t.car_id]||'#666'}"></span>${esc(CAR_NAMES[t.car_id]||'—')}` : '<span style="font-size:0.78rem;color:var(--muted);">Company</span>';
     const methodMap = { cash: '💵 Cash', stripe: '💳 Card', bank_transfer: '🏦 Bank', other: '—' };
     return `
     <tr>
       <td>${fmtDate(t.transaction_date)}</td>
-      <td><span class="badge" style="background:${typeBg};color:${typeColor};">${t.type}</span></td>
+      <td><span class="badge" style="background:${typeBg};color:${typeColor};">${esc(t.type)}</span></td>
       <td>${esc(t.category)}</td>
       <td>${car}</td>
       <td style="color:var(--muted-2);">${esc(t.description || '—')}</td>
       <td style="font-weight:700;color:${typeColor};">${sign}$${Number(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-      <td style="font-size:0.78rem;color:var(--muted);">${methodMap[t.payment_method] || t.payment_method || '—'}</td>
+      <td style="font-size:0.78rem;color:var(--muted);">${esc(methodMap[t.payment_method] || t.payment_method || '—')}</td>
       <td class="actions">
         <button class="btn-icon danger write-action" onclick="deleteTransaction('${t.id}', this)" title="Delete">🗑️</button>
       </td>
     </tr>`;
-  }).join('');
+  }).join(''));
 }
 
 // ====================================================
@@ -2574,9 +2589,9 @@ function renderRevenueByVehicle(resFiltered, totalRevenue) {
     const pct      = totalRevenue > 0 ? (revenue / totalRevenue * 100) : 0;
     return { id, bookings: bookings.length, revenue, avg, pct };
   });
-  tbody.innerHTML = rows.map(r => `
+  tbody.innerHTML = safeHTML(rows.map(r => `
     <tr>
-      <td><span class="car-dot-inline" style="background:${CAR_COLORS[r.id]}"></span><strong>${CAR_NAMES[r.id]}</strong></td>
+      <td><span class="car-dot-inline" style="background:${CAR_COLORS[r.id]}"></span><strong>${esc(CAR_NAMES[r.id])}</strong></td>
       <td style="text-align:center;">${r.bookings}</td>
       <td style="font-weight:600;">$${r.revenue.toLocaleString('en-US', { maximumFractionDigits: 0 })}</td>
       <td style="color:var(--muted-2);">$${r.avg.toLocaleString('en-US', { maximumFractionDigits: 0 })}</td>
@@ -2588,7 +2603,7 @@ function renderRevenueByVehicle(resFiltered, totalRevenue) {
           <span style="font-size:0.75rem;color:var(--muted-2);min-width:35px;">${r.pct.toFixed(1)}%</span>
         </div>
       </td>
-    </tr>`).join('');
+    </tr>`).join(''));
 }
 
 function renderReports() { renderFinancials(); }   // backward compat alias
@@ -2744,20 +2759,20 @@ function renderRecentBookings() {
     return;
   }
   const statusMap = { pending: 'badge-yellow', confirmed: 'badge-blue', active: 'badge-green', completed: 'badge-gray', cancelled: 'badge-red' };
-  el.innerHTML = recent.map(r => `
+  el.innerHTML = safeHTML(recent.map(r => `
     <div class="booking-row">
       <div>
         <div class="b-customer">${esc(r.customer_name)}</div>
         <div class="b-car">
           <span class="car-dot-inline" style="background:${CAR_COLORS[r.car_id]}"></span>
-          ${CAR_NAMES[r.car_id]} · ${fmtDate(r.pickup_date)} → ${fmtDate(r.return_date)}
+          ${esc(CAR_NAMES[r.car_id])} · ${fmtDate(r.pickup_date)} → ${fmtDate(r.return_date)}
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:1rem;">
-        <span class="badge ${statusMap[r.status] || 'badge-gray'}">${r.status}</span>
+        <span class="badge ${statusMap[r.status] || 'badge-gray'}">${esc(r.status)}</span>
         <span class="b-price">${r.total_amount ? '$' + Number(r.total_amount).toLocaleString() : '—'}</span>
       </div>
-    </div>`).join('');
+    </div>`).join(''));
 }
 
 // ====================================================
@@ -3018,7 +3033,7 @@ function renderServicesTable() {
     return;
   }
 
-  tbody.innerHTML = list.map(s => {
+  tbody.innerHTML = safeHTML(list.map(s => {
     let nextMiCell = '—';
     if (s.next_service_mileage) {
       const car     = allCars.find(c => c.id === s.car_id) || {};
@@ -3031,7 +3046,7 @@ function renderServicesTable() {
     return `
     <tr>
       <td>${fmtDate(s.service_date)}</td>
-      <td><span class="car-dot-inline" style="background:${CAR_COLORS[s.car_id] || '#666'}"></span>${CAR_NAMES[s.car_id] || '—'}</td>
+      <td><span class="car-dot-inline" style="background:${CAR_COLORS[s.car_id] || '#666'}"></span>${esc(CAR_NAMES[s.car_id] || '—')}</td>
       <td><span class="service-type-badge ${SVC_BADGE[s.service_type] || 'svc-other'}">${esc(s.service_type)}</span></td>
       <td>${s.mileage ? Number(s.mileage).toLocaleString() + ' mi' : '—'}</td>
       <td style="color:var(--muted-2);">${esc(s.provider || '—')}</td>
@@ -3044,7 +3059,7 @@ function renderServicesTable() {
         <button class="btn-icon danger write-action" onclick="deleteService('${s.id}', this)" title="Delete" aria-label="Delete service record">🗑️</button>
       </td>
     </tr>`;
-  }).join('');
+  }).join(''));
 }
 
 function openAddCar() {
@@ -3504,7 +3519,7 @@ function renderUsers(users) {
 
   const roleColors = { admin: '#6366F1', finance: '#10B981', staff: '#F59E0B' };
 
-  grid.innerHTML = users.map(u => {
+  grid.innerHTML = safeHTML(users.map(u => {
     const email      = u.auth_users?.email || '';
     const display    = u.full_name || email || 'Unknown';
     const initials   = display.split(/[\s@]+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -3528,7 +3543,7 @@ function renderUsers(users) {
           ${!isSelf ? `<button class="btn-icon danger write-action" onclick="removeUser('${u.id}')" title="Remove">🗑️</button>` : ''}
         </div>
       </div>`;
-  }).join('');
+  }).join(''));
 }
 
 function openInviteModal() {

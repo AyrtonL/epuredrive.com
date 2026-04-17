@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { agreementSignedCustomerEmail, agreementSignedOperatorEmail } from '@/lib/email/templates'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, 'agreement-sign', { windowMs: 60_000, max: 5 })
+  if (limited) return limited
+
   try {
     const { token, signature } = await req.json()
 

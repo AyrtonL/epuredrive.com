@@ -4,12 +4,15 @@
  * Requires: SUPABASE_SERVICE_ROLE_KEY, NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { welcomeEmail, onboardingEmail } from '@/lib/email/templates/platform'
+import { rateLimit } from '@/lib/rate-limit'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, 'tenant-create', { windowMs: 600_000, max: 3 })
+  if (limited) return limited
   let body: unknown
   try {
     body = await request.json()

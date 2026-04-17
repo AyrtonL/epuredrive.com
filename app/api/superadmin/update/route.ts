@@ -4,15 +4,18 @@
  * Caller must provide a valid Supabase JWT + is_super_admin = true.
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { subscriptionActivatedEmail, subscriptionChangedEmail } from '@/lib/email/templates/platform'
+import { rateLimit } from '@/lib/rate-limit'
 
 const VALID_PLANS = ['free', 'starter', 'pro', 'enterprise', 'suspended'] as const
 const ALLOWED_FIELDS = ['plan', 'notes', 'owner_name', 'owner_email', 'owner_phone'] as const
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, 'superadmin-update', { windowMs: 60_000, max: 20 })
+  if (limited) return limited
   const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim()
   if (!token) {
     return NextResponse.json({ error: 'Missing token' }, { status: 401 })

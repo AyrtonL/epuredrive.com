@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email/resend'
 import { newInquiryEmail } from '@/lib/email/templates'
+import { rateLimit } from '@/lib/rate-limit'
 
 // Uses anon key — RLS policy "anon_insert_concierge" permits inserts
 const supabase = createClient(
@@ -10,6 +11,8 @@ const supabase = createClient(
 )
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, 'concierge', { windowMs: 600_000, max: 5 })
+  if (limited) return limited
   let body: unknown
   try {
     body = await request.json()

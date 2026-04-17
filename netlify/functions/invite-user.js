@@ -3,7 +3,7 @@
 // Env vars required:
 //   SUPABASE_SERVICE_ROLE_KEY  — service_role key from Supabase → Settings → API
 
-const SUPABASE_URL = 'https://brwzjwbpguiignrxvjdc.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL;
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -24,8 +24,8 @@ exports.handler = async (event) => {
   }
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Server misconfigured: missing service role key' }) };
+  if (!SUPABASE_URL || !serviceKey) {
+    return { statusCode: 500, body: JSON.stringify({ error: 'Server misconfigured' }) };
   }
 
   const headers = {

@@ -6,7 +6,7 @@
 
 const crypto = require('crypto');
 
-const SUPABASE_URL = 'https://brwzjwbpguiignrxvjdc.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL;
 
 // Map Stripe price IDs to plan names
 const PRICE_TO_PLAN = {
@@ -55,8 +55,8 @@ exports.handler = async (event) => {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   const serviceKey    = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!webhookSecret) return { statusCode: 500, body: 'Missing webhook secret' };
-  if (!serviceKey)    return { statusCode: 500, body: 'Missing service role key' };
+  if (!webhookSecret)          return { statusCode: 500, body: 'Missing webhook secret' };
+  if (!SUPABASE_URL || !serviceKey) return { statusCode: 500, body: 'Missing Supabase config' };
 
   let stripeEvent;
   try {

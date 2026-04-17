@@ -3,7 +3,7 @@
 // Uses service role key to bypass RLS.
 // Requires: SUPABASE_SERVICE_ROLE_KEY env var
 
-const SUPABASE_URL = 'https://brwzjwbpguiignrxvjdc.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL;
 const ALLOWED_ROLES = ['admin', 'finance', 'staff'];
 
 exports.handler = async (event) => {
@@ -31,7 +31,7 @@ exports.handler = async (event) => {
   }
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) {
+  if (!SUPABASE_URL || !serviceKey) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Server misconfigured' }) };
   }
 

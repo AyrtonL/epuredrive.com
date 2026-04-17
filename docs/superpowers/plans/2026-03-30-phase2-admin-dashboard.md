@@ -12,7 +12,7 @@
 
 ## Key Constants
 
-- Supabase URL: `https://brwzjwbpguiignrxvjdc.supabase.co`
+- Supabase URL: `${SUPABASE_URL}`
 - Supabase anon key: `sb_publishable_krEuIpNhJVcADIUyBXYy9g_fiXrXzV9`
 - éPure Drive tenant ID: `8be5b928-ca59-4b29-a34b-75b18c9273db`
 

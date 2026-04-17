@@ -106,7 +106,7 @@ In the long `Content-Security-Policy` header value, find `connect-src` and add `
 
 The current connect-src ends with `https://assets.apollo.io`. Change it to:
 ```
-connect-src 'self' https://formspree.io https://brwzjwbpguiignrxvjdc.supabase.co https://api.allorigins.win https://api.stripe.com https://vpic.nhtsa.dot.gov https://assets.apollo.io https://oauth2.googleapis.com https://www.googleapis.com;
+connect-src 'self' https://formspree.io ${SUPABASE_URL} https://api.allorigins.win https://api.stripe.com https://vpic.nhtsa.dot.gov https://assets.apollo.io https://oauth2.googleapis.com https://www.googleapis.com;
 ```
 
 - [ ] **Step 3: Verify**
@@ -216,7 +216,7 @@ Receives the OAuth redirect from Google, exchanges the `code` for tokens, fetche
 //   GOOGLE_CLIENT_SECRET
 //   SUPABASE_SERVICE_ROLE_KEY
 
-const SUPABASE_URL  = 'https://brwzjwbpguiignrxvjdc.supabase.co';
+const SUPABASE_URL  = '${SUPABASE_URL}';
 const TOKEN_URL     = 'https://oauth2.googleapis.com/token';
 const REDIRECT_URI  = 'https://epuredrive.com/.netlify/functions/gmail-oauth-callback';
 const DASHBOARD_URL = '/admin/dashboard.html?gmail=connected#turo';
@@ -336,7 +336,7 @@ This is the main sync engine. Runs every 15 min, reads all active Gmail connecti
 //   GOOGLE_CLIENT_SECRET
 //   SUPABASE_SERVICE_ROLE_KEY
 
-const SUPABASE_URL    = 'https://brwzjwbpguiignrxvjdc.supabase.co';
+const SUPABASE_URL    = '${SUPABASE_URL}';
 const GMAIL_BASE      = 'https://gmail.googleapis.com/gmail/v1/users/me';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 

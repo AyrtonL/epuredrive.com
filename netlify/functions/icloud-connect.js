@@ -6,7 +6,7 @@
 
 const { ImapFlow } = require('imapflow');
 
-const SUPABASE_URL = 'https://brwzjwbpguiignrxvjdc.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL;
 
 function sbHeaders(serviceKey) {
   return {
@@ -36,7 +36,7 @@ exports.handler = async (event) => {
   }
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) {
+  if (!SUPABASE_URL || !serviceKey) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Server misconfigured' }) };
   }
 

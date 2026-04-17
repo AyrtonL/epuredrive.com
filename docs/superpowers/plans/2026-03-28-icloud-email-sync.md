@@ -96,7 +96,7 @@ Create `netlify/functions/icloud-connect.js` with the following content:
 
 const { ImapFlow } = require('imapflow');
 
-const SUPABASE_URL = 'https://brwzjwbpguiignrxvjdc.supabase.co';
+const SUPABASE_URL = '${SUPABASE_URL}';
 
 function sbHeaders(serviceKey) {
   return {

@@ -4,7 +4,7 @@
 // Auth: caller must pass a valid Supabase JWT in Authorization header
 //       AND their profile must have is_super_admin = true
 
-const SUPABASE_URL = 'https://brwzjwbpguiignrxvjdc.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL;
 
 function sbHeaders(key) {
   return {
@@ -29,8 +29,8 @@ exports.handler = async (event) => {
   const token      = authHeader.replace(/^Bearer\s+/i, '').trim();
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!token)      return { statusCode: 401, body: JSON.stringify({ error: 'Missing token' }) };
-  if (!serviceKey) return { statusCode: 500, body: JSON.stringify({ error: 'Server config error' }) };
+  if (!token)                  return { statusCode: 401, body: JSON.stringify({ error: 'Missing token' }) };
+  if (!SUPABASE_URL || !serviceKey) return { statusCode: 500, body: JSON.stringify({ error: 'Server config error' }) };
 
   // 1 — Verify JWT and get user id
   const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {

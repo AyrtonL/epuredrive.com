@@ -14,7 +14,7 @@
 
 - **éPure Drive tenant ID:** `8be5b928-ca59-4b29-a34b-75b18c9273db`
 - **éPure Drive slug:** `ayrtonn-lg-1774229361678`
-- **Supabase URL:** `https://brwzjwbpguiignrxvjdc.supabase.co`
+- **Supabase URL:** `${SUPABASE_URL}`
 - **Supabase anon key:** `sb_publishable_krEuIpNhJVcADIUyBXYy9g_fiXrXzV9`
 - **create-tenant function:** `/.netlify/functions/create-tenant`
 - **Image URL note:** Cars in DB store relative paths like `assets/images/Audi A3/car_1.jpg`. Prefix with `/` when rendering in Next.js (images will live in `public/assets/`).
@@ -355,7 +355,7 @@ export function createClient() {
 
 ```bash
 # .env.local
-NEXT_PUBLIC_SUPABASE_URL=https://brwzjwbpguiignrxvjdc.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_krEuIpNhJVcADIUyBXYy9g_fiXrXzV9
 EPUREDRIVE_TENANT_SLUG=ayrtonn-lg-1774229361678
 ```
@@ -376,7 +376,7 @@ curl -s -X POST \
   -H "Authorization: Bearer nfp_bFdMPn4ARKz2d9ArL8CdHZMKG7wZF6FU28d4" \
   -H "Content-Type: application/json" \
   -d '[
-    {"key":"NEXT_PUBLIC_SUPABASE_URL","values":[{"context":"all","value":"https://brwzjwbpguiignrxvjdc.supabase.co"}]},
+    {"key":"NEXT_PUBLIC_SUPABASE_URL","values":[{"context":"all","value":"${SUPABASE_URL}"}]},
     {"key":"NEXT_PUBLIC_SUPABASE_ANON_KEY","values":[{"context":"all","value":"sb_publishable_krEuIpNhJVcADIUyBXYy9g_fiXrXzV9"}]},
     {"key":"EPUREDRIVE_TENANT_SLUG","values":[{"context":"all","value":"ayrtonn-lg-1774229361678"}]}
   ]'
