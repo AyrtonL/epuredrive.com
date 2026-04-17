@@ -72,7 +72,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
         </div>
       )}
       <a
-        href="javascript:history.back()"
+        href={`/sites/${params.slug}/fleet`}
         className="text-white/40 text-sm hover:text-white mb-8 inline-block transition-colors"
       >
         ← Back to fleet

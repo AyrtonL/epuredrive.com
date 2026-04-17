@@ -1,11 +1,14 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+
 interface Props {
   error: Error & { digest?: string }
   reset: () => void
 }
 
 export default function CarDetailError({ error: _error, reset }: Props) {
+  const router = useRouter()
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
       <div className="min-h-[50vh] flex items-center justify-center">
@@ -42,12 +45,12 @@ export default function CarDetailError({ error: _error, reset }: Props) {
             >
               Try again
             </button>
-            <a
-              href="javascript:history.back()"
+            <button
+              onClick={() => router.back()}
               className="px-6 py-2.5 rounded-full border border-white/10 text-white/50 text-sm font-semibold hover:text-white hover:border-white/20 transition-colors"
             >
               ← Back to fleet
-            </a>
+            </button>
           </div>
         </div>
       </div>
