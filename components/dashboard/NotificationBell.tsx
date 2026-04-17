@@ -41,6 +41,8 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 })
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -88,7 +90,11 @@ export default function NotificationBell() {
   // Click outside to close
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      const target = e.target as Node
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(target) &&
+        buttonRef.current && !buttonRef.current.contains(target)
+      ) {
         setOpen(false)
       }
     }
@@ -124,24 +130,29 @@ export default function NotificationBell() {
     <div ref={dropdownRef} className="relative">
       {/* Bell Button */}
       <button
-        onClick={() => setOpen(prev => !prev)}
-        className="relative w-9 h-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/[0.06] transition-all"
+        ref={buttonRef}
+        onClick={() => {
+          if (!open && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect()
+            setDropdownPos({ top: rect.bottom + 8, left: rect.left })
+          }
+          setOpen(prev => !prev)
+        }}
+        className="relative w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 transition-all"
         aria-label="Notifications"
       >
-        <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 01-3.46 0" />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold text-white bg-red-500 rounded-full leading-none animate-pulse">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
+          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
         )}
       </button>
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-12 w-80 max-h-[420px] glass border border-white/10 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] z-50 flex flex-col overflow-hidden animate-fade-in">
+        <div style={{ top: dropdownPos.top, left: dropdownPos.left }} className="fixed w-80 max-h-[420px] glass border border-white/10 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] z-[100] flex flex-col overflow-hidden animate-fade-in">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
             <span className="text-white text-sm font-bold">Notifications</span>

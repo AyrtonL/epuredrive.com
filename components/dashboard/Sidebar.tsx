@@ -573,8 +573,8 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
   const navContent = (
     <>
       {/* ── Brand Header ──────────────────────────────────────────────── */}
-      <div className="h-20 flex items-center px-5 border-b border-surfaceBorder relative overflow-hidden gap-3">
-        <div className="absolute inset-0 bg-hero-glow opacity-40 mix-blend-screen pointer-events-none" />
+      <div className="h-20 flex items-center px-5 border-b border-surfaceBorder relative gap-3">
+        <div className="absolute inset-0 bg-hero-glow opacity-40 mix-blend-screen pointer-events-none overflow-hidden" />
         <div className="relative z-10 w-9 h-9 rounded-lg overflow-hidden shrink-0 shadow-[0_0_12px_rgba(255,255,255,0.15)]">
           <Image src="/favicon.svg" alt="éPure" width={36} height={36} className="w-full h-full" />
         </div>
