@@ -82,9 +82,10 @@ const sections = [
               </tr>
             </thead>
             <tbody className="text-charcoal">
-              <tr className="border-t border-white/[0.06]"><td className="py-2 text-white font-medium">Free / Starter</td><td className="py-2 text-right">8%</td></tr>
-              <tr className="border-t border-white/[0.06]"><td className="py-2 text-white font-medium">Pro</td><td className="py-2 text-right">5%</td></tr>
-              <tr className="border-t border-white/[0.06]"><td className="py-2 text-white font-medium">Max</td><td className="py-2 text-right">2%</td></tr>
+              <tr className="border-t border-white/[0.06]"><td className="py-2 text-white font-medium">Free</td><td className="py-2 text-right">2%</td></tr>
+              <tr className="border-t border-white/[0.06]"><td className="py-2 text-white font-medium">Starter</td><td className="py-2 text-right">1.5%</td></tr>
+              <tr className="border-t border-white/[0.06]"><td className="py-2 text-white font-medium">Pro</td><td className="py-2 text-right">1%</td></tr>
+              <tr className="border-t border-white/[0.06]"><td className="py-2 text-white font-medium">Max</td><td className="py-2 text-right">0%</td></tr>
               <tr className="border-t border-white/[0.06]"><td className="py-2 text-white font-medium">Enterprise</td><td className="py-2 text-right">Custom</td></tr>
             </tbody>
           </table>

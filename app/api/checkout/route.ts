@@ -85,7 +85,8 @@ export async function POST(request: NextRequest) {
 
   // Platform transaction fee by plan tier
   const plan = tenant.plan || 'free'
-  const feeRate = ['max', 'enterprise'].includes(plan) ? 0.02 : plan === 'pro' ? 0.05 : 0.08
+  const FEE_BY_PLAN: Record<string, number> = { max: 0, enterprise: 0, pro: 0.01, starter: 0.015, free: 0.02 }
+  const feeRate = FEE_BY_PLAN[plan] ?? 0.02
   const applicationFeeCents = Math.round(totalCents * feeRate)
 
   const session = await stripe.checkout.sessions.create(

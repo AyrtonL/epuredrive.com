@@ -17,7 +17,8 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
     .single()
 
   const plan = tenant?.plan || 'free'
-  const feeRate = ['max', 'enterprise'].includes(plan) ? 2 : plan === 'pro' ? 5 : 8
+  const FEE_BY_PLAN: Record<string, number> = { max: 0, enterprise: 0, pro: 1, starter: 1.5, free: 2 }
+  const feeRate = FEE_BY_PLAN[plan] ?? 2
   const params = await searchParams
   const status = await getConnectAccountStatus()
   const payments = status.chargesEnabled ? await getRecentPayments() : []
@@ -195,7 +196,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                 <p className="text-white font-bold text-2xl">{feeRate}%</p>
                 <p className="text-white/40 text-xs mt-0.5">Your current rate ({plan.charAt(0).toUpperCase() + plan.slice(1)} plan)</p>
               </div>
-              {feeRate > 2 && (
+              {feeRate > 0 && (
                 <a href="/dashboard/settings/billing"
                   className="px-4 py-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 text-[10px] font-bold uppercase tracking-widest hover:bg-violet-500/20 transition-colors">
                   Upgrade to lower fee
@@ -205,16 +206,20 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
 
             <div className="space-y-2 pt-4 border-t border-white/5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-white/40">Free / Starter</span>
-                <span className={plan === 'free' || plan === 'starter' ? 'text-white font-bold' : 'text-white/40'}>8%</span>
+                <span className="text-white/40">Free</span>
+                <span className={plan === 'free' ? 'text-white font-bold' : 'text-white/40'}>2%</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-white/40">Starter</span>
+                <span className={plan === 'starter' ? 'text-white font-bold' : 'text-white/40'}>1.5%</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-white/40">Pro</span>
-                <span className={plan === 'pro' ? 'text-white font-bold' : 'text-white/40'}>5%</span>
+                <span className={plan === 'pro' ? 'text-white font-bold' : 'text-white/40'}>1%</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-white/40">Max</span>
-                <span className={plan === 'max' ? 'text-white font-bold' : 'text-white/40'}>2%</span>
+                <span className={plan === 'max' ? 'text-white font-bold' : 'text-white/40'}>0%</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-white/40">Enterprise</span>
