@@ -111,9 +111,9 @@ export default function DateRangePicker({
 
   function toggleCalendar() {
     if (open) { setOpen(false); return }
-    // When reopening with a complete range, clear retDate so the user
-    // can pick a new return date without the calendar closing immediately
-    if (pickDate && retDate) {
+    // Always start fresh so the user selects pickup → return in one flow
+    if (pickDate || retDate) {
+      onPickDate('')
       onRetDate('')
     }
     if (triggerRef.current) {
