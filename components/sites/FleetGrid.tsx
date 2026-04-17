@@ -21,11 +21,21 @@ export default function FleetGrid({ cars, slug }: Props) {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [base, setBase] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (window.location.pathname.startsWith('/sites/')) {
       setBase(`/sites/${slug}`)
     }
+    // Forward date/time/location params to car detail links
+    const params = new URLSearchParams(window.location.search)
+    const forward = new URLSearchParams()
+    for (const key of ['pickup', 'return', 'pickTime', 'retTime', 'location']) {
+      const val = params.get(key)
+      if (val) forward.set(key, val)
+    }
+    const qs = forward.toString()
+    if (qs) setSearchQuery(`?${qs}`)
   }, [slug])
 
   const categories = useMemo(() => {
@@ -125,7 +135,7 @@ export default function FleetGrid({ cars, slug }: Props) {
           {filtered.map((car, i) => (
             <a
               key={car.id}
-              href={`${base}/${car.id}`}
+              href={`${base}/${car.id}${searchQuery}`}
               className="group relative rounded-[2rem] overflow-hidden border border-white/5 hover:border-white/15 transition-all duration-500 bg-white/[0.02] hover:bg-white/[0.04]"
               style={{ animation: `fadeInCard 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards ${i * 0.05}s`, opacity: 0 }}
             >
