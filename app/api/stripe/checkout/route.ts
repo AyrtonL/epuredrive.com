@@ -59,7 +59,8 @@ export async function POST(request: NextRequest) {
 
   const session = await res.json()
   if (!res.ok) {
-    return NextResponse.json({ error: session.error?.message || 'Stripe error' }, { status: 400 })
+    console.error('[stripe/checkout] Stripe error:', session.error?.message)
+    return NextResponse.json({ error: 'Payment session could not be created' }, { status: 400 })
   }
 
   return NextResponse.json({ url: session.url })

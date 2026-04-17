@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@supabase/supabase-js'
 
 /**
  * GET /api/availability?carId=123&tenantId=uuid
@@ -21,7 +21,11 @@ export async function GET(request: NextRequest) {
   const until = new Date(today)
   until.setDate(until.getDate() + 365)
 
-  const supabase = createAdminClient()
+  // Use anon client — this is a public endpoint; RLS enforces access rules
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   // Verify the car actually belongs to this tenant before returning any data
   const { data: carCheck } = await supabase

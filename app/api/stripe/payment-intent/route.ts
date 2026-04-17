@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server'
 
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*'
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://epuredrive.com'
 
 const CORS = {
   'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
@@ -61,7 +61,8 @@ export async function POST(request: Request) {
 
   const intent = await stripeRes.json()
   if (intent.error) {
-    return NextResponse.json({ error: intent.error.message }, { status: 402, headers: CORS })
+    console.error('[stripe/payment-intent] Stripe error:', intent.error.message)
+    return NextResponse.json({ error: 'Payment could not be processed' }, { status: 402, headers: CORS })
   }
 
   return NextResponse.json({ clientSecret: intent.client_secret }, { headers: CORS })

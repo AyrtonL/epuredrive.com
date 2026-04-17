@@ -10,7 +10,7 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  NPM_FLAGS = "--no-audit"
+  NPM_FLAGS = ""
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
@@ -22,7 +22,7 @@
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
+    # X-XSS-Protection removed — deprecated in modern browsers, can cause issues in IE
     X-Content-Type-Options = "nosniff"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
     Referrer-Policy = "strict-origin-when-cross-origin"

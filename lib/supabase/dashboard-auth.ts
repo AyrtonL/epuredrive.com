@@ -27,19 +27,30 @@ export async function requireTenantId(): Promise<{ supabase: ReturnType<typeof c
   }
 
   // No profile yet — check if this is an invited user with metadata
+  // Only trust user_metadata if the role is a known safe value (not admin via self-assignment)
   const meta = user.user_metadata as { tenant_id?: string; role?: string } | undefined
-  if (meta?.tenant_id && meta?.role) {
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        id: user.id,
-        tenant_id: meta.tenant_id,
-        role: meta.role,
-        full_name: null, // Set during onboarding
-      })
+  const SAFE_INVITE_ROLES = ['admin', 'finance', 'staff']
+  if (meta?.tenant_id && meta?.role && SAFE_INVITE_ROLES.includes(meta.role)) {
+    // Verify tenant exists before creating the profile
+    const { data: tenantCheck } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('id', meta.tenant_id)
+      .single()
 
-    if (!error) {
-      redirect('/dashboard/onboarding')
+    if (tenantCheck) {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          tenant_id: meta.tenant_id,
+          role: meta.role,
+          full_name: null, // Set during onboarding
+        })
+
+      if (!error) {
+        redirect('/dashboard/onboarding')
+      }
     }
   }
 

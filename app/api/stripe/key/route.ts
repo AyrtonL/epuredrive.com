@@ -8,6 +8,9 @@ import { NextResponse } from 'next/server'
 export async function GET() {
   return NextResponse.json(
     { publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '' },
-    { headers: { 'Access-Control-Allow-Origin': '*' } }
+    { headers: {
+      'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://epuredrive.com',
+      'Cache-Control': 'public, max-age=3600',
+    } }
   )
 }

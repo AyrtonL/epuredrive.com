@@ -1,20 +1,21 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createOAuthClient } from '@/lib/quickbooks/oauth-client'
+import { createOAuthClient, verifyState } from '@/lib/quickbooks/oauth-client'
 import { qboRequest } from '@/lib/quickbooks/api-client'
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const tenantId = searchParams.get('state')
+  const stateParam = searchParams.get('state')
   const oauthError = searchParams.get('error')
 
   const DASHBOARD_URL = '/dashboard/integrations/quickbooks?qb=connected'
   const ERROR_URL = '/dashboard/integrations/quickbooks?qb=error'
 
-  if (oauthError || !tenantId || !UUID_RE.test(tenantId)) {
-    console.error('[qb-callback] OAuth error or invalid params:', { oauthError, tenantId })
+  // Verify HMAC-signed state to prevent OAuth callback forgery
+  const tenantId = stateParam ? verifyState(stateParam) : null
+
+  if (oauthError || !tenantId) {
+    console.error('[qb-callback] OAuth error or invalid state:', { oauthError, stateParam })
     return NextResponse.redirect(new URL(ERROR_URL, request.url))
   }
 

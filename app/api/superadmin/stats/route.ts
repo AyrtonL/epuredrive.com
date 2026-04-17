@@ -7,7 +7,8 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const CORS = { 'Access-Control-Allow-Origin': '*' }
+const ADMIN_ORIGIN = process.env.ADMIN_DASHBOARD_ORIGIN || 'https://epuredrive.com'
+const CORS = { 'Access-Control-Allow-Origin': ADMIN_ORIGIN }
 const TRIAL_DAYS = 14
 
 export async function GET(request: Request) {

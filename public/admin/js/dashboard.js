@@ -20,7 +20,9 @@ function esc(str) {
   return d.innerHTML;
 }
 function safeHTML(html) {
-  return typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(html) : html;
+  if (typeof DOMPurify !== 'undefined') return DOMPurify.sanitize(html);
+  // Fallback: strip all HTML tags if DOMPurify failed to load
+  return String(html).replace(/<[^>]*>/g, '');
 }
 
 // ---- Constants ----
@@ -384,11 +386,12 @@ function _setUserUI(fullName, email, role) {
   if (avatarEl) avatarEl.textContent = initials;
   if (nameEl)   nameEl.textContent   = displayName;
   if (roleEl) {
-    roleEl.innerHTML = `<span class="role-badge ${currentRole}">${currentRole}</span>`;
+    roleEl.innerHTML = `<span class="role-badge ${esc(currentRole)}">${esc(currentRole)}</span>`;
   }
   // Apply role class to body for CSS-based visibility rules
   document.body.classList.remove('role-admin', 'role-finance', 'role-staff');
-  document.body.classList.add(`role-${currentRole}`);
+  const safeRole = currentRole.replace(/[^a-z]/g, '');
+  document.body.classList.add(`role-${safeRole}`);
 }
 
 // Redirect to safe tab if current active tab is restricted for this role
@@ -1054,14 +1057,15 @@ function showDetail(r) {
     <div class="detail-row"><span>Source</span><span class="source-badge source-${esc(r.source)}">${esc(r.source)}</span></div>
     ${r.notes ? `<div class="detail-row"><span>Notes</span><em style="color:var(--muted-2)">${esc(r.notes)}</em></div>` : ''}
   `);
+  const safeId = esc(String(r.id));
   document.getElementById('detail-actions').innerHTML = `
     <button class="btn btn-outline" onclick="closeModal('detail-modal')">Close</button>
-    <button class="btn btn-outline" style="font-size:0.8rem;" onclick="copyPortalLink('${r.id}')">
+    <button class="btn btn-outline" style="font-size:0.8rem;" onclick="copyPortalLink('${safeId}')">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
       Portal Link
     </button>
-    <button class="btn write-action" style="background:none;border:1px solid var(--red,#ef4444);color:var(--red,#ef4444);border-radius:8px;padding:0.5rem 1rem;font-size:0.85rem;font-weight:600;cursor:pointer;" onclick="closeModal('detail-modal');deleteReservation('${r.id}')">Delete</button>
-    <button class="btn btn-primary write-action" onclick="closeModal('detail-modal');openEdit('${r.id}')">Edit</button>
+    <button class="btn write-action" style="background:none;border:1px solid var(--red,#ef4444);color:var(--red,#ef4444);border-radius:8px;padding:0.5rem 1rem;font-size:0.85rem;font-weight:600;cursor:pointer;" onclick="closeModal('detail-modal');deleteReservation('${safeId}')">Delete</button>
+    <button class="btn btn-primary write-action" onclick="closeModal('detail-modal');openEdit('${safeId}')">Edit</button>
   `;
   openModal('detail-modal');
 }

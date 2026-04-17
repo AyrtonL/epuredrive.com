@@ -5,6 +5,18 @@ import type { WebhookEventType, WebhookPayload } from './events'
 const DELIVERY_TIMEOUT_MS = 10_000
 const MAX_RESPONSE_BODY = 1024
 
+/** Reject webhook URLs pointing to internal/private networks */
+function isSafeWebhookUrl(raw: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(raw)
+    if (protocol !== 'https:') return false
+    if (/^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|0\.|localhost|::1|\[::1\])/i.test(hostname)) return false
+    return true
+  } catch {
+    return false
+  }
+}
+
 function signPayload(payload: string, secret: string): string {
   const timestamp = Math.floor(Date.now() / 1000)
   const signature = crypto
@@ -35,8 +47,8 @@ export async function dispatchWebhookEvent(
   if (!endpoints?.length) return
 
   const matchingEndpoints = endpoints.filter(
-    (ep: { events: string[] }) =>
-      ep.events.includes(event) || ep.events.includes('*')
+    (ep: { events: string[]; url: string }) =>
+      (ep.events.includes(event) || ep.events.includes('*')) && isSafeWebhookUrl(ep.url)
   )
 
   if (!matchingEndpoints.length) return

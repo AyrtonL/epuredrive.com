@@ -184,13 +184,13 @@ function buildCustomerEmail(p: {
       <table width="100%" style="max-width:520px;background:#111111;border-radius:24px;overflow:hidden;border:1px solid rgba(255,255,255,0.08)">
         <!-- Header -->
         <tr><td style="padding:40px 40px 32px;border-bottom:1px solid rgba(255,255,255,0.06)">
-          <p style="margin:0 0 8px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.4em;color:rgba(255,255,255,0.3)">${p.tenantName}</p>
+          <p style="margin:0 0 8px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.4em;color:rgba(255,255,255,0.3)">${escHtml(p.tenantName)}</p>
           <h1 style="margin:0;font-size:28px;font-weight:900;letter-spacing:-0.03em;font-style:italic">Reservation Received</h1>
         </td></tr>
         <!-- Body -->
         <tr><td style="padding:32px 40px">
           <p style="margin:0 0 24px;color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6">
-            Hi <strong style="color:#fff">${p.customerName}</strong>, your reservation request for the <strong style="color:#fff">${p.vehicleName}</strong> has been received. We'll confirm your booking shortly.
+            Hi <strong style="color:#fff">${escHtml(p.customerName)}</strong>, your reservation request for the <strong style="color:#fff">${escHtml(p.vehicleName)}</strong> has been received. We'll confirm your booking shortly.
           </p>
           <!-- Details box -->
           <table width="100%" style="background:rgba(255,255,255,0.04);border-radius:16px;border:1px solid rgba(255,255,255,0.06);margin-bottom:24px">
@@ -204,7 +204,7 @@ function buildCustomerEmail(p: {
             </td></tr>
           </table>
           <p style="margin:0;color:rgba(255,255,255,0.3);font-size:12px;line-height:1.6">
-            Questions? Reply to this email or contact ${p.tenantName} directly.
+            Questions? Reply to this email or contact ${escHtml(p.tenantName)} directly.
           </p>
         </td></tr>
         <!-- Footer -->
@@ -240,7 +240,7 @@ function buildTenantEmail(p: {
     <tr><td align="center">
       <table width="100%" style="max-width:520px;background:#111111;border-radius:24px;overflow:hidden;border:1px solid rgba(255,255,255,0.08)">
         <tr><td style="padding:40px 40px 32px;border-bottom:1px solid rgba(255,255,255,0.06)">
-          <p style="margin:0 0 8px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.4em;color:rgba(255,255,255,0.3)">${p.tenantName} · New Booking</p>
+          <p style="margin:0 0 8px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.4em;color:rgba(255,255,255,0.3)">${escHtml(p.tenantName)} · New Booking</p>
           <h1 style="margin:0;font-size:28px;font-weight:900;letter-spacing:-0.03em;font-style:italic">New Reservation Request</h1>
         </td></tr>
         <tr><td style="padding:32px 40px">
@@ -270,9 +270,13 @@ function buildTenantEmail(p: {
 </html>`
 }
 
+function escHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
 function detailRow(label: string, value: string): string {
   return `<table width="100%" style="margin-bottom:12px"><tr>
-    <td style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:rgba(255,255,255,0.3);width:40%">${label}</td>
-    <td style="font-size:13px;font-weight:600;color:#ffffff;text-align:right">${value}</td>
+    <td style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:rgba(255,255,255,0.3);width:40%">${escHtml(label)}</td>
+    <td style="font-size:13px;font-weight:600;color:#ffffff;text-align:right">${escHtml(value)}</td>
   </tr></table>`
 }

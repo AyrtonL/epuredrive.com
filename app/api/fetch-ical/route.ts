@@ -5,10 +5,39 @@ import { NextRequest, NextResponse } from 'next/server'
  * Proxy route to fetch external iCal feeds (CORS bypass).
  * Replaces legacy /.netlify/functions/fetch-ical
  */
+
+// Allowlisted iCal hosts — only these can be fetched through this proxy
+const ALLOWED_HOSTS = [
+  'turo.com',
+  'calendar.google.com',
+  'p62-caldav.icloud.com',
+  'p63-caldav.icloud.com',
+  'caldav.icloud.com',
+  'outlook.office365.com',
+  'calendar.yahoo.com',
+  'airbnb.com',
+  'ical.booking.com',
+  'admin.booking.com',
+]
+
+function isSafeIcalUrl(raw: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(raw)
+    if (protocol !== 'https:') return false
+    return ALLOWED_HOSTS.some(h => hostname === h || hostname.endsWith(`.${h}`))
+  } catch {
+    return false
+  }
+}
+
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url')
   if (!url) {
     return NextResponse.json({ error: 'Missing url parameter' }, { status: 400 })
+  }
+
+  if (!isSafeIcalUrl(url)) {
+    return NextResponse.json({ error: 'URL not allowed — only known iCal hosts are permitted' }, { status: 403 })
   }
 
   try {

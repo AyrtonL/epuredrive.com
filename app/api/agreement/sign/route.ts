@@ -15,6 +15,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing token or signature' }, { status: 400 })
     }
 
+    // Cap signature size at 500KB to prevent abuse
+    const MAX_SIGNATURE_BYTES = 500 * 1024
+    if (typeof signature !== 'string' || signature.length > MAX_SIGNATURE_BYTES) {
+      return NextResponse.json({ error: 'Signature too large' }, { status: 413 })
+    }
+
     const supabase = createAdminClient()
 
     // Find the reservation by token

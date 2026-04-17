@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/resend'
 import { welcomeEmail, onboardingEmail } from '@/lib/email/templates/platform'
 import { rateLimit } from '@/lib/rate-limit'
@@ -13,6 +14,14 @@ import { rateLimit } from '@/lib/rate-limit'
 export async function POST(request: NextRequest) {
   const limited = rateLimit(request, 'tenant-create', { windowMs: 600_000, max: 3 })
   if (limited) return limited
+
+  // Authenticate: derive userId from session, never trust the request body
+  const sessionClient = createClient()
+  const { data: { user } } = await sessionClient.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   let body: unknown
   try {
     body = await request.json()
@@ -20,10 +29,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { userId, email, company } = body as Record<string, string>
-  if (!userId) {
-    return NextResponse.json({ error: 'userId is required' }, { status: 400 })
-  }
+  const { email, company } = body as Record<string, string>
+  const userId = user.id
 
   const supabase = createAdminClient()
 
