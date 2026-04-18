@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   }
 
   if (!feeds?.length) {
-    console.log('[sync-ical] No feeds configured')
+    console.info('[sync-ical] No feeds configured')
     return NextResponse.json({ totalImported: 0, errors: 0 })
   }
 
@@ -93,13 +93,13 @@ export async function GET(request: Request) {
         .update({ last_synced: new Date().toISOString() })
         .eq('id', feed.id)
 
-      console.log(`[sync-ical] Feed ${feed.id} (${sourceName}): imported ${events.length} events`)
+      console.info(`[sync-ical] Feed ${feed.id}: imported ${events.length} events`)
     } catch (err: unknown) {
       console.error(`[sync-ical] Feed ${feed.id} failed:`, err instanceof Error ? err.message : err)
       errors++
     }
   }
 
-  console.log(`[sync-ical] Finished: ${totalImported} imported, ${errors} error(s)`)
+  console.info(`[sync-ical] Finished: ${totalImported} imported, ${errors} error(s)`)
   return NextResponse.json({ totalImported, errors })
 }

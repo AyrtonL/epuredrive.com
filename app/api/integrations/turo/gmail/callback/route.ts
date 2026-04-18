@@ -78,7 +78,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL(ERROR_URL, request.url))
     }
 
-    console.log(`[gmail-callback] Connected Gmail ${gmailAddress} for tenant ${tenantId}`)
+    console.info(`[gmail-callback] Connected Gmail for tenant ${tenantId}`)
     return NextResponse.redirect(new URL(DASHBOARD_URL, request.url))
   } catch (err) {
     console.error('[gmail-callback] Internal error:', err)

@@ -517,7 +517,7 @@ export async function GET(request: Request) {
         .eq('id', sync.id)
 
       totalSynced += synced
-      console.log(`[poll-turo-emails] Tenant ${sync.tenant_id} (${sync.gmail_address}) [${sync.provider || 'gmail'}]: ${synced} processed`)
+      console.info(`[poll-turo-emails] Tenant ${sync.tenant_id}: ${synced} processed`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error(`[poll-turo-emails] Sync ${sync.id} failed:`, msg)
@@ -528,6 +528,6 @@ export async function GET(request: Request) {
     }
   }
 
-  console.log(`[poll-turo-emails] Done: ${totalSynced} synced, ${errors} error(s)`)
+  console.info(`[poll-turo-emails] Done: ${totalSynced} synced, ${errors} error(s)`)
   return NextResponse.json({ totalSynced, errors })
 }

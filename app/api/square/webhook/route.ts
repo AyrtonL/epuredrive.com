@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!tenant) {
-      console.log('[square-webhook] No tenant found for location:', locationId)
+      console.warn('[square-webhook] No tenant found for location:', locationId)
       return new Response('ok', { status: 200 })
     }
 

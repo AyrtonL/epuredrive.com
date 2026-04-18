@@ -84,7 +84,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL(ERROR_URL, request.url), 302)
     }
 
-    console.log(`[qb-callback] Connected QBO company "${companyName}" (realm ${realmId}) for tenant ${tenantId}`)
+    console.info(`[qb-callback] Connected QBO company for tenant ${tenantId}`)
     return NextResponse.redirect(new URL(DASHBOARD_URL, request.url), 302)
   } catch (err) {
     console.error('[qb-callback] Internal error:', err)
