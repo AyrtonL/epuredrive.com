@@ -2,19 +2,34 @@ interface Props {
   label: string
   value: string | number
   sub?: string
+  trend?: number | null
+  trendLabel?: string
+  accentColor?: string
   variant?: 'default' | 'primary'
 }
 
-export default function StatCard({ label, value, sub, variant = 'default' }: Props) {
+export default function StatCard({ label, value, sub, trend, trendLabel, accentColor, variant = 'default' }: Props) {
   const isPrimary = variant === 'primary'
+  const trendPositive = trend != null && trend >= 0
+  const trendColor = trendPositive ? 'text-emerald-400' : 'text-red-400'
+  const trendBg = trendPositive ? 'bg-emerald-500/10' : 'bg-red-500/10'
 
   return (
-    <div className={`glass rounded-2xl p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-500 border ${isPrimary ? 'border-white/[0.16] hover:border-white/30 hover:shadow-[0_12px_40px_rgba(255,255,255,0.08)]' : 'border-white/[0.12] hover:border-white/25 hover:shadow-[0_12px_40px_rgba(255,255,255,0.05)]'}`}>
-      <div className={`absolute top-0 right-0 w-28 h-28 rounded-full blur-3xl -mr-8 -mt-8 transition-colors duration-500 ${isPrimary ? 'bg-white/15 group-hover:bg-white/25' : 'bg-white/[0.06] group-hover:bg-white/[0.12]'}`} />
+    <div className={`glass rounded-2xl p-6 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300 border ${isPrimary ? 'border-white/[0.16]' : 'border-white/[0.10]'}`}>
+      {accentColor && (
+        <div className={`absolute top-0 left-0 right-0 h-[2px] ${accentColor}`} />
+      )}
       <div className="relative z-10">
-        <div className="text-[10px] font-bold text-white/55 uppercase tracking-[0.2em] mb-3">{label}</div>
-        <div className={`text-3xl font-black tracking-tight mb-2 truncate transition-all duration-300 ${isPrimary ? 'text-white group-hover:text-glow' : 'text-white/90 group-hover:text-white group-hover:text-glow'}`}>{value}</div>
-        {sub && <div className="text-xs text-white/45 font-medium truncate">{sub}</div>}
+        <div className="text-[10px] font-bold text-white/50 uppercase tracking-[0.18em] mb-4">{label}</div>
+        <div className="flex items-baseline gap-2.5">
+          <div className={`text-3xl font-black tracking-tight truncate ${isPrimary ? 'text-white' : 'text-white/90'}`}>{value}</div>
+          {trend != null && (
+            <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${trendColor} ${trendBg}`}>
+              {trendPositive ? '+' : ''}{trend}{trendLabel || '%'}
+            </span>
+          )}
+        </div>
+        {sub && <div className="text-[11px] text-white/40 font-medium mt-1.5 truncate">{sub}</div>}
       </div>
     </div>
   )

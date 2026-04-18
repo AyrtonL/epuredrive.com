@@ -6,8 +6,8 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import SupportModal from '@/components/dashboard/SupportModal'
-import NotificationBell from '@/components/dashboard/NotificationBell'
+
+
 
 // ── SVG Icon Components ────────────────────────────────────────────────────────
 
@@ -505,7 +505,6 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
   const router = useRouter()
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [supportOpen, setSupportOpen] = useState(false)
 
   const isSuperuser = role === 'superuser'
 
@@ -579,9 +578,6 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
           <Image src="/favicon.svg" alt="éPure" width={36} height={36} className="w-full h-full" />
         </div>
         <span className="relative z-10 text-white font-semibold text-sm tracking-wide flex-1">éPure Drive</span>
-        <div className="relative z-10">
-          <NotificationBell />
-        </div>
       </div>
 
       {/* ── Navigation ────────────────────────────────────────────────── */}
@@ -657,39 +653,36 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
       </nav>
 
       {/* ── User Footer ───────────────────────────────────────────────── */}
-      <div className="p-5 border-t border-surfaceBorder backdrop-blur-md bg-white/[0.02]">
-        <div className="flex items-center gap-3">
-          {role && (
-            <span className={`inline-block shrink-0 px-2.5 py-1 text-[10px] font-bold tracking-widest rounded-full uppercase ${
-              isSuperuser
-                ? 'text-amber-300 bg-amber-500/10 border border-amber-500/20'
-                : 'text-primary bg-primary/10 border border-primary/20'
-            }`}>
-              {isSuperuser ? 'Admin' : role}
-            </span>
-          )}
-          {name && (
-            <span className="text-[13px] text-white/60 font-medium truncate">{name}</span>
-          )}
+      <div className="p-3 border-t border-surfaceBorder backdrop-blur-md bg-white/[0.02]">
+        <div className="group/user relative">
+          {/* Popover — sits directly above with no gap, invisible bridge connects them */}
+          <div className="absolute bottom-full left-0 right-0 pb-1 opacity-0 pointer-events-none group-hover/user:opacity-100 group-hover/user:pointer-events-auto transition-all duration-200">
+            <div className="bg-[#1a1a1e] border border-white/[0.08] rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.6)] p-1.5">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-white/50 hover:text-red-400 hover:bg-red-500/[0.08] transition-all text-[12px] font-medium"
+              >
+                <IconLogout className="w-3.5 h-3.5" />
+                Log out
+              </button>
+            </div>
+          </div>
+
+          {/* User button */}
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/[0.06] group-hover/user:border-white/[0.12] group-hover/user:bg-white/[0.04] cursor-pointer transition-all duration-200">
+            <div className="w-9 h-9 rounded-full bg-white/[0.10] border border-white/[0.12] flex items-center justify-center shrink-0">
+              <span className="text-[13px] font-bold text-white/80">
+                {name ? name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : email.slice(0, 2).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] text-white/80 font-medium truncate">{name || email}</div>
+              {role && (
+                <div className="text-[10px] text-white/35 font-medium uppercase tracking-wider">{isSuperuser ? 'Admin' : role}</div>
+              )}
+            </div>
+          </div>
         </div>
-        <button
-          onClick={() => setSupportOpen(true)}
-          className="mt-4 flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-white/30
-                     hover:text-white/60 hover:bg-white/[0.03] transition-all text-xs font-medium"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round"
-              d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>
-          </svg>
-          Support
-        </button>
-        <button
-          onClick={handleLogout}
-          className="mt-1 w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
-        >
-          <IconLogout className="w-4 h-4" />
-          <span className="text-[13px] font-medium">Log out</span>
-        </button>
       </div>
     </>
   )
@@ -741,7 +734,6 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
         {navContent}
       </aside>
 
-      <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
     </>
   )
 }

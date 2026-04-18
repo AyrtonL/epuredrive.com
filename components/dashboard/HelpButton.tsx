@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import SupportModal from './SupportModal'
 
 interface Props {
   plan: string
@@ -10,6 +11,7 @@ const PAID_PLANS = ['pro', 'max', 'enterprise']
 
 export default function HelpButton({ plan }: Props) {
   const [open, setOpen] = useState(false)
+  const [ticketOpen, setTicketOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -96,6 +98,24 @@ export default function HelpButton({ plan }: Props) {
               </a>
             )}
 
+            <button
+              onClick={() => { setTicketOpen(true); setOpen(false) }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/70 hover:text-white hover:bg-white/[0.06] transition-all duration-200 group w-full text-left"
+            >
+              <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0 group-hover:bg-violet-500/20">
+                <svg className="w-4 h-4 text-violet-400/60 group-hover:text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="12" y1="18" x2="12" y2="12" />
+                  <line x1="9" y1="15" x2="15" y2="15" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-[13px] font-medium">Submit a ticket</div>
+                <div className="text-[11px] text-white/30">Create a support request</div>
+              </div>
+            </button>
+
             <a
               href="https://docs.epuredrive.com"
               target="_blank"
@@ -158,6 +178,8 @@ export default function HelpButton({ plan }: Props) {
           </svg>
         )}
       </button>
+
+      <SupportModal isOpen={ticketOpen} onClose={() => setTicketOpen(false)} />
     </>
   )
 }

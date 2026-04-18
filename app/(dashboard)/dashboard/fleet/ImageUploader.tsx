@@ -72,9 +72,11 @@ export default function ImageUploader({ images, onChange }: Props) {
       {/* Gallery Grid */}
       {images.length > 0 && (
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-          {images.map((url, idx) => (
+          {images.map((url, idx) => {
+            const src = url.startsWith('http') || url.startsWith('/') ? url : `/${url}`
+            return (
             <div key={url} className="relative group aspect-[4/3] rounded-xl overflow-hidden border border-white/10">
-              <Image src={url} alt={`Car photo ${idx + 1}`} fill className="object-cover" />
+              <Image src={src} alt={`Car photo ${idx + 1}`} fill className="object-cover" />
               {idx === 0 && (
                 <div className="absolute top-1.5 left-1.5 bg-black/70 text-[9px] font-bold text-white px-1.5 py-0.5 rounded uppercase tracking-wider">
                   Cover
@@ -88,7 +90,8 @@ export default function ImageUploader({ images, onChange }: Props) {
                 ×
               </button>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
