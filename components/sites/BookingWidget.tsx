@@ -9,6 +9,7 @@ interface Props {
   tenantId: string
   pickupLocations?: PickupLocation[]
   whatsappPhone?: string | null
+  paymentsEnabled?: boolean
 }
 
 const timeOptions = [
@@ -28,7 +29,7 @@ function formatBookedRange(from: string, to: string): string {
   return `${fmt(from)} – ${fmt(to)}`
 }
 
-export default function BookingWidget({ car, tenantId, pickupLocations = [], whatsappPhone }: Props) {
+export default function BookingWidget({ car, tenantId, pickupLocations = [], whatsappPhone, paymentsEnabled }: Props) {
   const [pickDate, setPickDate] = useState('')
   const [retDate, setRetDate] = useState('')
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([])
@@ -152,51 +153,88 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
     setSubmitting(true)
     setFormError('')
     try {
-      const res = await fetch('/api/booking/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tenant_id: tenantId,
-          car_id: car.id,
-          customer_name: custName.trim(),
-          customer_email: custEmail.trim(),
-          customer_phone: custPhone.trim() || null,
-          pickup_date: pickDate,
-          pickup_time: pickTime,
-          return_date: retDate,
-          return_time: retTime,
-          pickup_location: locationLabel,
-          total_amount: total,
-          notes: [
-            hasProtection ? 'Shield Protection' : '',
-            hasToll ? 'Unlimited Tolls' : '',
-            hasFuel ? 'Prepaid Fuel' : ''
-          ].filter(Boolean).join(', ') || null,
-        }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Request failed' }))
-        setFormError((err as { error?: string }).error || 'Something went wrong.')
+      // If tenant has Stripe Connect enabled, redirect to Stripe Checkout for payment
+      if (paymentsEnabled) {
+        const res = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenant_id: tenantId,
+            car_id: car.id,
+            start_date: pickDate,
+            end_date: retDate,
+            customer_name: custName.trim(),
+            customer_email: custEmail.trim(),
+          }),
+        })
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Payment failed' }))
+          // If tenant uses Square, fall back to booking request
+          if ((err as { processor?: string }).processor === 'square') {
+            await submitBookingRequest()
+            return
+          }
+          setFormError((err as { error?: string }).error || 'Could not start payment.')
+          return
+        }
+        const { url } = await res.json() as { url: string }
+        if (url) {
+          window.location.href = url
+          return
+        }
+        setFormError('Could not create payment session.')
         return
       }
-      const result = await res.json().catch(() => ({})) as { reservationId?: number }
-      // Redirect to confirmation page if we have a slug (public site context)
-      if (typeof window !== 'undefined') {
-        const onDirectPath = window.location.pathname.startsWith('/sites/')
-        const pathParts = window.location.pathname.split('/')
-        const siteIdx = pathParts.indexOf('sites')
-        const slug = siteIdx >= 0 ? pathParts[siteIdx + 1] : null
-        const basePath = onDirectPath && slug ? `/sites/${slug}` : ''
-        const confirmUrl = `${basePath}/booking-confirmation?id=${result.reservationId ?? ''}&car=${encodeURIComponent(car.make + ' ' + (car.model_full || car.model))}`
-        window.location.href = confirmUrl
-        return
-      }
-      setSubmitted(true)
+
+      // No Stripe Connect — submit as booking request (no payment)
+      await submitBookingRequest()
     } catch {
       setFormError('Network error. Please try again.')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const submitBookingRequest = async () => {
+    const res = await fetch('/api/booking/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tenant_id: tenantId,
+        car_id: car.id,
+        customer_name: custName.trim(),
+        customer_email: custEmail.trim(),
+        customer_phone: custPhone.trim() || null,
+        pickup_date: pickDate,
+        pickup_time: pickTime,
+        return_date: retDate,
+        return_time: retTime,
+        pickup_location: locationLabel,
+        total_amount: total,
+        notes: [
+          hasProtection ? 'Shield Protection' : '',
+          hasToll ? 'Unlimited Tolls' : '',
+          hasFuel ? 'Prepaid Fuel' : ''
+        ].filter(Boolean).join(', ') || null,
+      }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Request failed' }))
+      setFormError((err as { error?: string }).error || 'Something went wrong.')
+      return
+    }
+    const result = await res.json().catch(() => ({})) as { reservationId?: number }
+    if (typeof window !== 'undefined') {
+      const onDirectPath = window.location.pathname.startsWith('/sites/')
+      const pathParts = window.location.pathname.split('/')
+      const siteIdx = pathParts.indexOf('sites')
+      const slug = siteIdx >= 0 ? pathParts[siteIdx + 1] : null
+      const basePath = onDirectPath && slug ? `/sites/${slug}` : ''
+      const confirmUrl = `${basePath}/booking-confirmation?id=${result.reservationId ?? ''}&car=${encodeURIComponent(car.make + ' ' + (car.model_full || car.model))}`
+      window.location.href = confirmUrl
+      return
+    }
+    setSubmitted(true)
   }
 
   const priceNum = Number(car.daily_rate) || 0
@@ -379,7 +417,9 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
                 disabled={submitting}
                 className="w-full bg-white text-black font-black uppercase tracking-[0.2em] text-[11px] py-5 rounded-2xl hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? 'Submitting...' : 'Confirm Reservation Request'}
+                {submitting
+                  ? (paymentsEnabled ? 'Redirecting to Payment...' : 'Submitting...')
+                  : (paymentsEnabled ? 'Pay & Reserve Now' : 'Confirm Reservation Request')}
               </button>
               <button
                 onClick={() => setShowBookingForm(false)}

@@ -104,9 +104,9 @@ export async function POST(request: Request) {
 
   if (type === 'checkout.session.completed') {
     const session = data.object
-    const tenantId: string | undefined = session.metadata?.tenantId ?? session.metadata?.tenant_id
+    const tenantId: string | undefined = session.metadata?.tenant_id ?? session.metadata?.tenantId
     if (tenantId) {
-      const priceId: string | undefined = session.metadata?.priceId
+      const priceId: string | undefined = session.metadata?.priceId ?? session.metadata?.price_id
       const plan = resolvePlan(priceId, session.metadata?.plan)
       await patchTenant(tenantId, {
         plan,
@@ -138,7 +138,7 @@ export async function POST(request: Request) {
 
   if (type === 'customer.subscription.updated') {
     const sub = data.object
-    const tenantId: string | undefined = sub.metadata?.tenantId ?? sub.metadata?.tenant_id
+    const tenantId: string | undefined = sub.metadata?.tenant_id ?? sub.metadata?.tenantId
     if (tenantId) {
       const priceId: string | undefined = sub.items?.data?.[0]?.price?.id
       const plan = resolvePlan(priceId, sub.metadata?.plan)
@@ -164,11 +164,11 @@ export async function POST(request: Request) {
 
   if (type === 'customer.subscription.deleted') {
     const sub = data.object
-    const tenantId: string | undefined = sub.metadata?.tenantId
+    const tenantId: string | undefined = sub.metadata?.tenant_id ?? sub.metadata?.tenantId
     if (tenantId) {
       const priceId: string | undefined = sub.items?.data?.[0]?.price?.id
       const plan = resolvePlan(priceId, sub.metadata?.plan)
-      await patchTenant(tenantId, { plan: 'suspended' })
+      await patchTenant(tenantId, { plan: 'free' })
       // Send subscription cancelled email
       const emailsDel = await getOperatorEmailsForTenant(tenantId)
       const nameDel = await getTenantName(tenantId)

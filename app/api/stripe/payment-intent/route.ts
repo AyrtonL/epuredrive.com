@@ -4,7 +4,8 @@
  * Requires: STRIPE_SECRET_KEY
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://epuredrive.com'
 
@@ -14,11 +15,33 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
+function isAllowedOrigin(origin: string | null): boolean {
+  if (!origin) return false
+  try {
+    const { hostname } = new URL(origin)
+    if (hostname === 'epuredrive.com' || hostname.endsWith('.epuredrive.com')) return true
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return true
+    return false
+  } catch {
+    return false
+  }
+}
+
 export async function OPTIONS() {
   return new Response(null, { status: 204, headers: CORS })
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Rate limit: 10 requests per minute per IP
+  const rateLimited = rateLimit(request, 'stripe-payment-intent', { windowMs: 60_000, max: 10 })
+  if (rateLimited) return rateLimited
+
+  // Origin validation
+  const origin = request.headers.get('origin')
+  if (!isAllowedOrigin(origin)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: CORS })
+  }
+
   const stripeKey = process.env.STRIPE_SECRET_KEY
   if (!stripeKey) {
     return NextResponse.json({ error: 'Payment service not configured' }, { status: 500, headers: CORS })

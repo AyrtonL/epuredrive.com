@@ -144,6 +144,7 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, wh
               tenantId={tenantId}
               pickupLocations={pickupLocations}
               whatsappPhone={whatsappPhone}
+              paymentsEnabled={paymentsEnabled}
             />
           </div>
         )}

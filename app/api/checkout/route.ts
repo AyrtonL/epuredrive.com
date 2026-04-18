@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe'
 import { rateLimit } from '@/lib/rate-limit'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export async function POST(request: NextRequest) {
   const limited = rateLimit(request, 'checkout', { windowMs: 60_000, max: 10 })
@@ -42,6 +37,8 @@ export async function POST(request: NextRequest) {
   if (days < 1 || days > 365) {
     return NextResponse.json({ error: 'Invalid rental duration' }, { status: 400 })
   }
+
+  const supabase = createAdminClient()
 
   // Fetch car and tenant
   const { data: car } = await supabase

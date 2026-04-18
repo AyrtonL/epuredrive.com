@@ -5,7 +5,20 @@
 // Env vars required (set in Netlify → Site Settings → Environment Variables):
 //   STRIPE_SECRET_KEY  — sk_live_... or sk_test_...
 
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://epuredrive.com';
+
+// Origin validation — reject requests from unknown origins
+function isAllowedOrigin(origin) {
+  if (!origin) return false;
+  try {
+    const { hostname } = new URL(origin);
+    if (hostname === 'epuredrive.com' || hostname.endsWith('.epuredrive.com')) return true;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 exports.handler = async (event) => {
   const headers = {
@@ -22,6 +35,12 @@ exports.handler = async (event) => {
 
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+
+  // Validate origin
+  const origin = event.headers?.origin || event.headers?.Origin;
+  if (!isAllowedOrigin(origin)) {
+    return { statusCode: 403, headers, body: JSON.stringify({ error: 'Forbidden' }) };
   }
 
   const stripeKey = process.env.STRIPE_SECRET_KEY;

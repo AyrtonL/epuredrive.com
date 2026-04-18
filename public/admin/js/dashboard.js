@@ -2,12 +2,24 @@
    éPure Drive — Admin Dashboard
    ============================================= */
 
-// Public anon credentials — loaded from env-injected meta tags or fallback config endpoint.
+// Public anon credentials — loaded from env-injected meta tags.
 // These are NOT secrets; Row Level Security (RLS) enforces data access rules.
-const SUPABASE_URL = document.querySelector('meta[name="sb-url"]')?.content
-  || 'https://brwzjwbpguiignrxvjdc.supabase.co';
-const SUPABASE_KEY = document.querySelector('meta[name="sb-key"]')?.content
-  || 'sb_publishable_krEuIpNhJVcADIUyBXYy9g_fiXrXzV9';
+// If meta tags are missing, the app fails closed — no hardcoded fallback.
+const SUPABASE_URL = document.querySelector('meta[name="sb-url"]')?.content;
+const SUPABASE_KEY = document.querySelector('meta[name="sb-key"]')?.content;
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  const errDiv = document.createElement('div');
+  errDiv.style.cssText = 'padding:2rem;color:#c00;font-family:sans-serif';
+  const h2 = document.createElement('h2');
+  h2.textContent = 'Configuration Error';
+  const p = document.createElement('p');
+  p.textContent = 'Supabase credentials not found. Contact support.';
+  errDiv.appendChild(h2);
+  errDiv.appendChild(p);
+  document.body.replaceChildren(errDiv);
+  throw new Error('Missing Supabase meta tags — refusing to start without credentials');
+}
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);

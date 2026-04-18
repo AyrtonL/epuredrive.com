@@ -2,9 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSquareClient } from '@/lib/square/client'
 import { refreshSquareToken } from '@/lib/square/oauth'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { rateLimit } from '@/lib/rate-limit'
+import { decryptSquareToken, encryptSquareToken } from '@/lib/square/token-crypto'
 import crypto from 'crypto'
 
+function isAllowedOrigin(origin: string | null): boolean {
+  if (!origin) return false
+  try {
+    const { hostname } = new URL(origin)
+    if (hostname === 'epuredrive.com' || hostname.endsWith('.epuredrive.com')) return true
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return true
+    return false
+  } catch {
+    return false
+  }
+}
+
 export async function POST(request: NextRequest) {
+  // Rate limit: 10 requests per minute per IP
+  const rateLimited = rateLimit(request, 'square-checkout', { windowMs: 60_000, max: 10 })
+  if (rateLimited) return rateLimited
+
+  // Origin validation
+  const origin = request.headers.get('origin')
+  if (!isAllowedOrigin(origin)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   let body: unknown
   try {
     body = await request.json()
@@ -61,16 +85,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Square payments are not configured for this operator' }, { status: 400 })
   }
 
-  // Check if token needs refresh
-  let accessToken = tenant.square_access_token
+  // Decrypt stored tokens and check if refresh is needed
+  let accessToken: string
+  try {
+    accessToken = decryptSquareToken(tenant.square_access_token)
+  } catch {
+    return NextResponse.json({ error: 'Square credentials corrupted. Please reconnect.' }, { status: 500 })
+  }
+
   if (tenant.square_token_expires_at && new Date(tenant.square_token_expires_at) <= new Date()) {
     try {
-      const refreshed = await refreshSquareToken(tenant.square_refresh_token)
+      const decryptedRefresh = decryptSquareToken(tenant.square_refresh_token)
+      const refreshed = await refreshSquareToken(decryptedRefresh)
       accessToken = refreshed.access_token
-      // Update tokens in DB
+      // Update encrypted tokens in DB
       await supabase.from('tenants').update({
-        square_access_token: refreshed.access_token,
-        square_refresh_token: refreshed.refresh_token,
+        square_access_token: encryptSquareToken(refreshed.access_token),
+        square_refresh_token: encryptSquareToken(refreshed.refresh_token),
         square_token_expires_at: refreshed.expires_at,
       }).eq('id', tenantId)
     } catch (err) {
@@ -80,7 +111,7 @@ export async function POST(request: NextRequest) {
   }
 
   const totalCents = Math.round(car.daily_rate * days * 100)
-  const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const redirectOrigin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const carName = `${car.make} ${car.model}`
 
   try {
@@ -98,7 +129,7 @@ export async function POST(request: NextRequest) {
         locationId: tenant.square_location_id,
       },
       checkoutOptions: {
-        redirectUrl: `${origin}/sites/${tenant.slug}/${carId}?booked=true`,
+        redirectUrl: `${redirectOrigin}/sites/${tenant.slug}/${carId}?booked=true`,
         askForShippingAddress: false,
       },
       prePopulatedData: {

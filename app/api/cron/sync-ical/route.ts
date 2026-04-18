@@ -10,6 +10,30 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { parseIcal } from '@/lib/ical-parser'
 
+// Allowlisted iCal hosts — prevents SSRF via malicious URLs in DB
+const ALLOWED_ICAL_HOSTS = [
+  'turo.com',
+  'calendar.google.com',
+  'p62-caldav.icloud.com',
+  'p63-caldav.icloud.com',
+  'caldav.icloud.com',
+  'outlook.office365.com',
+  'calendar.yahoo.com',
+  'airbnb.com',
+  'ical.booking.com',
+  'admin.booking.com',
+]
+
+function isSafeIcalUrl(raw: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(raw)
+    if (protocol !== 'https:') return false
+    return ALLOWED_ICAL_HOSTS.some(h => hostname === h || hostname.endsWith(`.${h}`))
+  } catch {
+    return false
+  }
+}
+
 function verifyCronSecret(request: Request): boolean {
   const auth = request.headers.get('authorization')
   const secret = process.env.CRON_SECRET
@@ -43,6 +67,13 @@ export async function GET(request: Request) {
 
   for (const feed of feeds) {
     try {
+      // SSRF protection: validate URL against allowlist before fetching
+      if (!isSafeIcalUrl(feed.ical_url)) {
+        console.warn(`[sync-ical] Feed ${feed.id}: blocked unsafe URL: ${feed.ical_url}`)
+        errors++
+        continue
+      }
+
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 8000)
       let icsText: string

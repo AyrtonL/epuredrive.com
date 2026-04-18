@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { exchangeSquareCode, verifyState } from '@/lib/square/oauth'
 import { getSquareClient } from '@/lib/square/client'
+import { encryptSquareToken } from '@/lib/square/token-crypto'
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code')
@@ -27,8 +28,8 @@ export async function GET(request: NextRequest) {
     const supabase = createAdminClient()
     await supabase.from('tenants').update({
       square_merchant_id: tokens.merchant_id,
-      square_access_token: tokens.access_token,
-      square_refresh_token: tokens.refresh_token,
+      square_access_token: encryptSquareToken(tokens.access_token),
+      square_refresh_token: encryptSquareToken(tokens.refresh_token),
       square_token_expires_at: tokens.expires_at,
       square_location_id: primaryLocation?.id || null,
     }).eq('id', tenantId)

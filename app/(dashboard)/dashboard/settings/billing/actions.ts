@@ -33,15 +33,23 @@ export async function createCheckoutSession(planName: string): Promise<{ error: 
 
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
-    payment_method_types: ['card'],
+    payment_method_types: ['card', 'paypal'],
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://epuredrive.com'}/dashboard/settings/billing?success=1`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://epuredrive.com'}/dashboard/settings/billing?cancelled=1`,
     customer_email: user?.email ?? undefined,
+    automatic_tax: { enabled: true },
+    tax_id_collection: { enabled: true },
     metadata: {
       tenant_id: tenantId,
       plan: planName,
       tenant_name: tenant?.brand_name || tenant?.name || '',
+    },
+    subscription_data: {
+      metadata: {
+        tenant_id: tenantId,
+        plan: planName,
+      },
     },
   })
 

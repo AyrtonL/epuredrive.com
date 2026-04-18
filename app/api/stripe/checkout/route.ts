@@ -30,18 +30,19 @@ export async function POST(request: NextRequest) {
   const origin =
     request.headers.get('origin') ||
     request.headers.get('referer')?.replace(/\/[^/]*$/, '') ||
-    'https://epuredrivecom.netlify.app'
+    'https://epuredrive.com'
 
   const params = new URLSearchParams({
     mode: 'subscription',
     'payment_method_types[0]': 'card',
+    'payment_method_types[1]': 'paypal',
     'line_items[0][price]': priceId,
     'line_items[0][quantity]': '1',
-    success_url: `${origin}/dashboard?upgraded=1`,
-    cancel_url: `${origin}/dashboard?upgrade_cancelled=1`,
-    'metadata[tenantId]': tenantId,
+    success_url: `${origin}/dashboard/settings/billing?success=1`,
+    cancel_url: `${origin}/dashboard/settings/billing?cancelled=1`,
+    'metadata[tenant_id]': tenantId,
     'metadata[priceId]': priceId,
-    'subscription_data[metadata][tenantId]': tenantId,
+    'subscription_data[metadata][tenant_id]': tenantId,
     'subscription_data[metadata][priceId]': priceId,
     'automatic_tax[enabled]': 'true',
     'tax_id_collection[enabled]': 'true',

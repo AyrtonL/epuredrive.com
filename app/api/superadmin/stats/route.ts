@@ -4,14 +4,19 @@
  * Caller must provide a valid Supabase JWT + is_super_admin = true.
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { rateLimit } from '@/lib/rate-limit'
 
 const ADMIN_ORIGIN = process.env.ADMIN_DASHBOARD_ORIGIN || 'https://epuredrive.com'
 const CORS = { 'Access-Control-Allow-Origin': ADMIN_ORIGIN }
 const TRIAL_DAYS = 14
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  // Rate limit: 30 requests per minute per IP
+  const rateLimited = rateLimit(request, 'superadmin-stats', { windowMs: 60_000, max: 30 })
+  if (rateLimited) return rateLimited
+
   const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim()
   if (!token) {
     return NextResponse.json({ error: 'Missing token' }, { status: 401, headers: CORS })
