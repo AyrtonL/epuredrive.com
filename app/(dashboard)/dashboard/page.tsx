@@ -49,6 +49,7 @@ export default async function DashboardPage() {
   const lastOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0]
 
   const [
+    { data: tenant },
     { data: cars },
     { data: allRes },
     { data: thisMonthRes },
@@ -60,6 +61,7 @@ export default async function DashboardPage() {
     { data: thisMonthCustomers },
     { data: pendingRes },
   ] = await Promise.all([
+    supabase.from('tenants').select('slug').eq('id', tenantId).single(),
     supabase.from('cars').select('id, make, model, model_full, status, mileage').eq('tenant_id', tenantId),
     supabase.from('reservations').select('total_amount, status').eq('tenant_id', tenantId).eq('status', 'completed'),
     supabase.from('reservations').select('total_amount').eq('tenant_id', tenantId).gte('pickup_date', firstOfMonth),
@@ -141,6 +143,20 @@ export default async function DashboardPage() {
             />
           </div>
           <NotificationBell />
+          {tenant?.slug && (
+            <Link
+              href={`/sites/${tenant.slug}`}
+              target="_blank"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/[0.12] text-white/80 hover:text-white hover:bg-white/[0.06] transition-all shrink-0"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+              View Site
+            </Link>
+          )}
           <Link
             href="/dashboard/bookings"
             className="bg-white text-black px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-white/90 transition-all shrink-0"
