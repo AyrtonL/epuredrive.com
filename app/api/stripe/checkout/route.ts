@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
   const params = new URLSearchParams({
     mode: 'subscription',
     'payment_method_types[0]': 'card',
-    'payment_method_types[1]': 'paypal',
     'line_items[0][price]': priceId,
     'line_items[0][quantity]': '1',
     success_url: `${origin}/dashboard/settings/billing?success=1`,
