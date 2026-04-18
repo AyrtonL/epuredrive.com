@@ -1,5 +1,5 @@
 // Netlify Function — create-checkout-session
-// Creates a Stripe Checkout session for plan upgrades.
+// Creates a Stripe Checkout session for plan upgrades (legacy admin dashboard).
 // Env vars required:
 //   STRIPE_SECRET_KEY
 
@@ -25,20 +25,22 @@ exports.handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Missing Stripe secret key' }) };
   }
 
-  // Build base URL from request origin
-  const origin = event.headers.origin || event.headers.referer?.replace(/\/[^/]*$/, '') || 'https://epuredrivecom.netlify.app';
+  const origin = event.headers.origin || event.headers.referer?.replace(/\/[^/]*$/, '') || 'https://epuredrive.com';
 
   const params = new URLSearchParams({
     mode: 'subscription',
     'payment_method_types[0]': 'card',
+    'payment_method_types[1]': 'paypal',
     'line_items[0][price]': priceId,
     'line_items[0][quantity]': '1',
-    success_url: `${origin}/admin/dashboard.html?upgraded=1`,
-    cancel_url:  `${origin}/admin/dashboard.html?upgrade_cancelled=1`,
-    'metadata[tenantId]': tenantId,
-    'metadata[priceId]':  priceId,
-    'subscription_data[metadata][tenantId]': tenantId,
-    'subscription_data[metadata][priceId]':  priceId,
+    success_url: `${origin}/dashboard/settings/billing?success=1`,
+    cancel_url: `${origin}/dashboard/settings/billing?cancelled=1`,
+    'metadata[tenant_id]': tenantId,
+    'metadata[priceId]': priceId,
+    'subscription_data[metadata][tenant_id]': tenantId,
+    'subscription_data[metadata][priceId]': priceId,
+    'automatic_tax[enabled]': 'true',
+    'tax_id_collection[enabled]': 'true',
   });
 
   if (email) params.set('customer_email', email);

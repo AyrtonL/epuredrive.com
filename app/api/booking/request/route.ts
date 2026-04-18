@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { createInAppNotification } from '@/lib/notifications/create'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 import { generateBookingCode } from '@/lib/booking-code'
 
 const rateLimitStore = new Map<string, number[]>()
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
@@ -67,6 +62,8 @@ export async function POST(request: NextRequest) {
   ) {
     return NextResponse.json({ error: 'Missing or invalid required fields' }, { status: 400 })
   }
+
+  const supabase = createAdminClient()
 
   // Verify tenant exists and get their info for notifications
   const { data: tenant, error: tenantErr } = await supabase
