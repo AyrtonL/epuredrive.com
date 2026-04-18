@@ -74,7 +74,7 @@ curl https://api.stripe.com/v1/products \
 | Plan | Price ID |
 |---|---|
 | Starter | `price_1TDaQ3HAH4zJnnwfasGBYtYO` |
-| Pro | `price_1TF2UnHAH4zJnnwfTwU129PO` |
+| Pro | `price_1TNNl8HAH4zJnnwfnmxW0OSy` |
 | Max | `price_1TMBzWHAH4zJnnwf9xd3BxGL` |
 
 After creating a new price, always:
