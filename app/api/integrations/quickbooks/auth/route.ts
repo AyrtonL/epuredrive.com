@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
   try {
     const authUrl = getAuthorizationUrl(tenantId)
-    return NextResponse.redirect(authUrl)
+    return NextResponse.redirect(authUrl, 302)
   } catch (err) {
     console.error('[qb-auth] Failed to generate auth URL:', err)
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })

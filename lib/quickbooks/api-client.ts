@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { decryptToken, encryptToken } from '@/lib/quickbooks/token-crypto'
 
 interface QBConnection {
   realm_id: string
@@ -31,12 +32,20 @@ async function ensureFreshToken(tenantId: string): Promise<QBConnection> {
     throw new Error('QuickBooks not connected for this tenant')
   }
 
+  // Decrypt tokens from storage
+  const decryptedAccessToken = decryptToken(conn.access_token)
+  const decryptedRefreshToken = decryptToken(conn.refresh_token)
+
   const expiresAt = new Date(conn.access_token_expires_at)
   const fiveMinFromNow = new Date(Date.now() + 5 * 60 * 1000)
 
   // Token is still fresh
   if (expiresAt > fiveMinFromNow) {
-    return conn as QBConnection
+    return {
+      ...conn,
+      access_token: decryptedAccessToken,
+      refresh_token: decryptedRefreshToken,
+    } as QBConnection
   }
 
   // Check if refresh token itself is expired
@@ -50,10 +59,10 @@ async function ensureFreshToken(tenantId: string): Promise<QBConnection> {
     throw new Error('QuickBooks refresh token expired. Please reconnect your account.')
   }
 
-  // Refresh the token
+  // Refresh the token using decrypted refresh token
   const { createOAuthClient } = await import('./oauth-client')
   const oauthClient = createOAuthClient()
-  oauthClient.setToken({ refresh_token: conn.refresh_token })
+  oauthClient.setToken({ refresh_token: decryptedRefreshToken })
 
   const authResponse = await oauthClient.refresh()
   const newTokens = authResponse.getJson()
@@ -62,11 +71,12 @@ async function ensureFreshToken(tenantId: string): Promise<QBConnection> {
   const newAccessExpires = new Date(now.getTime() + (newTokens.expires_in || 3600) * 1000)
   const newRefreshExpires = new Date(now.getTime() + (newTokens.x_refresh_token_expires_in || 8726400) * 1000)
 
+  // Encrypt new tokens before storing
   await supabase
     .from('qb_connections')
     .update({
-      access_token: newTokens.access_token,
-      refresh_token: newTokens.refresh_token,
+      access_token: encryptToken(newTokens.access_token),
+      refresh_token: encryptToken(newTokens.refresh_token),
       access_token_expires_at: newAccessExpires.toISOString(),
       refresh_token_expires_at: newRefreshExpires.toISOString(),
     })

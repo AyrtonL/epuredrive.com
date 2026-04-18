@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createOAuthClient, verifyState } from '@/lib/quickbooks/oauth-client'
 import { qboRequest } from '@/lib/quickbooks/api-client'
+import { encryptToken } from '@/lib/quickbooks/token-crypto'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
 
   if (oauthError || !tenantId) {
     console.error('[qb-callback] OAuth error or invalid state:', { oauthError, stateParam })
-    return NextResponse.redirect(new URL(ERROR_URL, request.url))
+    return NextResponse.redirect(new URL(ERROR_URL, request.url), 302)
   }
 
   try {
@@ -27,13 +28,13 @@ export async function GET(request: Request) {
 
     if (!tokens.access_token || !tokens.refresh_token) {
       console.error('[qb-callback] Token exchange returned incomplete tokens')
-      return NextResponse.redirect(new URL(ERROR_URL, request.url))
+      return NextResponse.redirect(new URL(ERROR_URL, request.url), 302)
     }
 
     const realmId = tokens.realmId || searchParams.get('realmId')
     if (!realmId) {
       console.error('[qb-callback] No realmId in token response')
-      return NextResponse.redirect(new URL(ERROR_URL, request.url))
+      return NextResponse.redirect(new URL(ERROR_URL, request.url), 302)
     }
 
     const now = new Date()
@@ -60,13 +61,17 @@ export async function GET(request: Request) {
       // Non-critical — use default company name
     }
 
-    // 3. Save connection to Supabase (admin client bypasses RLS)
+    // 3. Encrypt tokens with AES-256-GCM before storing at rest
+    const encryptedAccessToken = encryptToken(tokens.access_token)
+    const encryptedRefreshToken = encryptToken(tokens.refresh_token)
+
+    // 4. Save connection to Supabase (admin client bypasses RLS)
     const supabase = createAdminClient()
     const { error: upsertError } = await supabase.from('qb_connections').upsert({
       tenant_id: tenantId,
       realm_id: realmId,
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
+      access_token: encryptedAccessToken,
+      refresh_token: encryptedRefreshToken,
       access_token_expires_at: accessExpiresAt.toISOString(),
       refresh_token_expires_at: refreshExpiresAt.toISOString(),
       company_name: companyName,
@@ -76,13 +81,13 @@ export async function GET(request: Request) {
 
     if (upsertError) {
       console.error('[qb-callback] Supabase upsert error:', upsertError)
-      return NextResponse.redirect(new URL(ERROR_URL, request.url))
+      return NextResponse.redirect(new URL(ERROR_URL, request.url), 302)
     }
 
     console.log(`[qb-callback] Connected QBO company "${companyName}" (realm ${realmId}) for tenant ${tenantId}`)
-    return NextResponse.redirect(new URL(DASHBOARD_URL, request.url))
+    return NextResponse.redirect(new URL(DASHBOARD_URL, request.url), 302)
   } catch (err) {
     console.error('[qb-callback] Internal error:', err)
-    return NextResponse.redirect(new URL(ERROR_URL, request.url))
+    return NextResponse.redirect(new URL(ERROR_URL, request.url), 302)
   }
 }
