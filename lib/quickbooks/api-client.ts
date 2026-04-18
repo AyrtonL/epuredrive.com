@@ -92,8 +92,36 @@ async function ensureFreshToken(tenantId: string): Promise<QBConnection> {
 }
 
 /**
+ * Log a QBO API call to the qb_api_logs table for troubleshooting.
+ * Only logs errors (non-2xx) to keep volume manageable.
+ */
+async function logQboCall(
+  tenantId: string,
+  method: string,
+  path: string,
+  statusCode: number,
+  intuitTid: string | null,
+  errorBody: string | null
+): Promise<void> {
+  try {
+    const supabase = createAdminClient()
+    await supabase.from('qb_api_logs').insert({
+      tenant_id: tenantId,
+      intuit_tid: intuitTid,
+      method,
+      path,
+      status_code: statusCode,
+      error_body: errorBody,
+    })
+  } catch (err) {
+    console.error('[qbo-log] Failed to write API log:', err)
+  }
+}
+
+/**
  * Make an authenticated request to the QuickBooks API.
  * Automatically refreshes tokens if needed.
+ * Captures intuit_tid from response headers for Intuit support troubleshooting.
  */
 export async function qboRequest<T = unknown>(
   tenantId: string,
@@ -115,8 +143,12 @@ export async function qboRequest<T = unknown>(
     body: body ? JSON.stringify(body) : undefined,
   })
 
+  const intuitTid = res.headers.get('intuit_tid')
+
   if (!res.ok) {
     const errBody = await res.text()
+    console.error(`[qbo] ${method} ${path} failed (${res.status}) intuit_tid=${intuitTid}:`, errBody)
+    await logQboCall(tenantId, method, path, res.status, intuitTid, errBody)
     throw new Error(`QBO API ${method} ${path} failed (${res.status}): ${errBody}`)
   }
 
