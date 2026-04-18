@@ -60,13 +60,61 @@ export async function createCheckoutSession(planName: string): Promise<{ error: 
   return { error: 'Could not create checkout session.' }
 }
 
-export async function deactivateAccount(): Promise<{ error: string | null }> {
+export async function cancelSubscription(): Promise<{ error: string | null }> {
+  const stripe = getStripe()
+  if (!stripe) {
+    return { error: 'Stripe is not configured.' }
+  }
+
   const { supabase, tenantId } = await requireTenantId()
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('stripe_subscription_id, plan')
+    .eq('id', tenantId)
+    .single()
+
+  if (!tenant?.stripe_subscription_id) {
+    // No active subscription — just reset to free
+    await supabase.from('tenants').update({ plan: 'free' }).eq('id', tenantId)
+    return { error: null }
+  }
+
+  if (tenant.plan === 'free') {
+    return { error: 'You are already on the Free plan.' }
+  }
+
+  // Cancel the subscription in Stripe (at period end so they keep access until billing cycle ends)
+  await stripe.subscriptions.update(tenant.stripe_subscription_id, {
+    cancel_at_period_end: true,
+  })
+
+  return { error: null }
+}
+
+export async function deactivateAccount(): Promise<{ error: string | null }> {
+  const stripe = getStripe()
+  const { supabase, tenantId } = await requireTenantId()
+
+  // Cancel Stripe subscription immediately if one exists
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('stripe_subscription_id')
+    .eq('id', tenantId)
+    .single()
+
+  if (tenant?.stripe_subscription_id && stripe) {
+    try {
+      await stripe.subscriptions.cancel(tenant.stripe_subscription_id)
+    } catch {
+      // Subscription may already be cancelled — proceed with deactivation
+    }
+  }
 
   // Mark tenant as deactivated
   const { error } = await supabase
     .from('tenants')
-    .update({ plan: 'deactivated' })
+    .update({ plan: 'deactivated', stripe_subscription_id: null })
     .eq('id', tenantId)
 
   if (error) return { error: error.message }

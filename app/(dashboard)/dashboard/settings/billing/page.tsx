@@ -2,6 +2,7 @@ import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import UpgradeButton from './UpgradeButton'
 import DeactivateButton from './DeactivateButton'
+import CancelSubscriptionButton from './CancelSubscriptionButton'
 import SubscribeTracker from './SubscribeTracker'
 import InvoiceHistory from './InvoiceHistory'
 
@@ -75,6 +76,11 @@ export default async function BillingPage({
             Active
           </div>
         </div>
+        {plan !== 'free' && (
+          <div className="mt-6 pt-6 border-t border-white/5">
+            <CancelSubscriptionButton plan={plan} />
+          </div>
+        )}
       </div>
 
       {/* Plan Cards */}
