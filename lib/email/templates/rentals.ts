@@ -169,6 +169,30 @@ export function agreementSignedCustomerEmail(params: {
   }
 }
 
+export function agreementClosedOutCustomerEmail(params: {
+  customerName: string
+  brand: TenantBrand
+  carName: string
+  totalAmount: number | null
+  signedBy: string
+}): { subject: string; html: string } {
+  return {
+    subject: `Your Rental Agreement is Finalized — ${params.brand.name}`,
+    html: tenantCompactLayout({
+      brand: params.brand,
+      headline: 'Rental closed out.',
+      body: `Hi ${params.customerName}, your rental agreement with <strong>${params.brand.name}</strong> has been finalized and countersigned by the operator. This is your final confirmation.`,
+      details: [
+        { label: 'Vehicle', value: params.carName },
+        ...(params.totalAmount != null ? [{ label: 'Final Amount', value: `$${params.totalAmount.toLocaleString()}` }] : []),
+        { label: 'Closed by', value: params.signedBy },
+        { label: 'Date', value: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) },
+      ],
+      note: `This is the final version of your rental agreement. If you have questions, please contact ${params.brand.name} directly.`,
+    }),
+  }
+}
+
 export function bookingConfirmedCustomerEmail(params: {
   customerName: string
   brand: TenantBrand

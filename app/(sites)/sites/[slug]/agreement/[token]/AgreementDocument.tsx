@@ -49,6 +49,10 @@ export interface AgreementReservation {
   insurance_policy_number: string | null
   damage_checkin: string | null
   damage_checkout: string | null
+  // tenant counter-signature
+  tenant_signed_at: string | null
+  tenant_signature_url: string | null
+  tenant_signed_by: string | null
 }
 
 interface Props {
@@ -313,12 +317,42 @@ export default function AgreementDocument({
           </div>
         </section>
 
-        {/* Signature Section */}
+        {/* Renter Signature Section */}
         <section>
           <div className="text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded mb-3 text-black" style={{ background: accentColor }}>
-            Signature
+            Renter Signature
           </div>
           {signatureSlot}
+        </section>
+
+        {/* Operator Counter-Signature Section */}
+        <section>
+          <div className="text-[11px] font-black uppercase tracking-widest text-white px-3 py-1.5 rounded mb-3" style={{ background: '#111' }}>
+            Operator Signature — Close Out
+          </div>
+          {reservation.tenant_signed_at && reservation.tenant_signature_url ? (
+            <div className="border border-gray-200 rounded-xl p-4 space-y-3">
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>
+                  Signed by <strong>{reservation.tenant_signed_by || 'Operator'}</strong> on{' '}
+                  {new Date(reservation.tenant_signed_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </span>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={reservation.tenant_signature_url}
+                alt="Operator signature"
+                className="h-16 object-contain"
+              />
+            </div>
+          ) : (
+            <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center">
+              <p className="text-gray-400 text-sm italic">Pending operator signature at vehicle return</p>
+            </div>
+          )}
         </section>
 
       </div>

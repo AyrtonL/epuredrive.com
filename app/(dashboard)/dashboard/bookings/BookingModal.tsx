@@ -6,6 +6,7 @@ import type { Reservation, Car } from '@/lib/supabase/types'
 import { createReservation, updateReservation, sendAgreement } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 import FuelSummary from '@/components/dashboard/FuelSummary'
+import TenantCloseOut from './TenantCloseOut'
 
 interface Props {
   isOpen: boolean
@@ -391,6 +392,18 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
 
                   {!reservation.customer_email && (
                     <p className="text-xs text-amber-400/70">Add customer email above to enable agreement sending.</p>
+                  )}
+
+                  {/* Tenant Close-Out Signature */}
+                  {reservation.agreement_signed_at && (
+                    <div className="pt-3 border-t border-white/[0.06]">
+                      <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-2">Operator Close-Out</p>
+                      <TenantCloseOut
+                        reservationId={reservation.id}
+                        tenantSignedAt={reservation.tenant_signed_at ?? null}
+                        onSigned={() => router.refresh()}
+                      />
+                    </div>
                   )}
                 </div>
               </div>

@@ -68,6 +68,9 @@ function buildSampleReservation(): AgreementReservation {
     insurance_policy_number: null,
     damage_checkin: null,
     damage_checkout: null,
+    tenant_signed_at: null,
+    tenant_signature_url: null,
+    tenant_signed_by: null,
   }
 }
 

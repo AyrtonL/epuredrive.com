@@ -116,11 +116,17 @@ export interface Reservation {
   // damage report
   damage_checkin: string | null
   damage_checkout: string | null
+  // rental extras / add-ons
+  extras: ReservationExtra[] | null
   // review request email tracking
   review_email_sent_at: string | null
   // payment IDs
   stripe_payment_id: string | null
   square_payment_id: string | null
+  // tenant counter-signature (close-out)
+  tenant_signed_at: string | null
+  tenant_signature_url: string | null
+  tenant_signed_by: string | null
 }
 
 export interface Customer {
@@ -191,6 +197,28 @@ export interface Profile {
   created_at?: string
   invited_by_user_id: string | null
   invite_accepted_notified_at: string | null
+}
+
+export interface RentalExtra {
+  id: string
+  tenant_id: string
+  name: string
+  description: string | null
+  pricing_type: 'per_day' | 'flat'
+  price: number
+  is_active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ReservationExtra {
+  extra_id: string
+  name: string
+  pricing_type: 'per_day' | 'flat'
+  unit_price: number
+  quantity: number  // days for per_day, 1 for flat
+  subtotal: number
 }
 
 export interface TaxSetting {

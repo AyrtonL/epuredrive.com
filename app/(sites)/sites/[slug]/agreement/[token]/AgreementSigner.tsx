@@ -24,6 +24,7 @@ interface Tenant {
 
 interface Reservation extends AgreementReservation {
   agreement_signed_at: string | null
+  agreement_signature_url: string | null
 }
 
 interface Props {
@@ -75,7 +76,7 @@ export default function AgreementSigner({
     setError(null)
     setStep('submitting')
 
-    const signatureDataUrl = sigRef.current.getTrimmedCanvas().toDataURL('image/png')
+    const signatureDataUrl = sigRef.current.getCanvas().toDataURL('image/png')
 
     try {
       // 1. Submit signature to server — saves to Supabase, sends emails
@@ -150,22 +151,55 @@ export default function AgreementSigner({
   }
 
   if (alreadySigned) {
+    const customerSignatureSlot = (
+      <div className="border border-gray-200 rounded-xl p-4 space-y-3">
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>
+            Signed by <strong>{reservation.customer_name || 'Renter'}</strong> on{' '}
+            {new Date(reservation.agreement_signed_at!).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          </span>
+        </div>
+        {reservation.agreement_signature_url && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={reservation.agreement_signature_url}
+            alt="Renter signature"
+            className="h-16 object-contain"
+          />
+        )}
+      </div>
+    )
+
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-lg p-10 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+      <div className="min-h-screen bg-gray-100 py-8 px-4">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Banner */}
+          <div className="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-4 border-l-4" style={{ borderColor: accentColor }}>
+            {tenant.logo_url && (
+              <Image src={tenant.logo_url} alt={tenantName} width={100} height={40} className="h-10 w-auto object-contain" />
+            )}
+            <div>
+              <h1 className="font-bold text-gray-900">{tenantName} — Rental Agreement</h1>
+              <p className="text-xs text-green-600 font-semibold">
+                {reservation.tenant_signed_at ? 'Finalized — Both parties have signed' : 'Signed — Pending operator close-out'}
+              </p>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Agreement Already Signed</h1>
-          <p className="text-gray-500 text-sm">
-            This rental agreement was signed on{' '}
-            <strong>{new Date(reservation.agreement_signed_at!).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>.
-          </p>
-          <p className="text-gray-400 text-xs mt-4">
-            Please contact {tenantName} if you have questions.
-          </p>
+
+          {/* Full Agreement Document */}
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <AgreementDocument
+              reservation={reservation}
+              tenant={tenant}
+              car={car}
+              tenantName={tenantName}
+              accentColor={accentColor}
+              signatureSlot={customerSignatureSlot}
+            />
+          </div>
         </div>
       </div>
     )
