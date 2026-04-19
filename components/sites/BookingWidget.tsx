@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import type { Car, PickupLocation } from '@/lib/supabase/types'
+import type { Car, PickupLocation, RentalExtra, ReservationExtra } from '@/lib/supabase/types'
 import DateRangePicker from './DateRangePicker'
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
   pickupLocations?: PickupLocation[]
   whatsappPhone?: string | null
   paymentsEnabled?: boolean
+  rentalExtras?: RentalExtra[]
 }
 
 const timeOptions = [
@@ -29,7 +30,7 @@ function formatBookedRange(from: string, to: string): string {
   return `${fmt(from)} – ${fmt(to)}`
 }
 
-export default function BookingWidget({ car, tenantId, pickupLocations = [], whatsappPhone, paymentsEnabled }: Props) {
+export default function BookingWidget({ car, tenantId, pickupLocations = [], whatsappPhone, paymentsEnabled, rentalExtras = [] }: Props) {
   const [pickDate, setPickDate] = useState('')
   const [retDate, setRetDate] = useState('')
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([])
@@ -38,9 +39,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   const [retTime, setRetTime] = useState('10:00 AM')
   const [locationIdx, setLocationIdx] = useState(0)
 
-  const [hasProtection, setHasProtection] = useState(false)
-  const [hasToll, setHasToll] = useState(false)
-  const [hasFuel, setHasFuel] = useState(false)
+  const [selectedExtras, setSelectedExtras] = useState<Record<string, boolean>>({})
 
   const selectedLocation: PickupLocation | null = pickupLocations[locationIdx] ?? null
 
@@ -94,18 +93,32 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
     setDateConflict(conflict)
   }, [pickDate, retDate, bookedRanges])
 
-  const { total, locFee, protFee, tollFee, fuelFee, baseCost } = useMemo(() => {
+  const { total, locFee, extrasTotal, baseCost } = useMemo(() => {
     const baserate = Number(car.daily_rate) || 0
     const base = days * baserate
     const lFee = selectedLocation?.fee ?? 0
-    const pFee = hasProtection ? days * 30 : 0
-    const tFee = hasToll ? days * 10 : 0
-    const fFee = hasFuel ? 80 : 0
+    const eTotal = rentalExtras
+      .filter(e => selectedExtras[e.id])
+      .reduce((sum, e) => sum + (e.pricing_type === 'per_day' ? days * e.price : e.price), 0)
     return {
-      baseCost: base, locFee: lFee, protFee: pFee, tollFee: tFee, fuelFee: fFee,
-      total: base + lFee + pFee + tFee + fFee
+      baseCost: base, locFee: lFee, extrasTotal: eTotal,
+      total: base + lFee + eTotal
     }
-  }, [days, car.daily_rate, selectedLocation, hasProtection, hasToll, hasFuel])
+  }, [days, car.daily_rate, selectedLocation, selectedExtras, rentalExtras])
+
+  // Build ReservationExtra[] for API submission
+  const buildExtrasPayload = (): ReservationExtra[] => {
+    return rentalExtras
+      .filter(e => selectedExtras[e.id])
+      .map(e => ({
+        extra_id: e.id,
+        name: e.name,
+        pricing_type: e.pricing_type,
+        unit_price: e.price,
+        quantity: e.pricing_type === 'per_day' ? days : 1,
+        subtotal: e.pricing_type === 'per_day' ? days * e.price : e.price,
+      }))
+  }
 
   const locationLabel = selectedLocation
     ? `${selectedLocation.label}${selectedLocation.fee > 0 ? ` ($${selectedLocation.fee})` : ' (Free)'}`
@@ -114,10 +127,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   const handleWhatsapp = () => {
     if (!pickDate || !retDate) { alert('Please select dates first.'); return; }
     if (!whatsappPhone) { alert('WhatsApp contact not configured.'); return; }
-    const addons: string[] = []
-    if (hasProtection) addons.push('Standard Protection')
-    if (hasToll) addons.push('Toll Package')
-    if (hasFuel) addons.push('Prepaid Fuel')
+    const addons = rentalExtras.filter(e => selectedExtras[e.id]).map(e => e.name)
 
     const msg = `Hello! I'd like to reserve the *${car.make} ${car.model_full || car.model}*.\n\n`
       + `Pickup: ${pickDate} at ${pickTime}\n`
@@ -155,6 +165,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
     try {
       // If tenant has Stripe Connect enabled, redirect to Stripe Checkout for payment
       if (paymentsEnabled) {
+        const extras = buildExtrasPayload()
         const res = await fetch('/api/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -165,6 +176,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
             end_date: retDate,
             customer_name: custName.trim(),
             customer_email: custEmail.trim(),
+            extras: extras.length > 0 ? extras : undefined,
           }),
         })
         if (!res.ok) {
@@ -196,6 +208,8 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   }
 
   const submitBookingRequest = async () => {
+    const extras = buildExtrasPayload()
+    const extrasNotes = extras.map(e => `${e.name} ($${e.subtotal})`).join(', ')
     const res = await fetch('/api/booking/request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -211,11 +225,8 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
         return_time: retTime,
         pickup_location: locationLabel,
         total_amount: total,
-        notes: [
-          hasProtection ? 'Shield Protection' : '',
-          hasToll ? 'Unlimited Tolls' : '',
-          hasFuel ? 'Prepaid Fuel' : ''
-        ].filter(Boolean).join(', ') || null,
+        notes: extrasNotes || null,
+        extras: extras.length > 0 ? extras : undefined,
       }),
     })
     if (!res.ok) {
@@ -328,25 +339,37 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
           </div>
         )}
 
-        {/* Add-ons - Minimalist Toggle Style */}
-        <div className="space-y-3 pt-4">
-          <div className="text-[9px] font-black text-white/30 uppercase tracking-widest ml-1 mb-2">Enhancements</div>
-          
-          {[
-            { id: 'prot', label: 'Shield Protection', fee: '+$30/day', checked: hasProtection, setter: setHasProtection },
-            { id: 'toll', label: 'Unlimited Tolls', fee: '+$10/day', checked: hasToll, setter: setHasToll },
-            { id: 'fuel', label: 'Prepaid Fuel', fee: '$80 Flat', checked: hasFuel, setter: setHasFuel }
-          ].map(addon => (
-            <button key={addon.id} onClick={() => addon.setter(!addon.checked)}
-              className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${addon.checked ? 'bg-primary/10 border-primary/30 text-white' : 'bg-white/5 border-white/5 text-white/40 hover:border-white/10'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full ${addon.checked ? 'bg-primary shadow-[0_0_8px_#3B82F6]' : 'bg-white/10'}`} />
-                <span className="text-[11px] font-black uppercase tracking-tight">{addon.label}</span>
-              </div>
-              <span className="text-[10px] font-bold opacity-60 italic">{addon.fee}</span>
-            </button>
-          ))}
-        </div>
+        {/* Dynamic Rental Extras */}
+        {rentalExtras.length > 0 && (
+          <div className="space-y-3 pt-4">
+            <div className="text-[9px] font-black text-white/30 uppercase tracking-widest ml-1 mb-2">Enhancements</div>
+
+            {rentalExtras.map(extra => {
+              const checked = !!selectedExtras[extra.id]
+              const feeLabel = extra.pricing_type === 'per_day'
+                ? `+$${Number(extra.price).toFixed(0)}/day`
+                : `$${Number(extra.price).toFixed(0)} Flat`
+              return (
+                <button
+                  key={extra.id}
+                  onClick={() => setSelectedExtras(prev => ({ ...prev, [extra.id]: !prev[extra.id] }))}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${checked ? 'bg-primary/10 border-primary/30 text-white' : 'bg-white/5 border-white/5 text-white/40 hover:border-white/10'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${checked ? 'bg-primary shadow-[0_0_8px_#3B82F6]' : 'bg-white/10'}`} />
+                    <div className="text-left">
+                      <span className="text-[11px] font-black uppercase tracking-tight block">{extra.name}</span>
+                      {extra.description && (
+                        <span className="text-[9px] opacity-50 block mt-0.5">{extra.description}</span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold opacity-60 italic">{feeLabel}</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         {/* Summary / Total */}
         <div className="pt-8 space-y-4">

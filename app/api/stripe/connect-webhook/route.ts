@@ -122,6 +122,12 @@ export async function POST(request: Request) {
 
     const carName = car ? `${car.make} ${car.model_full || car.model}` : `Car #${carId}`
 
+    // Parse extras from checkout metadata
+    let extras: unknown = null
+    if (metadata.extras) {
+      try { extras = JSON.parse(metadata.extras) } catch { /* ignore malformed */ }
+    }
+
     // Create the reservation
     const { data: reservation, error: insertError } = await supabase
       .from('reservations')
@@ -137,6 +143,7 @@ export async function POST(request: Request) {
         source: 'stripe',
         stripe_payment_id: paymentIntentId,
         notes: `Paid online — ${days} day${days !== 1 ? 's' : ''} via Stripe Checkout`,
+        extras,
       })
       .select('id')
       .single()

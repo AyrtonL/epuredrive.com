@@ -75,10 +75,77 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Payment system not configured' }, { status: 500 })
   }
 
-  const totalCents = Math.round(car.daily_rate * days * 100)
+  const rentalCents = Math.round(car.daily_rate * days * 100)
   const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const carName = `${car.make} ${car.model}`
   const tenantName = tenant.brand_name || tenant.name
+
+  // Build line items: base rental + extras
+  interface LineItem {
+    price_data: { currency: string; product_data: { name: string; description?: string; images?: string[] }; unit_amount: number }
+    quantity: number
+  }
+
+  const lineItems: LineItem[] = [
+    {
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: `${carName} — ${days}-day rental`,
+          description: `${startDate} to ${endDate} · ${tenantName}`,
+          ...(car.image_url ? { images: [car.image_url] } : {}),
+        },
+        unit_amount: rentalCents,
+      },
+      quantity: 1,
+    },
+  ]
+
+  // Validate and add extras as separate line items (server-side price verification)
+  interface ExtraInput { extra_id: string; name: string; pricing_type: string; unit_price: number; quantity: number; subtotal: number }
+  const clientExtras = Array.isArray(data.extras) ? (data.extras as ExtraInput[]) : []
+  const validatedExtras: ExtraInput[] = []
+
+  if (clientExtras.length > 0) {
+    // Re-fetch prices from DB to prevent tampering
+    const extraIds = clientExtras.map(e => e.extra_id)
+    const { data: dbExtras } = await supabase
+      .from('rental_extras')
+      .select('id, name, pricing_type, price')
+      .in('id', extraIds)
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+
+    for (const dbExtra of dbExtras ?? []) {
+      const qty = dbExtra.pricing_type === 'per_day' ? days : 1
+      const unitCents = Math.round(Number(dbExtra.price) * 100)
+      const subtotal = (unitCents * qty) / 100
+
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: dbExtra.name,
+            description: dbExtra.pricing_type === 'per_day' ? `$${dbExtra.price}/day × ${qty} days` : 'Flat fee',
+          },
+          unit_amount: unitCents,
+        },
+        quantity: qty,
+      })
+
+      validatedExtras.push({
+        extra_id: dbExtra.id,
+        name: dbExtra.name,
+        pricing_type: dbExtra.pricing_type,
+        unit_price: Number(dbExtra.price),
+        quantity: qty,
+        subtotal,
+      })
+    }
+  }
+
+  // Calculate total for fee
+  const totalCents = lineItems.reduce((sum, li) => sum + li.price_data.unit_amount * li.quantity, 0)
 
   // Platform transaction fee by plan tier
   const plan = tenant.plan || 'free'
@@ -89,20 +156,7 @@ export async function POST(request: NextRequest) {
   const session = await stripe.checkout.sessions.create(
     {
       mode: 'payment',
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `${carName} — ${days}-day rental`,
-              description: `${startDate} to ${endDate} · ${tenantName}`,
-              ...(car.image_url ? { images: [car.image_url] } : {}),
-            },
-            unit_amount: totalCents,
-          },
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       payment_intent_data: {
         application_fee_amount: applicationFeeCents,
       },
@@ -115,6 +169,7 @@ export async function POST(request: NextRequest) {
         end_date: endDate,
         days: String(days),
         customer_name: customerName,
+        extras: validatedExtras.length > 0 ? JSON.stringify(validatedExtras) : '',
       },
       success_url: `${origin}/sites/${tenant.slug}/${carId}?booked=true`,
       cancel_url: `${origin}/sites/${tenant.slug}/${carId}`,

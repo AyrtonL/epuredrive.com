@@ -254,6 +254,18 @@ function IconPayments({ className }: { className?: string }) {
   )
 }
 
+function IconRentalExtras({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 12v10H4V12" />
+      <path d="M2 7h20v5H2z" />
+      <path d="M12 22V7" />
+      <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" />
+      <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+    </svg>
+  )
+}
+
 function IconAgreement({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -379,6 +391,7 @@ const ICONS: Record<string, (props: { className?: string }) => React.ReactNode> 
   'Team & Roles': IconRoles,
   Notifications: IconNotifications,
   Security: IconSecurity,
+  'Rental Extras': IconRentalExtras,
   'Rental Agreement': IconAgreement,
   'Custom Domain': IconDomain,
   'API & Webhooks': IconAPI,
@@ -456,6 +469,7 @@ const NAV: NavEntry[] = [
       { label: 'Team & Roles', href: '/dashboard/settings/roles' },
       { label: 'Notifications', href: '/dashboard/settings/notifications' },
       { label: 'Security', href: '/dashboard/settings/security' },
+      { label: 'Rental Extras', href: '/dashboard/settings/extras' },
       { label: 'Rental Agreement', href: '/dashboard/settings/agreement' },
       { label: 'Custom Domain', href: '/dashboard/settings/domain' },
       { label: 'API & Webhooks', href: '/dashboard/settings/api' },

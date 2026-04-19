@@ -41,6 +41,7 @@ const makeRes = (overrides: Partial<Reservation> = {}): Reservation => ({
   fuel_in: null,
   damage_checkin: null,
   damage_checkout: null,
+  extras: null,
   review_email_sent_at: null,
   ...overrides,
 })

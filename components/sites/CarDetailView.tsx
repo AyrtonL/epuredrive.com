@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Image from 'next/image'
-import type { Car, PickupLocation } from '@/lib/supabase/types'
+import type { Car, PickupLocation, RentalExtra } from '@/lib/supabase/types'
 import BookingWidget from './BookingWidget'
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
   paymentsEnabled?: boolean
   whatsappPhone?: string | null
   pickupLocations?: PickupLocation[]
+  rentalExtras?: RentalExtra[]
 }
 
 function resolveImageUrl(url: string | null): string {
@@ -19,7 +20,7 @@ function resolveImageUrl(url: string | null): string {
   return `/${url}`
 }
 
-export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, whatsappPhone, pickupLocations = [] }: Props) {
+export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, whatsappPhone, pickupLocations = [], rentalExtras = [] }: Props) {
   const gallery: string[] = Array.isArray(car.gallery) && car.gallery.length > 0
     ? car.gallery
     : car.image_url
@@ -145,6 +146,7 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, wh
               pickupLocations={pickupLocations}
               whatsappPhone={whatsappPhone}
               paymentsEnabled={paymentsEnabled}
+              rentalExtras={rentalExtras}
             />
           </div>
         )}

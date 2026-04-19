@@ -109,14 +109,16 @@ export async function POST(request: NextRequest) {
       pickup_location: typeof data.pickup_location === 'string' ? data.pickup_location.trim().slice(0, 200) : null,
       total_amount: typeof data.total_amount === 'number' ? data.total_amount : null,
       status: 'pending',
-      source: 'website',
+      source: 'web',
       notes: typeof data.notes === 'string' ? data.notes.trim().slice(0, 2000) : null,
+      extras: Array.isArray(data.extras) ? data.extras : null,
       booking_code: bookingCode,
     })
     .select('id, booking_code')
     .single()
 
   if (error || !inserted) {
+    console.error('[booking] insert error:', error?.message, error?.details, error?.hint)
     return NextResponse.json({ error: 'Failed to create reservation' }, { status: 500 })
   }
 
