@@ -66,6 +66,7 @@ export async function updateTenantBranding(data: {
   pickup_locations?: Array<{ label: string; address: string; note: string; fee: number; maps_query: string }>
   experience_pillars?: ExperiencePillar[] | null
   how_it_works?: HowItWorksStep[] | null
+  site_theme?: 'dark' | 'light'
 }): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()

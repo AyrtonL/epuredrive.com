@@ -59,7 +59,7 @@ export default async function TenantLandingPage({ params }: Props) {
         locations={typedTenant.pickup_locations}
       />
 
-      <FleetPreview cars={fleet} slug={params.slug} />
+      <FleetPreview cars={fleet} slug={params.slug} theme={typedTenant.site_theme || 'dark'} />
 
       <HowItWorksSection tenant={typedTenant} />
 

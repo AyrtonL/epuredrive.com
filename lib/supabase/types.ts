@@ -43,6 +43,7 @@ export interface Tenant {
   square_merchant_id: string | null
   square_location_id: string | null
   payment_processor: string | null  // 'stripe' | 'square'
+  site_theme: 'dark' | 'light'
 }
 
 export interface Car {

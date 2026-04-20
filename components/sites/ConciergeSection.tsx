@@ -23,6 +23,7 @@ type FormState = 'idle' | 'loading' | 'success' | 'error'
 
 export default function ConciergeSection({ tenant, cars }: Props) {
   const displayName = tenant.brand_name || tenant.name
+  const isLight = tenant.site_theme === 'light'
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -81,11 +82,11 @@ export default function ConciergeSection({ tenant, cars }: Props) {
           {/* ── Left: copy ── */}
           <div className="lg:sticky lg:top-32">
             <p className="text-[10px] font-black uppercase tracking-[.4em] text-primary/60 mb-4">Concierge</p>
-            <h2 className="font-outfit font-black text-5xl sm:text-6xl text-white leading-none tracking-tight mb-6">
+            <h2 className={`font-outfit font-black text-5xl sm:text-6xl leading-none tracking-tight mb-6 ${isLight ? 'text-gray-900' : 'text-white'}`}>
               Let us craft<br />
-              <span className="italic text-charcoal">your experience.</span>
+              <span className={`italic ${isLight ? 'text-gray-400' : 'text-charcoal'}`}>your experience.</span>
             </h2>
-            <p className="text-charcoal text-base leading-relaxed mb-12 max-w-md">
+            <p className={`text-base leading-relaxed mb-12 max-w-md ${isLight ? 'text-gray-600' : 'text-charcoal'}`}>
               Whether you&apos;re planning a special occasion, need a corporate fleet, or want to consign your vehicle — our team responds within the hour.
             </p>
 
@@ -117,17 +118,25 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                 },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-4">
-                  <div className="w-9 h-9 rounded-2xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center text-grey flex-shrink-0">
+                  <div className={`w-9 h-9 rounded-2xl border flex items-center justify-center flex-shrink-0 ${
+                    isLight
+                      ? 'bg-gray-100 border-gray-200 text-gray-500'
+                      : 'bg-white/[0.06] border-white/[0.10] text-grey'
+                  }`}>
                     {item.icon}
                   </div>
-                  <span className="text-[11px] font-black uppercase tracking-widest text-silver">{item.label}</span>
+                  <span className={`text-[11px] font-black uppercase tracking-widest ${isLight ? 'text-gray-600' : 'text-silver'}`}>{item.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* ── Right: form ── */}
-          <div className="glass border border-white/[0.13] rounded-[2rem] p-10 shadow-2xl relative overflow-hidden" style={{boxShadow: '0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)'}}>
+          <div className={`rounded-[2rem] p-10 shadow-2xl relative overflow-hidden ${
+            isLight
+              ? 'bg-white border border-gray-200'
+              : 'glass border border-white/[0.13]'
+          }`} style={{boxShadow: isLight ? '0 24px 64px rgba(0,0,0,0.08)' : '0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)'}}>
             <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none" />
 
             {formState === 'success' ? (
@@ -154,46 +163,62 @@ export default function ConciergeSection({ tenant, cars }: Props) {
               <form onSubmit={handleSubmit} className="relative z-10 space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-silver ml-1">Full Name *</label>
+                    <label className={`block text-[9px] font-black uppercase tracking-widest ml-1 ${isLight ? 'text-gray-500' : 'text-silver'}`}>Full Name *</label>
                     <input
                       required
                       type="text"
                       value={name}
                       onChange={e => setName(e.target.value)}
                       placeholder="Your name"
-                      className="w-full bg-white/[0.06] border border-white/[0.12] rounded-2xl px-4 py-3.5 text-xs text-white placeholder-white/25 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all"
+                      className={`w-full rounded-2xl px-4 py-3.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all ${
+                        isLight
+                          ? 'bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400'
+                          : 'bg-white/[0.06] border border-white/[0.12] text-white placeholder-white/25'
+                      }`}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-silver ml-1">Phone</label>
+                    <label className={`block text-[9px] font-black uppercase tracking-widest ml-1 ${isLight ? 'text-gray-500' : 'text-silver'}`}>Phone</label>
                     <input
                       type="tel"
                       value={phone}
                       onChange={e => setPhone(e.target.value)}
                       placeholder="+1 (305) 000-0000"
-                      className="w-full bg-white/[0.06] border border-white/[0.12] rounded-2xl px-4 py-3.5 text-xs text-white placeholder-white/25 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all"
+                      className={`w-full rounded-2xl px-4 py-3.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all ${
+                        isLight
+                          ? 'bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400'
+                          : 'bg-white/[0.06] border border-white/[0.12] text-white placeholder-white/25'
+                      }`}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-silver ml-1">Email *</label>
+                  <label className={`block text-[9px] font-black uppercase tracking-widest ml-1 ${isLight ? 'text-gray-500' : 'text-silver'}`}>Email *</label>
                   <input
                     required
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full bg-white/[0.06] border border-white/[0.12] rounded-2xl px-4 py-3.5 text-xs text-white placeholder-white/25 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all"
+                    className={`w-full rounded-2xl px-4 py-3.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all ${
+                      isLight
+                        ? 'bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400'
+                        : 'bg-white/[0.06] border border-white/[0.12] text-white placeholder-white/25'
+                    }`}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-silver ml-1">Service Type</label>
+                  <label className={`block text-[9px] font-black uppercase tracking-widest ml-1 ${isLight ? 'text-gray-500' : 'text-silver'}`}>Service Type</label>
                   <select
                     value={service}
                     onChange={e => setService(e.target.value)}
-                    className="w-full bg-white/[0.06] border border-white/[0.12] rounded-2xl px-4 py-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all appearance-none"
+                    className={`w-full rounded-2xl px-4 py-3.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all appearance-none ${
+                      isLight
+                        ? 'bg-gray-50 border border-gray-200 text-gray-900'
+                        : 'bg-white/[0.06] border border-white/[0.12] text-white'
+                    }`}
                   >
                     {SERVICE_OPTIONS.map(o => (
                       <option key={o.value} value={o.value} className="text-black bg-white">
@@ -205,11 +230,15 @@ export default function ConciergeSection({ tenant, cars }: Props) {
 
                 {vehicleOptions.length > 0 && (
                   <div className="space-y-2">
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-silver ml-1">Vehicle of Interest</label>
+                    <label className={`block text-[9px] font-black uppercase tracking-widest ml-1 ${isLight ? 'text-gray-500' : 'text-silver'}`}>Vehicle of Interest</label>
                     <select
                       value={vehicle}
                       onChange={e => setVehicle(e.target.value)}
-                      className="w-full bg-white/[0.06] border border-white/[0.12] rounded-2xl px-4 py-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all appearance-none"
+                      className={`w-full rounded-2xl px-4 py-3.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all appearance-none ${
+                        isLight
+                          ? 'bg-gray-50 border border-gray-200 text-gray-900'
+                          : 'bg-white/[0.06] border border-white/[0.12] text-white'
+                      }`}
                     >
                       <option value="" className="text-black bg-white">Any / Not sure yet</option>
                       {vehicleOptions.map(v => (
@@ -220,13 +249,17 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                 )}
 
                 <div className="space-y-2">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-silver ml-1">Message</label>
+                  <label className={`block text-[9px] font-black uppercase tracking-widest ml-1 ${isLight ? 'text-gray-500' : 'text-silver'}`}>Message</label>
                   <textarea
                     rows={4}
                     value={message}
                     onChange={e => setMessage(e.target.value)}
                     placeholder="Tell us about the occasion, dates, or anything else we should know..."
-                    className="w-full bg-white/[0.06] border border-white/[0.12] rounded-2xl px-4 py-3.5 text-xs text-white placeholder-white/25 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all resize-none"
+                    className={`w-full rounded-2xl px-4 py-3.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/30 transition-all resize-none ${
+                      isLight
+                        ? 'bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400'
+                        : 'bg-white/[0.06] border border-white/[0.12] text-white placeholder-white/25'
+                    }`}
                   />
                 </div>
 
@@ -239,15 +272,19 @@ export default function ConciergeSection({ tenant, cars }: Props) {
                 <button
                   type="submit"
                   disabled={formState === 'loading'}
-                  className="w-full bg-white text-black font-black uppercase tracking-[.2em] text-[11px] py-5 rounded-2xl hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 mt-2"
+                  className={`w-full font-black uppercase tracking-[.2em] text-[11px] py-5 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 mt-2 ${
+                    isLight
+                      ? 'bg-gray-900 text-white hover:bg-gray-700 shadow-gray-900/10'
+                      : 'bg-white text-black hover:bg-white/90 shadow-white/5'
+                  }`}
                 >
                   {formState === 'loading' ? 'Sending...' : 'Send Inquiry'}
                 </button>
 
                 <div className="flex items-center gap-3 pt-1">
-                  <div className="h-px flex-1 bg-white/5" />
-                  <span className="text-[8px] font-black uppercase tracking-widest text-white/15">or reach us directly</span>
-                  <div className="h-px flex-1 bg-white/5" />
+                  <div className={`h-px flex-1 ${isLight ? 'bg-gray-200' : 'bg-white/5'}`} />
+                  <span className={`text-[8px] font-black uppercase tracking-widest ${isLight ? 'text-gray-400' : 'text-white/15'}`}>or reach us directly</span>
+                  <div className={`h-px flex-1 ${isLight ? 'bg-gray-200' : 'bg-white/5'}`} />
                 </div>
 
                 {tenant.whatsapp_phone && (

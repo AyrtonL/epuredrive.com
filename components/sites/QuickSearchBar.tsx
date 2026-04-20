@@ -14,6 +14,7 @@ interface Props {
   initialPickTime?: string
   initialRetTime?: string
   initialLocation?: string
+  theme?: 'dark' | 'light'
 }
 
 const TIME_OPTIONS = [
@@ -26,8 +27,9 @@ export default function QuickSearchBar({
   slug, locations, inline = false,
   initialPickDate = '', initialRetDate = '',
   initialPickTime = '10:00 AM', initialRetTime = '10:00 AM',
-  initialLocation,
+  initialLocation, theme = 'dark',
 }: Props) {
+  const isLight = theme === 'light'
   const [pickDate, setPickDate] = useState(initialPickDate)
   const [retDate, setRetDate] = useState(initialRetDate)
   const [pickTime, setPickTime] = useState(initialPickTime)
@@ -48,11 +50,17 @@ export default function QuickSearchBar({
     window.location.href = `${fleetPath}?${params.toString()}`
   }
 
-  const selectCls = 'w-full bg-white/10 border border-white/15 rounded-xl px-3 py-3.5 text-sm text-white focus:ring-1 focus:ring-primary/50 outline-none appearance-none [color-scheme:dark]'
-  const labelCls = 'block text-[9px] font-black text-white/40 uppercase tracking-widest mb-2'
+  const selectCls = isLight
+    ? 'w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-3.5 text-sm text-gray-900 focus:ring-1 focus:ring-primary/50 outline-none appearance-none'
+    : 'w-full bg-white/10 border border-white/15 rounded-xl px-3 py-3.5 text-sm text-white focus:ring-1 focus:ring-primary/50 outline-none appearance-none [color-scheme:dark]'
+  const labelCls = `block text-[9px] font-black uppercase tracking-widest mb-2 ${isLight ? 'text-gray-500' : 'text-white/40'}`
 
   const inner = (
-    <div className="bg-white/[0.08] backdrop-blur-xl border border-white/15 rounded-[2rem] p-6 sm:p-8 shadow-2xl">
+    <div className={`backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 shadow-2xl ${
+      isLight
+        ? 'bg-white/90 border border-gray-200'
+        : 'bg-white/[0.08] border border-white/15'
+    }`}>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
           {/* Date Range Picker — spans 2 cols */}
           <div className="col-span-2 md:col-span-2">
@@ -63,6 +71,7 @@ export default function QuickSearchBar({
               onPickDate={setPickDate}
               onRetDate={setRetDate}
               disabledRanges={[]}
+              theme={theme}
             />
           </div>
 
@@ -104,7 +113,11 @@ export default function QuickSearchBar({
       <div className="mt-4">
         <button
           onClick={handleSearch}
-          className="w-full bg-white text-black font-black uppercase tracking-[.15em] text-[11px] py-4 rounded-xl hover:bg-black hover:text-white hover:scale-[1.01] active:scale-95 transition-all shadow-lg border border-transparent hover:border-white/20"
+          className={`w-full font-black uppercase tracking-[.15em] text-[11px] py-4 rounded-xl hover:scale-[1.01] active:scale-95 transition-all shadow-lg border border-transparent ${
+            isLight
+              ? 'bg-gray-900 text-white hover:bg-gray-700 shadow-gray-900/10'
+              : 'bg-white text-black hover:bg-black hover:text-white hover:border-white/20 shadow-white/5'
+          }`}
         >
           Search Fleet
         </button>

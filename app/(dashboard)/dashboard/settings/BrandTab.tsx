@@ -13,6 +13,7 @@ interface Props {
     primary_color?: string | null
     accent_color?: string | null
     logo_url?: string | null
+    site_theme?: 'dark' | 'light'
   } | null
   brandName: string
   setBrandName: (v: string) => void
@@ -24,6 +25,8 @@ interface Props {
   setPrimary: (v: string) => void
   accent: string
   setAccent: (v: string) => void
+  siteTheme: 'dark' | 'light'
+  setSiteTheme: (v: 'dark' | 'light') => void
   setMsg: (v: string) => void
 }
 
@@ -32,7 +35,8 @@ const labelCls = 'text-[11px] font-bold text-white/50 uppercase tracking-widest 
 
 export default function BrandTab({
   tenant, brandName, setBrandName, slug, setSlug,
-  logoUrl, setLogoUrl, primary, setPrimary, accent, setAccent, setMsg,
+  logoUrl, setLogoUrl, primary, setPrimary, accent, setAccent,
+  siteTheme, setSiteTheme, setMsg,
 }: Props) {
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
@@ -144,6 +148,61 @@ export default function BrandTab({
                 className="w-10 h-10 bg-transparent border-none cursor-pointer rounded-xl" />
               <span className="text-white/30 text-[10px] font-black uppercase tracking-widest">{accent}</span>
             </div>
+          </div>
+        </div>
+
+        {/* Site Theme */}
+        <div className="space-y-2">
+          <label className={labelCls}>Site Theme</label>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => setSiteTheme('dark')}
+              className={`relative p-4 rounded-2xl border-2 transition-all ${
+                siteTheme === 'dark'
+                  ? 'border-white/60 bg-white/10'
+                  : 'border-white/10 bg-white/5 hover:border-white/20'
+              }`}
+            >
+              <div className="w-full h-16 rounded-xl bg-[#040404] border border-white/10 mb-3 flex items-center justify-center">
+                <div className="flex gap-1.5">
+                  <div className="w-6 h-1.5 rounded bg-white/80" />
+                  <div className="w-4 h-1.5 rounded bg-white/30" />
+                </div>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/70">Dark</span>
+              {siteTheme === 'dark' && (
+                <div className="absolute top-2 right-2 w-5 h-5 bg-white rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSiteTheme('light')}
+              className={`relative p-4 rounded-2xl border-2 transition-all ${
+                siteTheme === 'light'
+                  ? 'border-white/60 bg-white/10'
+                  : 'border-white/10 bg-white/5 hover:border-white/20'
+              }`}
+            >
+              <div className="w-full h-16 rounded-xl bg-white border border-gray-200 mb-3 flex items-center justify-center">
+                <div className="flex gap-1.5">
+                  <div className="w-6 h-1.5 rounded bg-gray-800" />
+                  <div className="w-4 h-1.5 rounded bg-gray-300" />
+                </div>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/70">Light</span>
+              {siteTheme === 'light' && (
+                <div className="absolute top-2 right-2 w-5 h-5 bg-white rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+            </button>
           </div>
         </div>
       </div>

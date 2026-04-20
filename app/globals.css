@@ -46,6 +46,32 @@
   }
 }
 
+/* ── Light theme overrides for tenant public sites ── */
+[data-theme="light"] {
+  --brand-bg: #FAFAFA;
+  --brand-text: #111111;
+  --brand-surface: #FFFFFF;
+  --brand-border: rgba(0, 0, 0, 0.08);
+  --brand-muted: #6B7280;
+}
+
+[data-theme="light"] .glass {
+  background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.6) 100%);
+  backdrop-filter: blur(20px);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+/* Hero section overlays for light theme */
+[data-theme="light"] .hero-overlay {
+  background: linear-gradient(to bottom, rgba(255,255,255,0.3) 0%, rgba(250,250,250,0.6) 60%, rgba(250,250,250,1) 100%) !important;
+}
+
+/* Fleet card overlays */
+[data-theme="light"] .fleet-card-overlay {
+  background: linear-gradient(to top, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.5) 40%, transparent 100%) !important;
+}
+
 @layer utilities {
   .glass {
     @apply bg-glass-gradient backdrop-blur-xl border border-surfaceBorder;

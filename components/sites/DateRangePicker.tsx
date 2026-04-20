@@ -16,6 +16,7 @@ interface Props {
   onPickDate: (d: string) => void
   onRetDate: (d: string) => void
   disabledRanges: DisabledRange[]
+  theme?: 'dark' | 'light'
 }
 
 function toDate(s: string): Date {
@@ -27,8 +28,9 @@ function toStr(d: Date): string {
 }
 
 export default function DateRangePicker({
-  pickDate, retDate, onPickDate, onRetDate, disabledRanges,
+  pickDate, retDate, onPickDate, onRetDate, disabledRanges, theme = 'dark',
 }: Props) {
+  const isLight = theme === 'light'
   const [open, setOpen] = useState(false)
   const [popupStyle, setPopupStyle] = useState<CSSProperties>({})
   const [mounted, setMounted] = useState(false)
@@ -135,25 +137,33 @@ export default function DateRangePicker({
       <button
         type="button"
         onClick={toggleCalendar}
-        className={`w-full text-left bg-white/5 border rounded-2xl px-4 py-3 text-xs text-white focus:ring-1 focus:ring-primary/40 outline-none hover:border-white/10 transition-colors ${open ? 'border-primary/40 bg-primary/5' : 'border-white/5'}`}
+        className={`w-full text-left border rounded-2xl px-4 py-3 text-xs focus:ring-1 focus:ring-primary/40 outline-none transition-colors ${
+          isLight
+            ? `bg-gray-50 text-gray-900 hover:border-gray-300 ${open ? 'border-primary/40 bg-primary/5' : 'border-gray-200'}`
+            : `bg-white/5 text-white hover:border-white/10 ${open ? 'border-primary/40 bg-primary/5' : 'border-white/5'}`
+        }`}
       >
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           <div>
-            <span className={`block text-[9px] font-black uppercase tracking-widest mb-0.5 ${waitingForReturn ? 'text-white/30' : 'text-white/40'}`}>
+            <span className={`block text-[9px] font-black uppercase tracking-widest mb-0.5 ${
+              isLight
+                ? (waitingForReturn ? 'text-gray-400' : 'text-gray-500')
+                : (waitingForReturn ? 'text-white/30' : 'text-white/40')
+            }`}>
               Pickup
             </span>
-            <span className={pickDate ? 'text-white font-semibold' : 'text-white/40'}>
+            <span className={pickDate ? (isLight ? 'text-gray-900 font-semibold' : 'text-white font-semibold') : (isLight ? 'text-gray-400' : 'text-white/40')}>
               {formatDisplay(pickDate)}
             </span>
           </div>
-          <svg className="w-3.5 h-3.5 text-white/20 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <svg className={`w-3.5 h-3.5 flex-shrink-0 ${isLight ? 'text-gray-300' : 'text-white/20'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
           <div className="text-right">
-            <span className={`block text-[9px] font-black uppercase tracking-widest mb-0.5 ${waitingForReturn ? 'text-primary/70' : 'text-white/40'}`}>
+            <span className={`block text-[9px] font-black uppercase tracking-widest mb-0.5 ${waitingForReturn ? 'text-primary/70' : (isLight ? 'text-gray-500' : 'text-white/40')}`}>
               Return
             </span>
-            <span className={retDate ? 'text-white font-semibold' : waitingForReturn ? 'text-primary/50 animate-pulse' : 'text-white/40'}>
+            <span className={retDate ? (isLight ? 'text-gray-900 font-semibold' : 'text-white font-semibold') : waitingForReturn ? 'text-primary/50 animate-pulse' : (isLight ? 'text-gray-400' : 'text-white/40')}>
               {waitingForReturn ? 'Select...' : formatDisplay(retDate)}
             </span>
           </div>

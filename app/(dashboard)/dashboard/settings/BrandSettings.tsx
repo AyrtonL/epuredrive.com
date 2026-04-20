@@ -27,6 +27,7 @@ interface Props {
     pickup_locations?: PickupLocation[]
     experience_pillars?: ExperiencePillar[] | null
     how_it_works?: HowItWorksStep[] | null
+    site_theme?: 'dark' | 'light'
   } | null
 }
 
@@ -41,6 +42,7 @@ export default function BrandSettings({ tenant }: Props) {
   const [logoUrl, setLogoUrl] = useState(tenant?.logo_url || '')
   const [primary, setPrimary] = useState(tenant?.primary_color || '#000000')
   const [accent, setAccent] = useState(tenant?.accent_color || '#3B82F6')
+  const [siteTheme, setSiteTheme] = useState<'dark' | 'light'>(tenant?.site_theme || 'dark')
 
   // Site content
   const [tagline, setTagline] = useState(tenant?.tagline || '')
@@ -88,6 +90,7 @@ export default function BrandSettings({ tenant }: Props) {
         pickup_locations: locations.filter(l => l.label.trim()),
         experience_pillars: pillars,
         how_it_works: howItWorks,
+        site_theme: siteTheme,
       })
       if (result.error) setMsg('Error: ' + result.error)
       else setMsg('Settings saved successfully.')
@@ -112,6 +115,7 @@ export default function BrandSettings({ tenant }: Props) {
           logoUrl={logoUrl} setLogoUrl={setLogoUrl}
           primary={primary} setPrimary={setPrimary}
           accent={accent} setAccent={setAccent}
+          siteTheme={siteTheme} setSiteTheme={setSiteTheme}
           setMsg={setMsg}
         />
       )}
