@@ -58,3 +58,4 @@ __pycache__/
 legal/compliance-checklist.md
 legal/consignment-agreement.md
 legal/llc-setup-guide.md
+.playwright/

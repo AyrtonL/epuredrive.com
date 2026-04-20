@@ -12,7 +12,7 @@ interface Props {
 }
 
 const PLAN_STYLES: Record<string, string> = {
-  enterprise: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
+  max: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
   pro: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
   free: 'text-white/40 bg-white/5 border-white/10',
 }
@@ -137,7 +137,7 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
               >
                 <option value="free">Free</option>
                 <option value="pro">Pro</option>
-                <option value="enterprise">Enterprise</option>
+                <option value="max">Max</option>
               </select>
             </div>
           </div>
@@ -196,7 +196,7 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
                     >
                       <option value="free">Free</option>
                       <option value="pro">Pro</option>
-                      <option value="enterprise">Enterprise</option>
+                      <option value="max">Max</option>
                     </select>
                   ) : (
                     <button

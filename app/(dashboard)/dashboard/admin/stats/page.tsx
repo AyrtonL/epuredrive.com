@@ -31,7 +31,7 @@ export default async function PlatformStatsPage() {
   }
 
   // Simple MRR calculation based on plan pricing
-  const PLAN_PRICES: Record<string, number> = { free: 0, pro: 49, enterprise: 149 }
+  const PLAN_PRICES: Record<string, number> = { free: 0, pro: 49, max: 99 }
   const mrr = Object.entries(planCounts).reduce(
     (sum, [plan, count]) => sum + (PLAN_PRICES[plan] ?? 0) * count, 0
   )
@@ -97,7 +97,7 @@ export default async function PlatformStatsPage() {
                 <div className="text-2xl font-black text-white">{count}</div>
                 <div className="mt-2 w-full h-2 rounded-full bg-white/5 overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${plan === 'enterprise' ? 'bg-violet-400' : plan === 'pro' ? 'bg-blue-400' : 'bg-white/20'}`}
+                    className={`h-full rounded-full transition-all ${plan === 'max' ? 'bg-violet-400' : plan === 'pro' ? 'bg-blue-400' : 'bg-white/20'}`}
                     style={{ width: `${pct}%` }}
                   />
                 </div>

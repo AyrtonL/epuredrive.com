@@ -36,13 +36,6 @@ const PLAN_DEFINITIONS = [
     color: 'border-amber-500/20 text-amber-400',
     limits: { vehicles: 60, members: -1, integrations: true, api: true, customDomain: false },
   },
-  {
-    name: 'Enterprise',
-    slug: 'enterprise',
-    price: 0,
-    color: 'border-violet-500/20 text-violet-400',
-    limits: { vehicles: -1, members: -1, integrations: true, api: true, customDomain: true },
-  },
 ]
 
 export default function PlansManager({ planCounts, tenants }: Props) {
@@ -153,14 +146,12 @@ export default function PlansManager({ planCounts, tenants }: Props) {
                   <option value="free">Free</option>
                   <option value="pro">Pro</option>
                   <option value="max">Max</option>
-                  <option value="enterprise">Enterprise</option>
                 </select>
               ) : (
                 <button
                   onClick={() => setChangingTenant(t.id)}
                   className={`inline-block px-2.5 py-1 text-[10px] font-bold tracking-widest rounded-full uppercase border cursor-pointer hover:opacity-80 transition-opacity ${
-                    t.plan === 'enterprise' ? 'text-violet-400 bg-violet-500/10 border-violet-500/20'
-                    : t.plan === 'max' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                    t.plan === 'max' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
                     : t.plan === 'pro' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20'
                     : 'text-white/40 bg-white/5 border-white/10'
                   }`}

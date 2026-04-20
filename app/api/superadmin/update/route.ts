@@ -10,7 +10,7 @@ import { sendEmail } from '@/lib/email/resend'
 import { subscriptionActivatedEmail, subscriptionChangedEmail } from '@/lib/email/templates/platform'
 import { rateLimit } from '@/lib/rate-limit'
 
-const VALID_PLANS = ['free', 'starter', 'pro', 'enterprise', 'suspended'] as const
+const VALID_PLANS = ['free', 'pro', 'max', 'suspended'] as const
 const ALLOWED_FIELDS = ['plan', 'notes', 'owner_name', 'owner_email', 'owner_phone'] as const
 
 export async function POST(request: NextRequest) {
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
         const previousPlan = tenant.plan ?? 'free'
 
         // If activating from free/suspended, send activation email; otherwise send change email
-        const isPaidPlan = ['starter', 'pro', 'max', 'enterprise'].includes(newPlan)
+        const isPaidPlan = ['pro', 'max'].includes(newPlan)
         const wasInactive = ['free', 'suspended', 'deactivated'].includes(previousPlan)
 
         await Promise.allSettled(
