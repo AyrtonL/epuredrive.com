@@ -3,6 +3,7 @@ import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
 import PageHeader from '@/components/dashboard/PageHeader'
 import { getConnectAccountStatus, getRecentPayments } from './actions'
 import ConnectButton from './ConnectButton'
+import StripeDisconnectButton from './StripeDisconnectButton'
 import SquareConnectButton from './SquareConnectButton'
 import PaymentProcessorToggle from './PaymentProcessorToggle'
 import RentalFeesForm from './RentalFeesForm'
@@ -97,9 +98,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
             </div>
 
             {status.connected && status.chargesEnabled ? (
-              <div className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest">
-                Active
-              </div>
+              <StripeDisconnectButton />
             ) : (
               <ConnectButton />
             )}

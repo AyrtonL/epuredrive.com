@@ -46,6 +46,35 @@ export async function createConnectAccount() {
   redirect(accountLink.url)
 }
 
+export async function disconnectStripeAccount(): Promise<{ error?: string }> {
+  const stripe = getStripe()
+  if (!stripe) return { error: 'Stripe is not configured' }
+
+  const { supabase, tenantId } = await requireTenantId()
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('stripe_account_id')
+    .eq('id', tenantId)
+    .single()
+
+  if (!tenant?.stripe_account_id) {
+    return { error: 'No Stripe account connected' }
+  }
+
+  // Remove the Stripe account ID from the tenant record
+  const { error: updateError } = await supabase
+    .from('tenants')
+    .update({ stripe_account_id: null })
+    .eq('id', tenantId)
+
+  if (updateError) {
+    return { error: 'Failed to disconnect Stripe' }
+  }
+
+  redirect('/dashboard/settings/payments')
+}
+
 export async function getConnectAccountStatus(): Promise<{
   connected: boolean
   accountId: string | null
