@@ -18,7 +18,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
     .single()
 
   const plan = tenant?.plan || 'free'
-  const FEE_BY_PLAN: Record<string, number> = { max: 0, enterprise: 0, pro: 1, starter: 1.5, free: 2 }
+  const FEE_BY_PLAN: Record<string, number> = { max: 0, pro: 1, free: 2 }
   const feeRate = FEE_BY_PLAN[plan] ?? 2
   const params = await searchParams
   const status = await getConnectAccountStatus()
@@ -218,20 +218,12 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                 <span className={plan === 'free' ? 'text-white font-bold' : 'text-white/40'}>2%</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-white/40">Starter</span>
-                <span className={plan === 'starter' ? 'text-white font-bold' : 'text-white/40'}>1.5%</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
                 <span className="text-white/40">Pro</span>
                 <span className={plan === 'pro' ? 'text-white font-bold' : 'text-white/40'}>1%</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-white/40">Max</span>
                 <span className={plan === 'max' ? 'text-white font-bold' : 'text-white/40'}>0%</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-white/40">Enterprise</span>
-                <span className={plan === 'enterprise' ? 'text-white font-bold' : 'text-white/40'}>Custom</span>
               </div>
             </div>
 
