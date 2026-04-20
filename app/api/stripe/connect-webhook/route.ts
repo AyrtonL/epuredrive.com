@@ -11,6 +11,8 @@ import { getStripe } from '@/lib/stripe'
 import crypto from 'crypto'
 import { sendEmail } from '@/lib/email/resend'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
+import { createInAppNotification } from '@/lib/notifications/create'
+import { generateBookingCode } from '@/lib/booking-code'
 import {
   newBookingEmail,
   bookingConfirmedCustomerEmail,
@@ -95,9 +97,15 @@ export async function POST(request: Request) {
     const days = parseInt(metadata.days || '0', 10)
     const customerName = metadata.customer_name || 'Customer'
     const customerEmail = (session.customer_email as string) || ''
+    const customerPhone = metadata.customer_phone || null
+    const pickupTime = metadata.pickup_time || null
+    const returnTime = metadata.return_time || null
+    const pickupLocation = metadata.pickup_location || null
     const paymentIntentId = (session.payment_intent as string) || null
+    const sessionId = (session.id as string) || null
     const amountTotal = (session.amount_total as number) || 0
     const totalDollars = amountTotal / 100
+    const bookingCode = generateBookingCode()
 
     // Check for duplicate — idempotency via payment_intent
     if (paymentIntentId) {
@@ -136,22 +144,36 @@ export async function POST(request: Request) {
         car_id: carId,
         customer_name: customerName,
         customer_email: customerEmail || null,
+        customer_phone: customerPhone,
         pickup_date: startDate,
         return_date: endDate,
+        pickup_time: pickupTime,
+        return_time: returnTime,
+        pickup_location: pickupLocation,
         total_amount: totalDollars,
         status: 'confirmed',
         source: 'stripe',
         stripe_payment_id: paymentIntentId,
+        stripe_session_id: sessionId,
+        booking_code: bookingCode,
         notes: `Paid online — ${days} day${days !== 1 ? 's' : ''} via Stripe Checkout`,
         extras,
       })
-      .select('id')
+      .select('id, booking_code')
       .single()
 
     if (insertError) {
       console.error('[connect-webhook] Failed to create reservation:', insertError.message)
       return new Response('Reservation insert failed', { status: 500 })
     }
+
+    // In-app notification
+    createInAppNotification({
+      tenantId,
+      event: 'new_booking',
+      title: 'New Paid Booking',
+      body: `${customerName} booked ${carName} (${startDate} → ${endDate}) — $${totalDollars.toFixed(2)} paid via Stripe`,
+    }).catch(e => console.error('[connect-webhook] In-app notification failed:', e))
 
     dispatchWebhookEvent(tenantId, 'payment.received', {
       reservation_id: reservation.id,
@@ -221,7 +243,7 @@ export async function POST(request: Request) {
           carName,
           pickupDate: startDate,
           returnDate: endDate,
-          pickupLocation: 'To be confirmed',
+          pickupLocation: pickupLocation || 'To be confirmed',
           reservationId: reservation.id,
         }),
       }).catch(e => console.error('[connect-webhook] Customer email failed:', e))

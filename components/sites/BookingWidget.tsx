@@ -178,6 +178,11 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
             end_date: retDate,
             customer_name: custName.trim(),
             customer_email: custEmail.trim(),
+            customer_phone: custPhone.trim() || undefined,
+            pickup_time: pickTime || undefined,
+            return_time: retTime || undefined,
+            pickup_location: locationLabel || undefined,
+            total_amount: total,
             extras: extras.length > 0 ? extras : undefined,
           }),
         })

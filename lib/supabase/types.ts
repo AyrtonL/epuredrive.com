@@ -122,6 +122,7 @@ export interface Reservation {
   review_email_sent_at: string | null
   // payment IDs
   stripe_payment_id: string | null
+  stripe_session_id: string | null
   square_payment_id: string | null
   // tenant counter-signature (close-out)
   tenant_signed_at: string | null

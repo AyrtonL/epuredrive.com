@@ -3,9 +3,12 @@
  * Returns the Stripe publishable key for client-side initialization.
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = rateLimit(request, 'stripe-key', { windowMs: 60_000, max: 20 })
+  if (limited) return limited
   return NextResponse.json(
     { publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '' },
     { headers: {

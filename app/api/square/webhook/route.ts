@@ -2,6 +2,13 @@ import { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
+import { createInAppNotification } from '@/lib/notifications/create'
+import { generateBookingCode } from '@/lib/booking-code'
+import {
+  newBookingEmail,
+  bookingConfirmedCustomerEmail,
+  type TenantBrand,
+} from '@/lib/email/templates/rentals'
 import crypto from 'crypto'
 
 /**
@@ -52,6 +59,13 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient()
 
+  // Cleanup expired pending checkouts (housekeeping)
+  void supabase
+    .from('pending_checkouts')
+    .delete()
+    .lt('expires_at', new Date().toISOString())
+    .eq('status', 'pending')
+
   // Handle payment.completed event
   if (event.type === 'payment.completed') {
     const payment = event.data.object as Record<string, unknown>
@@ -61,6 +75,7 @@ export async function POST(request: NextRequest) {
     const amountMoney = payment.amountMoney as { amount?: number; currency?: string } | undefined
     const totalCents = Number(amountMoney?.amount ?? 0)
     const totalDollars = totalCents / 100
+    const buyerEmail = (payment.buyerEmailAddress as string) || ''
 
     // Find the tenant by square_location_id
     if (!locationId) {
@@ -69,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     const { data: tenant } = await supabase
       .from('tenants')
-      .select('id, name, brand_name, slug, owner_email')
+      .select('id, name, brand_name, slug, owner_email, logo_url, company_phone, whatsapp_phone, owner_phone, company_address')
       .eq('square_location_id', locationId)
       .single()
 
@@ -89,25 +104,82 @@ export async function POST(request: NextRequest) {
       return new Response('ok', { status: 200 })
     }
 
-    // Extract metadata from the order note or reference_id if available
-    const referenceId = payment.referenceId as string | undefined
-    const note = payment.note as string | undefined
-    const buyerEmail = (payment.buyerEmailAddress as string) || ''
+    // Look up pending_checkout for full booking data
+    let pendingCheckout: {
+      id: string; car_id: number; customer_name: string; customer_email: string;
+      customer_phone: string | null; pickup_date: string; return_date: string;
+      pickup_time: string | null; return_time: string | null; pickup_location: string | null;
+      total_amount: number | null; extras: unknown;
+    } | null = null
 
-    // Create reservation
+    if (orderId) {
+      const { data: pc } = await supabase
+        .from('pending_checkouts')
+        .select('*')
+        .eq('square_order_id', orderId)
+        .eq('status', 'pending')
+        .maybeSingle()
+      pendingCheckout = pc
+    }
+
+    // Fallback: match by tenant + amount + email within last 2 hours
+    if (!pendingCheckout && buyerEmail) {
+      const { data: pc } = await supabase
+        .from('pending_checkouts')
+        .select('*')
+        .eq('tenant_id', tenant.id)
+        .eq('customer_email', buyerEmail)
+        .eq('status', 'pending')
+        .gte('created_at', new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      pendingCheckout = pc
+    }
+
+    const bookingCode = generateBookingCode()
+    const customerName = pendingCheckout?.customer_name || 'Square Customer'
+    const customerEmail = pendingCheckout?.customer_email || buyerEmail || null
+    const carId = pendingCheckout?.car_id || null
+
+    // Fetch car name for emails
+    let carName = 'Vehicle'
+    if (carId) {
+      const { data: car } = await supabase
+        .from('cars')
+        .select('make, model, model_full')
+        .eq('id', carId)
+        .maybeSingle()
+      if (car) carName = `${car.make} ${car.model_full || car.model}`
+    }
+
+    const days = pendingCheckout?.pickup_date && pendingCheckout?.return_date
+      ? Math.ceil((new Date(pendingCheckout.return_date).getTime() - new Date(pendingCheckout.pickup_date).getTime()) / (1000 * 60 * 60 * 24))
+      : 0
+
+    // Create complete reservation
     const { data: reservation, error: insertError } = await supabase
       .from('reservations')
       .insert({
         tenant_id: tenant.id,
-        customer_name: referenceId || 'Square Customer',
-        customer_email: buyerEmail || null,
+        car_id: carId,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: pendingCheckout?.customer_phone || null,
+        pickup_date: pendingCheckout?.pickup_date || null,
+        return_date: pendingCheckout?.return_date || null,
+        pickup_time: pendingCheckout?.pickup_time || null,
+        return_time: pendingCheckout?.return_time || null,
+        pickup_location: pendingCheckout?.pickup_location || null,
         total_amount: totalDollars,
         status: 'confirmed',
         source: 'square',
         square_payment_id: paymentId,
-        notes: note || `Paid via Square — Payment ${paymentId}`,
+        booking_code: bookingCode,
+        notes: `Paid online — ${days > 0 ? `${days} day${days !== 1 ? 's' : ''} ` : ''}via Square`,
+        extras: pendingCheckout?.extras || null,
       })
-      .select('id')
+      .select('id, booking_code')
       .single()
 
     if (insertError) {
@@ -115,33 +187,92 @@ export async function POST(request: NextRequest) {
       return new Response('Reservation insert failed', { status: 500 })
     }
 
+    // Mark pending checkout as completed
+    if (pendingCheckout) {
+      await supabase
+        .from('pending_checkouts')
+        .update({ status: 'completed' })
+        .eq('id', pendingCheckout.id)
+    }
+
+    // In-app notification
+    createInAppNotification({
+      tenantId: tenant.id,
+      event: 'new_booking',
+      title: 'New Paid Booking',
+      body: `${customerName} booked ${carName}${pendingCheckout?.pickup_date ? ` (${pendingCheckout.pickup_date} → ${pendingCheckout.return_date})` : ''} — $${totalDollars.toFixed(2)} paid via Square`,
+    }).catch(e => console.error('[square-webhook] In-app notification failed:', e))
+
     // Dispatch webhook event (fire-and-forget)
     dispatchWebhookEvent(tenant.id, 'payment.received', {
       reservation_id: reservation.id,
       amount: totalDollars,
       currency: amountMoney?.currency || 'USD',
       square_payment_id: paymentId,
-      customer_email: buyerEmail,
+      customer_email: customerEmail,
+      customer_name: customerName,
       source: 'square',
     }).catch(err => console.error('[square-webhook] webhook dispatch failed:', err))
 
-    // Send notification email to tenant (fire-and-forget)
-    const tenantEmail = tenant.owner_email
-    if (tenantEmail) {
+    // ── Send emails (fire-and-forget) ──
+    const brand: TenantBrand = {
+      name: tenant.brand_name || tenant.name || 'Your Rental Company',
+      logoUrl: tenant.logo_url ?? null,
+      email: tenant.owner_email ?? null,
+      phone: tenant.company_phone || tenant.whatsapp_phone || tenant.owner_phone || null,
+      address: tenant.company_address ?? null,
+    }
+
+    // 1. Notify operator
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('tenant_id', tenant.id)
+
+    if (profiles?.length) {
+      const adminClient = createAdminClient()
+      const results = await Promise.allSettled(
+        profiles.map((p: { id: string }) => adminClient.auth.admin.getUserById(p.id))
+      )
+      const operatorEmails: string[] = []
+      for (const r of results) {
+        if (r.status === 'fulfilled') {
+          const email = r.value.data?.user?.email
+          if (email) operatorEmails.push(email)
+        }
+      }
+
+      if (operatorEmails.length > 0) {
+        sendEmail({
+          to: operatorEmails,
+          ...newBookingEmail({
+            customerName,
+            carName,
+            pickupDate: pendingCheckout?.pickup_date || 'N/A',
+            returnDate: pendingCheckout?.return_date || 'N/A',
+            totalAmount: totalDollars,
+            tenantName: brand.name,
+          }),
+        }).catch(e => console.error('[square-webhook] Operator email failed:', e))
+      }
+    }
+
+    // 2. Confirm to customer
+    if (customerEmail && reservation) {
       sendEmail({
-        to: tenantEmail,
-        subject: `New Payment Received — $${totalDollars.toFixed(2)} via Square`,
-        html: `
-          <div style="font-family:sans-serif;color:#333;padding:20px">
-            <h2>New Square Payment</h2>
-            <p>A payment of <strong>$${totalDollars.toFixed(2)}</strong> was received via Square.</p>
-            <p><strong>Payment ID:</strong> ${paymentId}</p>
-            ${buyerEmail ? `<p><strong>Customer:</strong> ${buyerEmail}</p>` : ''}
-            <p>Log in to your dashboard to manage this reservation.</p>
-            <p style="color:#999;font-size:12px">ePure Drive Platform</p>
-          </div>
-        `,
-      }).catch(e => console.error('[square-webhook] Email failed:', e))
+        to: customerEmail,
+        fromName: brand.name,
+        replyTo: brand.email ?? undefined,
+        ...bookingConfirmedCustomerEmail({
+          customerName,
+          brand,
+          carName,
+          pickupDate: pendingCheckout?.pickup_date || 'N/A',
+          returnDate: pendingCheckout?.return_date || 'N/A',
+          pickupLocation: pendingCheckout?.pickup_location || 'To be confirmed',
+          reservationId: reservation.id,
+        }),
+      }).catch(e => console.error('[square-webhook] Customer email failed:', e))
     }
   }
 

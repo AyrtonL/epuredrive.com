@@ -45,6 +45,11 @@ export async function POST(request: NextRequest) {
   const endDate = String(data.end_date || '')
   const customerName = String(data.customer_name || '').trim().slice(0, 200)
   const customerEmail = String(data.customer_email || '').trim().slice(0, 200)
+  const customerPhone = typeof data.customer_phone === 'string' ? data.customer_phone.trim().slice(0, 50) : null
+  const pickupTime = typeof data.pickup_time === 'string' ? data.pickup_time : null
+  const returnTime = typeof data.return_time === 'string' ? data.return_time : null
+  const pickupLocation = typeof data.pickup_location === 'string' ? data.pickup_location.trim().slice(0, 200) : null
+  const totalAmount = typeof data.total_amount === 'number' ? data.total_amount : null
 
   if (!carId || !tenantId || !startDate || !endDate || !customerName || !customerEmail) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -111,12 +116,69 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const totalCents = Math.round(car.daily_rate * days * 100)
+  // Validate and calculate extras
+  interface ExtraInput { extra_id: string; name: string; pricing_type: string; unit_price: number; quantity: number; subtotal: number }
+  const clientExtras = Array.isArray(data.extras) ? (data.extras as ExtraInput[]) : []
+  let validatedExtras: ExtraInput[] = []
+  let extrasCents = 0
+
+  if (clientExtras.length > 0) {
+    const extraIds = clientExtras.map(e => e.extra_id)
+    const { data: dbExtras } = await supabase
+      .from('rental_extras')
+      .select('id, name, pricing_type, price')
+      .in('id', extraIds)
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+
+    for (const dbExtra of dbExtras ?? []) {
+      const qty = dbExtra.pricing_type === 'per_day' ? days : 1
+      const unitCents = Math.round(Number(dbExtra.price) * 100)
+      extrasCents += unitCents * qty
+
+      validatedExtras.push({
+        extra_id: dbExtra.id,
+        name: dbExtra.name,
+        pricing_type: dbExtra.pricing_type,
+        unit_price: Number(dbExtra.price),
+        quantity: qty,
+        subtotal: (unitCents * qty) / 100,
+      })
+    }
+  }
+
+  const rentalCents = Math.round(car.daily_rate * days * 100)
+  const totalCents = rentalCents + extrasCents
   const redirectOrigin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const carName = `${car.make} ${car.model}`
 
+  // Insert pending_checkout to preserve booking metadata for the webhook
+  const { data: pendingCheckout, error: pcError } = await supabase
+    .from('pending_checkouts')
+    .insert({
+      tenant_id: tenantId,
+      car_id: carId,
+      customer_name: customerName,
+      customer_email: customerEmail,
+      customer_phone: customerPhone,
+      pickup_date: startDate,
+      return_date: endDate,
+      pickup_time: pickupTime,
+      return_time: returnTime,
+      pickup_location: pickupLocation,
+      total_amount: totalCents / 100,
+      extras: validatedExtras.length > 0 ? validatedExtras : null,
+    })
+    .select('id')
+    .single()
+
+  if (pcError || !pendingCheckout) {
+    console.error('[square-checkout] Failed to create pending checkout:', pcError?.message)
+    return NextResponse.json({ error: 'Failed to prepare checkout' }, { status: 500 })
+  }
+
   try {
-    console.log('[square-checkout] Creating payment link:', { carName, days, totalCents, locationId: tenant.square_location_id })
+    console.log('[square-checkout] Creating payment link:', { carName, days, totalCents, locationId: tenant.square_location_id, pendingCheckoutId: pendingCheckout.id })
     const client = getSquareClient(accessToken)
     const idempotencyKey = crypto.randomUUID()
 
@@ -145,7 +207,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create payment link' }, { status: 500 })
     }
 
-    console.log('[square-checkout] Payment link created:', paymentLink.url)
+    // Store the Square order ID so the webhook can look up this pending checkout
+    const orderId = paymentLink.orderId || paymentLink.id
+    if (orderId) {
+      await supabase
+        .from('pending_checkouts')
+        .update({ square_order_id: orderId })
+        .eq('id', pendingCheckout.id)
+    }
+
+    console.log('[square-checkout] Payment link created:', paymentLink.url, 'orderId:', orderId)
     return NextResponse.json({ url: paymentLink.url })
   } catch (err: unknown) {
     console.error('[square-checkout] Payment link creation failed:', err)

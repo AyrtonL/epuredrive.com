@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { rateLimit } from '@/lib/rate-limit'
 
 /**
  * GET /api/availability?carId=123&tenantId=uuid
  * Returns booked date ranges for a specific car so the UI can block unavailable dates.
  */
 export async function GET(request: NextRequest) {
+  const limited = rateLimit(request, 'availability', { windowMs: 60_000, max: 30 })
+  if (limited) return limited
   const { searchParams } = new URL(request.url)
   const carId = searchParams.get('carId')
   const tenantId = searchParams.get('tenantId')

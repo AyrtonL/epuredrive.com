@@ -21,6 +21,10 @@ export async function POST(request: NextRequest) {
   const endDate = String(data.end_date || '')
   const customerName = String(data.customer_name || '').trim().slice(0, 200)
   const customerEmail = String(data.customer_email || '').trim().slice(0, 200)
+  const customerPhone = typeof data.customer_phone === 'string' ? data.customer_phone.trim().slice(0, 50) : ''
+  const pickupTime = typeof data.pickup_time === 'string' ? data.pickup_time : ''
+  const returnTime = typeof data.return_time === 'string' ? data.return_time : ''
+  const pickupLocation = typeof data.pickup_location === 'string' ? data.pickup_location.trim().slice(0, 200) : ''
 
   if (!carId || !tenantId || !startDate || !endDate || !customerName || !customerEmail) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -168,6 +172,10 @@ export async function POST(request: NextRequest) {
           end_date: endDate,
           days: String(days),
           customer_name: customerName,
+          customer_phone: customerPhone,
+          pickup_time: pickupTime,
+          return_time: returnTime,
+          pickup_location: pickupLocation,
           extras: validatedExtras.length > 0 ? JSON.stringify(validatedExtras) : '',
         },
         success_url: `${origin}/sites/${tenant.slug}/${carId}?booked=true`,
