@@ -90,14 +90,17 @@ export async function createReservation(
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
-  const { error } = await supabase
+  const { data: inserted, error } = await supabase
     .from('reservations')
     .insert({ ...data, tenant_id: tenantId, booking_code: generateBookingCode() })
+    .select('id')
+    .single()
   revalidatePath('/dashboard/bookings')
 
   if (!error) {
+    const reservationId = inserted?.id ?? null
     dispatchWebhookEvent(tenantId, 'booking.created', {
-      reservation_id: null, // we don't have the ID from insert without .select()
+      reservation_id: reservationId,
       car_id: data.car_id ?? null,
       customer_name: data.customer_name ?? null,
       customer_email: data.customer_email ?? null,
@@ -136,7 +139,7 @@ export async function createReservation(
       event: 'new_booking',
       title: 'New Booking',
       body: `${data.customer_name || 'A customer'} booked ${data.pickup_date || ''} → ${data.return_date || ''}`,
-      metadata: { car_id: data.car_id, customer_name: data.customer_name },
+      metadata: { reservation_id: reservationId, car_id: data.car_id, customer_name: data.customer_name },
     }).catch(() => {})
   }
 

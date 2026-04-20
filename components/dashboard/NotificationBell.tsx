@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 interface Notification {
@@ -201,6 +202,34 @@ export default function NotificationBell() {
     })
   }, [])
 
+  const router = useRouter()
+
+  const getNotificationHref = useCallback((n: Notification): string | null => {
+    switch (n.event) {
+      case 'new_booking':
+      case 'booking_modified':
+      case 'booking_cancelled':
+        return '/dashboard/bookings'
+      case 'maintenance_due':
+        return '/dashboard/fleet'
+      case 'payment_received':
+        return '/dashboard/bookings'
+      case 'team_invite_accepted':
+        return '/dashboard/settings/team'
+      default:
+        return null
+    }
+  }, [])
+
+  const handleNotificationClick = useCallback((n: Notification) => {
+    if (!n.read) markAsRead(n.id)
+    const href = getNotificationHref(n)
+    if (href) {
+      setOpen(false)
+      router.push(href)
+    }
+  }, [markAsRead, getNotificationHref, router])
+
   const eventConfig = (event: string) => EVENT_CONFIG[event] ?? DEFAULT_EVENT
 
   return (
@@ -284,8 +313,8 @@ export default function NotificationBell() {
                   return (
                     <button
                       key={n.id}
-                      onClick={() => { if (!n.read) markAsRead(n.id) }}
-                      className={`w-full text-left px-5 py-3.5 flex gap-3.5 transition-all duration-150 group relative ${
+                      onClick={() => handleNotificationClick(n)}
+                      className={`w-full text-left px-5 py-3.5 flex gap-3.5 transition-all duration-150 group relative cursor-pointer ${
                         !n.read
                           ? 'bg-white/[0.02] hover:bg-white/[0.05]'
                           : 'hover:bg-white/[0.03] opacity-60 hover:opacity-80'

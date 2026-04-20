@@ -201,6 +201,7 @@ export async function POST(request: NextRequest) {
       event: 'new_booking',
       title: 'New Paid Booking',
       body: `${customerName} booked ${carName}${pendingCheckout?.pickup_date ? ` (${pendingCheckout.pickup_date} → ${pendingCheckout.return_date})` : ''} — $${totalDollars.toFixed(2)} paid via Square`,
+      metadata: { reservation_id: reservation.id, car_id: carId, source: 'square' },
     }).catch(e => console.error('[square-webhook] In-app notification failed:', e))
 
     // Dispatch webhook event (fire-and-forget)

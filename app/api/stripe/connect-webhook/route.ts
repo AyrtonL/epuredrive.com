@@ -173,6 +173,7 @@ export async function POST(request: Request) {
       event: 'new_booking',
       title: 'New Paid Booking',
       body: `${customerName} booked ${carName} (${startDate} → ${endDate}) — $${totalDollars.toFixed(2)} paid via Stripe`,
+      metadata: { reservation_id: reservation.id, car_id: carId, source: 'stripe' },
     }).catch(e => console.error('[connect-webhook] In-app notification failed:', e))
 
     dispatchWebhookEvent(tenantId, 'payment.received', {
