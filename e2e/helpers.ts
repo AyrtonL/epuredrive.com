@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { Page } from '@playwright/test';
 
 /**
  * Navigate to a page and handle Netlify bot protection challenge.
@@ -14,6 +14,20 @@ export async function safeGoto(page: Page, url: string, options?: { timeout?: nu
     const bodyText = await page.locator('body').textContent({ timeout: 3000 }).catch(() => '');
     if (!bodyText?.includes('verifying your connection')) break;
     await page.waitForTimeout(2000);
+  }
+
+  // Dismiss cookie consent banner if present (blocks clicks on underlying elements)
+  await dismissCookieBanner(page);
+}
+
+/**
+ * Dismiss cookie consent banner if visible.
+ */
+export async function dismissCookieBanner(page: Page) {
+  const acceptBtn = page.locator('button:has-text("Accept"), button:has-text("ACCEPT"), button:has-text("Accept All")').first();
+  if (await acceptBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await acceptBtn.click();
+    await page.waitForTimeout(300);
   }
 }
 

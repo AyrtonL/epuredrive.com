@@ -16,6 +16,9 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
+    extraHTTPHeaders: {
+      'x-bypass-token': process.env.PLAYWRIGHT_BYPASS_TOKEN || '',
+    },
   },
   projects: [
     // Auth setup — runs first to create session

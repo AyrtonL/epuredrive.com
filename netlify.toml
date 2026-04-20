@@ -75,3 +75,12 @@
 
 [functions.review-requests-cron]
   schedule = "0 14 * * *"
+
+# Edge Functions
+[[edge_functions]]
+  function = "playwright-bypass"
+  path = "/*"
+
+[[edge_functions]]
+  function = "subdomain-rewrite"
+  path = "/*"
