@@ -63,7 +63,7 @@ export default async function TenantLayout({ children, params }: Props) {
                   <span className="font-outfit font-black text-xl text-primary tracking-tighter">É</span>
                 )}
               </div>
-              <a href="/" className="flex flex-col -space-y-1">
+              <a href={`/sites/${typedTenant.slug}`} className="flex flex-col -space-y-1">
                 <span className="font-outfit font-black text-lg tracking-tight group-hover/logo:text-glow transition-all duration-500">{displayName}</span>
                 <span className="text-[10px] font-black uppercase tracking-[.3em] text-white/20">{tagline}</span>
               </a>
@@ -71,13 +71,13 @@ export default async function TenantLayout({ children, params }: Props) {
 
             <div className="flex items-center gap-8">
               <div className="hidden md:flex items-center gap-6">
-                <a href="/fleet" className="text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors">Fleet</a>
-                <a href="/#experience" className="text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors">Experience</a>
-                <a href="/#concierge" className="text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors">Concierge</a>
-                <a href="/my-booking" className="text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors">My Booking</a>
+                <a href={`/sites/${typedTenant.slug}`} className="text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors">Fleet</a>
+                <a href={`/sites/${typedTenant.slug}#experience`} className="text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors">Experience</a>
+                <a href={`/sites/${typedTenant.slug}#concierge`} className="text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors">Concierge</a>
+                <a href={`/sites/${typedTenant.slug}/my-booking`} className="text-[10px] font-black uppercase tracking-[.2em] text-white/70 hover:text-white transition-colors">My Booking</a>
               </div>
               <a
-                href="/fleet"
+                href={`/sites/${typedTenant.slug}`}
                 className="bg-white text-black font-black uppercase tracking-widest text-[10px] px-8 py-3.5 rounded-full hover:bg-black hover:text-white hover:border hover:border-white/20 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/5"
               >
                 Reserve Now
