@@ -10,6 +10,7 @@ interface Props {
   pickupLocations?: PickupLocation[]
   whatsappPhone?: string | null
   paymentsEnabled?: boolean
+  paymentProcessor?: string
   rentalExtras?: RentalExtra[]
 }
 
@@ -30,7 +31,7 @@ function formatBookedRange(from: string, to: string): string {
   return `${fmt(from)} – ${fmt(to)}`
 }
 
-export default function BookingWidget({ car, tenantId, pickupLocations = [], whatsappPhone, paymentsEnabled, rentalExtras = [] }: Props) {
+export default function BookingWidget({ car, tenantId, pickupLocations = [], whatsappPhone, paymentsEnabled, paymentProcessor, rentalExtras = [] }: Props) {
   const [pickDate, setPickDate] = useState('')
   const [retDate, setRetDate] = useState('')
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([])
@@ -163,10 +164,11 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
     setSubmitting(true)
     setFormError('')
     try {
-      // If tenant has Stripe Connect enabled, redirect to Stripe Checkout for payment
+      // If tenant has payments enabled, redirect to checkout for payment
       if (paymentsEnabled) {
         const extras = buildExtrasPayload()
-        const res = await fetch('/api/checkout', {
+        const checkoutEndpoint = paymentProcessor === 'square' ? '/api/square/checkout' : '/api/checkout'
+        const res = await fetch(checkoutEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -181,11 +183,6 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
         })
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: 'Payment failed' }))
-          // If tenant uses Square, fall back to booking request
-          if ((err as { processor?: string }).processor === 'square') {
-            await submitBookingRequest()
-            return
-          }
           setFormError((err as { error?: string }).error || 'Could not start payment.')
           return
         }

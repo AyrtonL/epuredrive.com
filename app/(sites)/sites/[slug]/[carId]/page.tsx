@@ -91,6 +91,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
         tenantId={tenant.id}
         slug={tenant.slug!}
         paymentsEnabled={!!tenant.stripe_account_id || !!tenant.square_merchant_id}
+        paymentProcessor={tenant.payment_processor ?? 'stripe'}
         whatsappPhone={tenant.whatsapp_phone ?? null}
         pickupLocations={pickupLocations}
         rentalExtras={(rentalExtras as RentalExtra[]) ?? []}
