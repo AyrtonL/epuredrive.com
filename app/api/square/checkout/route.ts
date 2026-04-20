@@ -115,6 +115,7 @@ export async function POST(request: NextRequest) {
   const carName = `${car.make} ${car.model}`
 
   try {
+    console.log('[square-checkout] Creating payment link:', { carName, days, totalCents, locationId: tenant.square_location_id })
     const client = getSquareClient(accessToken)
     const idempotencyKey = crypto.randomUUID()
 
@@ -139,12 +140,21 @@ export async function POST(request: NextRequest) {
 
     const paymentLink = result.paymentLink
     if (!paymentLink?.url) {
+      console.error('[square-checkout] No payment link URL in response:', JSON.stringify(result))
       return NextResponse.json({ error: 'Failed to create payment link' }, { status: 500 })
     }
 
+    console.log('[square-checkout] Payment link created:', paymentLink.url)
     return NextResponse.json({ url: paymentLink.url })
   } catch (err: unknown) {
     console.error('[square-checkout] Payment link creation failed:', err)
+    // Extract Square API error details
+    const errObj = err as { errors?: Array<{ category?: string; code?: string; detail?: string }> }
+    if (errObj.errors?.length) {
+      const details = errObj.errors.map(e => e.detail || e.code).join('; ')
+      console.error('[square-checkout] Square API errors:', JSON.stringify(errObj.errors))
+      return NextResponse.json({ error: `Square error: ${details}` }, { status: 500 })
+    }
     const message = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json({ error: `Square checkout failed: ${message}` }, { status: 500 })
   }
