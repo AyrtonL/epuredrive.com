@@ -78,6 +78,7 @@ export async function exchangeSquareCode(code: string): Promise<TokenResponse> {
       client_secret: process.env.SQUARE_APPLICATION_SECRET,
       code,
       grant_type: 'authorization_code',
+      redirect_uri: process.env.SQUARE_REDIRECT_URI,
     }),
   })
 
