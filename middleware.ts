@@ -10,6 +10,10 @@ export async function middleware(request: NextRequest) {
   // Path 1: epuredrive.com subdomain → slug-based rewrite (no DB call)
   const slug = getTenantSlug(host)
   if (slug) {
+    // Don't rewrite API routes — they live at the app root
+    if (request.nextUrl.pathname.startsWith('/api/')) {
+      return NextResponse.next()
+    }
     const url = request.nextUrl.clone()
     url.pathname = `/sites/${slug}${url.pathname === '/' ? '' : url.pathname}`
     return NextResponse.rewrite(url)
@@ -25,6 +29,11 @@ export async function middleware(request: NextRequest) {
     hostname === '127.0.0.1'
 
   if (!isEpureDomain) {
+    // Don't rewrite API routes — they live at the app root
+    if (request.nextUrl.pathname.startsWith('/api/')) {
+      return NextResponse.next()
+    }
+
     const supabase = createEdgeClient()
     const { data } = await supabase
       .from('tenants')

@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
   // Origin validation
   const origin = request.headers.get('origin')
   if (!isAllowedOrigin(origin)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    console.error('[square-checkout] Blocked origin:', origin)
+    return NextResponse.json({ error: `Forbidden: origin ${origin} not allowed` }, { status: 403 })
   }
 
   let body: unknown
