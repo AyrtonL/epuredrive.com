@@ -80,16 +80,9 @@ export async function POST(request: NextRequest) {
   const carName = `${car.make} ${car.model}`
   const tenantName = tenant.brand_name || tenant.name
 
-  // Build absolute image URL for Stripe (requires https://)
-  const imageUrl = car.image_url && car.image_url.startsWith('http')
-    ? car.image_url
-    : car.image_url
-      ? `${origin}/${car.image_url}`
-      : null
-
   // Build line items: base rental + extras
   interface LineItem {
-    price_data: { currency: string; product_data: { name: string; description?: string; images?: string[] }; unit_amount: number }
+    price_data: { currency: string; product_data: { name: string; description?: string }; unit_amount: number }
     quantity: number
   }
 
@@ -100,7 +93,6 @@ export async function POST(request: NextRequest) {
         product_data: {
           name: `${carName} — ${days}-day rental`,
           description: `${startDate} to ${endDate} · ${tenantName}`,
-          ...(imageUrl ? { images: [imageUrl] } : {}),
         },
         unit_amount: rentalCents,
       },
