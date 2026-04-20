@@ -80,6 +80,13 @@ export async function POST(request: NextRequest) {
   const carName = `${car.make} ${car.model}`
   const tenantName = tenant.brand_name || tenant.name
 
+  // Build absolute image URL for Stripe (requires https://)
+  const imageUrl = car.image_url && car.image_url.startsWith('http')
+    ? car.image_url
+    : car.image_url
+      ? `${origin}/${car.image_url}`
+      : null
+
   // Build line items: base rental + extras
   interface LineItem {
     price_data: { currency: string; product_data: { name: string; description?: string; images?: string[] }; unit_amount: number }
@@ -93,7 +100,7 @@ export async function POST(request: NextRequest) {
         product_data: {
           name: `${carName} — ${days}-day rental`,
           description: `${startDate} to ${endDate} · ${tenantName}`,
-          ...(car.image_url ? { images: [car.image_url] } : {}),
+          ...(imageUrl ? { images: [imageUrl] } : {}),
         },
         unit_amount: rentalCents,
       },
@@ -153,31 +160,36 @@ export async function POST(request: NextRequest) {
   const feeRate = FEE_BY_PLAN[plan] ?? 0.02
   const applicationFeeCents = Math.round(totalCents * feeRate)
 
-  const session = await stripe.checkout.sessions.create(
-    {
-      mode: 'payment',
-      line_items: lineItems,
-      payment_intent_data: {
-        application_fee_amount: applicationFeeCents,
+  try {
+    const session = await stripe.checkout.sessions.create(
+      {
+        mode: 'payment',
+        line_items: lineItems,
+        payment_intent_data: {
+          application_fee_amount: applicationFeeCents,
+        },
+        customer_email: customerEmail,
+        metadata: {
+          tenant_id: tenantId,
+          car_id: String(carId),
+          start_date: startDate,
+          end_date: endDate,
+          days: String(days),
+          customer_name: customerName,
+          extras: validatedExtras.length > 0 ? JSON.stringify(validatedExtras) : '',
+        },
+        success_url: `${origin}/sites/${tenant.slug}/${carId}?booked=true`,
+        cancel_url: `${origin}/sites/${tenant.slug}/${carId}`,
       },
-      automatic_tax: { enabled: true },
-      customer_email: customerEmail,
-      metadata: {
-        tenant_id: tenantId,
-        car_id: String(carId),
-        start_date: startDate,
-        end_date: endDate,
-        days: String(days),
-        customer_name: customerName,
-        extras: validatedExtras.length > 0 ? JSON.stringify(validatedExtras) : '',
-      },
-      success_url: `${origin}/sites/${tenant.slug}/${carId}?booked=true`,
-      cancel_url: `${origin}/sites/${tenant.slug}/${carId}`,
-    },
-    {
-      stripeAccount: tenant.stripe_account_id,
-    }
-  )
+      {
+        stripeAccount: tenant.stripe_account_id,
+      }
+    )
 
-  return NextResponse.json({ url: session.url })
+    return NextResponse.json({ url: session.url })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Stripe session creation failed'
+    console.error('Stripe checkout error:', message)
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
