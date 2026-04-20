@@ -10,14 +10,22 @@ interface SquareConnectButtonProps {
 
 export default function SquareConnectButton({ connected, merchantId, locationId }: SquareConnectButtonProps) {
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleConnect() {
     setLoading(true)
-    const res = await fetch('/api/square/authorize')
-    const data = await res.json()
-    if (data.url) {
-      window.location.href = data.url
-    } else {
+    setError(null)
+    try {
+      const res = await fetch('/api/square/authorize')
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setError(data.error || 'Failed to start Square authorization')
+        setLoading(false)
+      }
+    } catch {
+      setError('Network error. Please try again.')
       setLoading(false)
     }
   }
@@ -61,6 +69,7 @@ export default function SquareConnectButton({ connected, merchantId, locationId 
   }
 
   return (
+    <div className="space-y-2">
     <button
       onClick={handleConnect}
       disabled={loading}
@@ -73,5 +82,7 @@ export default function SquareConnectButton({ connected, merchantId, locationId 
         </svg>
       )}
     </button>
+    {error && <p className="text-red-400 text-xs">{error}</p>}
+    </div>
   )
 }
