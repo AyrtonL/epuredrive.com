@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import type { Tenant, Car } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
 import { buildFleetMetadata } from '@/lib/utils/fleet-metadata'
+import { buildBreadcrumbSchema, buildAutoRentalSchema } from '@/lib/utils/jsonld'
+import JsonLd from '@/components/JsonLd'
 import HeroSection from '@/components/sites/HeroSection'
 import FleetPreview from '@/components/sites/FleetPreview'
 import ExperienceSection from '@/components/sites/ExperienceSection'
@@ -50,8 +52,25 @@ export default async function TenantLandingPage({ params }: Props) {
 
   const fleet = (cars ?? []) as Car[]
 
+  const displayName = typedTenant.brand_name ?? typedTenant.name
+  const tenantUrl = `https://${typedTenant.slug}.epuredrive.com`
+
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'éPure Drive', url: 'https://epuredrive.com' },
+    { name: displayName, url: tenantUrl },
+  ])
+
+  const autoRentalSchema = buildAutoRentalSchema({
+    name: displayName,
+    slug: typedTenant.slug!,
+    logoUrl: typedTenant.logo_url,
+    description: typedTenant.tagline,
+  })
+
   return (
     <main>
+      <JsonLd schema={breadcrumbSchema} />
+      <JsonLd schema={autoRentalSchema} />
       <HeroSection
         tenant={typedTenant}
         carCount={fleet.length}

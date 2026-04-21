@@ -25,7 +25,7 @@ function resolveImageUrl(url: string | null): string | null {
 
 export function buildFleetMetadata(tenant: TenantMeta, _slug: string): Metadata {
   const displayName = tenant.brand_name ?? tenant.name
-  const ogImages = tenant.logo_url ? [{ url: tenant.logo_url }] : undefined
+  const canonicalUrl = `https://${tenant.slug}.epuredrive.com`
 
   return {
     title: `${displayName} — Fleet`,
@@ -33,7 +33,12 @@ export function buildFleetMetadata(tenant: TenantMeta, _slug: string): Metadata 
     openGraph: {
       title: `${displayName} — Fleet`,
       description: `Browse available vehicles from ${displayName}.`,
-      ...(ogImages ? { images: ogImages } : {}),
+      url: canonicalUrl,
+      siteName: displayName,
+      type: 'website',
+    },
+    alternates: {
+      canonical: canonicalUrl,
     },
   }
 }

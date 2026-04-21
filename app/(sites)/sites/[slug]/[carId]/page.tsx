@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import type { Car, Tenant, PickupLocation, RentalExtra } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
 import { buildCarMetadata } from '@/lib/utils/fleet-metadata'
+import { buildBreadcrumbSchema, buildCarProductSchema } from '@/lib/utils/jsonld'
+import JsonLd from '@/components/JsonLd'
 import CarDetailView from '@/components/sites/CarDetailView'
 
 interface Props {
@@ -70,8 +72,34 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
     .order('sort_order')
     .order('created_at')
 
+  const typedCar = car as Car
+  const displayName = tenant.brand_name || tenant.name
+  const tenantUrl = `https://${tenant.slug}.epuredrive.com`
+  const modelDisplay = typedCar.model_full ?? typedCar.model
+
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'éPure Drive', url: 'https://epuredrive.com' },
+    { name: displayName, url: tenantUrl },
+    { name: `${typedCar.make} ${modelDisplay}`, url: `${tenantUrl}/${typedCar.id}` },
+  ])
+
+  const carProductSchema = buildCarProductSchema(
+    {
+      make: typedCar.make,
+      model: typedCar.model,
+      modelFull: typedCar.model_full,
+      description: typedCar.description,
+      imageUrl: typedCar.gallery?.[0] ?? typedCar.image_url,
+      dailyRate: typedCar.daily_rate,
+      year: typedCar.year,
+    },
+    { name: displayName, slug: tenant.slug! }
+  )
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
+      <JsonLd schema={breadcrumbSchema} />
+      <JsonLd schema={carProductSchema} />
       {searchParams.booked === 'true' && (
         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm px-5 py-4 rounded-2xl mb-8 flex items-center gap-3">
           <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
