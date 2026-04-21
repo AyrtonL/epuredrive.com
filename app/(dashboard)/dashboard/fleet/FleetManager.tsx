@@ -31,7 +31,10 @@ export default function FleetManager({ initialCars }: Props) {
   function handleDelete(id: number) {
     if (!confirm('Decommission this car? This cannot be undone.')) return
     startTransition(async () => {
-      await deleteCar(id)
+      const result = await deleteCar(id)
+      if (result.error) {
+        alert(`Failed to delete car: ${result.error}`)
+      }
       router.refresh()
     })
   }

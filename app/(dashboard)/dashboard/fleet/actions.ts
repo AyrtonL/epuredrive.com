@@ -130,7 +130,33 @@ export async function updateCar(
 export async function deleteCar(id: number): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
-  const { error } = await supabase.from('cars').delete().eq('id', id).eq('tenant_id', tenantId)
+
+  // Verify the car belongs to this tenant before cascading deletes
+  const { data: car } = await supabase
+    .from('cars')
+    .select('id')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (!car) {
+    return { error: 'Car not found or access denied' }
+  }
+
+  // Delete related records that have NO ACTION foreign keys
+  const admin = createAdminClient()
+  const deletes = await Promise.all([
+    admin.from('blocked_dates').delete().eq('car_id', id),
+    admin.from('turo_feeds').delete().eq('car_id', id),
+    admin.from('reservations').delete().eq('car_id', id),
+  ])
+
+  const relatedError = deletes.find(d => d.error)
+  if (relatedError?.error) {
+    return { error: `Failed to remove related records: ${relatedError.error.message}` }
+  }
+
+  const { error } = await admin.from('cars').delete().eq('id', id).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/fleet')
   return { error: error?.message ?? null }
 }
