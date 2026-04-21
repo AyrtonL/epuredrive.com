@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     description: 'A Miami-based SaaS platform built for the modern car rental industry. Streamline operations, elevate the customer journey.',
     images: [
       {
-        url: '/og-image.jpg',
+        url: 'https://epuredrive.com/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'éPure Drive — Premium Fleet Software',
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'éPure Drive — Premium Fleet Software for Car Rental Businesses',
     description: 'A Miami-based SaaS platform built for the modern car rental industry.',
-    images: ['/og-image.jpg'],
+    images: ['https://epuredrive.com/og-image.jpg'],
   },
   robots: {
     index: true,

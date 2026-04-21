@@ -15,6 +15,11 @@ export const metadata: Metadata = {
   title: 'éPure Drive — Fleet Management Software for Car Rental Businesses',
   description:
     'Manage your fleet, accept online bookings, and launch a branded rental site — all from one dashboard. Free to start. Built for independent car rental operators.',
+  openGraph: {
+    title: 'éPure Drive — Fleet Management Software for Car Rental Businesses',
+    description:
+      'Manage your fleet, accept online bookings, and launch a branded rental site — all from one dashboard. Free to start. Built for independent car rental operators.',
+  },
 }
 
 const SPLIT_FEATURES = [
