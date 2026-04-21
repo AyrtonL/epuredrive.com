@@ -37,9 +37,6 @@ export const metadata: Metadata = {
     description: 'A Miami-based SaaS platform built for the modern car rental industry.',
     images: ['https://epuredrive.com/og-image.jpg'],
   },
-  other: {
-    'fb:app_id': process.env.NEXT_PUBLIC_FB_APP_ID || '',
-  },
   robots: {
     index: true,
     follow: true,
@@ -59,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta property="og:image:height" content="630" />
         <meta property="og:image:alt" content="éPure Drive — Premium Fleet Software" />
         <meta property="og:image:type" content="image/jpeg" />
+        <meta property="fb:app_id" content="1889073585117703" />
       </head>
       <body className={`${outfit.variable} ${manrope.variable} ${outfit.className}`}>
         <GoogleAnalytics />
