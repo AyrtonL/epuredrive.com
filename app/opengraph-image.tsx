@@ -6,100 +6,186 @@ export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
 export default function OGImage() {
+  const BASE = 'https://epuredrive.com'
+
   return new ImageResponse(
     (
       <div
         style={{
-          background: 'black',
+          background: '#000',
           width: '100%',
           height: '100%',
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
           fontFamily: 'sans-serif',
           position: 'relative',
           overflow: 'hidden',
         }}
       >
-        {/* Subtle gradient */}
-        <div
+        {/* ── Background: fleet page screenshot ── */}
+        <img
+          src={`${BASE}/assets/screenshots/site-fleet.png`}
+          width={680}
+          height={440}
           style={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.06) 0%, transparent 70%)',
+            right: -30,
+            bottom: -20,
+            borderRadius: 16,
+            border: '1px solid rgba(255,255,255,0.1)',
+            opacity: 0.55,
           }}
         />
 
-        {/* Top line accent */}
-        <div
+        {/* ── Dashboard screenshot (stacked behind) ── */}
+        <img
+          src={`${BASE}/assets/screenshots/dash-overview.png`}
+          width={600}
+          height={390}
           style={{
             position: 'absolute',
-            top: 0,
-            left: '20%',
-            right: '20%',
-            height: 2,
-            background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent)',
+            right: 60,
+            bottom: 30,
+            borderRadius: 16,
+            border: '1px solid rgba(255,255,255,0.08)',
+            opacity: 0.3,
           }}
         />
 
-        {/* Brand mark */}
+        {/* ── Dark gradient overlay for readability ── */}
         <div
           style={{
-            fontSize: 120,
-            fontWeight: 900,
-            fontStyle: 'italic',
-            color: 'white',
-            letterSpacing: '-4px',
+            position: 'absolute',
+            inset: 0,
+            background:
+              'linear-gradient(to right, #000 35%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.4) 100%)',
             display: 'flex',
-            marginBottom: 16,
           }}
-        >
-          éPure
-        </div>
+        />
 
+        {/* ── Left content ── */}
         <div
           style={{
-            fontSize: 16,
-            fontWeight: 800,
-            color: 'rgba(255,255,255,0.3)',
-            letterSpacing: '12px',
-            textTransform: 'uppercase',
-            marginBottom: 48,
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            padding: '60px 64px',
+            width: '55%',
           }}
         >
-          DRIVE
-        </div>
+          {/* Brand */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: 8,
+              marginBottom: 32,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 52,
+                fontWeight: 900,
+                fontStyle: 'italic',
+                color: 'white',
+                letterSpacing: '-2px',
+              }}
+            >
+              éPure
+            </span>
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 800,
+                color: 'rgba(255,255,255,0.3)',
+                letterSpacing: '8px',
+                textTransform: 'uppercase',
+              }}
+            >
+              DRIVE
+            </span>
+          </div>
 
-        <div
-          style={{
-            fontSize: 24,
-            color: 'rgba(255,255,255,0.5)',
-            fontWeight: 500,
-            maxWidth: 600,
-            textAlign: 'center',
-            lineHeight: 1.4,
-          }}
-        >
-          Premium Fleet Software for Car Rental Businesses
-        </div>
+          {/* Headline */}
+          <div
+            style={{
+              fontSize: 36,
+              fontWeight: 800,
+              color: 'white',
+              lineHeight: 1.15,
+              marginBottom: 20,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <span>Your fleet. Online.</span>
+            <span>In minutes.</span>
+          </div>
 
-        {/* Bottom bar */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 40,
-            fontSize: 13,
-            color: 'rgba(255,255,255,0.2)',
-            letterSpacing: '6px',
-            textTransform: 'uppercase',
-            fontWeight: 700,
-          }}
-        >
-          epuredrive.com
+          {/* Subtitle */}
+          <div
+            style={{
+              fontSize: 18,
+              color: 'rgba(255,255,255,0.5)',
+              fontWeight: 400,
+              lineHeight: 1.5,
+              marginBottom: 32,
+              maxWidth: 400,
+            }}
+          >
+            Fleet management, online bookings, payments & digital contracts — all in one platform.
+          </div>
+
+          {/* Feature pills */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {['Branded Site', 'Online Booking', 'Stripe + Square', 'Turo Sync'].map(
+              (label) => (
+                <div
+                  key={label}
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: 20,
+                    padding: '6px 16px',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'rgba(255,255,255,0.6)',
+                  }}
+                >
+                  {label}
+                </div>
+              )
+            )}
+          </div>
+
+          {/* CTA line */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginTop: 32,
+            }}
+          >
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                background: '#34d399',
+              }}
+            />
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.4)',
+                letterSpacing: '0.5px',
+              }}
+            >
+              Free to start — epuredrive.com
+            </span>
+          </div>
         </div>
       </div>
     ),
