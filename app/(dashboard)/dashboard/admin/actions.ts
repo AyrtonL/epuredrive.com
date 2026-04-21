@@ -122,11 +122,23 @@ export async function deleteTenant(
     .eq('id', tenantId)
     .single()
 
-  // Unlink profiles first (don't delete users, just orphan them)
-  await supabase
-    .from('profiles')
-    .update({ tenant_id: null })
-    .eq('tenant_id', tenantId)
+  // Delete child records with NO ACTION FK constraints (order matters)
+  // 1. reservations (references cars & customers)
+  await supabase.from('reservations').delete().eq('tenant_id', tenantId)
+  // 2. blocked_dates (references cars)
+  await supabase.from('blocked_dates').delete().eq('tenant_id', tenantId)
+  // 3. car_services (references cars)
+  await supabase.from('car_services').delete().eq('tenant_id', tenantId)
+  // 4. consignment_expenses (references consignments)
+  await supabase.from('consignment_expenses').delete().eq('tenant_id', tenantId)
+  // 5. consignments (references cars)
+  await supabase.from('consignments').delete().eq('tenant_id', tenantId)
+  // 6. cars
+  await supabase.from('cars').delete().eq('tenant_id', tenantId)
+  // 7. customers
+  await supabase.from('customers').delete().eq('tenant_id', tenantId)
+  // 8. Unlink profiles (don't delete users, just orphan them)
+  await supabase.from('profiles').update({ tenant_id: null }).eq('tenant_id', tenantId)
 
   const { error } = await supabase
     .from('tenants')

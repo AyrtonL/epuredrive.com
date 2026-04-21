@@ -9,6 +9,7 @@ interface Props {
   memberCounts: Record<string, number>
   carCounts: Record<string, number>
   bookingCounts: Record<string, number>
+  owners: Record<string, { name: string; email: string }>
 }
 
 const PLAN_STYLES: Record<string, string> = {
@@ -17,7 +18,7 @@ const PLAN_STYLES: Record<string, string> = {
   free: 'text-white/40 bg-white/5 border-white/10',
 }
 
-export default function TenantsManager({ tenants, memberCounts, carCounts, bookingCounts }: Props) {
+export default function TenantsManager({ tenants, memberCounts, carCounts, bookingCounts, owners }: Props) {
   const [isPending, startTransition] = useTransition()
   const [msg, setMsg] = useState('')
   const [showCreate, setShowCreate] = useState(false)
@@ -159,7 +160,7 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
           <thead>
             <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/30 border-b border-white/10 bg-black/20">
               <th className="px-6 py-4">Organization</th>
-              <th className="px-6 py-4">Slug</th>
+              <th className="px-6 py-4">Owner</th>
               <th className="px-6 py-4">Plan</th>
               <th className="px-6 py-4">Members</th>
               <th className="px-6 py-4">Cars</th>
@@ -184,7 +185,14 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-white/50 font-mono text-xs">{t.slug || '—'}</span>
+                  {owners[t.id] ? (
+                    <div>
+                      <div className="text-white/70 text-xs font-medium">{owners[t.id].name}</div>
+                      <div className="text-white/30 text-[11px]">{owners[t.id].email}</div>
+                    </div>
+                  ) : (
+                    <span className="text-white/20 text-xs italic">No owner</span>
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   {editingPlan === t.id ? (
