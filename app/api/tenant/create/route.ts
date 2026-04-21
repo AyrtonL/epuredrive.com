@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/resend'
-import { welcomeEmail, onboardingEmail } from '@/lib/email/templates/platform'
+import { welcomeEmail, onboardingEmail, adminNewSignupEmail } from '@/lib/email/templates/platform'
 import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
@@ -93,11 +93,26 @@ export async function POST(request: NextRequest) {
 
   if (email) {
     const operatorName = company || email.split('@')[0] || 'there'
-    // Fire both emails in parallel, non-blocking
-    Promise.allSettled([
+    const adminEmail = process.env.ADMIN_NOTIFY_EMAIL
+    // Fire all emails in parallel, non-blocking
+    const emails = [
       sendEmail({ to: email, ...welcomeEmail({ operatorName }) }),
       sendEmail({ to: email, ...onboardingEmail({ operatorName }) }),
-    ]).catch(() => {}) // intentional fire-and-forget
+    ]
+    if (adminEmail) {
+      emails.push(
+        sendEmail({
+          to: adminEmail,
+          ...adminNewSignupEmail({
+            userEmail: email,
+            companyName: company || '',
+            tenantSlug: slug,
+            signedUpAt: new Date().toISOString(),
+          }),
+        })
+      )
+    }
+    Promise.allSettled(emails).catch(() => {}) // intentional fire-and-forget
   }
 
   return NextResponse.json({ tenantId, slug })

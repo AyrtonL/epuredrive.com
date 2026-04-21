@@ -267,6 +267,29 @@ export function teamInviteAcceptedEmail(params: {
   }
 }
 
+export function adminNewSignupEmail(params: {
+  userEmail: string
+  companyName: string
+  tenantSlug: string
+  signedUpAt: string
+}): { subject: string; html: string } {
+  return {
+    subject: `New signup: ${params.companyName || params.userEmail}`,
+    html: compactLayout({
+      subheadline: 'Admin Alert',
+      headline: 'New tenant registered.',
+      body: `A new user just signed up and created a tenant on éPure Drive.`,
+      details: [
+        { label: 'Email', value: params.userEmail },
+        { label: 'Company', value: params.companyName || '—' },
+        { label: 'Slug', value: params.tenantSlug },
+        { label: 'When', value: params.signedUpAt },
+      ],
+      note: `<a href="${APP_URL}/dashboard/admin/tenants" style="color:#000;font-weight:700;">View in Admin Panel →</a>`,
+    }),
+  }
+}
+
 export function passwordChangedEmail(params: {
   when: string
 }): { subject: string; html: string } {
