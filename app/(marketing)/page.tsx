@@ -24,6 +24,13 @@ export const metadata: Metadata = {
     description:
       'Manage your fleet, accept online bookings, and launch a branded rental site — all from one dashboard. Free to start. Built for independent car rental operators.',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'éPure Drive — Fleet Management Software for Car Rental Businesses',
+    description:
+      'Manage your fleet, accept online bookings, and launch a branded rental site — all from one dashboard. Free to start. Built for independent car rental operators.',
+    images: ['https://epuredrive.com/og-image.jpg'],
+  },
 }
 
 const SPLIT_FEATURES = [
