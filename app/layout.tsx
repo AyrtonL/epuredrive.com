@@ -37,6 +37,9 @@ export const metadata: Metadata = {
     description: 'A Miami-based SaaS platform built for the modern car rental industry.',
     images: ['https://epuredrive.com/og-image.jpg'],
   },
+  other: {
+    'fb:app_id': process.env.NEXT_PUBLIC_FB_APP_ID || '',
+  },
   robots: {
     index: true,
     follow: true,
