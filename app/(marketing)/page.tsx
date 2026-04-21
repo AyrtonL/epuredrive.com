@@ -11,25 +11,35 @@ import {
   buildSoftwareApplicationSchema,
 } from '@/lib/utils/jsonld'
 
+const OG_TITLE = 'éPure Drive — Fleet Management Software for Car Rental Businesses'
+const OG_DESCRIPTION = 'Manage your fleet, accept online bookings, and launch a branded rental site — all from one dashboard. Free to start. Built for independent car rental operators.'
+const OG_IMAGE = 'https://epuredrive.com/og-image.jpg'
+
 export const metadata: Metadata = {
-  title: 'éPure Drive — Fleet Management Software for Car Rental Businesses',
-  description:
-    'Manage your fleet, accept online bookings, and launch a branded rental site — all from one dashboard. Free to start. Built for independent car rental operators.',
+  title: OG_TITLE,
+  description: OG_DESCRIPTION,
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: 'https://epuredrive.com',
     siteName: 'éPure Drive',
-    title: 'éPure Drive — Fleet Management Software for Car Rental Businesses',
-    description:
-      'Manage your fleet, accept online bookings, and launch a branded rental site — all from one dashboard. Free to start. Built for independent car rental operators.',
+    title: OG_TITLE,
+    description: OG_DESCRIPTION,
+    images: [
+      {
+        url: OG_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: 'éPure Drive — Fleet Management Software',
+        type: 'image/jpeg',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'éPure Drive — Fleet Management Software for Car Rental Businesses',
-    description:
-      'Manage your fleet, accept online bookings, and launch a branded rental site — all from one dashboard. Free to start. Built for independent car rental operators.',
-    images: ['https://epuredrive.com/og-image.jpg'],
+    title: OG_TITLE,
+    description: OG_DESCRIPTION,
+    images: [OG_IMAGE],
   },
 }
 
