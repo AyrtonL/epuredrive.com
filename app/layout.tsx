@@ -53,6 +53,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <meta property="og:image" content="https://epuredrive.com/og-image.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="éPure Drive — Premium Fleet Software" />
+        <meta property="og:image:type" content="image/jpeg" />
+      </head>
       <body className={`${outfit.variable} ${manrope.variable} ${outfit.className}`}>
         <GoogleAnalytics />
         <CookieConsentManager />
