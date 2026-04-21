@@ -32,7 +32,7 @@ export default async function BillingPage({
     },
     {
       name: 'Pro',
-      price: '$49',
+      price: '$19',
       period: '/month + taxes',
       features: ['Up to 25 vehicles', '5 team members', 'Advanced analytics & ROI', 'Turo integration', 'Custom domain', 'Priority support'],
       current: plan === 'pro',
@@ -40,7 +40,7 @@ export default async function BillingPage({
     },
     {
       name: 'Max',
-      price: '$99',
+      price: '$39',
       period: '/month + taxes',
       features: ['Up to 60 vehicles', 'Unlimited team members', 'API access & webhooks', 'White-label branding', 'Priority help & assistance', 'Dedicated account manager'],
       current: plan === 'max',

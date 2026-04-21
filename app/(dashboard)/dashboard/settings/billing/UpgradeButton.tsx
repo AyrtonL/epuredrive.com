@@ -10,8 +10,8 @@ interface Props {
 }
 
 const PLAN_VALUES: Record<string, number> = {
-  pro: 49,
-  max: 99,
+  pro: 19,
+  max: 39,
 }
 
 export default function UpgradeButton({ planName, isCurrent }: Props) {

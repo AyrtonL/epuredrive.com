@@ -322,7 +322,7 @@ export default function HomePage() {
                 Pro <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               </div>
               <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-5xl font-extrabold text-white tracking-tight">$49</span>
+                <span className="text-5xl font-extrabold text-white tracking-tight">$19</span>
               </div>
               <div className="text-charcoal text-sm mb-1">/ month + taxes</div>
               <div className="text-charcoal/60 text-[11px] mb-8">1% transaction fee on online payments</div>
@@ -376,7 +376,7 @@ export default function HomePage() {
                 Max
               </div>
               <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-5xl font-extrabold text-white tracking-tight">$99</span>
+                <span className="text-5xl font-extrabold text-white tracking-tight">$39</span>
               </div>
               <div className="text-charcoal text-sm mb-1">/ month + taxes</div>
               <div className="text-amber-400/40 text-[11px] mb-8">0% transaction fee on online payments</div>

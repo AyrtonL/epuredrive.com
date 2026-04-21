@@ -74,8 +74,8 @@ curl https://api.stripe.com/v1/products \
 | Plan | Price ID |
 |---|---|
 | Starter | `price_1TDaQ3HAH4zJnnwfasGBYtYO` |
-| Pro | `price_1TNNl8HAH4zJnnwfnmxW0OSy` |
-| Max | `price_1TMBzWHAH4zJnnwf9xd3BxGL` |
+| Pro | `price_1TOeR2HAH4zJnnwfoIUGUERS` ($19/mo) |
+| Max | `price_1TOeR5HAH4zJnnwftxKqDqG2` ($39/mo) |
 
 After creating a new price, always:
 1. Add it to `.env.local` as `STRIPE_PRICE_<PLAN>=...`

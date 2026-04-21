@@ -31,7 +31,7 @@ export default async function PlatformStatsPage() {
   }
 
   // Simple MRR calculation based on plan pricing
-  const PLAN_PRICES: Record<string, number> = { free: 0, pro: 49, max: 99 }
+  const PLAN_PRICES: Record<string, number> = { free: 0, pro: 19, max: 39 }
   const mrr = Object.entries(planCounts).reduce(
     (sum, [plan, count]) => sum + (PLAN_PRICES[plan] ?? 0) * count, 0
   )

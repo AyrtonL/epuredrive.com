@@ -18,8 +18,8 @@ import {
 } from '@/lib/email/templates/platform'
 
 const STARTER_PRICE_ID = 'price_1TDaQ3HAH4zJnnwfasGBYtYO'
-const PRO_PRICE_ID = 'price_1TNNl8HAH4zJnnwfnmxW0OSy'
-const MAX_PRICE_ID = process.env.STRIPE_PRICE_MAX ?? 'price_1TMBzWHAH4zJnnwf9xd3BxGL'
+const PRO_PRICE_ID = process.env.STRIPE_PRICE_PRO ?? 'price_1TOeR2HAH4zJnnwfoIUGUERS'
+const MAX_PRICE_ID = process.env.STRIPE_PRICE_MAX ?? 'price_1TOeR5HAH4zJnnwftxKqDqG2'
 
 function resolvePlan(priceId: string | undefined, metaPlan: string | undefined): string {
   // Prefer the plan name set in checkout metadata (most reliable)

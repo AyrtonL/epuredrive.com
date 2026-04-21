@@ -101,7 +101,7 @@ function makeCases(): TestCase[] {
         paymentReceiptEmail({
           operatorName: 'Test Operator',
           plan: 'pro',
-          amount: '$49.00',
+          amount: '$19.00',
           billingDate: 'April 15, 2026',
           last4: '4242',
         }),
@@ -111,7 +111,7 @@ function makeCases(): TestCase[] {
       build: () =>
         paymentFailedEmail({
           operatorName: 'Test Operator',
-          amount: '$49.00',
+          amount: '$19.00',
           reason: 'card_declined',
         }),
     },
