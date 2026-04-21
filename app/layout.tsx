@@ -25,8 +25,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'éPure Drive — Premium Fleet Software for Car Rental Businesses',
-    description: 'A Miami-based SaaS platform built for the modern car rental industry.',
+    title: 'éPure Drive — Fleet Management Software for Car Rental Businesses',
+    description: 'Manage your fleet, accept online bookings, and launch a branded rental site — all from one dashboard. Free to start. Built for independent car rental operators.',
     images: ['https://epuredrive.com/og-image.jpg'],
   },
   robots: {
