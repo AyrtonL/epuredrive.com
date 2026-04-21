@@ -29,7 +29,7 @@ export default function UpgradeButton({ planName, isCurrent }: Props) {
     )
   }
 
-  if (planName === 'free') {
+  if (planName.toLowerCase() === 'free') {
     return (
       <button
         disabled
