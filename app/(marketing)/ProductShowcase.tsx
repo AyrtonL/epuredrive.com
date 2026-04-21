@@ -23,6 +23,14 @@ const SCREENS = [
   },
 ]
 
+const MORE_SCREENS = [
+  { src: '/assets/screenshots/dash-calendar.png', alt: 'Visual calendar with all reservations', label: 'Calendar' },
+  { src: '/assets/screenshots/dash-roi.png', alt: 'Revenue and ROI analysis per vehicle', label: 'ROI Analysis' },
+  { src: '/assets/screenshots/dash-taxes.png', alt: 'Tax management and reporting', label: 'Tax Reports' },
+  { src: '/assets/screenshots/dash-payments.png', alt: 'Payment processing and transactions', label: 'Payments' },
+  { src: '/assets/screenshots/dash-quickbooks.png', alt: 'QuickBooks integration for accounting', label: 'QuickBooks' },
+]
+
 export default function ProductShowcase() {
   return (
     <section className="relative py-24 bg-black overflow-hidden" id="product">
@@ -92,6 +100,18 @@ export default function ProductShowcase() {
           {SCREENS.map((s) => (
             <ScreenFrame key={s.src} src={s.src} alt={s.alt} label={s.label} url={s.url} />
           ))}
+        </div>
+
+        {/* More dashboard views */}
+        <div className="mt-20">
+          <p className="text-center text-[11px] font-bold tracking-[0.3em] text-white/20 uppercase mb-8">
+            More from the dashboard
+          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {MORE_SCREENS.map((s) => (
+              <ScreenFrame key={s.src} src={s.src} alt={s.alt} label={s.label} url="app.epuredrive.com" />
+            ))}
+          </div>
         </div>
       </div>
     </section>
