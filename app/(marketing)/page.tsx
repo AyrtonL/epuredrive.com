@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import ProductShowcase from './ProductShowcase'
 import ContactSection from '@/components/marketing/ContactSection'
+import TrackedCTA from '@/components/marketing/TrackedCTA'
 import JsonLd from '@/components/JsonLd'
 import {
   buildOrganizationSchema,
@@ -116,12 +117,13 @@ export default function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-5 justify-center animate-fade-in-up animation-delay-200">
-            <Link
+            <TrackedCTA
               href="/sign-up"
+              location="hero"
               className="bg-white text-black font-semibold px-10 py-4 rounded-xl text-base hover:bg-white/90 active:scale-[0.97] transition-all cta-glow"
             >
               Get started free
-            </Link>
+            </TrackedCTA>
             <Link
               href="/login"
               className="text-grey text-sm font-medium hover:text-white transition-colors underline-offset-4 hover:underline"
@@ -303,12 +305,13 @@ export default function HomePage() {
                 </li>
               </ul>
 
-              <Link
+              <TrackedCTA
                 href="/sign-up"
+                location="pricing-starter"
                 className="block text-center bg-white text-black font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/90 transition-colors mt-auto"
               >
                 Launch your business
-              </Link>
+              </TrackedCTA>
             </div>
 
             {/* ── Pro ── */}
@@ -360,12 +363,13 @@ export default function HomePage() {
                 </li>
               </ul>
 
-              <Link
+              <TrackedCTA
                 href="/sign-up"
+                location="pricing-pro"
                 className="block text-center bg-white text-black font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/90 transition-colors mt-auto"
               >
                 Get started
-              </Link>
+              </TrackedCTA>
             </div>
 
             {/* ── Max ── */}
@@ -409,12 +413,13 @@ export default function HomePage() {
                 </li>
               </ul>
 
-              <Link
+              <TrackedCTA
                 href="/sign-up"
+                location="pricing-max"
                 className="block text-center bg-amber-500/10 text-amber-300 font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-amber-500/20 hover:text-amber-200 transition-colors border border-amber-500/20 mt-auto"
               >
                 Get started
-              </Link>
+              </TrackedCTA>
             </div>
 
             {/* ── Enterprise ── */}
@@ -491,12 +496,13 @@ export default function HomePage() {
                 Join rental operators who manage their fleet, bookings, and customers
                 on éPure Drive. Set up in 5 minutes — no credit card required.
               </p>
-              <Link
+              <TrackedCTA
                 href="/sign-up"
+                location="bottom-cta"
                 className="inline-block bg-white text-black font-semibold px-12 py-4 rounded-xl text-base hover:bg-white/90 active:scale-[0.97] transition-all cta-glow"
               >
                 Start for free
-              </Link>
+              </TrackedCTA>
               <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-7">
                 {['No credit card required', 'Cancel anytime', 'Free forever to start'].map((t) => (
                   <span key={t} className="flex items-center gap-1.5 text-[12px] text-white/25">

@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import type { Car, PickupLocation, RentalExtra, ReservationExtra } from '@/lib/supabase/types'
 import DateRangePicker from './DateRangePicker'
+import { trackBookingStart, trackBookingSubmit, trackWhatsAppInquiry } from '@/lib/analytics'
 
 interface Props {
   car: Car
@@ -128,6 +129,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   const handleWhatsapp = () => {
     if (!pickDate || !retDate) { alert('Please select dates first.'); return; }
     if (!whatsappPhone) { alert('WhatsApp contact not configured.'); return; }
+    trackWhatsAppInquiry({ car_make: car.make, car_model: car.model_full || car.model })
     const addons = rentalExtras.filter(e => selectedExtras[e.id]).map(e => e.name)
 
     const msg = `Hello! I'd like to reserve the *${car.make} ${car.model_full || car.model}*.\n\n`
@@ -143,6 +145,13 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
 
   const handleOnlineBooking = () => {
     if (!pickDate || !retDate) { alert('Please select dates first.'); return; }
+    trackBookingStart({
+      car_make: car.make,
+      car_model: car.model_full || car.model,
+      daily_rate: Number(car.daily_rate) || 0,
+      days,
+      total,
+    })
     setShowBookingForm(true)
     setFormError('')
   }
@@ -193,6 +202,12 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
         }
         const { url } = await res.json() as { url: string }
         if (url) {
+          trackBookingSubmit({
+            car_make: car.make,
+            car_model: car.model_full || car.model,
+            total,
+            payment_method: 'online',
+          })
           window.location.href = url
           return
         }
@@ -237,6 +252,12 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
       return
     }
     const result = await res.json().catch(() => ({})) as { reservationId?: number }
+    trackBookingSubmit({
+      car_make: car.make,
+      car_model: car.model_full || car.model,
+      total,
+      payment_method: 'request',
+    })
     if (typeof window !== 'undefined') {
       const onDirectPath = window.location.pathname.startsWith('/sites/')
       const pathParts = window.location.pathname.split('/')

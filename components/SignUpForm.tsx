@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { trackPixelEvent } from '@/lib/meta-pixel'
 import { trackAdsConversion } from '@/lib/google-ads'
+import { trackSignUpStart, trackSignUpComplete } from '@/lib/analytics'
 
 export default function SignUpForm() {
   const router = useRouter()
@@ -19,6 +20,7 @@ export default function SignUpForm() {
     setError(null)
     trackPixelEvent('Lead', { content_name: 'Google Sign Up' })
     trackAdsConversion('lead')
+    trackSignUpStart('google')
     const supabase = createClient()
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -46,6 +48,7 @@ export default function SignUpForm() {
 
     trackPixelEvent('Lead', { content_name: 'Sign Up Form Submit' })
     trackAdsConversion('lead')
+    trackSignUpStart('email')
 
     const { data: authData, error: authError } = await supabase.auth.signUp({ email, password })
     if (authError) {
@@ -85,6 +88,7 @@ export default function SignUpForm() {
 
     trackPixelEvent('CompleteRegistration', { content_name: 'Tenant Created' })
     trackAdsConversion('signup')
+    trackSignUpComplete('email')
 
     router.push('/dashboard')
   }

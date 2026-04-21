@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { trackLogin } from '@/lib/analytics'
 
 export default function LoginForm() {
   const router = useRouter()
@@ -15,6 +16,7 @@ export default function LoginForm() {
     setOauthLoading(true)
     setError(null)
     const supabase = createClient()
+    trackLogin('google')
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -45,6 +47,7 @@ export default function LoginForm() {
       return
     }
 
+    trackLogin('email')
     router.push('/dashboard')
   }
 
