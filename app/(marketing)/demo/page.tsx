@@ -220,6 +220,105 @@ export default function DemoPage() {
         </div>
       </section>
 
+      {/* ─── Dashboard Screenshots ─── */}
+      <section className="relative py-24 bg-black">
+        <div className="section-divider absolute top-0 left-0 right-0" />
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 bg-white/[0.05] border border-white/[0.09] rounded-full px-4 py-1.5 mb-5">
+              <span className="text-[11px] font-bold tracking-[0.25em] text-white/40 uppercase">Your Dashboard</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
+              This is what you see behind the scenes.
+            </h2>
+            <p className="text-white/40 text-lg font-light max-w-xl mx-auto">
+              Manage bookings, track revenue, monitor your fleet — all from one clean dashboard.
+            </p>
+          </div>
+
+          <div className="space-y-8">
+            {/* Main dashboard */}
+            <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.5)]">
+              <div className="bg-[#1a1a1a] px-4 py-3 flex items-center gap-3 border-b border-white/[0.06]">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-white/10" />
+                  <div className="w-3 h-3 rounded-full bg-white/10" />
+                  <div className="w-3 h-3 rounded-full bg-white/10" />
+                </div>
+                <div className="flex-1 bg-white/[0.06] rounded-md px-3 py-1.5 text-xs text-white/30 text-center">
+                  epuredrive.com/dashboard
+                </div>
+              </div>
+              <Image
+                src="/assets/screenshots/dash-main.png"
+                alt="éPure Drive dashboard overview — revenue, bookings, and fleet status at a glance"
+                width={1920}
+                height={1080}
+                className="w-full h-auto"
+                quality={90}
+              />
+            </div>
+
+            {/* Grid of other views */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {[
+                { src: '/assets/screenshots/dash-bookings.png', label: 'Bookings', alt: 'Booking management view with status tracking' },
+                { src: '/assets/screenshots/dash-fleet.png', label: 'Fleet', alt: 'Fleet management with vehicle details and availability' },
+                { src: '/assets/screenshots/dash-calendar.png', label: 'Calendar', alt: 'Visual calendar showing all reservations' },
+                { src: '/assets/screenshots/dash-roi.png', label: 'ROI Analysis', alt: 'Revenue and ROI analysis per vehicle' },
+              ].map((screenshot) => (
+                <div key={screenshot.label} className="relative rounded-xl overflow-hidden border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.4)] group">
+                  <div className="bg-[#1a1a1a] px-4 py-2.5 flex items-center gap-3 border-b border-white/[0.06]">
+                    <div className="flex gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                    </div>
+                    <span className="text-[11px] text-white/30 font-medium">{screenshot.label}</span>
+                  </div>
+                  <Image
+                    src={screenshot.src}
+                    alt={screenshot.alt}
+                    width={960}
+                    height={540}
+                    className="w-full h-auto group-hover:scale-[1.02] transition-transform duration-500"
+                    quality={85}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Additional views row */}
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { src: '/assets/screenshots/dash-taxes.png', label: 'Tax Reports', alt: 'Tax management and reporting dashboard' },
+                { src: '/assets/screenshots/dash-payments.png', label: 'Payments', alt: 'Payment processing and transaction history' },
+                { src: '/assets/screenshots/dash-quickbooks.png', label: 'QuickBooks Sync', alt: 'QuickBooks integration for accounting' },
+              ].map((screenshot) => (
+                <div key={screenshot.label} className="relative rounded-xl overflow-hidden border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.4)] group">
+                  <div className="bg-[#1a1a1a] px-4 py-2.5 flex items-center gap-3 border-b border-white/[0.06]">
+                    <div className="flex gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                    </div>
+                    <span className="text-[11px] text-white/30 font-medium">{screenshot.label}</span>
+                  </div>
+                  <Image
+                    src={screenshot.src}
+                    alt={screenshot.alt}
+                    width={640}
+                    height={360}
+                    className="w-full h-auto group-hover:scale-[1.02] transition-transform duration-500"
+                    quality={85}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ─── Before / After Comparison ─── */}
       <section className="relative py-24 bg-black">
         <div className="section-divider absolute top-0 left-0 right-0" />
