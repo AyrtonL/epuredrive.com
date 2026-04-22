@@ -53,7 +53,10 @@ export default function SignUpForm() {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { company } },
+      options: {
+        data: { company },
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+      },
     })
     if (authError) {
       setError(authError.message)
