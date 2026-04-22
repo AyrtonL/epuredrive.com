@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getFeatureFlags } from '@/lib/supabase/feature-flags'
 import Sidebar from '@/components/dashboard/Sidebar'
 import HelpButton from '@/components/dashboard/HelpButton'
+import SignUpCompleteTracker from '@/components/analytics/SignUpCompleteTracker'
 import { notifyInviterOnFirstLogin } from '@/lib/team/invite-notifier'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -45,6 +46,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="bg-background text-primary min-h-screen selection:bg-white/30 selection:text-white">
+      <Suspense fallback={null}>
+        <SignUpCompleteTracker />
+      </Suspense>
       <div className="flex h-screen overflow-hidden bg-background">
         <Sidebar email={user.email ?? ''} role={profile?.role ?? null} name={profile?.full_name ?? null} featureFlags={featureFlags} />
         <main className="flex-1 overflow-y-auto pt-20 px-6 pb-6 md:pt-10 md:px-10 md:pb-10 lg:px-12 lg:pb-12 relative z-0 bg-dot-pattern">

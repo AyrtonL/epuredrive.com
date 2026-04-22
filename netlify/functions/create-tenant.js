@@ -1,6 +1,9 @@
 // Netlify Function — create-tenant
 // Creates a tenant + profile row using service role key (bypasses RLS).
+// Auth: requires a valid Supabase access token in the Authorization header.
+// The userId is taken from the verified token — never trust the body.
 // Env vars required:
+//   SUPABASE_URL
 //   SUPABASE_SERVICE_ROLE_KEY
 //   NETLIFY_SITE_ID       — auto-registers {slug}.epuredrive.com as a domain alias
 //   NETLIFY_AUTH_TOKEN    — personal access token with site:write scope
@@ -12,19 +15,39 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  let body;
-  try { body = JSON.parse(event.body); }
-  catch { return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
-
-  const { userId, email, company } = body;
-  if (!userId) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
-  }
-
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!SUPABASE_URL || !serviceKey) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Server misconfigured' }) };
   }
+
+  // 0 — Verify caller's Supabase JWT
+  const authHeader = event.headers.authorization || event.headers.Authorization || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!token) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'Missing Authorization header' }) };
+  }
+
+  const verifyRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'apikey': serviceKey,
+    },
+  });
+  if (!verifyRes.ok) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired session' }) };
+  }
+  const verifiedUser = await verifyRes.json();
+  const userId = verifiedUser?.id;
+  const email = verifiedUser?.email;
+  if (!userId) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'Could not verify user' }) };
+  }
+
+  let body = {};
+  try { body = event.body ? JSON.parse(event.body) : {}; }
+  catch { return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+
+  const company = body.company;
 
   const headers = {
     'Content-Type': 'application/json',

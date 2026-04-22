@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { trackPixelEvent } from '@/lib/meta-pixel'
 import { trackAdsConversion } from '@/lib/google-ads'
-import { trackSignUpStart, trackSignUpComplete } from '@/lib/analytics'
+import { trackSignUpStart } from '@/lib/analytics'
 
 export default function SignUpForm() {
   const router = useRouter()
@@ -50,7 +50,11 @@ export default function SignUpForm() {
     trackAdsConversion('lead')
     trackSignUpStart('email')
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password })
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { company } },
+    })
     if (authError) {
       setError(authError.message)
       setLoading(false)
@@ -72,25 +76,31 @@ export default function SignUpForm() {
       return
     }
 
-    // 2 — Create tenant via existing Netlify function
+    // Auto-confirmed path: create tenant immediately using the session token.
+    const accessToken = authData.session?.access_token
+    if (!accessToken) {
+      setError('Sign up succeeded but no session token was returned.')
+      setLoading(false)
+      return
+    }
+
     const res = await fetch('/.netlify/functions/create-tenant', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, email, company }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ company }),
     })
 
     if (!res.ok) {
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       setError(data.error || 'Failed to create your account.')
       setLoading(false)
       return
     }
 
-    trackPixelEvent('CompleteRegistration', { content_name: 'Tenant Created' })
-    trackAdsConversion('signup')
-    trackSignUpComplete('email')
-
-    router.push('/dashboard')
+    router.push('/dashboard?signup=email')
   }
 
   if (emailSent) {
