@@ -31,16 +31,24 @@ export default async function DashboardLayout({ children }: { children: React.Re
     }).catch(() => {})
   }
 
-  // Fetch tenant plan and feature flags (only if user has a tenant)
+  // Fetch tenant plan, branding, and feature flags (only if user has a tenant)
   let plan = 'free'
   let featureFlags: Record<string, boolean> = {}
+  let tenantName: string | null = null
+  let tenantLogoUrl: string | null = null
 
   if (profile?.tenant_id) {
     const [{ data: tenant }, flags] = await Promise.all([
-      supabase.from('tenants').select('plan').eq('id', profile.tenant_id).single(),
+      supabase
+        .from('tenants')
+        .select('plan, name, brand_name, logo_url')
+        .eq('id', profile.tenant_id)
+        .single(),
       getFeatureFlags(profile.tenant_id, ['turo_sync', 'quickbooks_sync', 'custom_domains', 'api_access', 'webhooks']),
     ])
     plan = tenant?.plan ?? 'free'
+    tenantName = tenant?.brand_name || tenant?.name || null
+    tenantLogoUrl = tenant?.logo_url || null
     featureFlags = flags
   }
 
@@ -50,7 +58,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <SignUpCompleteTracker />
       </Suspense>
       <div className="flex h-screen overflow-hidden bg-background">
-        <Sidebar email={user.email ?? ''} role={profile?.role ?? null} name={profile?.full_name ?? null} featureFlags={featureFlags} />
+        <Sidebar email={user.email ?? ''} role={profile?.role ?? null} name={profile?.full_name ?? null} tenantName={tenantName} tenantLogoUrl={tenantLogoUrl} featureFlags={featureFlags} />
         <main className="flex-1 overflow-y-auto pt-20 px-6 pb-6 md:pt-10 md:px-10 md:pb-10 lg:px-12 lg:pb-12 relative z-0 bg-dot-pattern">
           <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-hero-glow opacity-35 -z-10 pointer-events-none" />
           <div className="absolute bottom-0 left-1/3 w-[500px] h-[500px] bg-hero-glow opacity-10 -z-10 pointer-events-none" />

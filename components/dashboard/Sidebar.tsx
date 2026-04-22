@@ -92,6 +92,8 @@ interface Props {
   email: string
   role: string | null
   name?: string | null
+  tenantName?: string | null
+  tenantLogoUrl?: string | null
   featureFlags?: Record<string, boolean>
 }
 
@@ -110,7 +112,15 @@ function hasActiveChild(pathname: string, children: NavItem[]): boolean {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export default function Sidebar({ email, role, name, featureFlags = {} }: Props) {
+export default function Sidebar({ email, role, name, tenantName, tenantLogoUrl, featureFlags = {} }: Props) {
+  const displayBrand = tenantName || 'éPure Drive'
+  const brandInitials = (tenantName || 'éP')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState<Record<string, boolean>>({})
@@ -184,10 +194,23 @@ export default function Sidebar({ email, role, name, featureFlags = {} }: Props)
       {/* ── Brand Header ──────────────────────────────────────────────── */}
       <div className="h-20 flex items-center px-5 border-b border-surfaceBorder relative gap-3">
         <div className="absolute inset-0 bg-hero-glow opacity-40 mix-blend-screen pointer-events-none overflow-hidden" />
-        <div className="relative z-10 w-9 h-9 rounded-lg overflow-hidden shrink-0 shadow-[0_0_12px_rgba(255,255,255,0.15)]">
-          <Image src="/favicon.svg" alt="éPure" width={36} height={36} className="w-full h-full" />
+        <div className="relative z-10 w-9 h-9 rounded-lg overflow-hidden shrink-0 shadow-[0_0_12px_rgba(255,255,255,0.15)] bg-white/5 flex items-center justify-center">
+          {tenantLogoUrl ? (
+            <Image
+              src={tenantLogoUrl}
+              alt={displayBrand}
+              width={36}
+              height={36}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
+          ) : tenantName ? (
+            <span className="text-[11px] font-bold text-white/80 tracking-tight">{brandInitials}</span>
+          ) : (
+            <Image src="/favicon.svg" alt="éPure" width={36} height={36} className="w-full h-full" />
+          )}
         </div>
-        <span className="relative z-10 text-white font-semibold text-sm tracking-wide flex-1">éPure Drive</span>
+        <span className="relative z-10 text-white font-semibold text-sm tracking-wide flex-1 truncate capitalize">{displayBrand}</span>
       </div>
 
       {/* ── Navigation ────────────────────────────────────────────────── */}
