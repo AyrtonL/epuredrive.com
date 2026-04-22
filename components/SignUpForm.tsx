@@ -61,28 +61,23 @@ export default function SignUpForm() {
       return
     }
 
-    const userId = authData.user?.id
-    if (!userId) {
+    if (!authData.user?.id) {
       setError('Sign up failed — no user ID returned.')
       setLoading(false)
       return
     }
 
-    // Check if email confirmation is required (identities empty = unconfirmed)
-    const needsConfirmation = authData.user?.identities?.length === 0
-    if (needsConfirmation) {
+    // No session => either email confirmation is required OR the address is
+    // already registered (Supabase returns both states the same way to prevent
+    // email enumeration). In either case, tell the user to check their email.
+    if (!authData.session) {
       setEmailSent(true)
       setLoading(false)
       return
     }
 
     // Auto-confirmed path: create tenant immediately using the session token.
-    const accessToken = authData.session?.access_token
-    if (!accessToken) {
-      setError('Sign up succeeded but no session token was returned.')
-      setLoading(false)
-      return
-    }
+    const accessToken = authData.session.access_token
 
     const res = await fetch('/.netlify/functions/create-tenant', {
       method: 'POST',
