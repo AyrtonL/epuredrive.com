@@ -2,36 +2,70 @@
 
 import Image from 'next/image'
 
-const SCREENS = [
-  {
-    src: '/assets/screenshots/dash-bookings.png',
-    alt: 'Bookings dashboard',
-    label: 'Bookings',
-    url: 'app.epuredrive.com',
-  },
-  {
-    src: '/assets/screenshots/dash-main.png',
-    alt: 'Main dashboard',
-    label: 'Dashboard',
-    url: 'app.epuredrive.com',
-  },
-  {
-    src: '/assets/screenshots/dash-fleet.png',
-    alt: 'Fleet dashboard',
-    label: 'Fleet',
-    url: 'app.epuredrive.com',
-  },
-]
+type Lang = 'en' | 'es'
 
-const MORE_SCREENS = [
-  { src: '/assets/screenshots/dash-calendar.png', alt: 'Visual calendar with all reservations', label: 'Calendar' },
-  { src: '/assets/screenshots/dash-roi.png', alt: 'Revenue and ROI analysis per vehicle', label: 'ROI Analysis' },
-  { src: '/assets/screenshots/dash-taxes.png', alt: 'Tax management and reporting', label: 'Tax Reports' },
-  { src: '/assets/screenshots/dash-payments.png', alt: 'Payment processing and transactions', label: 'Payments' },
-  { src: '/assets/screenshots/dash-quickbooks.png', alt: 'QuickBooks integration for accounting', label: 'QuickBooks' },
-]
+const COPY: Record<Lang, { pill: string; title: string; subtitle: string; more: string }> = {
+  en: {
+    pill: 'Product',
+    title: 'See it in action',
+    subtitle: 'Built for operators who run lean and move fast.',
+    more: 'More from the dashboard',
+  },
+  es: {
+    pill: 'Producto',
+    title: 'Vélo en acción',
+    subtitle: 'Hecho para operadores que van al grano y se mueven rápido.',
+    more: 'Más vistas del panel',
+  },
+}
 
-export default function ProductShowcase() {
+const SCREEN_LABELS: Record<Lang, { bookings: string; dashboard: string; fleet: string; calendar: string; roi: string; taxes: string; payments: string; quickbooks: string }> = {
+  en: {
+    bookings: 'Bookings',
+    dashboard: 'Dashboard',
+    fleet: 'Fleet',
+    calendar: 'Calendar',
+    roi: 'ROI Analysis',
+    taxes: 'Tax Reports',
+    payments: 'Payments',
+    quickbooks: 'QuickBooks',
+  },
+  es: {
+    bookings: 'Reservas',
+    dashboard: 'Panel',
+    fleet: 'Flota',
+    calendar: 'Calendario',
+    roi: 'Análisis de ROI',
+    taxes: 'Reportes de impuestos',
+    payments: 'Pagos',
+    quickbooks: 'QuickBooks',
+  },
+}
+
+function getScreens(lang: Lang) {
+  const l = SCREEN_LABELS[lang]
+  return [
+    { src: '/assets/screenshots/dash-bookings.png', alt: 'Bookings dashboard', label: l.bookings, url: 'app.epuredrive.com' },
+    { src: '/assets/screenshots/dash-main.png', alt: 'Main dashboard', label: l.dashboard, url: 'app.epuredrive.com' },
+    { src: '/assets/screenshots/dash-fleet.png', alt: 'Fleet dashboard', label: l.fleet, url: 'app.epuredrive.com' },
+  ]
+}
+
+function getMoreScreens(lang: Lang) {
+  const l = SCREEN_LABELS[lang]
+  return [
+    { src: '/assets/screenshots/dash-calendar.png', alt: 'Visual calendar with all reservations', label: l.calendar },
+    { src: '/assets/screenshots/dash-roi.png', alt: 'Revenue and ROI analysis per vehicle', label: l.roi },
+    { src: '/assets/screenshots/dash-taxes.png', alt: 'Tax management and reporting', label: l.taxes },
+    { src: '/assets/screenshots/dash-payments.png', alt: 'Payment processing and transactions', label: l.payments },
+    { src: '/assets/screenshots/dash-quickbooks.png', alt: 'QuickBooks integration for accounting', label: l.quickbooks },
+  ]
+}
+
+export default function ProductShowcase({ lang = 'en' }: { lang?: Lang }) {
+  const t = COPY[lang]
+  const SCREENS = getScreens(lang)
+  const MORE_SCREENS = getMoreScreens(lang)
   return (
     <section className="relative py-24 bg-black overflow-hidden" id="product">
       <div className="section-divider absolute top-0 left-0 right-0" />
@@ -45,13 +79,13 @@ export default function ProductShowcase() {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 bg-white/[0.05] border border-white/[0.09] rounded-full px-4 py-1.5 mb-5">
-            <span className="text-[11px] font-bold tracking-[0.25em] text-white/40 uppercase">Product</span>
+            <span className="text-[11px] font-bold tracking-[0.25em] text-white/40 uppercase">{t.pill}</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
-            See it in action
+            {t.title}
           </h2>
           <p className="text-lg text-white/40 font-light">
-            Built for operators who run lean and move fast.
+            {t.subtitle}
           </p>
         </div>
 
@@ -105,7 +139,7 @@ export default function ProductShowcase() {
         {/* More dashboard views */}
         <div className="mt-20">
           <p className="text-center text-[11px] font-bold tracking-[0.3em] text-white/20 uppercase mb-8">
-            More from the dashboard
+            {t.more}
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {MORE_SCREENS.map((s) => (

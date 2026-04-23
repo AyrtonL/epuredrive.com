@@ -19,7 +19,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
-  // Path 2: custom domain → look up tenant by custom_domain column
   const hostname = host.split(':')[0]
   const isEpureDomain =
     hostname === 'epuredrive.com' ||
@@ -28,6 +27,26 @@ export async function middleware(request: NextRequest) {
     hostname === 'localhost' ||
     hostname === '127.0.0.1'
 
+  // Path 2: marketing domain — auto-redirect Spanish browsers from `/` to `/es`.
+  // Only fires on the exact root path so shared links to other pages
+  // (e.g. /features, /sign-up) are never language-redirected.
+  if (isEpureDomain && request.nextUrl.pathname === '/') {
+    const acceptLang = request.headers.get('accept-language') ?? ''
+    const primary = (acceptLang.split(',')[0] ?? '').trim().toLowerCase()
+    if (primary.startsWith('es')) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/es'
+      const res = NextResponse.redirect(url, 307)
+      // Make CDNs cache per-language to avoid serving the wrong redirect
+      res.headers.set('Vary', 'Accept-Language')
+      return res
+    }
+    const res = NextResponse.next()
+    res.headers.set('Vary', 'Accept-Language')
+    return res
+  }
+
+  // Path 3: custom domain → look up tenant by custom_domain column
   if (!isEpureDomain) {
     // Don't rewrite API routes — they live at the app root
     if (request.nextUrl.pathname.startsWith('/api/')) {

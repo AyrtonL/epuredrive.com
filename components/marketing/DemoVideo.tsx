@@ -2,11 +2,38 @@
 
 import { useState } from 'react'
 
-interface Props {
-  videoUrl: string
+type Lang = 'en' | 'es'
+
+const COPY: Record<Lang, {
+  pill: string
+  title: string
+  subtitle: string
+  playLabel: string
+  closeLabel: string
+}> = {
+  en: {
+    pill: 'Watch',
+    title: 'See éPure Drive in 2 minutes',
+    subtitle: 'A quick tour of the dashboard, your public booking page, and how a customer reservation flows end-to-end.',
+    playLabel: 'Play product demo video',
+    closeLabel: 'Close demo',
+  },
+  es: {
+    pill: 'Mirá',
+    title: 'Conocé éPure Drive en 2 minutos',
+    subtitle: 'Un recorrido rápido por el panel, tu página pública de reservas y cómo fluye una reserva de principio a fin.',
+    playLabel: 'Reproducir video demo del producto',
+    closeLabel: 'Cerrar demo',
+  },
 }
 
-export default function DemoVideo({ videoUrl }: Props) {
+interface Props {
+  videoUrl: string
+  lang?: Lang
+}
+
+export default function DemoVideo({ videoUrl, lang = 'en' }: Props) {
+  const t = COPY[lang]
   const [open, setOpen] = useState(false)
 
   return (
@@ -15,20 +42,20 @@ export default function DemoVideo({ videoUrl }: Props) {
 
       <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
         <div className="inline-flex items-center gap-2 bg-white/[0.05] border border-white/[0.09] rounded-full px-4 py-1.5 mb-5">
-          <span className="text-[11px] font-bold tracking-[0.25em] text-charcoal uppercase">Watch</span>
+          <span className="text-[11px] font-bold tracking-[0.25em] text-charcoal uppercase">{t.pill}</span>
         </div>
         <h2 className="text-4xl md:text-5xl font-bold text-white mb-5 tracking-tight">
-          See éPure Drive in 2 minutes
+          {t.title}
         </h2>
         <p className="text-lg text-charcoal font-light mb-10 max-w-xl mx-auto">
-          A quick tour of the dashboard, your public booking page, and how a customer reservation flows end-to-end.
+          {t.subtitle}
         </p>
 
         <button
           type="button"
           onClick={() => setOpen(true)}
           className="group relative mx-auto block rounded-2xl overflow-hidden border border-white/10 hover:border-white/25 transition-all shadow-[0_24px_60px_rgba(0,0,0,0.55)]"
-          aria-label="Play product demo video"
+          aria-label={t.playLabel}
         >
           <div className="relative aspect-video w-full max-w-3xl bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
             <div className="absolute inset-0 bg-grid-lines opacity-30 pointer-events-none" />
@@ -47,7 +74,7 @@ export default function DemoVideo({ videoUrl }: Props) {
           onClick={() => setOpen(false)}
           role="dialog"
           aria-modal="true"
-          aria-label="Product demo video"
+          aria-label={t.title}
         >
           <div
             className="relative w-full max-w-5xl aspect-video rounded-2xl overflow-hidden border border-white/10"
@@ -55,7 +82,7 @@ export default function DemoVideo({ videoUrl }: Props) {
           >
             <iframe
               src={videoUrl}
-              title="éPure Drive product demo"
+              title={t.title}
               className="w-full h-full"
               allow="autoplay; fullscreen"
               allowFullScreen
@@ -64,7 +91,7 @@ export default function DemoVideo({ videoUrl }: Props) {
               type="button"
               onClick={() => setOpen(false)}
               className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/70 border border-white/10 flex items-center justify-center text-white hover:bg-black transition-colors"
-              aria-label="Close demo"
+              aria-label={t.closeLabel}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

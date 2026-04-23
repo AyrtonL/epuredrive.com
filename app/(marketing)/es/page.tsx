@@ -1,8 +1,7 @@
-// app/(marketing)/page.tsx
+// app/(marketing)/es/page.tsx
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import Image from 'next/image'
-import ProductShowcase from './ProductShowcase'
+import ProductShowcase from '../ProductShowcase'
 import ContactSection from '@/components/marketing/ContactSection'
 import TrackedCTA from '@/components/marketing/TrackedCTA'
 import TrustBar from '@/components/marketing/TrustBar'
@@ -16,16 +15,16 @@ import {
   buildSoftwareApplicationSchema,
 } from '@/lib/utils/jsonld'
 
-const SEO_TITLE = 'Rental Car Software — Launch Your Booking Site in Minutes | éPure Drive'
+const SEO_TITLE = 'Software para Rent a Car — Tu sitio de reservas en minutos | éPure Drive'
 const SEO_DESCRIPTION =
-  'Fleet management software for independent car rental operators. Launch a branded booking site, accept online payments, and manage every vehicle from one dashboard. Free forever plan — no credit card required.'
+  'Software de gestión de flota para empresas de alquiler de autos independientes. Lanzá tu sitio de reservas con tu marca, aceptá pagos online y manejá cada vehículo desde un solo panel. Plan gratis para siempre — sin tarjeta de crédito.'
 const OG_IMAGE = 'https://epuredrive.com/og-image.jpg'
 
 export const metadata: Metadata = {
   title: SEO_TITLE,
   description: SEO_DESCRIPTION,
   alternates: {
-    canonical: 'https://epuredrive.com',
+    canonical: 'https://epuredrive.com/es',
     languages: {
       en: 'https://epuredrive.com',
       es: 'https://epuredrive.com/es',
@@ -33,8 +32,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    locale: 'en_US',
-    url: 'https://epuredrive.com',
+    locale: 'es_ES',
+    url: 'https://epuredrive.com/es',
     siteName: 'éPure Drive',
     title: SEO_TITLE,
     description: SEO_DESCRIPTION,
@@ -43,10 +42,11 @@ export const metadata: Metadata = {
         url: OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: 'éPure Drive — Rental Car Software',
+        alt: 'éPure Drive — Software para Rent a Car',
         type: 'image/jpeg',
       },
     ],
+    alternateLocale: ['en_US'],
   },
   twitter: {
     card: 'summary_large_image',
@@ -65,12 +65,12 @@ const SPLIT_FEATURES = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
       </svg>
     ),
-    title: 'Your branded booking site,\nlive in minutes.',
+    title: 'Tu sitio de reservas con tu marca,\nen vivo en minutos.',
     description:
-      'Launch a professional rental site showcasing your vehicles — with real-time availability, pricing, and your brand. No code, no developer, no waiting.',
-    bullets: ['Custom subdomain included', 'Live availability calendar', 'Auto-syncs with your inventory'],
+      'Lanzá un sitio profesional de alquiler que muestre tus vehículos — con disponibilidad en tiempo real, precios y tu marca. Sin código, sin desarrollador, sin esperas.',
+    bullets: ['Subdominio personalizado incluido', 'Calendario de disponibilidad en vivo', 'Sincroniza con tu inventario'],
     screenshot: '/assets/screenshots/site-fleet.png',
-    alt: 'Tenant branded fleet site',
+    alt: 'Sitio público del tenant',
   },
   {
     icon: (
@@ -78,25 +78,24 @@ const SPLIT_FEATURES = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
       </svg>
     ),
-    title: 'Every booking,\nunder control.',
+    title: 'Cada reserva,\nbajo control.',
     description:
-      'Track all your rentals in one place — who booked, which vehicle, dates, amounts, and status. Automated confirmations keep customers informed without lifting a finger.',
-    bullets: ['Turo & iCal sync', 'Automated confirmations', 'Customer records per booking'],
+      'Llevá todas tus rentas en un solo lugar — quién reservó, qué vehículo, fechas, montos y estado. Las confirmaciones automáticas mantienen informados a tus clientes sin que muevas un dedo.',
+    bullets: ['Sincronización con Turo e iCal', 'Confirmaciones automáticas', 'Ficha de cliente por reserva'],
     screenshot: '/assets/screenshots/dash-bookings.png',
-    alt: 'Bookings dashboard',
+    alt: 'Panel de reservas',
   },
 ]
 
-export default function HomePage() {
+export default function HomePageEs() {
   return (
     <>
       {/* ─────────────────── Hero ─────────────────── */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Cinematic road background */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden" lang="es">
         <div className="absolute inset-0 -z-20">
           <Image
             src="/assets/images/Imagenes/grant-porter-O7qK1vQY3p0-unsplash.jpg"
-            alt="Cinematic mountain road at golden hour"
+            alt="Ruta de montaña cinematográfica al atardecer"
             fill
             priority
             className="object-cover object-center"
@@ -111,29 +110,29 @@ export default function HomePage() {
           <div className="inline-flex items-center gap-2.5 bg-white/[0.06] border border-white/[0.12] rounded-full px-4 py-2 mb-8 animate-fade-in">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
             <span className="text-[11px] font-bold tracking-[0.25em] text-grey uppercase">
-              Built with rental operators, for rental operators
+              Hecho por operadores de rent a car, para operadores de rent a car
             </span>
           </div>
 
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-white leading-[1.05] mb-6 tracking-tight animate-fade-in-up">
-            Fleet management software
+            Software de flota
             <br />
-            <span className="text-gradient">for car rental operators.</span>
+            <span className="text-gradient">para empresas de rent a car.</span>
           </h1>
 
           <p className="text-lg md:text-xl text-grey max-w-2xl mx-auto mb-12 animate-fade-in-up animation-delay-100 font-light leading-relaxed">
-            Launch a branded booking site, accept online payments, and manage
-            every vehicle from one dashboard. Free to start — no credit card,
-            no developer, no setup calls.
+            Lanzá un sitio de reservas con tu marca, aceptá pagos online y
+            manejá cada vehículo desde un solo panel. Gratis para empezar —
+            sin tarjeta, sin desarrollador, sin llamadas de onboarding.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-5 justify-center animate-fade-in-up animation-delay-200">
             <TrackedCTA
               href="/sign-up"
-              location="hero"
+              location="hero-es"
               className="bg-white text-black font-semibold px-10 py-4 rounded-xl text-base hover:bg-white/90 active:scale-[0.97] transition-all cta-glow"
             >
-              Get started free
+              Empezar gratis
             </TrackedCTA>
             {DEMO_VIDEO_URL ? (
               <a
@@ -143,21 +142,20 @@ export default function HomePage() {
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M8 5v14l11-7z" />
                 </svg>
-                Watch 2-min demo
+                Ver demo de 2 min
               </a>
             ) : (
               <a
                 href="#how-it-works"
                 className="inline-flex items-center gap-2 text-white/80 text-sm font-medium hover:text-white transition-colors bg-white/[0.06] border border-white/[0.12] px-6 py-3.5 rounded-xl hover:bg-white/[0.10]"
               >
-                See how it works →
+                Ver cómo funciona →
               </a>
             )}
           </div>
 
-          {/* Trust signals */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8 animate-fade-in-up animation-delay-300">
-            {['No credit card required', 'Free forever to start', 'Setup in 5 minutes'].map((t) => (
+            {['Sin tarjeta de crédito', 'Gratis para siempre', 'Listo en 5 minutos'].map((t) => (
               <span key={t} className="flex items-center gap-1.5 text-[12px] text-charcoal">
                 <svg className="w-3 h-3 text-white/25 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -170,11 +168,11 @@ export default function HomePage() {
       </section>
 
       {/* ─────────────────── Integrations strip ─────────────────── */}
-      <section className="relative bg-black py-12">
+      <section className="relative bg-black py-12" lang="es">
         <div className="section-divider absolute top-0 left-0 right-0" />
         <div className="max-w-5xl mx-auto px-6">
           <p className="text-center text-[11px] font-bold tracking-[0.3em] text-white/20 uppercase mb-6">
-            Works with the tools you already use
+            Funciona con las herramientas que ya usás
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             {['Turo', 'Stripe', 'Square', 'QuickBooks', 'iCal', 'Google Calendar', 'WhatsApp'].map((name) => (
@@ -191,30 +189,29 @@ export default function HomePage() {
       </section>
 
       {/* ─────────────────── Trust bar ─────────────────── */}
-      <TrustBar />
+      <TrustBar lang="es" />
 
       {/* ─────────────────── How it works ─────────────────── */}
-      <HowItWorks />
+      <HowItWorks lang="es" />
 
       {/* ─────────────────── Features (split) ─────────────────── */}
-      <section className="relative py-24 overflow-hidden bg-black" id="features">
+      <section className="relative py-24 overflow-hidden bg-black" id="features" lang="es">
         <div className="absolute inset-0 bg-grid-lines opacity-100 pointer-events-none" />
         <div className="absolute inset-0 bg-warm-glow pointer-events-none" />
 
         <div className="max-w-6xl mx-auto px-6 relative z-10">
           <div className="text-center mb-24">
             <div className="inline-flex items-center gap-2 bg-white/[0.05] border border-white/[0.09] rounded-full px-4 py-1.5 mb-5">
-              <span className="text-[11px] font-bold tracking-[0.25em] text-charcoal uppercase">Platform</span>
+              <span className="text-[11px] font-bold tracking-[0.25em] text-charcoal uppercase">Plataforma</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-5 tracking-tight">
-              Fleet management, bookings,<br />and payments — one dashboard.
+              Gestión de flota, reservas<br />y pagos — un solo panel.
             </h2>
             <p className="text-lg text-charcoal font-light max-w-xl mx-auto">
-              Stop juggling spreadsheets, texts, and calendar apps. Run your rental business from one place.
+              Basta de hacer malabares con planillas, mensajes y calendarios. Manejá tu negocio de rent a car desde un solo lugar.
             </p>
           </div>
 
-          {/* Split features */}
           <div className="space-y-24">
             {SPLIT_FEATURES.map((feature, i) => (
               <div
@@ -223,7 +220,6 @@ export default function HomePage() {
                   i % 2 === 1 ? 'lg:flex-row-reverse' : ''
                 }`}
               >
-                {/* Text side */}
                 <div className="flex-1 min-w-0">
                   <div className="w-11 h-11 rounded-xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center text-grey mb-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                     {feature.icon}
@@ -248,7 +244,6 @@ export default function HomePage() {
                   </ul>
                 </div>
 
-                {/* Screenshot side */}
                 <div className="flex-1 min-w-0 w-full">
                   <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.5)]">
                     <div className="bg-[#1a1a1a] px-3 py-2.5 flex items-center gap-1.5 border-b border-white/[0.06]">
@@ -268,31 +263,30 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-
         </div>
       </section>
 
       {/* ─────────────────── Product Showcase ─────────────────── */}
-      <ProductShowcase />
+      <ProductShowcase lang="es" />
 
       {/* ─────────────────── Demo video (only if configured) ─────────────────── */}
-      {DEMO_VIDEO_URL && <DemoVideo videoUrl={DEMO_VIDEO_URL} />}
+      {DEMO_VIDEO_URL && <DemoVideo videoUrl={DEMO_VIDEO_URL} lang="es" />}
 
       {/* ─────────────────── Pricing ─────────────────── */}
-      <section className="relative py-32 bg-black" id="pricing">
+      <section className="relative py-32 bg-black" id="pricing" lang="es">
         <div className="section-divider absolute top-0 left-0 right-0" />
         <div className="absolute inset-0 bg-dot-pattern opacity-15 pointer-events-none" />
 
         <div className="max-w-6xl mx-auto px-6 relative z-10">
           <div className="text-center mb-20 animate-fade-in">
             <div className="inline-flex items-center gap-2 bg-white/[0.05] border border-white/[0.09] rounded-full px-4 py-1.5 mb-5">
-              <span className="text-[11px] font-bold tracking-[0.25em] text-charcoal uppercase">Pricing</span>
+              <span className="text-[11px] font-bold tracking-[0.25em] text-charcoal uppercase">Precios</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-5 tracking-tight">
-              Simple pricing
+              Precios simples
             </h2>
             <p className="text-lg text-charcoal font-light">
-              Start free. Upgrade when you demand more.
+              Empezá gratis. Actualizá cuando necesites más.
             </p>
           </div>
 
@@ -306,19 +300,19 @@ export default function HomePage() {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">$0</span>
               </div>
-              <div className="text-charcoal text-sm mb-1">forever</div>
-              <div className="text-charcoal/60 text-[11px] mb-8">2% transaction fee on online payments</div>
+              <div className="text-charcoal text-sm mb-1">para siempre</div>
+              <div className="text-charcoal/60 text-[11px] mb-8">2% de comisión sobre pagos online</div>
 
               <ul className="space-y-3 text-sm text-grey mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> 1 branded fleet page
+                  </span> 1 página de flota con tu marca
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Up to 5 vehicles
+                  </span> Hasta 5 vehículos
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
@@ -328,21 +322,21 @@ export default function HomePage() {
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Live availability calendar
+                  </span> Calendario de disponibilidad en vivo
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Booking management
+                  </span> Gestión de reservas
                 </li>
               </ul>
 
               <TrackedCTA
                 href="/sign-up"
-                location="pricing-starter"
+                location="pricing-starter-es"
                 className="block text-center bg-white text-black font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/90 transition-colors mt-auto"
               >
-                Launch your business
+                Lanzá tu negocio
               </TrackedCTA>
             </div>
 
@@ -350,7 +344,7 @@ export default function HomePage() {
             <div className="rounded-2xl p-8 text-left relative overflow-hidden group transition-all duration-500 flex flex-col bg-glass-gradient backdrop-blur-xl border-2 border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),0_0_60px_rgba(255,255,255,0.03)]">
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/40 to-white/5" />
               <div className="absolute top-5 right-5 bg-white text-black text-[10px] font-bold px-3 py-1.5 rounded-full tracking-widest uppercase">
-                Most Popular
+                Más elegido
               </div>
 
               <div className="text-[11px] font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
@@ -359,48 +353,48 @@ export default function HomePage() {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">$19</span>
               </div>
-              <div className="text-charcoal text-sm mb-1">/ month</div>
-              <div className="text-charcoal/60 text-[11px] mb-8">1% transaction fee on online payments</div>
+              <div className="text-charcoal text-sm mb-1">/ mes</div>
+              <div className="text-charcoal/60 text-[11px] mb-8">1% de comisión sobre pagos online</div>
 
               <ul className="space-y-3 text-sm text-grey mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Everything in Starter
+                  </span> Todo lo de Starter
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Up to 25 vehicles
+                  </span> Hasta 25 vehículos
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Full brand customization
+                  </span> Personalización total de marca
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Online payments (Stripe + Square)
+                  </span> Pagos online (Stripe + Square)
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Tax management & reports
+                  </span> Reportes e impuestos
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Unlimited team members
+                  </span> Miembros de equipo ilimitados
                 </li>
               </ul>
 
               <TrackedCTA
                 href="/sign-up"
-                location="pricing-pro"
+                location="pricing-pro-es"
                 className="block text-center bg-white text-black font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/90 transition-colors mt-auto"
               >
-                Get started
+                Empezar
               </TrackedCTA>
             </div>
 
@@ -414,65 +408,64 @@ export default function HomePage() {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-extrabold text-white tracking-tight">$39</span>
               </div>
-              <div className="text-charcoal text-sm mb-1">/ month + taxes</div>
-              <div className="text-amber-400/40 text-[11px] mb-8">0% transaction fee on online payments</div>
+              <div className="text-charcoal text-sm mb-1">/ mes</div>
+              <div className="text-amber-400/40 text-[11px] mb-8">0% de comisión sobre pagos online</div>
 
               <ul className="space-y-3 text-sm text-grey mb-10 font-light flex-1">
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Everything in Pro
+                  </span> Todo lo de Pro
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Up to 60 vehicles
+                  </span> Hasta 60 vehículos
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Unlimited team members
+                  </span> Miembros de equipo ilimitados
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> QuickBooks sync
+                  </span> Sincronización con QuickBooks
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> API access & priority support
+                  </span> Acceso a API y soporte prioritario
                 </li>
               </ul>
 
               <TrackedCTA
                 href="/sign-up"
-                location="pricing-max"
+                location="pricing-max-es"
                 className="block text-center bg-amber-500/10 text-amber-300 font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-amber-500/20 hover:text-amber-200 transition-colors border border-amber-500/20 mt-auto"
               >
-                Get started
+                Empezar
               </TrackedCTA>
             </div>
           </div>
 
-          {/* Enterprise / multi-location line */}
           <p className="text-center text-sm text-charcoal mt-12 font-light">
-            Running multiple locations or need unlimited vehicles?{' '}
+            ¿Manejás varias sucursales o necesitás vehículos ilimitados?{' '}
             <a
-              href="mailto:info@epuredrive.com?subject=Enterprise%20Inquiry"
+              href="mailto:info@epuredrive.com?subject=Consulta%20Enterprise"
               className="text-white font-medium underline underline-offset-4 hover:text-white/80"
             >
-              Talk to us →
+              Hablemos →
             </a>
           </p>
         </div>
       </section>
 
       {/* ─────────────────── FAQ ─────────────────── */}
-      <FAQ />
+      <FAQ lang="es" />
 
       {/* ─────────────────── Final CTA ─────────────────── */}
-      <section className="relative py-32 bg-black overflow-hidden">
+      <section className="relative py-32 bg-black overflow-hidden" lang="es">
         <div className="section-divider absolute top-0 left-0 right-0" />
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[700px] h-[400px] rounded-full bg-white/[0.03] blur-[80px]" />
@@ -483,25 +476,24 @@ export default function HomePage() {
             <div className="rounded-3xl bg-gradient-to-b from-white/[0.05] to-transparent px-8 py-16 md:px-16">
               <span className="inline-flex items-center gap-2 bg-white/[0.06] border border-white/[0.10] rounded-full px-4 py-1.5 mb-8">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[11px] font-bold tracking-[0.25em] text-grey uppercase">Ready to launch</span>
+                <span className="text-[11px] font-bold tracking-[0.25em] text-grey uppercase">Listo para arrancar</span>
               </span>
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-                Launch your rental business<br />online today.
+                Lanzá tu negocio de rent a car<br />online hoy.
               </h2>
               <p className="text-charcoal mb-10 font-light text-lg max-w-lg mx-auto">
-                Join the rental operators who run their fleet, bookings, and
-                customers on éPure Drive. Set up in 5 minutes — no credit card
-                required.
+                Sumate a los operadores que manejan su flota, reservas y clientes
+                en éPure Drive. Listo en 5 minutos — sin tarjeta de crédito.
               </p>
               <TrackedCTA
                 href="/sign-up"
-                location="bottom-cta"
+                location="bottom-cta-es"
                 className="inline-block bg-white text-black font-semibold px-12 py-4 rounded-xl text-base hover:bg-white/90 active:scale-[0.97] transition-all cta-glow"
               >
-                Start for free
+                Empezar gratis
               </TrackedCTA>
               <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-7">
-                {['No credit card required', 'Cancel anytime', 'Free forever to start'].map((t) => (
+                {['Sin tarjeta de crédito', 'Cancelás cuando quieras', 'Gratis para siempre'].map((t) => (
                   <span key={t} className="flex items-center gap-1.5 text-[12px] text-white/25">
                     <svg className="w-3 h-3 text-white/20 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -516,7 +508,7 @@ export default function HomePage() {
       </section>
 
       {/* ─────────────────── Contact ─────────────────── */}
-      <ContactSection />
+      <ContactSection lang="es" />
 
       <JsonLd schema={buildOrganizationSchema()} />
       <JsonLd schema={buildWebSiteSchema()} />
