@@ -5,6 +5,10 @@ import Image from 'next/image'
 import ProductShowcase from './ProductShowcase'
 import ContactSection from '@/components/marketing/ContactSection'
 import TrackedCTA from '@/components/marketing/TrackedCTA'
+import TrustBar from '@/components/marketing/TrustBar'
+import HowItWorks from '@/components/marketing/HowItWorks'
+import FAQ from '@/components/marketing/FAQ'
+import DemoVideo from '@/components/marketing/DemoVideo'
 import JsonLd from '@/components/JsonLd'
 import {
   buildOrganizationSchema,
@@ -12,37 +16,43 @@ import {
   buildSoftwareApplicationSchema,
 } from '@/lib/utils/jsonld'
 
-const OG_TITLE = 'éPure Drive — Fleet Management Software for Car Rental Businesses'
-const OG_DESCRIPTION = 'Manage your fleet, accept online bookings, and launch a branded rental site — all from one dashboard. Free to start. Built for independent car rental operators.'
+const SEO_TITLE = 'Rental Car Software — Launch Your Booking Site in Minutes | éPure Drive'
+const SEO_DESCRIPTION =
+  'Fleet management software for independent car rental operators. Launch a branded booking site, accept online payments, and manage every vehicle from one dashboard. Free forever plan — no credit card required.'
 const OG_IMAGE = 'https://epuredrive.com/og-image.jpg'
 
 export const metadata: Metadata = {
-  title: OG_TITLE,
-  description: OG_DESCRIPTION,
+  title: SEO_TITLE,
+  description: SEO_DESCRIPTION,
+  alternates: {
+    canonical: 'https://epuredrive.com',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: 'https://epuredrive.com',
     siteName: 'éPure Drive',
-    title: OG_TITLE,
-    description: OG_DESCRIPTION,
+    title: SEO_TITLE,
+    description: SEO_DESCRIPTION,
     images: [
       {
         url: OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: 'éPure Drive — Fleet Management Software',
+        alt: 'éPure Drive — Rental Car Software',
         type: 'image/jpeg',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: OG_TITLE,
-    description: OG_DESCRIPTION,
+    title: SEO_TITLE,
+    description: SEO_DESCRIPTION,
     images: [OG_IMAGE],
   },
 }
+
+const DEMO_VIDEO_URL = process.env.NEXT_PUBLIC_DEMO_VIDEO_URL
 
 const SPLIT_FEATURES = [
   {
@@ -51,7 +61,7 @@ const SPLIT_FEATURES = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
       </svg>
     ),
-    title: 'Your branded fleet page,\nlive in minutes.',
+    title: 'Your branded booking site,\nlive in minutes.',
     description:
       'Launch a professional rental site showcasing your vehicles — with real-time availability, pricing, and your brand. No code, no developer, no waiting.',
     bullets: ['Custom subdomain included', 'Live availability calendar', 'Auto-syncs with your inventory'],
@@ -89,31 +99,28 @@ export default function HomePage() {
             sizes="100vw"
           />
         </div>
-        {/* Dark overlay with warm undertone */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/80 via-black/60 to-black" />
-        {/* Subtle warm ambient light at center */}
         <div className="absolute inset-0 -z-10 bg-warm-glow" />
-        {/* Bottom fade to black */}
         <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black to-transparent -z-10" />
 
         <div className="max-w-5xl mx-auto px-6 py-32 text-center z-10">
           <div className="inline-flex items-center gap-2.5 bg-white/[0.06] border border-white/[0.12] rounded-full px-4 py-2 mb-8 animate-fade-in">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
             <span className="text-[11px] font-bold tracking-[0.25em] text-grey uppercase">
-              Miami-based · Premium Fleet Platform
+              Built with rental operators, for rental operators
             </span>
           </div>
 
-          <h1 className="text-5xl sm:text-6xl md:text-8xl font-extrabold text-white leading-[1.0] mb-8 tracking-tight animate-fade-in-up">
-            Your fleet. Online.
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-white leading-[1.05] mb-6 tracking-tight animate-fade-in-up">
+            Fleet management software
             <br />
-            <span className="text-gradient">In minutes.</span>
+            <span className="text-gradient">for car rental operators.</span>
           </h1>
 
-          <p className="text-lg md:text-xl text-grey max-w-2xl mx-auto mb-14 animate-fade-in-up animation-delay-100 font-light leading-relaxed">
-            The all-in-one platform for car rental operators. Manage your fleet,
-            accept bookings online, and give your customers a premium experience
-            — without the complexity.
+          <p className="text-lg md:text-xl text-grey max-w-2xl mx-auto mb-12 animate-fade-in-up animation-delay-100 font-light leading-relaxed">
+            Launch a branded booking site, accept online payments, and manage
+            every vehicle from one dashboard. Free to start — no credit card,
+            no developer, no setup calls.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-5 justify-center animate-fade-in-up animation-delay-200">
@@ -124,12 +131,24 @@ export default function HomePage() {
             >
               Get started free
             </TrackedCTA>
-            <Link
-              href="/login"
-              className="text-grey text-sm font-medium hover:text-white transition-colors underline-offset-4 hover:underline"
-            >
-              Sign in to dashboard →
-            </Link>
+            {DEMO_VIDEO_URL ? (
+              <a
+                href="#demo"
+                className="inline-flex items-center gap-2 text-white/80 text-sm font-medium hover:text-white transition-colors bg-white/[0.06] border border-white/[0.12] px-6 py-3.5 rounded-xl hover:bg-white/[0.10]"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                Watch 2-min demo
+              </a>
+            ) : (
+              <a
+                href="#how-it-works"
+                className="inline-flex items-center gap-2 text-white/80 text-sm font-medium hover:text-white transition-colors bg-white/[0.06] border border-white/[0.12] px-6 py-3.5 rounded-xl hover:bg-white/[0.10]"
+              >
+                See how it works →
+              </a>
+            )}
           </div>
 
           {/* Trust signals */}
@@ -166,6 +185,12 @@ export default function HomePage() {
         </div>
         <div className="section-divider absolute bottom-0 left-0 right-0" />
       </section>
+
+      {/* ─────────────────── Trust bar ─────────────────── */}
+      <TrustBar />
+
+      {/* ─────────────────── How it works ─────────────────── */}
+      <HowItWorks />
 
       {/* ─────────────────── Features (split) ─────────────────── */}
       <section className="relative py-24 overflow-hidden bg-black" id="features">
@@ -246,6 +271,9 @@ export default function HomePage() {
       {/* ─────────────────── Product Showcase ─────────────────── */}
       <ProductShowcase />
 
+      {/* ─────────────────── Demo video (only if configured) ─────────────────── */}
+      {DEMO_VIDEO_URL && <DemoVideo videoUrl={DEMO_VIDEO_URL} />}
+
       {/* ─────────────────── Pricing ─────────────────── */}
       <section className="relative py-32 bg-black" id="pricing">
         <div className="section-divider absolute top-0 left-0 right-0" />
@@ -264,7 +292,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch max-w-5xl mx-auto">
             {/* ── Starter ── */}
             <div className="glass rounded-2xl p-8 text-left relative overflow-hidden group hover:border-white/15 transition-all duration-500 flex flex-col">
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/10 to-transparent" />
@@ -421,68 +449,32 @@ export default function HomePage() {
                 Get started
               </TrackedCTA>
             </div>
-
-            {/* ── Enterprise ── */}
-            <div className="glass rounded-2xl p-8 text-left relative overflow-hidden group hover:border-white/15 transition-all duration-500 flex flex-col">
-              <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/10 to-transparent" />
-              <div className="text-[11px] font-bold text-charcoal uppercase tracking-widest mb-6">
-                Enterprise
-              </div>
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-5xl font-extrabold text-white tracking-tight">Custom</span>
-              </div>
-              <div className="text-charcoal text-sm mb-1">tailored pricing + taxes</div>
-              <div className="text-charcoal/60 text-[11px] mb-8">Custom transaction fee</div>
-
-              <ul className="space-y-3 text-sm text-grey mb-10 font-light flex-1">
-                <li className="flex items-center gap-3">
-                  <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Everything in Max
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Unlimited vehicles
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Multi-location management
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> White-label branding
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> QuickBooks + dedicated account manager
-                </li>
-              </ul>
-
-              <a
-                href="mailto:info@epuredrive.com?subject=Enterprise%20Inquiry"
-                className="block text-center bg-white/[0.06] text-silver font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/10 hover:text-white transition-colors border border-white/10 mt-auto"
-              >
-                Contact us
-              </a>
-            </div>
           </div>
+
+          {/* Enterprise / multi-location line */}
+          <p className="text-center text-sm text-charcoal mt-12 font-light">
+            Running multiple locations or need unlimited vehicles?{' '}
+            <a
+              href="mailto:info@epuredrive.com?subject=Enterprise%20Inquiry"
+              className="text-white font-medium underline underline-offset-4 hover:text-white/80"
+            >
+              Talk to us →
+            </a>
+          </p>
         </div>
       </section>
+
+      {/* ─────────────────── FAQ ─────────────────── */}
+      <FAQ />
 
       {/* ─────────────────── Final CTA ─────────────────── */}
       <section className="relative py-32 bg-black overflow-hidden">
         <div className="section-divider absolute top-0 left-0 right-0" />
-        {/* Radial glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[700px] h-[400px] rounded-full bg-white/[0.03] blur-[80px]" />
         </div>
 
         <div className="max-w-3xl mx-auto px-6 text-center relative z-10">
-          {/* Gradient-border card */}
           <div className="relative rounded-3xl p-px bg-gradient-to-b from-white/[0.14] via-white/[0.06] to-white/[0.02]">
             <div className="rounded-3xl bg-gradient-to-b from-white/[0.05] to-transparent px-8 py-16 md:px-16">
               <span className="inline-flex items-center gap-2 bg-white/[0.06] border border-white/[0.10] rounded-full px-4 py-1.5 mb-8">
@@ -493,8 +485,9 @@ export default function HomePage() {
                 Launch your rental business<br />online today.
               </h2>
               <p className="text-charcoal mb-10 font-light text-lg max-w-lg mx-auto">
-                Join rental operators who manage their fleet, bookings, and customers
-                on éPure Drive. Set up in 5 minutes — no credit card required.
+                Join the rental operators who run their fleet, bookings, and
+                customers on éPure Drive. Set up in 5 minutes — no credit card
+                required.
               </p>
               <TrackedCTA
                 href="/sign-up"

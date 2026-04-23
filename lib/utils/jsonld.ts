@@ -35,7 +35,7 @@ export function buildSoftwareApplicationSchema(): Record<string, unknown> {
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     description:
-      'car rental fleet management software for operators in Miami. Manage bookings, vehicles, finances, and customer records from one dashboard.',
+      'Rental car fleet management software for independent car rental operators. Manage bookings, vehicles, finances, and customer records from one dashboard.',
     offers: {
       '@type': 'Offer',
       price: '0',

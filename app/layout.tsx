@@ -8,8 +8,8 @@ import './globals.css'
 const outfit = Outfit({ subsets: ['latin'], weight: ['300', '400', '600', '700', '800'], variable: '--font-outfit' })
 const manrope = Manrope({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-manrope' })
 
-const OG_TITLE = 'éPure Drive — Fleet Management Software for Car Rental Businesses'
-const OG_DESCRIPTION = 'Manage your fleet, accept online bookings, and launch a branded rental site — all from one dashboard. Free to start. Built for independent car rental operators.'
+const OG_TITLE = 'Rental Car Software — Launch Your Booking Site in Minutes | éPure Drive'
+const OG_DESCRIPTION = 'Fleet management software for independent car rental operators. Launch a branded booking site, accept online payments, and manage every vehicle from one dashboard. Free forever plan — no credit card required.'
 const OG_IMAGE = 'https://epuredrive.com/og-image.jpg'
 
 export const metadata: Metadata = {
