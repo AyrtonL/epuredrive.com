@@ -113,9 +113,16 @@ export default function SignUpForm() {
         <p className="text-white/50 text-sm max-w-xs mx-auto">
           We sent a confirmation link to your email. Click it to activate your account and access your dashboard.
         </p>
-        <a href="/login" className="text-white/60 hover:text-white text-sm transition-colors inline-block mt-2">
-          Back to sign in
-        </a>
+        <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/40 max-w-xs mx-auto">
+          Already signed up before?{' '}
+          <a href="/login" className="text-white/70 hover:text-white underline transition-colors">
+            Sign in instead
+          </a>
+          {' '}or{' '}
+          <a href="/forgot-password" className="text-white/70 hover:text-white underline transition-colors">
+            reset your password
+          </a>.
+        </div>
       </div>
     )
   }
