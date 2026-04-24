@@ -30,13 +30,13 @@ export default defineConfig({
     // Public tests — no auth needed
     {
       name: 'chromium',
-      testIgnore: /dashboard.*\.spec\.ts/,
+      testIgnore: /(dashboard|telematics).*\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
-    // Dashboard tests — reuse saved auth session
+    // Dashboard + telematics tests — reuse saved auth session
     {
       name: 'chromium-auth',
-      testMatch: /dashboard.*\.spec\.ts/,
+      testMatch: /(dashboard|telematics).*\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -46,7 +46,7 @@ export default defineConfig({
     {
       name: 'mobile',
       use: { ...devices['iPhone 14'] },
-      testIgnore: /dashboard.*\.spec\.ts/,
+      testIgnore: /(dashboard|telematics).*\.spec\.ts/,
     },
   ],
 });
