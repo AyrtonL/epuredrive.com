@@ -73,3 +73,105 @@ export async function ingestLocationUpdate(
     await supabase.from('cars').update(patch).eq('id', car_id)
   }
 }
+
+// ── Trip end ──────────────────────────────────────────────────────────────
+
+interface BouncieTripPayload {
+  transactionId?: string
+  startTime?: string
+  endTime?: string
+  distance?: number
+  maxSpeed?: number
+  duration?: number
+  hardBrakingCount?: number
+  hardAccelerationCount?: number
+  fuelConsumed?: number
+  gpsTrail?: Array<{ lat: number; lon: number }>
+}
+
+function num(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function str(value: unknown): string | null {
+  return typeof value === 'string' ? value : null
+}
+
+function firstTrailPoint(
+  trail: Array<{ lat: number; lon: number }> | undefined,
+): { lat: number; lon: number } | null {
+  if (!trail || trail.length === 0) return null
+  const p = trail[0]
+  return typeof p.lat === 'number' && typeof p.lon === 'number' ? p : null
+}
+
+function lastTrailPoint(
+  trail: Array<{ lat: number; lon: number }> | undefined,
+): { lat: number; lon: number } | null {
+  if (!trail || trail.length === 0) return null
+  const p = trail[trail.length - 1]
+  return typeof p.lat === 'number' && typeof p.lon === 'number' ? p : null
+}
+
+/**
+ * Upsert a completed trip into `telematics_trips` and best-effort match it to
+ * a reservation (same tenant + car, with the trip start date falling inside
+ * the reservation's pickup/return window).
+ *
+ * The unique (tenant_id, bouncie_trip_id) constraint plus onConflict upsert
+ * make this safe to call repeatedly for the same provider trip.
+ */
+export async function ingestTripEnd(
+  supabase: SupabaseClient,
+  ctx: IngestContext,
+): Promise<void> {
+  const { tenant_id, device_id, car_id, event } = ctx
+  const p = event.payload as BouncieTripPayload
+
+  const transactionId = str(p.transactionId)
+  const startTime = str(p.startTime)
+  if (!transactionId || !startTime) return
+
+  // Attempt reservation match when we know which car this trip belongs to.
+  // reservations.id is uuid in this schema → reservation_id is a string.
+  let reservation_id: string | null = null
+  if (car_id !== null) {
+    const startDate = startTime.slice(0, 10) // YYYY-MM-DD
+    const { data: res } = await supabase
+      .from('reservations')
+      .select('id')
+      .eq('tenant_id', tenant_id)
+      .eq('car_id', car_id)
+      .lte('pickup_date', startDate)
+      .gte('return_date', startDate)
+      .maybeSingle()
+    const matchedId = (res as { id?: unknown } | null)?.id
+    reservation_id = typeof matchedId === 'string' ? matchedId : null
+  }
+
+  const first = firstTrailPoint(p.gpsTrail)
+  const last = lastTrailPoint(p.gpsTrail)
+
+  await supabase.from('telematics_trips').upsert(
+    {
+      tenant_id,
+      device_id,
+      car_id,
+      reservation_id,
+      started_at: startTime,
+      ended_at: str(p.endTime),
+      start_lat: first?.lat ?? null,
+      start_lon: first?.lon ?? null,
+      end_lat: last?.lat ?? null,
+      end_lon: last?.lon ?? null,
+      distance_mi: num(p.distance) ?? 0,
+      duration_s: num(p.duration),
+      max_speed_mph: num(p.maxSpeed),
+      hard_braking_count: num(p.hardBrakingCount) ?? 0,
+      hard_accel_count: num(p.hardAccelerationCount) ?? 0,
+      fuel_consumed_gal: num(p.fuelConsumed),
+      bouncie_trip_id: transactionId,
+    },
+    { onConflict: 'tenant_id,bouncie_trip_id' },
+  )
+}
