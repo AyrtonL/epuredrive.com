@@ -25,12 +25,13 @@ export const dynamic = 'force-dynamic'
 const STATE_COOKIE = 'bouncie_oauth_state'
 const STATE_TTL_SECONDS = 600
 
-export async function GET() {
+export async function GET(req: Request) {
+  const siteUrl = getSiteUrl(req)
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.redirect(new URL('/login', getSiteUrl()))
+    return NextResponse.redirect(new URL('/login', siteUrl))
   }
 
   // Resolve tenant_id from profiles — matches the pattern used across the
@@ -43,7 +44,7 @@ export async function GET() {
 
   const tenantId = (profile as { tenant_id?: unknown } | null)?.tenant_id
   if (typeof tenantId !== 'string') {
-    return NextResponse.redirect(new URL('/dashboard/settings', getSiteUrl()))
+    return NextResponse.redirect(new URL('/dashboard/settings', siteUrl))
   }
 
   // Feature-flag gate at API level (audit finding #3). Middleware does not
@@ -51,7 +52,7 @@ export async function GET() {
   const enabled = await isFeatureEnabled(tenantId, 'bouncie_telematics')
   if (!enabled) {
     return NextResponse.redirect(
-      new URL('/dashboard/settings/billing?upgrade=telematics', getSiteUrl()),
+      new URL('/dashboard/settings/billing?upgrade=telematics', siteUrl),
     )
   }
 
@@ -72,6 +73,6 @@ export async function GET() {
   return NextResponse.redirect(url)
 }
 
-function getSiteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://app.epuredrive.com'
+function getSiteUrl(req: Request): string {
+  return process.env.NEXT_PUBLIC_SITE_URL ?? new URL(req.url).origin
 }

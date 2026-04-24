@@ -10,7 +10,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 
-const APP_ORIGIN = process.env.NEXT_PUBLIC_APP_ORIGIN || 'https://app.epuredrive.com'
+const APP_ORIGIN = process.env.NEXT_PUBLIC_APP_ORIGIN || 'https://epuredrive.com'
 
 export interface TelematicsAlertEmailArgs {
   tenant_id: string

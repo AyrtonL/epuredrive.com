@@ -28,7 +28,7 @@ const STATE_COOKIE = 'bouncie_oauth_state'
 const GENERIC_ERROR_PATH = '/dashboard/integrations/bouncie?error=auth_failed'
 
 export async function GET(request: Request) {
-  const siteUrl = getSiteUrl()
+  const siteUrl = getSiteUrl(request)
   const genericError = new URL(GENERIC_ERROR_PATH, siteUrl)
 
   // Audit finding #5: always clear the state cookie at the very top so the
@@ -173,6 +173,6 @@ export async function GET(request: Request) {
   return NextResponse.redirect(new URL('/dashboard/telematics/devices', siteUrl))
 }
 
-function getSiteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://app.epuredrive.com'
+function getSiteUrl(req: Request): string {
+  return process.env.NEXT_PUBLIC_SITE_URL ?? new URL(req.url).origin
 }
