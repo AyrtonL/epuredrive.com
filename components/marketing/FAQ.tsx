@@ -6,6 +6,10 @@ type Lang = 'en' | 'es'
 const FAQS: Record<Lang, { q: string; a: string }[]> = {
   en: [
     {
+      q: 'What is éPure Drive?',
+      a: 'éPure Drive (also written Epure Drive) is rental car fleet management software for independent operators. It gives you a branded booking site, online payments via Stripe or Square, a live availability calendar, and full reservation management from a single dashboard — no developer or code required.',
+    },
+    {
       q: 'How much does éPure Drive cost?',
       a: 'The Starter plan is free forever — includes up to 5 vehicles, a branded fleet page on a {slug}.epuredrive.com subdomain, and full booking management. Paid plans start at $19/month for more vehicles, your own domain, and lower transaction fees.',
     },
@@ -47,6 +51,10 @@ const FAQS: Record<Lang, { q: string; a: string }[]> = {
     },
   ],
   es: [
+    {
+      q: '¿Qué es éPure Drive?',
+      a: 'éPure Drive (también escrita Epure Drive) es un software de gestión de flota para operadores de alquiler de autos independientes. Incluye un sitio de reservas con tu marca, pagos online vía Stripe o Square, calendario de disponibilidad en vivo y gestión completa de reservas desde un único panel — sin desarrollador ni código.',
+    },
     {
       q: '¿Cuánto cuesta éPure Drive?',
       a: 'El plan Starter es gratis para siempre — incluye hasta 5 vehículos, una página de flota con tu marca en un subdominio {slug}.epuredrive.com y gestión completa de reservas. Los planes pagos arrancan en $19/mes e incluyen más vehículos, menor comisión y funciones avanzadas.',

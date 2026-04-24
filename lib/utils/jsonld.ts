@@ -3,6 +3,7 @@ export function buildOrganizationSchema(): Record<string, unknown> {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'éPure Drive',
+    alternateName: 'Epure Drive',
     url: 'https://epuredrive.com',
     logo: 'https://epuredrive.com/favicon.svg',
     contactPoint: {
@@ -18,6 +19,7 @@ export function buildWebSiteSchema(): Record<string, unknown> {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'éPure Drive',
+    alternateName: 'Epure Drive',
     url: 'https://epuredrive.com',
     potentialAction: {
       '@type': 'SearchAction',
@@ -32,6 +34,7 @@ export function buildSoftwareApplicationSchema(): Record<string, unknown> {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name: 'éPure Drive',
+    alternateName: 'Epure Drive',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     description:
