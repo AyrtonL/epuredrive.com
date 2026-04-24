@@ -39,10 +39,23 @@ interface MockSupabase {
   inserts: InsertCall[]
   from: (table: string) => {
     insert: (row: Record<string, unknown>) => Promise<{ data: null; error: null }>
+    select: (_cols?: string) => {
+      eq: (_col: string, _val: unknown) => {
+        maybeSingle: () => Promise<{ data: unknown; error: null }>
+      }
+    }
   }
 }
 
-function mkSupabase(): MockSupabase {
+/**
+ * Tiny fluent mock supporting:
+ *   .from(table).insert(row)                                      → recorded
+ *   .from(table).select(cols).eq(col, val).maybeSingle()          → scripted
+ *
+ * `prefsRow` is what `tenant_notification_prefs.select(...).maybeSingle()`
+ * should return. Pass `null` for "no prefs row exists".
+ */
+function mkSupabase(prefsRow: { telematics_warning_email: boolean } | null = null): MockSupabase {
   const inserts: InsertCall[] = []
   return {
     inserts,
@@ -52,6 +65,16 @@ function mkSupabase(): MockSupabase {
           inserts.push({ table, row })
           return Promise.resolve({ data: null, error: null })
         },
+        select: () => ({
+          eq: () => ({
+            maybeSingle: () => {
+              if (table === 'tenant_notification_prefs') {
+                return Promise.resolve({ data: prefsRow, error: null })
+              }
+              return Promise.resolve({ data: null, error: null })
+            },
+          }),
+        }),
       }
     },
   }
@@ -79,8 +102,9 @@ function mkEvent(
 async function call(
   severity: TelematicsSeverity,
   event: ProviderEvent,
+  prefsRow: { telematics_warning_email: boolean } | null = null,
 ): Promise<MockSupabase> {
-  const sb = mkSupabase()
+  const sb = mkSupabase(prefsRow)
   await dispatchAlert(sb as never, {
     tenant_id: 't1',
     car_id: 42,
@@ -128,10 +152,11 @@ describe('dispatchAlert', () => {
     })
   })
 
-  test('warning event inserts notification but does NOT email (prefs not built yet)', async () => {
+  test('warning event inserts notification but does NOT email when tenant has not opted in', async () => {
     const sb = await call(
       'warning',
       mkEvent('speed_exceeded', { speed: 95 }),
+      null, // no tenant_notification_prefs row
     )
     const notif = sb.inserts.find((i) => i.table === 'notifications')
     expect(notif).toBeDefined()
@@ -142,7 +167,35 @@ describe('dispatchAlert', () => {
     const metadata = notif?.row.metadata as Record<string, unknown>
     expect(metadata).toMatchObject({ severity: 'warning', event_id: 'ev-1' })
 
-    // No email on warning (tenant_notification_prefs not wired yet — TODO Task 33)
+    // Default = opt-out, so no email on warning.
+    expect(emailCalls).toHaveLength(0)
+  })
+
+  test('warning event DOES email when tenant_notification_prefs.telematics_warning_email = true', async () => {
+    const sb = await call(
+      'warning',
+      mkEvent('speed_exceeded', { speed: 95 }),
+      { telematics_warning_email: true },
+    )
+    const notif = sb.inserts.find((i) => i.table === 'notifications')
+    expect(notif).toBeDefined()
+
+    // Email sent on warning when opted in.
+    expect(emailCalls).toHaveLength(1)
+    expect(emailCalls[0]).toMatchObject({
+      tenant_id: 't1',
+      event_id: 'ev-1',
+      severity: 'warning',
+      title: 'Speed exceeded (95 mph)',
+    })
+  })
+
+  test('warning event does NOT email when telematics_warning_email = false (explicit opt-out)', async () => {
+    await call(
+      'warning',
+      mkEvent('speed_exceeded', { speed: 95 }),
+      { telematics_warning_email: false },
+    )
     expect(emailCalls).toHaveLength(0)
   })
 

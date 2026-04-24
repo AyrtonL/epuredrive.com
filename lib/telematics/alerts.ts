@@ -44,13 +44,19 @@ export async function dispatchAlert(
 
   // Email policy (spec §8):
   //   critical → always email
-  //   warning  → only when the tenant has opted in (tenant_notification_prefs,
-  //              delivered in Task 33). For now, warnings don't email.
+  //   warning  → only when the tenant opted in via
+  //              tenant_notification_prefs.telematics_warning_email
   //   info     → never
   const emailCritical = ad.severity === 'critical'
-  // TODO Task 33: look up tenant_notification_prefs.telematics_warning_email
-  // when that table is introduced; until then warnings default to off.
-  const emailWarning = false
+  let emailWarning = false
+  if (ad.severity === 'warning') {
+    const { data: prefs } = await supabase
+      .from('tenant_notification_prefs')
+      .select('telematics_warning_email')
+      .eq('tenant_id', ad.tenant_id)
+      .maybeSingle()
+    emailWarning = Boolean(prefs?.telematics_warning_email)
+  }
 
   if (emailCritical || emailWarning) {
     try {
