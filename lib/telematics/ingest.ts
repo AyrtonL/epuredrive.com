@@ -8,7 +8,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { TelematicsSeverity } from '@/lib/supabase/types'
-import { dispatchAlert } from './alerts'
+import { dispatchAlert, safeErrorMessage } from './alerts'
 import type { ProviderEvent } from './types'
 
 export interface IngestContext {
@@ -39,26 +39,44 @@ export async function ingestLocationUpdate(
   const heading = typeof event.payload.heading === 'number' ? event.payload.heading : null
   const ignition = typeof event.payload.ignition === 'boolean' ? event.payload.ignition : null
 
-  await supabase.from('telematics_positions').insert({
-    tenant_id,
-    device_id,
-    car_id,
-    recorded_at: event.occurred_at,
-    lat: event.lat,
-    lon: event.lon,
-    speed_mph: event.speed_mph,
-    heading,
-    odometer_mi: event.odometer_mi,
-    ignition,
-  })
+  // Idempotent write: Bouncie can redeliver webhooks, and the
+  // (device_id, recorded_at) unique index guarantees we only store each
+  // position once. ignoreDuplicates:true makes redeliveries a no-op
+  // instead of returning a 23505 error.
+  const { error: posErr } = await supabase
+    .from('telematics_positions')
+    .upsert(
+      {
+        tenant_id,
+        device_id,
+        car_id,
+        recorded_at: event.occurred_at,
+        lat: event.lat,
+        lon: event.lon,
+        speed_mph: event.speed_mph,
+        heading,
+        odometer_mi: event.odometer_mi,
+        ignition,
+      },
+      { onConflict: 'device_id,recorded_at', ignoreDuplicates: true },
+    )
+  if (posErr) {
+    console.warn(
+      '[telematics] positions upsert failed',
+      safeErrorMessage(posErr),
+    )
+  }
 
-  await supabase
+  const { error: devErr } = await supabase
     .from('telematics_devices')
     .update({
       last_seen_at: event.occurred_at,
       online: true,
     })
     .eq('id', device_id)
+  if (devErr) {
+    console.warn('[telematics] devices update failed', safeErrorMessage(devErr))
+  }
 
   if (car_id !== null) {
     // Build patch immutably; only include mileage when we actually have one.
@@ -72,7 +90,13 @@ export async function ingestLocationUpdate(
         ? { ...basePatch, mileage: Math.round(event.odometer_mi) }
         : basePatch
 
-    await supabase.from('cars').update(patch).eq('id', car_id)
+    const { error: carErr } = await supabase
+      .from('cars')
+      .update(patch)
+      .eq('id', car_id)
+    if (carErr) {
+      console.warn('[telematics] cars update failed', safeErrorMessage(carErr))
+    }
   }
 }
 
@@ -154,7 +178,7 @@ export async function ingestTripEnd(
   const first = firstTrailPoint(p.gpsTrail)
   const last = lastTrailPoint(p.gpsTrail)
 
-  await supabase.from('telematics_trips').upsert(
+  const { error: tripErr } = await supabase.from('telematics_trips').upsert(
     {
       tenant_id,
       device_id,
@@ -176,6 +200,9 @@ export async function ingestTripEnd(
     },
     { onConflict: 'tenant_id,bouncie_trip_id' },
   )
+  if (tripErr) {
+    console.warn('[telematics] trips upsert failed', safeErrorMessage(tripErr))
+  }
 }
 
 // ── Generic event + classification + alert dispatch ───────────────────────
@@ -220,18 +247,37 @@ export async function ingestEvent(
     .select('id')
     .single()
 
-  if (error || !row) return
+  if (error || !row) {
+    if (error) {
+      console.warn(
+        '[telematics] events insert failed',
+        safeErrorMessage(error),
+      )
+    }
+    return
+  }
   const eventId = (row as { id?: unknown }).id
   if (typeof eventId !== 'string') return
 
   if (shouldNotify) {
-    await dispatchAlert(supabase, {
-      tenant_id,
-      car_id,
-      event_id: eventId,
-      event,
-      severity,
-    })
+    // dispatchAlert writes a notifications row (can fail on transient DB
+    // issues) and then emails (already guarded). A failure here must NOT
+    // abort the webhook's outer event loop — subsequent events in the
+    // batch must still be processed, so we log and swallow.
+    try {
+      await dispatchAlert(supabase, {
+        tenant_id,
+        car_id,
+        event_id: eventId,
+        event,
+        severity,
+      })
+    } catch (err: unknown) {
+      console.warn(
+        '[telematics] dispatchAlert failed',
+        safeErrorMessage(err),
+      )
+    }
   }
 }
 
