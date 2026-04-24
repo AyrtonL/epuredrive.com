@@ -56,7 +56,7 @@ export async function sendTelematicsAlertEmail(
 
   const fullLink = args.link.startsWith('http') ? args.link : `${APP_ORIGIN}${args.link}`
   const prefix = args.severity === 'critical' ? '[CRITICAL]' : '[WARNING]'
-  const subject = `${prefix} ${args.title}`
+  const subject = `${prefix} ${sanitizeSubject(args.title)}`
   const html = renderHtml({ title: args.title, link: fullLink, tenantName })
 
   await Promise.allSettled(
@@ -82,6 +82,15 @@ function renderHtml(args: { title: string; link: string; tenantName: string }): 
     `<p style="margin:0;color:#666;font-size:12px">Sent by ${escapeHtml(args.tenantName)} via éPure Drive</p>`,
     '</div>',
   ].join('')
+}
+
+/**
+ * Strip CR/LF from a subject line to prevent email header injection via
+ * user-influenced content (e.g. DTC codes pulled from provider payloads).
+ * Also trims and caps length to avoid pathological headers.
+ */
+export function sanitizeSubject(s: string): string {
+  return s.replace(/[\r\n]+/g, ' ').trim().slice(0, 200)
 }
 
 function escapeHtml(s: string): string {
