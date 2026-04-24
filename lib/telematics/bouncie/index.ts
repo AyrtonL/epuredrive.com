@@ -9,6 +9,7 @@ import type { OAuthTokens, ProviderVehicle, ProviderTrip, ProviderEvent } from '
 import { bouncieConfig } from '../config'
 import { bouncieApi } from './api'
 import type { BouncieTokenResponse, BouncieVehicle, BouncieTrip } from './types'
+import { parseBouncieWebhook } from './webhook-parser'
 
 export class BouncieProvider implements TelematicsProvider {
   readonly name = 'bouncie' as const
@@ -135,7 +136,7 @@ export class BouncieProvider implements TelematicsProvider {
     return crypto.timingSafeEqual(a, b)
   }
 
-  parseWebhookPayload(_rawBody: string): ProviderEvent[] {
-    throw new Error('not implemented yet (Task 9)')
+  parseWebhookPayload(rawBody: string): ProviderEvent[] {
+    return parseBouncieWebhook(rawBody)
   }
 }
