@@ -132,6 +132,21 @@ export default function FleetMileagePanel({ cars, services }: Props) {
                         <span className="text-white/80 font-medium group-hover:text-white transition-colors">
                           {car.mileage != null ? `${car.mileage.toLocaleString()} mi` : '—'}
                         </span>
+                        {car.telematics_device_id ? (
+                          <span
+                            className="ml-1 px-1.5 py-0.5 text-[10px] rounded bg-emerald-500/15 text-emerald-300"
+                            title="Mileage auto-synced from Bouncie"
+                          >
+                            auto
+                          </span>
+                        ) : (
+                          <span
+                            className="ml-1 px-1.5 py-0.5 text-[10px] rounded bg-white/5 text-white/40"
+                            title="Mileage entered manually"
+                          >
+                            manual
+                          </span>
+                        )}
                         <span className="text-[10px] text-white/20 group-hover:text-white/50 transition-colors">✎</span>
                       </button>
                     )}

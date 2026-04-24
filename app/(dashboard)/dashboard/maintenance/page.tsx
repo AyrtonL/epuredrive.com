@@ -11,7 +11,7 @@ export default async function MaintenancePage() {
 
   const [{ data: services }, { data: cars }] = await Promise.all([
     supabase.from('car_services').select('*').eq('tenant_id', tenantId).order('service_date', { ascending: false }),
-    supabase.from('cars').select('id, make, model, model_full, mileage').eq('tenant_id', tenantId).order('make'),
+    supabase.from('cars').select('id, make, model, model_full, mileage, telematics_device_id').eq('tenant_id', tenantId).order('make'),
   ])
 
   const rows = (services as CarService[]) ?? []
