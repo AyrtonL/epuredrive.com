@@ -33,7 +33,7 @@
 | 15 | OAuth start route `/api/telematics/oauth/start` | API |
 | 16 | OAuth callback route `/api/telematics/oauth/callback` | API |
 | 17 | Webhook receiver `/api/telematics/webhook/bouncie` | API |
-| 18 | Netlify cron — pull sync | Cron |
+| 18 | Netlify cron — pull sync (+ `lib/telematics/sync.ts` per-connection helper) | Cron |
 | 19 | Netlify cron — positions 90d prune | Cron |
 | 20 | Feature flag seed + Stripe webhook flip | Gating |
 | 21 | `Sidebar.tsx` — Telematics group + Bouncie item + hiding | Gating |
@@ -138,6 +138,9 @@ create index on public.telematics_positions (tenant_id, device_id, recorded_at d
 create index on public.telematics_positions (recorded_at);
 
 alter table public.telematics_positions enable row level security;
+-- SECURITY: Intentionally NO insert/update/delete policy for user-auth clients.
+-- All writes go through the service-role client (webhook + cron). Adding a
+-- user-role INSERT policy here would be a security regression (finding #9).
 create policy "tenant read" on public.telematics_positions for select
   using (tenant_id = (select tenant_id from public.user_tenants where user_id = auth.uid()));
 
@@ -165,6 +168,7 @@ create index on public.telematics_trips (tenant_id, started_at desc);
 create index on public.telematics_trips (reservation_id);
 
 alter table public.telematics_trips enable row level security;
+-- SECURITY: service-role writes only (see telematics_positions comment above).
 create policy "tenant read" on public.telematics_trips for select
   using (tenant_id = (select tenant_id from public.user_tenants where user_id = auth.uid()));
 
@@ -973,6 +977,14 @@ describe('BouncieProvider.verifyWebhookSignature', () => {
     expect(new BouncieProvider().verifyWebhookSignature(body, sig1)).toBe(false)
     expect(new BouncieProvider().verifyWebhookSignature(body, sig2)).toBe(false)
   })
+
+  test('rejects malformed hex signatures (security finding #15)', () => {
+    const p = new BouncieProvider()
+    expect(p.verifyWebhookSignature(body, 'sha256=')).toBe(false)
+    expect(p.verifyWebhookSignature(body, 'sha256=xyz!@#')).toBe(false)
+    expect(p.verifyWebhookSignature(body, 'sha256=' + 'a'.repeat(63))).toBe(false) // wrong length
+    expect(p.verifyWebhookSignature(body, 'sha256=' + 'a'.repeat(65))).toBe(false)
+  })
 })
 ```
 
@@ -990,15 +1002,18 @@ Replace the `verifyWebhookSignature` stub with:
     const prefix = 'sha256='
     if (!signatureHeader.startsWith(prefix)) return false
     const provided = signatureHeader.slice(prefix.length)
-    const expected = require('node:crypto')
+    // Strict format: exactly 64 lowercase hex chars. Rejects empty / malformed inputs
+    // (security finding #15: Buffer.from('xyz!@#','hex') silently returns partial bytes).
+    if (!/^[0-9a-f]{64}$/i.test(provided)) return false
+    const crypto = require('node:crypto')
+    const expected = crypto
       .createHmac('sha256', bouncieConfig.webhookSecret)
       .update(rawBody)
       .digest('hex')
-    // constant-time compare; both buffers must be equal length or timingSafeEqual throws
     const a = Buffer.from(provided, 'hex')
     const b = Buffer.from(expected, 'hex')
     if (a.length !== b.length) return false
-    return require('node:crypto').timingSafeEqual(a, b)
+    return crypto.timingSafeEqual(a, b)
   }
 ```
 
@@ -1528,7 +1543,7 @@ export async function ingestEvent(
   ctx: IngestContext
 ): Promise<void> {
   const { tenant_id, device_id, car_id, event } = ctx
-  const { severity, shouldNotify } = classifyEvent(event)
+  const { severity, shouldNotify } = await classifyEvent(supabase, tenant_id, event)
 
   const { data: row, error } = await supabase.from('telematics_events').insert({
     tenant_id,
@@ -1544,14 +1559,38 @@ export async function ingestEvent(
   if (shouldNotify) await dispatchAlert(supabase, { tenant_id, car_id, event_id: row.id, event, severity })
 }
 
-function classifyEvent(event: ProviderEvent): { severity: 'info'|'warning'|'critical'; shouldNotify: boolean } {
-  // See spec §8 Alerts pipeline matrix
+// SECURITY (audit finding #10): the geofence severity MUST come from the DB,
+// not from `event.payload.geofence_kind`. Payload fields are attacker-influenceable
+// via replay with modified body; DB rows are tenant-controlled and authoritative.
+async function classifyEvent(
+  supabase: SupabaseClient,
+  tenant_id: string,
+  event: ProviderEvent
+): Promise<{ severity: 'info'|'warning'|'critical'; shouldNotify: boolean }> {
   switch (event.type) {
-    case 'geofence_exit': {
-      const kind = event.payload.geofence_kind
-      return kind === 'forbidden'
-        ? { severity: 'critical', shouldNotify: true }
-        : { severity: 'warning', shouldNotify: true }
+    case 'geofence_exit':
+    case 'geofence_enter': {
+      const geofenceId = typeof event.payload.geofence_id === 'string'
+        ? event.payload.geofence_id : null
+      let kind: 'allowed' | 'forbidden' = 'allowed'
+      if (geofenceId) {
+        const { data } = await supabase
+          .from('telematics_geofences')
+          .select('kind')
+          .eq('id', geofenceId)
+          .eq('tenant_id', tenant_id)
+          .maybeSingle()
+        if (data?.kind === 'forbidden') kind = 'forbidden'
+      }
+      if (event.type === 'geofence_enter' && kind === 'forbidden') {
+        return { severity: 'critical', shouldNotify: true }
+      }
+      if (event.type === 'geofence_exit') {
+        return kind === 'forbidden'
+          ? { severity: 'critical', shouldNotify: true }
+          : { severity: 'warning', shouldNotify: true }
+      }
+      return { severity: 'info', shouldNotify: false }
     }
     case 'speed_exceeded':
     case 'dtc_new':
@@ -1760,11 +1799,26 @@ import crypto from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
 import { getProvider } from '@/lib/telematics/registry'
 import { bouncieConfig } from '@/lib/telematics/config'
+import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
 
 export async function GET() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'))
+  if (!user) return NextResponse.redirect(new URL('/login', appUrl))
+
+  // SECURITY (audit finding #3): API routes are NOT covered by /dashboard/* middleware.
+  // Must gate at the API level too — a Starter tenant who knows this URL could
+  // otherwise connect Bouncie without paying for Pro.
+  const { data: userTenant } = await supabase
+    .from('user_tenants').select('tenant_id').eq('user_id', user.id).single()
+  if (!userTenant?.tenant_id) return NextResponse.redirect(new URL('/dashboard', appUrl))
+  const allowed = await isFeatureEnabled(userTenant.tenant_id, 'bouncie_telematics')
+  if (!allowed) {
+    const url = new URL('/dashboard/settings/billing', appUrl)
+    url.searchParams.set('upgrade', 'telematics')
+    return NextResponse.redirect(url)
+  }
 
   const state = crypto.randomBytes(16).toString('hex')
   cookies().set('bouncie_oauth_state', state, {
@@ -1799,9 +1853,19 @@ import { cookies } from 'next/headers'
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { getProvider } from '@/lib/telematics/registry'
 import { bouncieConfig } from '@/lib/telematics/config'
+import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
+
+// SECURITY (audit finding #5): all failure paths redirect to a SINGLE generic
+// error URL and ALWAYS delete the state cookie — never expose specific error
+// codes to the client (prevents CSRF-probe fingerprinting).
+const GENERIC_ERR = '/dashboard/integrations/bouncie?error=auth_failed'
 
 export async function GET(req: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin
+  // Delete state cookie up-front so the nonce is single-use regardless of outcome.
+  const storedState = cookies().get('bouncie_oauth_state')?.value
+  cookies().delete('bouncie_oauth_state')
+
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.redirect(new URL('/login', appUrl))
@@ -1809,22 +1873,26 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const code = searchParams.get('code')
   const state = searchParams.get('state')
-  const storedState = cookies().get('bouncie_oauth_state')?.value
   if (!code || !state || state !== storedState) {
-    return NextResponse.redirect(new URL('/dashboard/integrations/bouncie?error=invalid_state', appUrl))
+    console.warn('[bouncie oauth] state mismatch', { user: user.id })
+    return NextResponse.redirect(new URL(GENERIC_ERR, appUrl))
   }
-  cookies().delete('bouncie_oauth_state')
 
-  // Resolve tenant_id
+  // Resolve tenant_id + gate at API level (security finding #3)
   const { data: userTenant } = await supabase.from('user_tenants').select('tenant_id').eq('user_id', user.id).single()
-  if (!userTenant?.tenant_id) return NextResponse.redirect(new URL('/dashboard', appUrl))
+  if (!userTenant?.tenant_id) return NextResponse.redirect(new URL(GENERIC_ERR, appUrl))
+  const allowed = await isFeatureEnabled(userTenant.tenant_id, 'bouncie_telematics')
+  if (!allowed) return NextResponse.redirect(new URL(GENERIC_ERR, appUrl))
 
   const provider = getProvider('bouncie')
   let tokens
   try {
     tokens = await provider.exchangeCodeForToken(code, bouncieConfig.redirectUri)
-  } catch {
-    return NextResponse.redirect(new URL('/dashboard/integrations/bouncie?error=token_exchange', appUrl))
+  } catch (err: unknown) {
+    // SECURITY: never spread the err object — token endpoint response body may contain bearer tokens
+    const msg = err instanceof Error ? err.message : 'unknown'
+    console.error('[bouncie oauth] token exchange failed', { user: user.id, msg: msg.slice(0, 200) })
+    return NextResponse.redirect(new URL(GENERIC_ERR, appUrl))
   }
 
   const service = createServiceRoleClient()
@@ -1892,26 +1960,65 @@ import { ingestLocationUpdate, ingestTripEnd, ingestEvent } from '@/lib/telemati
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
+// SECURITY constants (audit findings #2, #11)
+const MAX_BODY_BYTES = 1_048_576       // 1 MiB
+const MAX_EVENTS_PER_BATCH = 100
+const MAX_TIMESTAMP_SKEW_SEC = 300     // ±5 min — matches Stripe webhook policy
+
+function safeErrorMessage(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err)
+  // Strip any bearer-token patterns that might have leaked into the message
+  return msg.replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer [redacted]').slice(0, 200)
+}
+
 export async function POST(req: NextRequest) {
+  // SECURITY (audit finding #11): cap body size BEFORE reading
+  const contentLength = parseInt(req.headers.get('content-length') ?? '0', 10)
+  if (contentLength > MAX_BODY_BYTES) {
+    return new NextResponse('payload too large', { status: 413 })
+  }
+
   const provider = getProvider('bouncie')
   const raw = await req.text()
+  if (raw.length > MAX_BODY_BYTES) {
+    return new NextResponse('payload too large', { status: 413 })
+  }
+
   const sig = req.headers.get('x-bouncie-signature')
   if (!provider.verifyWebhookSignature(raw, sig)) {
     return new NextResponse('invalid signature', { status: 401 })
   }
 
-  const events = provider.parseWebhookPayload(raw)
+  let events = provider.parseWebhookPayload(raw)
+  if (events.length === 0) return NextResponse.json({ ok: true })
+  // SECURITY (audit finding #11): cap events per batch
+  if (events.length > MAX_EVENTS_PER_BATCH) {
+    console.warn('[bouncie webhook] batch overflow, dropping', { total: events.length })
+    events = events.slice(0, MAX_EVENTS_PER_BATCH)
+  }
+
+  // SECURITY (audit finding #2): replay-attack defense — drop events whose
+  // timestamp is too far from server clock (Stripe-style ±5 min window).
+  const now = Date.now()
+  events = events.filter(e => {
+    const t = new Date(e.occurred_at).getTime()
+    if (isNaN(t)) return false
+    return Math.abs(now - t) <= MAX_TIMESTAMP_SKEW_SEC * 1000
+  })
   if (events.length === 0) return NextResponse.json({ ok: true })
 
   const supabase = createServiceRoleClient()
 
   for (const event of events) {
+    // SECURITY (audit finding #1): device lookup MUST JOIN telematics_connections
+    // with status='active' to prevent cross-tenant IMEI routing.
     const { data: device } = await supabase
       .from('telematics_devices')
-      .select('id, tenant_id, car_id')
+      .select('id, tenant_id, car_id, connection:telematics_connections!inner(id,status)')
       .eq('imei', event.imei)
+      .eq('connection.status', 'active')
       .maybeSingle()
-    if (!device) continue  // tenant not linked yet — ack & drop
+    if (!device) continue  // tenant not linked, or connection not active — ack & drop
 
     const ctx = { tenant_id: device.tenant_id, device_id: device.id, car_id: device.car_id, event }
 
@@ -1925,7 +2032,11 @@ export async function POST(req: NextRequest) {
         await ingestEvent(supabase, ctx)
       }
     } catch (err) {
-      console.error('[bouncie webhook] ingest failure', { imei: event.imei, type: event.type, err })
+      // SECURITY (audit finding #7): never spread the raw err object — it may
+      // include token endpoint response bodies with bearer tokens.
+      console.error('[bouncie webhook] ingest failure', {
+        imei: event.imei, type: event.type, msg: safeErrorMessage(err),
+      })
       // swallow; return 200 so Bouncie doesn't retry the whole batch forever
     }
   }
@@ -1967,7 +2078,8 @@ test('rejects invalid signature', async () => {
 
 test('accepts valid signature and returns 200', async () => {
   process.env.BOUNCIE_WEBHOOK_SECRET = 'sec'
-  const body = JSON.stringify({ eventType: 'ignition-on', imei: '123', timestamp: '2026-04-23T12:00:00Z' })
+  const nowIso = new Date().toISOString()  // fresh timestamp
+  const body = JSON.stringify({ eventType: 'ignition-on', imei: '123', timestamp: nowIso })
   const sig = 'sha256=' + crypto.createHmac('sha256', 'sec').update(body).digest('hex')
   const req = new Request('http://localhost/api/telematics/webhook/bouncie', {
     method: 'POST',
@@ -1977,6 +2089,37 @@ test('accepts valid signature and returns 200', async () => {
   // @ts-expect-error
   const res = await POST(req)
   expect(res.status).toBe(200)
+})
+
+test('rejects stale timestamp (replay defense, finding #2)', async () => {
+  process.env.BOUNCIE_WEBHOOK_SECRET = 'sec'
+  const staleIso = new Date(Date.now() - 10 * 60 * 1000).toISOString() // 10 min ago
+  const body = JSON.stringify({ eventType: 'ignition-on', imei: '123', timestamp: staleIso })
+  const sig = 'sha256=' + crypto.createHmac('sha256', 'sec').update(body).digest('hex')
+  const req = new Request('http://localhost/api/telematics/webhook/bouncie', {
+    method: 'POST',
+    headers: { 'x-bouncie-signature': sig },
+    body,
+  })
+  // @ts-expect-error
+  const res = await POST(req)
+  // Stale events are filtered out → 200 but no writes (we just assert 200 here)
+  expect(res.status).toBe(200)
+})
+
+test('rejects oversized payload (finding #11)', async () => {
+  process.env.BOUNCIE_WEBHOOK_SECRET = 'sec'
+  const req = new Request('http://localhost/api/telematics/webhook/bouncie', {
+    method: 'POST',
+    headers: {
+      'x-bouncie-signature': 'sha256=' + 'a'.repeat(64),
+      'content-length': String(2_000_000),
+    },
+    body: 'x',
+  })
+  // @ts-expect-error
+  const res = await POST(req)
+  expect(res.status).toBe(413)
 })
 ```
 
@@ -2008,69 +2151,90 @@ git commit -m "feat(telematics): HMAC-verified Bouncie webhook receiver + ingest
 // netlify/functions/telematics-sync.ts
 import type { Handler } from '@netlify/functions'
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { getProvider } from '@/lib/telematics/registry'
-import { ingestLocationUpdate } from '@/lib/telematics/ingest'
+import { syncConnection } from '@/lib/telematics/sync'
 
 export const handler: Handler = async () => {
   const supabase = createServiceRoleClient()
-  const provider = getProvider('bouncie')
-
   const { data: conns } = await supabase
-    .from('telematics_connections')
-    .select('*')
-    .eq('status', 'active')
-
+    .from('telematics_connections').select('*').eq('status', 'active')
   for (const c of conns ?? []) {
-    let accessToken = c.access_token as string
-    // Refresh if near expiry
-    if (c.token_expires_at && new Date(c.token_expires_at).getTime() < Date.now() + 60_000) {
-      try {
-        const t = await provider.refreshAccessToken(c.refresh_token)
-        accessToken = t.access_token
-        await supabase.from('telematics_connections').update({
-          access_token: t.access_token, refresh_token: t.refresh_token,
-          token_expires_at: t.expires_at, last_sync_at: new Date().toISOString(),
-        }).eq('id', c.id)
-      } catch {
-        await supabase.from('telematics_connections').update({ status: 'expired' }).eq('id', c.id)
-        await supabase.from('telematics_events').insert({
-          tenant_id: c.tenant_id, event_type: 'connection_expired', severity: 'critical',
-          occurred_at: new Date().toISOString(), payload: { reason: 'refresh_failed' },
-        })
-        continue
-      }
-    }
-
-    // Pull vehicle states and insert position rows for freshly-seen updates
-    try {
-      const vehicles = await provider.listVehicles(accessToken)
-      for (const v of vehicles) {
-        const { data: dev } = await supabase.from('telematics_devices')
-          .select('id, car_id, last_seen_at').eq('tenant_id', c.tenant_id).eq('imei', v.imei).maybeSingle()
-        if (!dev) continue
-        if (v.last_seen_at && (!dev.last_seen_at || v.last_seen_at > dev.last_seen_at)) {
-          if (v.last_lat != null && v.last_lon != null) {
-            await ingestLocationUpdate(supabase, {
-              tenant_id: c.tenant_id,
-              device_id: dev.id,
-              car_id: dev.car_id,
-              event: {
-                type: 'location_update', imei: v.imei, occurred_at: v.last_seen_at,
-                lat: v.last_lat, lon: v.last_lon, speed_mph: null,
-                odometer_mi: v.odometer_mi, payload: {}, provider_event_id: null,
-              },
-            })
-          }
-        }
-      }
-      await supabase.from('telematics_connections').update({ last_sync_at: new Date().toISOString() }).eq('id', c.id)
-    } catch (err) {
-      await supabase.from('telematics_connections')
-        .update({ status: 'error', error_message: String(err).slice(0, 500) })
-        .eq('id', c.id)
-    }
+    await syncConnection(supabase, c)
   }
   return { statusCode: 200, body: 'ok' }
+}
+```
+
+Now write `lib/telematics/sync.ts` with the per-connection function so `syncNowAction` (Task 23) can reuse it scoped to a single tenant (security finding #8):
+
+```typescript
+// lib/telematics/sync.ts
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { getProvider } from './registry'
+import { ingestLocationUpdate } from './ingest'
+import type { TelematicsConnection } from '@/lib/supabase/types'
+
+function safeErr(e: unknown): string {
+  const m = e instanceof Error ? e.message : String(e)
+  return m.replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer [redacted]').slice(0, 500)
+}
+
+export async function syncConnection(
+  supabase: SupabaseClient,
+  c: TelematicsConnection
+): Promise<void> {
+  const provider = getProvider('bouncie')
+  let accessToken = c.access_token ?? ''
+
+  if (c.token_expires_at && new Date(c.token_expires_at).getTime() < Date.now() + 60_000) {
+    try {
+      const t = await provider.refreshAccessToken(c.refresh_token ?? '')
+      accessToken = t.access_token
+      await supabase.from('telematics_connections').update({
+        access_token: t.access_token, refresh_token: t.refresh_token,
+        token_expires_at: t.expires_at, last_sync_at: new Date().toISOString(),
+      }).eq('id', c.id)
+    } catch (err) {
+      await supabase.from('telematics_connections')
+        .update({ status: 'expired', error_message: safeErr(err) })
+        .eq('id', c.id)
+      await supabase.from('telematics_events').insert({
+        tenant_id: c.tenant_id, event_type: 'connection_expired', severity: 'critical',
+        occurred_at: new Date().toISOString(), payload: { reason: 'refresh_failed' },
+      })
+      return
+    }
+  }
+
+  try {
+    const vehicles = await provider.listVehicles(accessToken)
+    for (const v of vehicles) {
+      const { data: dev } = await supabase.from('telematics_devices')
+        .select('id, car_id, last_seen_at')
+        .eq('tenant_id', c.tenant_id).eq('imei', v.imei).maybeSingle()
+      if (!dev) continue
+      if (v.last_seen_at && (!dev.last_seen_at || v.last_seen_at > dev.last_seen_at)) {
+        if (v.last_lat != null && v.last_lon != null) {
+          await ingestLocationUpdate(supabase, {
+            tenant_id: c.tenant_id,
+            device_id: dev.id,
+            car_id: dev.car_id,
+            event: {
+              type: 'location_update', imei: v.imei, occurred_at: v.last_seen_at,
+              lat: v.last_lat, lon: v.last_lon, speed_mph: null,
+              odometer_mi: v.odometer_mi, payload: {}, provider_event_id: null,
+            },
+          })
+        }
+      }
+    }
+    await supabase.from('telematics_connections')
+      .update({ last_sync_at: new Date().toISOString(), error_message: null })
+      .eq('id', c.id)
+  } catch (err) {
+    await supabase.from('telematics_connections')
+      .update({ status: 'error', error_message: safeErr(err) })
+      .eq('id', c.id)
+  }
 }
 ```
 
@@ -2326,12 +2490,32 @@ export default async function BouncieIntegrationPage({ searchParams }: { searchP
 import { revalidatePath } from 'next/cache'
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { getProvider } from '@/lib/telematics/registry'
+import { syncConnection } from '@/lib/telematics/sync'
+import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
 
+// SECURITY (audit finding #8): this action MUST sync only the caller's own
+// tenant connection. Never invoke the cron handler (which iterates all tenants).
 export async function syncNowAction() {
-  // Trigger one-off pull — reuse the cron handler internally
-  const { handler } = await import('@/netlify/functions/telematics-sync')
-  // @ts-expect-error: Netlify handler signature differs slightly
-  await handler({}, {})
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  const { data: userTenant } = await supabase
+    .from('user_tenants').select('tenant_id').eq('user_id', user.id).single()
+  const tenantId = userTenant?.tenant_id
+  if (!tenantId) return
+  // Gate at action level too (finding #3 defense in depth)
+  if (!(await isFeatureEnabled(tenantId, 'bouncie_telematics'))) return
+
+  const service = createServiceRoleClient()
+  const { data: conn } = await service
+    .from('telematics_connections')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('provider', 'bouncie')
+    .eq('status', 'active')
+    .maybeSingle()
+  if (!conn) return
+  await syncConnection(service, conn)
   revalidatePath('/dashboard/integrations/bouncie')
 }
 
@@ -2453,6 +2637,56 @@ Because these are largely boilerplate following the spec's §6 layouts and estab
 - **Task 27 — Devices** (`app/(dashboard)/dashboard/telematics/devices/page.tsx`): loads `telematics_devices` + tenant cars, renders table with `<DeviceRow/>` per row. Server action `linkDeviceAction(deviceId, carId)` writes `telematics_devices.car_id` and `cars.telematics_device_id`.
 
 - **Task 28 — Geofences** (`app/(dashboard)/dashboard/telematics/geofences/page.tsx`): loads all `telematics_geofences` for tenant, renders `<GeofenceEditor/>` (client component with leaflet-draw). Server actions `saveGeofenceAction(payload)` and `deleteGeofenceAction(id)`.
+
+  **SECURITY (audit finding #4):** `saveGeofenceAction` MUST validate input with Zod BEFORE any DB write. Malformed or huge polygons would crash `@turf/boolean-point-in-polygon` or cause DoS on every `location_update` webhook. Include this validation verbatim:
+
+  ```typescript
+  // app/(dashboard)/dashboard/telematics/geofences/actions.ts
+  'use server'
+  import { z } from 'zod'
+  import { createClient } from '@/lib/supabase/server'
+
+  const polygonSchema = z.object({
+    type: z.literal('Polygon'),
+    coordinates: z.array(
+      z.array(z.tuple([z.number().finite(), z.number().finite()]))
+        .min(4)      // polygon ring needs ≥4 points (first == last)
+        .max(101)    // cap at 100 vertices (+1 for the closing point)
+    ).min(1).max(5), // at most 5 rings (1 outer + 4 holes)
+  })
+
+  const geofenceInputSchema = z.object({
+    id: z.string().uuid().optional(),
+    name: z.string().min(1).max(80),
+    kind: z.enum(['allowed', 'forbidden']),
+    polygon: polygonSchema,
+    applies_to: z.enum(['all', 'specific']),
+    car_ids: z.array(z.number().int().positive()).max(500).default([]),
+    speed_limit_mph: z.number().int().min(1).max(200).nullable(),
+    active: z.boolean().default(true),
+  })
+
+  export async function saveGeofenceAction(input: unknown) {
+    const parsed = geofenceInputSchema.safeParse(input)
+    if (!parsed.success) {
+      return { ok: false, error: 'Invalid geofence input' }
+    }
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { ok: false, error: 'unauthorized' }
+    const { data: userTenant } = await supabase
+      .from('user_tenants').select('tenant_id').eq('user_id', user.id).single()
+    if (!userTenant?.tenant_id) return { ok: false, error: 'no tenant' }
+
+    // RLS enforces tenant isolation on write (with check)
+    const { error } = await supabase.from('telematics_geofences').upsert({
+      ...parsed.data,
+      tenant_id: userTenant.tenant_id,
+    }, { onConflict: 'id' })
+    if (error) return { ok: false, error: 'db error' }
+    return { ok: true }
+  }
+  ```
 
 - **Task 29 — Trips** (`app/(dashboard)/dashboard/telematics/trips/page.tsx`): loads trips + cars, renders filter bar + table. Row click opens `<TripDetailModal/>` which fetches positions for the trip's time window via a server action and renders the polyline on a mini map. CSV export button triggers a server action that returns a CSV stream.
 

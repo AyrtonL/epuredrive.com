@@ -147,9 +147,11 @@ All DTOs (`ProviderVehicle`, `ProviderTrip`, `ProviderEvent`, `OAuthTokens`) are
 
 ```
 /dashboard/integrations/bouncie → "Connect Bouncie"
-  → server action: generate signed-cookie nonce `state`, build authorization URL
+  → server action: check isFeatureEnabled(tenantId, 'bouncie_telematics')  ← gating at API level
+  → generate signed-cookie nonce `state`, build authorization URL
   → 302 to Bouncie authorize
   → user approves → Bouncie redirects to /api/telematics/oauth/callback?code=&state=
+  → verify feature flag again (defense in depth)
   → verify state matches cookie
   → provider.exchangeCodeForToken(code, redirectUri)
   → upsert telematics_connections (tenant_id)
@@ -157,26 +159,43 @@ All DTOs (`ProviderVehicle`, `ProviderTrip`, `ProviderEvent`, `OAuthTokens`) are
   → redirect to /dashboard/telematics/devices
 ```
 
+**Gating at API level (NOT only in middleware):** both `/api/telematics/oauth/start` and `/api/telematics/oauth/callback` call `isFeatureEnabled(tenantId, 'bouncie_telematics')` and return 403/redirect-to-billing if false. Middleware gating `/dashboard/*` is insufficient because API routes are excluded from the middleware matcher.
+
+**Error-path hygiene in callback:**
+  - Any failure (invalid state, token exchange error, user not auth'd, feature flag off) redirects to a single generic URL `/dashboard/integrations/bouncie?error=auth_failed`. Do NOT expose distinct error codes to the client (prevents CSRF-probe fingerprinting).
+  - The `bouncie_oauth_state` cookie is deleted unconditionally at the start of the callback (both success and failure) so the nonce is single-use.
+  - Detailed failure reason is logged server-side only.
+
 **Disconnect** — button in Integrations/Bouncie:
   - `provider.revokeToken(access_token)`
-  - `UPDATE telematics_connections SET status='disconnected'`
+  - `UPDATE telematics_connections SET status='disconnected', access_token=null, refresh_token=null`
   - Devices and historical data preserved (so mileage history isn't lost).
 
-**Token refresh** — before every outbound Bouncie API call: if `token_expires_at < now() + 60s`, call `refreshAccessToken`, store new tokens. If refresh fails, set `status='expired'` and emit `connection_expired` event.
+**Token refresh** — before every outbound Bouncie API call: if `token_expires_at < now() + 60s`, call `refreshAccessToken`, store new tokens. If refresh fails, set `status='expired'` and emit `connection_expired` event. **Never log the raw HTTP response body** from the token endpoint — it contains the bearer tokens.
 
 ### 5.3 Webhook handler — `POST /api/telematics/webhook/bouncie`
 
-1. Read `rawBody` as text (HMAC requires byte-exact input).
-2. `provider.verifyWebhookSignature(rawBody, req.headers.get('x-bouncie-signature'))` — on failure return 401.
-3. `provider.parseWebhookPayload(rawBody)` → `ProviderEvent[]`.
-4. For each event:
-   - Resolve `{ tenant_id, car_id }` from `telematics_devices.imei` (service role, bypasses RLS).
-   - If device not found, log and ack 200 (tenant hasn't linked yet).
+1. **Body size guard** — reject `content-length > 1 MiB` with 413 before reading.
+2. Read `rawBody` as text (HMAC requires byte-exact input).
+3. `provider.verifyWebhookSignature(rawBody, req.headers.get('x-bouncie-signature'))` — on failure return 401.
+4. `provider.parseWebhookPayload(rawBody)` → `ProviderEvent[]`. Cap at 100 events per batch; drop overflow with a warn log.
+5. **Timestamp freshness** — reject each event whose `occurred_at` is more than 300 s from server clock in either direction (replay-attack defense, matches the Stripe webhook 5-min window already used in this codebase).
+6. For each event:
+   - **Device lookup MUST JOIN `telematics_connections` with status='active'** — this prevents a malicious or stale IMEI from routing data to the wrong tenant even if UNIQUE(tenant_id, imei) would theoretically allow two tenants to register the same IMEI:
+     ```sql
+     SELECT td.id, td.tenant_id, td.car_id
+     FROM telematics_devices td
+     JOIN telematics_connections tc ON tc.id = td.connection_id
+     WHERE td.imei = $1 AND tc.status = 'active'
+     LIMIT 1
+     ```
+   - If no device matched, log and ack 200 (tenant hasn't linked yet, or connection inactive).
    - Dispatch by `event.type`:
-     - `location_update` → INSERT `telematics_positions` + UPDATE `cars.{mileage, last_lat, last_lon, last_seen_at}` (mileage monotonic max).
+     - `location_update` → INSERT `telematics_positions` + UPDATE `cars.{mileage, last_lat, last_lon, last_seen_at}` (mileage monotonic max, enforced by DB trigger).
      - `trip_end` → INSERT `telematics_trips` (dedup on `bouncie_trip_id`); attempt reservation match by `tenant_id + car_id + started_at` inside pickup/return window → set `reservation_id`.
      - `geofence_enter/exit`, `speed_exceeded`, `hard_braking`, `hard_accel`, `battery_low`, `dtc_new/cleared`, `offline/online` → INSERT `telematics_events` → `alerts.dispatch(event)`.
-5. Return 200 within ~1s. If p95 exceeds 2s in production, migrate heavy work to a Supabase Edge Function queue.
+7. **Log safety** — any caught exception is logged as `{ imei, event_type, message }` only; never spread the raw error object (which may include tokens from a failed refresh). Helper: `safeErrorMessage(err)` strips URLs and bearer tokens.
+8. Return 200 within ~1s. If p95 exceeds 2s in production, migrate heavy work to a Supabase Edge Function queue.
 
 ### 5.4 Pull backfill (cron every 5 min)
 
@@ -255,7 +274,15 @@ Both the group and the Bouncie item are hidden when `featureFlags['bouncie_telem
 - Left panel: list of geofences (name, kind, applies-to summary, active toggle).
 - Right: Leaflet map with `leaflet-draw` tools; selected geofence polygon is editable.
 - Form: name, kind (allowed/forbidden), applies-to (all / specific cars with picker), speed_limit_mph (optional), active.
-- Save → upsert `telematics_geofences` with GeoJSON polygon.
+- Save server action **MUST validate** the submitted polygon with a Zod schema before upserting:
+  ```
+  polygon: {
+    type: 'Polygon',
+    coordinates: [[[lon, lat], ...]]   // at least 1 ring, each ring ≤ 100 vertices
+  }
+  ```
+  Reject malformed input with 400; a 10k-vertex polygon would DoS every `location_update` event (O(n) point-in-polygon per active geofence per tenant). This cap is also enforced client-side in `leaflet-draw` as a UI hint, but server-side is authoritative.
+- Upsert into `telematics_geofences` with GeoJSON polygon.
 
 ### 6.6 Devices — `/dashboard/telematics/devices`
 
@@ -310,6 +337,8 @@ Severity matrix (MVP):
 | `battery_low` (<12V) | warning | ✓ | opt-in |
 | `offline` (>6h) | warning | ✓ | — |
 | `connection_expired` (OAuth refresh failed) | critical | ✓ | ✓ |
+
+**Authoritative geofence kind — MUST come from DB, not webhook payload.** When classifying a `geofence_exit` or `geofence_enter` event, resolve `kind` (`allowed` vs `forbidden`) by looking up `telematics_geofences.id = event.payload.geofence_id` for the tenant. Do NOT trust `event.payload.geofence_kind` or any other payload field, because the webhook payload is attacker-influenceable (e.g., via replay with a modified body that happens to match a different signature vector). The DB row is tenant-controlled and authoritative.
 
 Email opt-ins managed in `/dashboard/settings/notifications` (existing page — new "Telematics" section added).
 
@@ -428,7 +457,51 @@ e2e/
 - `app/(dashboard)/dashboard/settings/notifications/*` — add Telematics opt-in section.
 - `.env.local` + Netlify env vars — add Bouncie secrets.
 
-## 13. Open questions / follow-ups (post-implementation)
+## 13. Security hardening (applied pre-implementation)
+
+Consolidated security requirements — the implementation plan enforces these as explicit test cases and code comments. All items here were surfaced by a pre-implementation security audit on 2026-04-23 and MUST be honored.
+
+### 13.1 Webhook hardening
+- **HMAC verification before any parsing** (Bouncie-shared secret from `BOUNCIE_WEBHOOK_SECRET`, SHA-256, constant-time `timingSafeEqual`, strict hex-length regex `^[0-9a-f]{64}$` pre-check).
+- **Timestamp freshness check** — reject events older than 300 s or in the future (matches the project's existing Stripe webhook policy).
+- **Body size cap** — reject `content-length > 1 MiB` with 413.
+- **Batch cap** — drop events beyond the first 100 in a single payload.
+- **Device lookup JOINS `telematics_connections` with status='active'** to prevent cross-tenant IMEI routing.
+- **Error logging sanitized** — never log raw error objects from Bouncie API calls (may contain tokens). Use `safeErrorMessage(err)` helper.
+
+### 13.2 OAuth hardening
+- Both `/api/telematics/oauth/start` and `/api/telematics/oauth/callback` check `isFeatureEnabled(tenantId, 'bouncie_telematics')` and reject at API level — middleware gating is insufficient because API routes are not under `/dashboard/*`.
+- State nonce = `crypto.randomBytes(16).toString('hex')`, stored in `httpOnly + secure + sameSite=lax` cookie with 600 s TTL.
+- Callback error path always deletes the state cookie and redirects with a single generic `?error=auth_failed` — never exposes specific error codes to the client.
+- Token endpoint response bodies are never logged (would include bearer tokens).
+
+### 13.3 Geofence input validation
+- Server action validates polygon with Zod before upsert.
+- Polygon schema: `{ type: 'Polygon', coordinates: [[[lon, lat], ...]] }`, minimum 1 ring, each ring ≤ 100 vertices.
+- Invalid input → 400, no DB write.
+
+### 13.4 Authoritative severity resolution
+- Geofence severity (critical for `forbidden` zones) is resolved from `telematics_geofences.kind` in the DB at alert-dispatch time, NOT from the webhook payload.
+
+### 13.5 Tenant-scoped actions
+- `syncNowAction` in `/dashboard/integrations/bouncie/actions.ts` MUST sync only the calling user's tenant connection. It never invokes the cron handler directly (which iterates all tenants).
+
+### 13.6 RLS posture
+- `telematics_positions` and `telematics_trips` expose **only SELECT** policies to user-auth clients. All writes are service-role (webhook + cron). A comment in the migration file explicitly warns against adding INSERT policies in future PRs — doing so would be a security regression.
+
+### 13.7 Data retention & deletion
+- 90-day position prune is automated (daily Netlify cron).
+- Tenant account deletion must trigger a **hard delete** of the `telematics_connections` row (not merely `status='disconnected'`) to cascade-delete all downstream PII (`telematics_devices`, `telematics_positions`, `telematics_trips`, `telematics_events`).
+- Telematics data is PII under GDPR/CCPA — if a tenant or an end-customer invokes a deletion right, the cascade chain above MUST be exercised.
+
+### 13.8 Secret rotation runbook
+- `BOUNCIE_WEBHOOK_SECRET` rotation: (1) generate new secret, (2) set `BOUNCIE_WEBHOOK_SECRET_PREV` in env to old value, (3) `verifyWebhookSignature` accepts either secret during the transition, (4) update Bouncie's webhook config, (5) remove `BOUNCIE_WEBHOOK_SECRET_PREV` after 24 h.
+- OAuth app credentials (`BOUNCIE_CLIENT_ID` / `BOUNCIE_CLIENT_SECRET`): rotation requires Bouncie app re-issue; notify tenants that re-authentication is required.
+
+### 13.9 At-rest token storage
+- OAuth tokens in `telematics_connections` are encrypted at rest by Supabase's default encryption. Column-level pgcrypto encryption is a tracked Post-MVP backlog item — not blocking MVP ship.
+
+## 14. Open questions / follow-ups (post-implementation)
 
 - Is there a reliable Bouncie sandbox environment for integration tests? If not, we need fixture-based tests.
 - What's the billing model if a tenant's Bouncie subscription lapses on Bouncie's side (we can't detect it directly — API returns 401)? Current plan: mark connection `status='expired'`, surface in UI; tenant resolves on Bouncie's side + reconnects.
