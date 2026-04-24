@@ -79,6 +79,9 @@
 [functions.telematics-sync]
   schedule = "*/5 * * * *"
 
+[functions.telematics-positions-prune]
+  schedule = "0 3 * * *"
+
 # Edge Functions
 [[edge_functions]]
   function = "playwright-bypass"
