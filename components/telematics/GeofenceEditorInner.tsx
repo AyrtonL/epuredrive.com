@@ -14,7 +14,7 @@
 //     with a closing vertex equal to the first vertex — matching our
 //     TelematicsGeofence shape.
 import { useEffect, useMemo, useRef } from 'react'
-import { MapContainer, TileLayer } from 'react-leaflet'
+import { MapContainer, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet-draw/dist/leaflet.draw.css'
@@ -81,7 +81,7 @@ function DrawControl({
   // react-leaflet-draw packages are laggy behind react-leaflet's current
   // versions, and pulling a plain Leaflet control in is simpler and more
   // robust.
-  const mapInstance = useLeafletMap()
+  const mapInstance = useMap()
   const featureGroupRef = useRef<L.FeatureGroup | null>(null)
   const onChangeRef = useRef(onChange)
 
@@ -173,15 +173,6 @@ function DrawControl({
   }, [mapInstance])
 
   return null
-}
-
-// Tiny shim so DrawControl can `useMap()` without importing from react-leaflet
-// at module top level (keeps the file tree-shakable on SSR bundles).
-function useLeafletMap(): L.Map | null {
-  // dynamic import to avoid loading react-leaflet at SSR
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { useMap } = require('react-leaflet') as typeof import('react-leaflet')
-  return useMap()
 }
 
 export default function GeofenceEditorInner({ polygon, onChange }: Props) {
