@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from './server'
 
 /**
@@ -68,4 +69,34 @@ export async function getFeatureFlags(
   }
 
   return result
+}
+
+/**
+ * Upsert a per-tenant feature flag override. Pass an already-authenticated
+ * SupabaseClient (admin or server) so this helper stays decoupled from the
+ * auth context — the Stripe webhook calls it with the service-role client.
+ *
+ * Uses `onConflict: 'flag_key,tenant_id'` to match the composite unique
+ * index on `tenant_feature_flags`.
+ */
+export async function setTenantFlag(
+  supabase: SupabaseClient,
+  tenantId: string,
+  flagKey: string,
+  enabled: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from('tenant_feature_flags')
+    .upsert(
+      { tenant_id: tenantId, flag_key: flagKey, enabled },
+      { onConflict: 'flag_key,tenant_id' },
+    )
+  if (error) {
+    // Don't throw — the caller (e.g. the Stripe webhook) must still return
+    // 200 to Stripe even if flag persistence hiccups; log a sanitized note.
+    console.warn(
+      '[feature-flags] setTenantFlag failed',
+      error.message,
+    )
+  }
 }

@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import crypto from 'crypto'
 import { sendEmail } from '@/lib/email/resend'
+import { setTenantFlag } from '@/lib/supabase/feature-flags'
 import { createInAppNotification } from '@/lib/notifications/create'
 import {
   subscriptionActivatedEmail,
@@ -71,6 +72,14 @@ export async function POST(request: Request) {
     await supabase.from('tenants').update(patch).eq('id', tenantId)
   }
 
+  // Telematics (Bouncie) is a Pro/Max feature. Flip tenant_feature_flags
+  // whenever a plan change lands so the sidebar + middleware show/hide
+  // the Telematics section without manual admin intervention.
+  async function syncTelematicsFlag(tenantId: string, plan: string) {
+    const enabled = plan === 'pro' || plan === 'max'
+    await setTenantFlag(supabase, tenantId, 'bouncie_telematics', enabled)
+  }
+
   async function getOperatorEmailsForTenant(tenantId: string): Promise<string[]> {
     const { data: profiles } = await supabase
       .from('profiles')
@@ -113,6 +122,7 @@ export async function POST(request: Request) {
         stripe_customer_id: session.customer,
         stripe_subscription_id: session.subscription,
       })
+      await syncTelematicsFlag(tenantId, plan)
       // Send subscription activated email
       const emails = await getOperatorEmailsForTenant(tenantId)
       const tenantName = await getTenantName(tenantId)
@@ -143,6 +153,7 @@ export async function POST(request: Request) {
       const priceId: string | undefined = sub.items?.data?.[0]?.price?.id
       const plan = resolvePlan(priceId, sub.metadata?.plan)
       await patchTenant(tenantId, { plan, plan_limit_warning_last_count: null })
+      await syncTelematicsFlag(tenantId, plan)
       // Send subscription changed email
       const emailsUpd = await getOperatorEmailsForTenant(tenantId)
       const nameUpd = await getTenantName(tenantId)
@@ -169,6 +180,8 @@ export async function POST(request: Request) {
       const priceId: string | undefined = sub.items?.data?.[0]?.price?.id
       const plan = resolvePlan(priceId, sub.metadata?.plan)
       await patchTenant(tenantId, { plan: 'free' })
+      // plan is 'free' here — disables bouncie_telematics per Starter/downgrade rule.
+      await syncTelematicsFlag(tenantId, 'free')
       // Send subscription cancelled email
       const emailsDel = await getOperatorEmailsForTenant(tenantId)
       const nameDel = await getTenantName(tenantId)
