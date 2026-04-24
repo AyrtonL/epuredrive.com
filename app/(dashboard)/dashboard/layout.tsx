@@ -1,12 +1,22 @@
 // app/dashboard/layout.tsx
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { getFeatureFlags } from '@/lib/supabase/feature-flags'
 import Sidebar from '@/components/dashboard/Sidebar'
 import HelpButton from '@/components/dashboard/HelpButton'
 import SignUpCompleteTracker from '@/components/analytics/SignUpCompleteTracker'
 import { notifyInviterOnFirstLogin } from '@/lib/team/invite-notifier'
+
+// Routes gated by the `bouncie_telematics` feature flag. When the flag is off
+// for the tenant, access is redirected to billing with an upgrade banner.
+function isTelematicsGatedPath(pathname: string): boolean {
+  return (
+    pathname.startsWith('/dashboard/telematics') ||
+    pathname === '/dashboard/integrations/bouncie'
+  )
+}
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -50,6 +60,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
     tenantName = tenant?.brand_name || tenant?.name || null
     tenantLogoUrl = tenant?.logo_url || null
     featureFlags = flags
+
+    // Gate telematics + Bouncie integration routes behind feature flag.
+    // Middleware already forwards the request path via x-pathname so we
+    // can branch server-side without touching edge auth.
+    const hdrs = headers()
+    const pathname = hdrs.get('x-pathname') ?? ''
+    if (isTelematicsGatedPath(pathname) && !featureFlags['bouncie_telematics']) {
+      redirect('/dashboard/settings/billing?upgrade=telematics')
+    }
   }
 
   return (

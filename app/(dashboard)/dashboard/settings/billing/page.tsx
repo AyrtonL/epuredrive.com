@@ -9,7 +9,7 @@ import InvoiceHistory from './InvoiceHistory'
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string; cancelled?: string }>
+  searchParams: Promise<{ success?: string; cancelled?: string; upgrade?: string }>
 }) {
   const params = await searchParams
   const { supabase, tenantId } = await requireTenantId()
@@ -62,6 +62,11 @@ export default async function BillingPage({
       {params.cancelled && (
         <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-2xl text-sm">
           Checkout was cancelled. No changes were made to your plan.
+        </div>
+      )}
+      {params.upgrade === 'telematics' && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-2xl text-sm">
+          Telematics is available on Pro and Max plans. Upgrade to enable live tracking, alerts, and auto mileage sync.
         </div>
       )}
 
