@@ -45,20 +45,20 @@ const SCREEN_LABELS: Record<Lang, { bookings: string; dashboard: string; fleet: 
 function getScreens(lang: Lang) {
   const l = SCREEN_LABELS[lang]
   return [
-    { src: '/assets/screenshots/dash-bookings.png', alt: 'Bookings dashboard', label: l.bookings, url: 'app.epuredrive.com' },
-    { src: '/assets/screenshots/dash-main.png', alt: 'Main dashboard', label: l.dashboard, url: 'app.epuredrive.com' },
-    { src: '/assets/screenshots/dash-fleet.png', alt: 'Fleet dashboard', label: l.fleet, url: 'app.epuredrive.com' },
+    { src: '/assets/screenshots/dash-bookings.webp', alt: 'Bookings dashboard', label: l.bookings, url: 'app.epuredrive.com' },
+    { src: '/assets/screenshots/dash-main.webp', alt: 'Main dashboard', label: l.dashboard, url: 'app.epuredrive.com' },
+    { src: '/assets/screenshots/dash-fleet.webp', alt: 'Fleet dashboard', label: l.fleet, url: 'app.epuredrive.com' },
   ]
 }
 
 function getMoreScreens(lang: Lang) {
   const l = SCREEN_LABELS[lang]
   return [
-    { src: '/assets/screenshots/dash-calendar.png', alt: 'Visual calendar with all reservations', label: l.calendar },
-    { src: '/assets/screenshots/dash-roi.png', alt: 'Revenue and ROI analysis per vehicle', label: l.roi },
-    { src: '/assets/screenshots/dash-taxes.png', alt: 'Tax management and reporting', label: l.taxes },
-    { src: '/assets/screenshots/dash-payments.png', alt: 'Payment processing and transactions', label: l.payments },
-    { src: '/assets/screenshots/dash-quickbooks.png', alt: 'QuickBooks integration for accounting', label: l.quickbooks },
+    { src: '/assets/screenshots/dash-calendar.webp', alt: 'Visual calendar with all reservations', label: l.calendar },
+    { src: '/assets/screenshots/dash-roi.webp', alt: 'Revenue and ROI analysis per vehicle', label: l.roi },
+    { src: '/assets/screenshots/dash-taxes.webp', alt: 'Tax management and reporting', label: l.taxes },
+    { src: '/assets/screenshots/dash-payments.webp', alt: 'Payment processing and transactions', label: l.payments },
+    { src: '/assets/screenshots/dash-quickbooks.webp', alt: 'QuickBooks integration for accounting', label: l.quickbooks },
   ]
 }
 

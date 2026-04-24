@@ -1,14 +1,18 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
+import JsonLd from '@/components/JsonLd'
+import { buildBreadcrumbSchema } from '@/lib/utils/jsonld'
+
+const SEO_TITLE = 'Features — Car Rental Management Software | éPure Drive'
 
 export const metadata: Metadata = {
-  title: 'Features — Car Rental Management Software | éPure Drive',
+  title: { absolute: SEO_TITLE },
   description:
     'Fleet management, online bookings, branded fleet pages, digital agreements, Stripe & Square payments, QuickBooks sync, tax management, team roles, and financial reporting — all in one platform for car rental businesses.',
   alternates: { canonical: 'https://epuredrive.com/features' },
   openGraph: {
-    title: 'Features — Car Rental Management Software | éPure Drive',
+    title: SEO_TITLE,
     description:
       'Everything car rental operators need to manage their fleet, accept bookings, track finances, and grow their business.',
     url: 'https://epuredrive.com/features',
@@ -85,7 +89,7 @@ const DETAILED_SECTIONS = [
       { name: 'Vehicle Status', detail: 'Mark cars active or inactive. Inactive vehicles are hidden from your public fleet page.' },
       { name: 'Photo Gallery', detail: 'Upload up to 10 photos per vehicle with drag-and-drop. Customers see a polished gallery.' },
     ],
-    screenshot: '/assets/screenshots/dash-bookings.png',
+    screenshot: '/assets/screenshots/dash-bookings.webp',
     alt: 'Operations dashboard showing bookings and calendar',
   },
   {
@@ -102,7 +106,7 @@ const DETAILED_SECTIONS = [
       { name: 'Payments (Stripe + Square)', detail: 'Choose your payment processor. View transaction history and manage payouts from either platform.' },
       { name: 'QuickBooks Sync', detail: 'Connect QuickBooks Online to automatically sync transactions and keep your books up to date.' },
     ],
-    screenshot: '/assets/screenshots/dash-taxes.png',
+    screenshot: '/assets/screenshots/dash-taxes.webp',
     alt: 'Financial reports, tax management, and fleet performance dashboard',
   },
   {
@@ -117,7 +121,7 @@ const DETAILED_SECTIONS = [
       { name: 'Digital Agreement', detail: 'Send a signing link via email. Customer signs on any device. PDF stored automatically.' },
       { name: 'Email Notifications', detail: 'Automated confirmation and notification emails to both customer and operator on every booking.' },
     ],
-    screenshot: '/assets/screenshots/site-fleet.png',
+    screenshot: '/assets/screenshots/site-fleet.webp',
     alt: 'Customer-facing branded fleet page with booking widget',
   },
 ]
@@ -305,6 +309,13 @@ export default function FeaturesPage() {
           </div>
         </div>
       </section>
+
+      <JsonLd
+        schema={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://epuredrive.com' },
+          { name: 'Features', url: 'https://epuredrive.com/features' },
+        ])}
+      />
     </>
   )
 }

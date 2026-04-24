@@ -1,13 +1,15 @@
 import type { Metadata } from 'next'
 import JsonLd from '@/components/JsonLd'
-import { buildFAQPageSchema } from '@/lib/utils/jsonld'
+import { buildFAQPageSchema, buildBreadcrumbSchema } from '@/lib/utils/jsonld'
+
+const SEO_TITLE = 'FAQ — Frequently Asked Questions | éPure Drive'
 
 export const metadata: Metadata = {
-  title: 'FAQ — Frequently Asked Questions',
+  title: { absolute: SEO_TITLE },
   description: 'Answers to common questions about éPure Drive, fleet management, pricing, and getting started.',
   alternates: { canonical: 'https://epuredrive.com/faq' },
   openGraph: {
-    title: 'FAQ — Frequently Asked Questions | éPure Drive',
+    title: SEO_TITLE,
     description: 'Answers to common questions about éPure Drive, fleet management, pricing, and getting started.',
     url: 'https://epuredrive.com/faq',
   },
@@ -152,6 +154,12 @@ export default function FAQPage() {
         ))}
       </div>
       <JsonLd schema={buildFAQPageSchema(allFaqItems)} />
+      <JsonLd
+        schema={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://epuredrive.com' },
+          { name: 'FAQ', url: 'https://epuredrive.com/faq' },
+        ])}
+      />
     </div>
   )
 }

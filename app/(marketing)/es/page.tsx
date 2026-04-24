@@ -13,7 +13,39 @@ import {
   buildOrganizationSchema,
   buildWebSiteSchema,
   buildSoftwareApplicationSchema,
+  buildPricingPlanSchema,
+  buildVideoObjectSchema,
 } from '@/lib/utils/jsonld'
+
+const PRICING_PLANS_ES = [
+  {
+    name: 'Starter',
+    price: 0,
+    billingPeriod: 'month' as const,
+    description:
+      'Plan gratis para siempre — hasta 5 vehículos, sitio de reservas con tu marca en subdominio {slug}.epuredrive.com, calendario de disponibilidad en vivo y gestión completa de reservas.',
+    features: ['Hasta 5 vehículos', 'Página de flota con tu marca', 'Gestión de reservas'],
+    url: 'https://epuredrive.com/sign-up',
+  },
+  {
+    name: 'Pro',
+    price: 19,
+    billingPeriod: 'month' as const,
+    description:
+      'Hasta 25 vehículos, personalización completa de marca, pagos online con Stripe y Square, gestión de impuestos y miembros de equipo ilimitados.',
+    features: ['Hasta 25 vehículos', 'Pagos online', 'Reportes fiscales'],
+    url: 'https://epuredrive.com/sign-up?plan=pro',
+  },
+  {
+    name: 'Max',
+    price: 39,
+    billingPeriod: 'month' as const,
+    description:
+      'Hasta 60 vehículos, 0% de comisión en pagos online, sincronización con QuickBooks, acceso a API y soporte prioritario.',
+    features: ['Hasta 60 vehículos', 'Sincronización con QuickBooks', 'Acceso a API'],
+    url: 'https://epuredrive.com/sign-up?plan=max',
+  },
+]
 
 const SEO_TITLE = 'Software para Rent a Car — Tu sitio de reservas en minutos | éPure Drive'
 const SEO_DESCRIPTION =
@@ -70,7 +102,7 @@ const SPLIT_FEATURES = [
     description:
       'Lanzá un sitio profesional de alquiler que muestre tus vehículos — con disponibilidad en tiempo real, precios y tu marca. Sin código, sin desarrollador, sin esperas.',
     bullets: ['Subdominio personalizado incluido', 'Calendario de disponibilidad en vivo', 'Sincroniza con tu inventario'],
-    screenshot: '/assets/screenshots/site-fleet.png',
+    screenshot: '/assets/screenshots/site-fleet.webp',
     alt: 'Sitio público del tenant',
   },
   {
@@ -83,7 +115,7 @@ const SPLIT_FEATURES = [
     description:
       'Llevá todas tus rentas en un solo lugar — quién reservó, qué vehículo, fechas, montos y estado. Las confirmaciones automáticas mantienen informados a tus clientes sin que muevas un dedo.',
     bullets: ['Sincronización con Turo e iCal', 'Confirmaciones automáticas', 'Ficha de cliente por reserva'],
-    screenshot: '/assets/screenshots/dash-bookings.png',
+    screenshot: '/assets/screenshots/dash-bookings.webp',
     alt: 'Panel de reservas',
   },
 ]
@@ -514,6 +546,22 @@ export default function HomePageEs() {
       <JsonLd schema={buildOrganizationSchema()} />
       <JsonLd schema={buildWebSiteSchema()} />
       <JsonLd schema={buildSoftwareApplicationSchema()} />
+      {PRICING_PLANS_ES.map((plan) => (
+        <JsonLd key={plan.name} schema={buildPricingPlanSchema(plan)} />
+      ))}
+      {DEMO_VIDEO_URL && (
+        <JsonLd
+          schema={buildVideoObjectSchema({
+            name: 'éPure Drive — demo del producto en 2 minutos',
+            description:
+              'Mirá cómo lanzar tu sitio de reservas de alquiler con tu marca, aceptar pagos online y manejar tu flota desde un panel en 2 minutos.',
+            thumbnailUrl: 'https://epuredrive.com/og-image.jpg',
+            uploadDate: '2026-04-20',
+            embedUrl: DEMO_VIDEO_URL,
+            duration: 'PT2M',
+          })}
+        />
+      )}
     </>
   )
 }

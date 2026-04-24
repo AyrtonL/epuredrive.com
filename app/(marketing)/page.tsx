@@ -14,7 +14,39 @@ import {
   buildOrganizationSchema,
   buildWebSiteSchema,
   buildSoftwareApplicationSchema,
+  buildPricingPlanSchema,
+  buildVideoObjectSchema,
 } from '@/lib/utils/jsonld'
+
+const PRICING_PLANS = [
+  {
+    name: 'Starter',
+    price: 0,
+    billingPeriod: 'month' as const,
+    description:
+      'Free forever plan — up to 5 vehicles, branded booking site on a {slug}.epuredrive.com subdomain, live availability calendar, and full booking management.',
+    features: ['Up to 5 vehicles', 'Branded fleet page', 'Booking management'],
+    url: 'https://epuredrive.com/sign-up',
+  },
+  {
+    name: 'Pro',
+    price: 19,
+    billingPeriod: 'month' as const,
+    description:
+      'Up to 25 vehicles, full brand customization, online payments via Stripe and Square, tax management, and unlimited team members.',
+    features: ['Up to 25 vehicles', 'Online payments', 'Tax reports'],
+    url: 'https://epuredrive.com/sign-up?plan=pro',
+  },
+  {
+    name: 'Max',
+    price: 39,
+    billingPeriod: 'month' as const,
+    description:
+      'Up to 60 vehicles, 0% platform fee on online payments, QuickBooks sync, API access, and priority support.',
+    features: ['Up to 60 vehicles', 'QuickBooks sync', 'API access'],
+    url: 'https://epuredrive.com/sign-up?plan=max',
+  },
+]
 
 const SEO_TITLE = 'Rental Car Software — Launch Your Booking Site in Minutes | éPure Drive'
 const SEO_DESCRIPTION =
@@ -70,7 +102,7 @@ const SPLIT_FEATURES = [
     description:
       'Launch a professional rental site showcasing your vehicles — with real-time availability, pricing, and your brand. No code, no developer, no waiting.',
     bullets: ['Custom subdomain included', 'Live availability calendar', 'Auto-syncs with your inventory'],
-    screenshot: '/assets/screenshots/site-fleet.png',
+    screenshot: '/assets/screenshots/site-fleet.webp',
     alt: 'Tenant branded fleet site',
   },
   {
@@ -83,7 +115,7 @@ const SPLIT_FEATURES = [
     description:
       'Track all your rentals in one place — who booked, which vehicle, dates, amounts, and status. Automated confirmations keep customers informed without lifting a finger.',
     bullets: ['Turo & iCal sync', 'Automated confirmations', 'Customer records per booking'],
-    screenshot: '/assets/screenshots/dash-bookings.png',
+    screenshot: '/assets/screenshots/dash-bookings.webp',
     alt: 'Bookings dashboard',
   },
 ]
@@ -522,6 +554,22 @@ export default function HomePage() {
       <JsonLd schema={buildOrganizationSchema()} />
       <JsonLd schema={buildWebSiteSchema()} />
       <JsonLd schema={buildSoftwareApplicationSchema()} />
+      {PRICING_PLANS.map((plan) => (
+        <JsonLd key={plan.name} schema={buildPricingPlanSchema(plan)} />
+      ))}
+      {DEMO_VIDEO_URL && (
+        <JsonLd
+          schema={buildVideoObjectSchema({
+            name: 'éPure Drive — 2-minute product demo',
+            description:
+              'See how to launch a branded rental car booking site, accept online payments, and manage your fleet from one dashboard in 2 minutes.',
+            thumbnailUrl: 'https://epuredrive.com/og-image.jpg',
+            uploadDate: '2026-04-20',
+            embedUrl: DEMO_VIDEO_URL,
+            duration: 'PT2M',
+          })}
+        />
+      )}
     </>
   )
 }

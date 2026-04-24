@@ -136,3 +136,78 @@ export function buildCarProductSchema(
     },
   }
 }
+
+/* ─── Marketing Page Schemas (pricing, video, breadcrumbs) ─── */
+
+interface PricingPlanInput {
+  name: string
+  price: number
+  billingPeriod: 'month' | 'year' | 'one-time'
+  description: string
+  features: string[]
+  url: string
+}
+
+/**
+ * Product + Offer schema for a pricing plan. Enables rich snippets with
+ * price in Google search results. Use one per plan (Starter / Pro / Max).
+ */
+export function buildPricingPlanSchema(
+  plan: PricingPlanInput
+): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: `éPure Drive — ${plan.name}`,
+    description: plan.description,
+    brand: { '@type': 'Brand', name: 'éPure Drive' },
+    offers: {
+      '@type': 'Offer',
+      price: String(plan.price),
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+      url: plan.url,
+      ...(plan.billingPeriod === 'month'
+        ? {
+            priceSpecification: {
+              '@type': 'UnitPriceSpecification',
+              price: String(plan.price),
+              priceCurrency: 'USD',
+              billingIncrement: 1,
+              unitCode: 'MON',
+            },
+          }
+        : {}),
+    },
+  }
+}
+
+interface VideoObjectInput {
+  name: string
+  description: string
+  thumbnailUrl: string
+  uploadDate: string
+  contentUrl?: string
+  embedUrl?: string
+  duration?: string // ISO 8601, e.g. 'PT2M'
+}
+
+/**
+ * VideoObject schema for the product demo video. Lets Google index the
+ * video and display a thumbnail in search results.
+ */
+export function buildVideoObjectSchema(
+  video: VideoObjectInput
+): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: video.name,
+    description: video.description,
+    thumbnailUrl: video.thumbnailUrl,
+    uploadDate: video.uploadDate,
+    ...(video.contentUrl ? { contentUrl: video.contentUrl } : {}),
+    ...(video.embedUrl ? { embedUrl: video.embedUrl } : {}),
+    ...(video.duration ? { duration: video.duration } : {}),
+  }
+}
