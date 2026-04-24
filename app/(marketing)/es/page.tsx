@@ -21,13 +21,14 @@ const SEO_DESCRIPTION =
 const OG_IMAGE = 'https://epuredrive.com/og-image.jpg'
 
 export const metadata: Metadata = {
-  title: SEO_TITLE,
+  title: { absolute: SEO_TITLE },
   description: SEO_DESCRIPTION,
   alternates: {
     canonical: 'https://epuredrive.com/es',
     languages: {
       en: 'https://epuredrive.com',
       es: 'https://epuredrive.com/es',
+      'x-default': 'https://epuredrive.com',
     },
   },
   openGraph: {

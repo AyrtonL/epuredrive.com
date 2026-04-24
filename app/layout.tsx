@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Outfit, Manrope } from 'next/font/google'
+import { headers } from 'next/headers'
 import CookieConsentBanner from '@/components/CookieConsentBanner'
 import CookieConsentManager from '@/components/CookieConsentManager'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
@@ -53,8 +54,11 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const pathname = headers().get('x-pathname') ?? '/'
+  const lang = pathname === '/es' || pathname.startsWith('/es/') ? 'es' : 'en'
+
   return (
-    <html lang="en">
+    <html lang={lang}>
       <head>
         <meta property="fb:app_id" content="1889073585117703" />
       </head>
