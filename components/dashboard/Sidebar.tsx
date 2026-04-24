@@ -54,6 +54,17 @@ const NAV: NavEntry[] = [
     children: [
       { label: 'Turo', href: '/dashboard/integrations/turo' },
       { label: 'QuickBooks', href: '/dashboard/integrations/quickbooks' },
+      { label: 'Bouncie', href: '/dashboard/integrations/bouncie' },
+    ],
+  },
+  {
+    label: 'Telematics',
+    children: [
+      { label: 'Live Map',  href: '/dashboard/telematics' },
+      { label: 'Trips',     href: '/dashboard/telematics/trips' },
+      { label: 'Alerts',    href: '/dashboard/telematics/alerts' },
+      { label: 'Geofences', href: '/dashboard/telematics/geofences' },
+      { label: 'Devices',   href: '/dashboard/telematics/devices' },
     ],
   },
   {
@@ -135,6 +146,7 @@ export default function Sidebar({ email, role, name, tenantName, tenantLogoUrl, 
     if (!featureFlags['quickbooks_sync']) items.push('QuickBooks')
     if (!featureFlags['custom_domains']) items.push('Custom Domain')
     if (!featureFlags['api_access'] && !featureFlags['webhooks']) items.push('API & Webhooks')
+    if (!featureFlags['bouncie_telematics']) items.push('Telematics', 'Bouncie')
     return items
   }, [featureFlags])
 

@@ -332,6 +332,84 @@ export function IconSystemLogs({ className }: IconProps) {
   )
 }
 
+export function IconTelematics({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12h3" />
+      <path d="M19 12h3" />
+      <path d="M5.5 8.5a8 8 0 0113 0" />
+      <path d="M8 11.5a4 4 0 018 0" />
+      <circle cx="12" cy="14.5" r="1.5" />
+    </svg>
+  )
+}
+
+export function IconLiveMap({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+      <line x1="8" y1="2" x2="8" y2="18" />
+      <line x1="16" y1="6" x2="16" y2="22" />
+    </svg>
+  )
+}
+
+export function IconTrips({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="6" cy="19" r="2" />
+      <circle cx="18" cy="5" r="2" />
+      <path d="M8 19h6a4 4 0 000-8H10a4 4 0 010-8h6" />
+    </svg>
+  )
+}
+
+export function IconAlerts({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 01-3.46 0" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <circle cx="12" cy="15" r="0.5" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function IconGeofences({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3 2">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+    </svg>
+  )
+}
+
+export function IconDevices({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <rect x="9" y="9" width="6" height="6" />
+      <line x1="9" y1="2" x2="9" y2="4" />
+      <line x1="15" y1="2" x2="15" y2="4" />
+      <line x1="9" y1="20" x2="9" y2="22" />
+      <line x1="15" y1="20" x2="15" y2="22" />
+      <line x1="20" y1="9" x2="22" y2="9" />
+      <line x1="20" y1="14" x2="22" y2="14" />
+      <line x1="2" y1="9" x2="4" y2="9" />
+      <line x1="2" y1="14" x2="4" y2="14" />
+    </svg>
+  )
+}
+
+export function IconBouncie({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 15c-3 0-5-2-5-5a5 5 0 0110 0c0 3-2 5-5 5z" />
+      <path d="M12 15v6" />
+      <circle cx="12" cy="10" r="1.5" fill="currentColor" />
+    </svg>
+  )
+}
+
 export function IconChevron({ className, open }: { className?: string; open: boolean }) {
   return (
     <svg
@@ -399,4 +477,11 @@ export const ICONS: Record<string, (props: { className?: string }) => React.Reac
   Integrations: IconTuro,
   Settings: IconGeneral,
   Admin: IconPlatformStats,
+  Telematics: IconTelematics,
+  'Live Map': IconLiveMap,
+  Trips: IconTrips,
+  Alerts: IconAlerts,
+  Geofences: IconGeofences,
+  Devices: IconDevices,
+  Bouncie: IconBouncie,
 }

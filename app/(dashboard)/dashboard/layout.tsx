@@ -44,7 +44,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         .select('plan, name, brand_name, logo_url')
         .eq('id', profile.tenant_id)
         .single(),
-      getFeatureFlags(profile.tenant_id, ['turo_sync', 'quickbooks_sync', 'custom_domains', 'api_access', 'webhooks']),
+      getFeatureFlags(profile.tenant_id, ['turo_sync', 'quickbooks_sync', 'custom_domains', 'api_access', 'webhooks', 'bouncie_telematics']),
     ])
     plan = tenant?.plan ?? 'free'
     tenantName = tenant?.brand_name || tenant?.name || null
