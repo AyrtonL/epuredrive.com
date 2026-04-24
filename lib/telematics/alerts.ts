@@ -41,6 +41,40 @@ export async function dispatchAlert(
     },
     read: false,
   })
+
+  // Email policy (spec §8):
+  //   critical → always email
+  //   warning  → only when the tenant has opted in (tenant_notification_prefs,
+  //              delivered in Task 33). For now, warnings don't email.
+  //   info     → never
+  const emailCritical = ad.severity === 'critical'
+  // TODO Task 33: look up tenant_notification_prefs.telematics_warning_email
+  // when that table is introduced; until then warnings default to off.
+  const emailWarning = false
+
+  if (emailCritical || emailWarning) {
+    try {
+      const { sendTelematicsAlertEmail } = await import('@/lib/email/telematics')
+      await sendTelematicsAlertEmail({
+        tenant_id: ad.tenant_id,
+        event_id: ad.event_id,
+        severity: ad.severity === 'warning' ? 'warning' : 'critical',
+        title,
+        link,
+      })
+    } catch (err: unknown) {
+      // Never crash ingestion because email failed — the notification row is
+      // already in the bell feed, which is the primary signal.
+      // Audit finding #7: avoid logging raw error objects; stringify safely.
+      console.warn('[telematics/alerts] email send failed:', safeErrorMessage(err))
+    }
+  }
+}
+
+function safeErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  if (typeof err === 'string') return err
+  return 'unknown error'
 }
 
 export function titleFor(
