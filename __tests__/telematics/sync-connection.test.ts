@@ -1,0 +1,315 @@
+/**
+ * @jest-environment node
+ */
+import { syncConnection } from '@/lib/telematics/sync'
+import type { TelematicsConnection } from '@/lib/supabase/types'
+
+// We mock the provider registry so we can drive listVehicles / refresh
+// outcomes directly. The real BouncieProvider hits the network.
+jest.mock('../../lib/telematics/registry', () => ({
+  getProvider: jest.fn(),
+}))
+
+import { getProvider } from '@/lib/telematics/registry'
+
+interface TrackedUpdate {
+  table: string
+  match: Record<string, unknown>
+  patch: Record<string, unknown>
+}
+interface TrackedInsert {
+  table: string
+  row: Record<string, unknown>
+}
+interface TrackedUpsert {
+  table: string
+  row: Record<string, unknown>
+  opts: Record<string, unknown>
+}
+
+interface MockSupabase {
+  inserts: TrackedInsert[]
+  updates: TrackedUpdate[]
+  upserts: TrackedUpsert[]
+  setDevice: (imei: string, dev: unknown) => void
+  from: (table: string) => unknown
+}
+
+// Build a flexible supabase stub that supports the call shapes used by
+// sync.ts + ingestLocationUpdate:
+//   - .update(patch).eq(col, val)
+//   - .insert(row)
+//   - .upsert(row, opts)
+//   - .select('...').eq().eq().maybeSingle()
+function mkSupabase(): MockSupabase {
+  const inserts: TrackedInsert[] = []
+  const updates: TrackedUpdate[] = []
+  const upserts: TrackedUpsert[] = []
+  const devicesByImei: Record<string, unknown> = {}
+
+  const sb: MockSupabase = {
+    inserts,
+    updates,
+    upserts,
+    setDevice(imei: string, dev: unknown) {
+      devicesByImei[imei] = dev
+    },
+    from(table: string) {
+      if (table === 'telematics_devices') {
+        return {
+          select: (_cols: string) => ({
+            eq: (_col1: string, _val1: unknown) => ({
+              eq: (_col2: string, val2: unknown) => ({
+                maybeSingle: () =>
+                  Promise.resolve({
+                    data: devicesByImei[String(val2)] ?? null,
+                    error: null,
+                  }),
+              }),
+            }),
+          }),
+          // ingestLocationUpdate also calls .update(...).eq('id', ...) on
+          // telematics_devices when it forwards a position.
+          update: (patch: Record<string, unknown>) => ({
+            eq: (col: string, val: unknown) => {
+              updates.push({ table, match: { [col]: val }, patch })
+              return Promise.resolve({ data: null, error: null })
+            },
+          }),
+        }
+      }
+
+      if (table === 'telematics_connections') {
+        return {
+          update: (patch: Record<string, unknown>) => ({
+            eq: (col: string, val: unknown) => {
+              updates.push({ table, match: { [col]: val }, patch })
+              return Promise.resolve({ data: null, error: null })
+            },
+          }),
+        }
+      }
+
+      if (table === 'telematics_events') {
+        return {
+          insert: (row: Record<string, unknown>) => {
+            inserts.push({ table, row })
+            return Promise.resolve({ data: null, error: null })
+          },
+        }
+      }
+
+      // telematics_positions + cars: accept upsert/update silently so
+      // ingestLocationUpdate doesn't blow up.
+      if (table === 'telematics_positions') {
+        return {
+          upsert: (row: Record<string, unknown>, opts: Record<string, unknown>) => {
+            upserts.push({ table, row, opts })
+            return Promise.resolve({ data: null, error: null })
+          },
+        }
+      }
+      if (table === 'cars') {
+        return {
+          update: (patch: Record<string, unknown>) => ({
+            eq: (col: string, val: unknown) => {
+              updates.push({ table, match: { [col]: val }, patch })
+              return Promise.resolve({ data: null, error: null })
+            },
+          }),
+        }
+      }
+
+      // Catch-all
+      return {
+        insert: (row: Record<string, unknown>) => {
+          inserts.push({ table, row })
+          return Promise.resolve({ data: null, error: null })
+        },
+      }
+    },
+  }
+
+  return sb
+}
+
+function mkConnection(
+  overrides: Partial<TelematicsConnection> = {},
+): TelematicsConnection {
+  return {
+    id: 'conn-1',
+    tenant_id: 't1',
+    provider: 'bouncie',
+    access_token: 'at-existing',
+    refresh_token: 'rt-existing',
+    // far-future by default so needsRefresh() is false
+    token_expires_at: '2099-01-01T00:00:00.000Z',
+    scope: null,
+    account_email: null,
+    connected_at: '2026-01-01T00:00:00.000Z',
+    last_sync_at: null,
+    status: 'active',
+    error_message: null,
+    ...overrides,
+  }
+}
+
+describe('syncConnection', () => {
+  beforeEach(() => {
+    jest.resetAllMocks()
+  })
+
+  test('refreshes an expiring token and updates the connection row', async () => {
+    const newTokens = {
+      access_token: 'at-new',
+      refresh_token: 'rt-new',
+      expires_at: '2099-06-01T00:00:00.000Z',
+      scope: 'read:vehicles',
+      account_email: null,
+    }
+    const listVehicles = jest.fn().mockResolvedValue([])
+    ;(getProvider as jest.Mock).mockReturnValue({
+      refreshAccessToken: jest.fn().mockResolvedValue(newTokens),
+      listVehicles,
+    })
+
+    const sb = mkSupabase()
+    // token_expires_at = 30s in the future → needsRefresh() triggers
+    const expiringSoon = new Date(Date.now() + 30_000).toISOString()
+
+    await syncConnection(
+      sb as never,
+      mkConnection({ token_expires_at: expiringSoon }),
+    )
+
+    // token row was patched with refreshed values
+    const tokenPatch = sb.updates.find(
+      (u) =>
+        u.table === 'telematics_connections' &&
+        u.patch.access_token === 'at-new',
+    )
+    expect(tokenPatch).toBeDefined()
+    expect(tokenPatch?.patch).toMatchObject({
+      access_token: 'at-new',
+      refresh_token: 'rt-new',
+      token_expires_at: '2099-06-01T00:00:00.000Z',
+      status: 'active',
+      error_message: null,
+    })
+    expect(tokenPatch?.match).toEqual({ id: 'conn-1' })
+
+    // listVehicles was called with the NEW token, not the stale one
+    expect(listVehicles).toHaveBeenCalledWith('at-new')
+
+    // last_sync_at bump on success (no listVehicles error)
+    const successPatch = sb.updates.find(
+      (u) =>
+        u.table === 'telematics_connections' && u.patch.last_sync_at !== undefined,
+    )
+    expect(successPatch).toBeDefined()
+    expect(successPatch?.patch).toMatchObject({ error_message: null })
+
+    // no connection_expired event was emitted
+    expect(
+      sb.inserts.find(
+        (i) =>
+          i.table === 'telematics_events' &&
+          i.row.event_type === 'connection_expired',
+      ),
+    ).toBeUndefined()
+  })
+
+  test('marks connection expired and emits connection_expired event when refresh fails', async () => {
+    ;(getProvider as jest.Mock).mockReturnValue({
+      refreshAccessToken: jest
+        .fn()
+        .mockRejectedValue(new Error('HTTP 400 invalid_grant')),
+      listVehicles: jest.fn(), // must not be called
+    })
+
+    const sb = mkSupabase()
+    const expiringSoon = new Date(Date.now() + 30_000).toISOString()
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+
+    await syncConnection(
+      sb as never,
+      mkConnection({ token_expires_at: expiringSoon }),
+    )
+
+    // status set to 'expired' with sanitized error_message
+    const expiredPatch = sb.updates.find(
+      (u) =>
+        u.table === 'telematics_connections' && u.patch.status === 'expired',
+    )
+    expect(expiredPatch).toBeDefined()
+    expect(expiredPatch?.patch).toMatchObject({ status: 'expired' })
+    expect(typeof expiredPatch?.patch.error_message).toBe('string')
+    expect(expiredPatch?.match).toEqual({ id: 'conn-1' })
+
+    // connection_expired event inserted (critical)
+    const expiredEvent = sb.inserts.find(
+      (i) =>
+        i.table === 'telematics_events' &&
+        i.row.event_type === 'connection_expired',
+    )
+    expect(expiredEvent).toBeDefined()
+    expect(expiredEvent?.row).toMatchObject({
+      tenant_id: 't1',
+      event_type: 'connection_expired',
+      severity: 'critical',
+    })
+    expect(expiredEvent?.row.payload).toMatchObject({
+      reason: 'refresh_failed',
+    })
+
+    // listVehicles must NOT have been called after a failed refresh
+    const prov = (getProvider as jest.Mock).mock.results[0].value
+    expect(prov.listVehicles).not.toHaveBeenCalled()
+
+    // and we must not have written the raw error object — only a string msg.
+    // (safeErr always returns a string.)
+    expect(typeof expiredPatch?.patch.error_message).toBe('string')
+
+    warnSpy.mockRestore()
+  })
+
+  test('sets status=error with sanitized message when listVehicles throws', async () => {
+    ;(getProvider as jest.Mock).mockReturnValue({
+      refreshAccessToken: jest.fn(),
+      listVehicles: jest
+        .fn()
+        .mockRejectedValue(
+          new Error('fetch failed with Bearer abc123xyz in url'),
+        ),
+    })
+
+    const sb = mkSupabase()
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+
+    // token not near expiry → refresh path is skipped
+    await syncConnection(sb as never, mkConnection())
+
+    const errorPatch = sb.updates.find(
+      (u) =>
+        u.table === 'telematics_connections' && u.patch.status === 'error',
+    )
+    expect(errorPatch).toBeDefined()
+    expect(errorPatch?.patch).toMatchObject({ status: 'error' })
+    const msg = errorPatch?.patch.error_message
+    expect(typeof msg).toBe('string')
+    // Bearer tokens must be redacted before being written to the DB.
+    expect(String(msg)).not.toContain('abc123xyz')
+    expect(String(msg)).toContain('[redacted]')
+
+    // last_sync_at success path was NOT hit
+    const syncPatch = sb.updates.find(
+      (u) =>
+        u.table === 'telematics_connections' &&
+        u.patch.last_sync_at !== undefined &&
+        u.patch.status === undefined,
+    )
+    expect(syncPatch).toBeUndefined()
+
+    warnSpy.mockRestore()
+  })
+})

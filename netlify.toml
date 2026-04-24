@@ -76,6 +76,9 @@
 [functions.review-requests-cron]
   schedule = "0 14 * * *"
 
+[functions.telematics-sync]
+  schedule = "*/5 * * * *"
+
 # Edge Functions
 [[edge_functions]]
   function = "playwright-bypass"
