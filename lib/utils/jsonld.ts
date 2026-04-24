@@ -151,15 +151,27 @@ interface PricingPlanInput {
 /**
  * Product + Offer schema for a pricing plan. Enables rich snippets with
  * price in Google search results. Use one per plan (Starter / Pro / Max).
+ *
+ * The extra merchant-listing fields (image, sku, hasMerchantReturnPolicy,
+ * shippingDetails) are needed because Google automatically tries to
+ * promote Product schemas to the stricter "Merchant Listing" rich
+ * result class. Without them we pass Product Snippets but fail
+ * Merchant Listings. For a digital SaaS subscription there is no
+ * shipping and no returns, but the fields must still be declared
+ * explicitly in a format Google accepts.
  */
 export function buildPricingPlanSchema(
   plan: PricingPlanInput
 ): Record<string, unknown> {
+  const sku = `epd-${plan.name.toLowerCase()}-${plan.billingPeriod}`
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: `éPure Drive — ${plan.name}`,
     description: plan.description,
+    sku,
+    mpn: sku,
+    image: 'https://epuredrive.com/og-image.jpg',
     brand: { '@type': 'Brand', name: 'éPure Drive' },
     offers: {
       '@type': 'Offer',
@@ -167,6 +179,41 @@ export function buildPricingPlanSchema(
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
       url: plan.url,
+      priceValidUntil: '2027-12-31',
+      itemCondition: 'https://schema.org/NewCondition',
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'US',
+        returnPolicyCategory:
+          'https://schema.org/MerchantReturnNotPermitted',
+      },
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingRate: {
+          '@type': 'MonetaryAmount',
+          value: '0',
+          currency: 'USD',
+        },
+        shippingDestination: {
+          '@type': 'DefinedRegion',
+          geoTargetName: 'US',
+        },
+        deliveryTime: {
+          '@type': 'ShippingDeliveryTime',
+          handlingTime: {
+            '@type': 'QuantitativeValue',
+            minValue: 0,
+            maxValue: 0,
+            unitCode: 'DAY',
+          },
+          transitTime: {
+            '@type': 'QuantitativeValue',
+            minValue: 0,
+            maxValue: 0,
+            unitCode: 'DAY',
+          },
+        },
+      },
       ...(plan.billingPeriod === 'month'
         ? {
             priceSpecification: {
