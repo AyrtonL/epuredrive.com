@@ -69,6 +69,11 @@ export interface Car {
   vin: string | null
   color: string | null
   plate: string | null
+  // Telematics (Bouncie) — present when car is linked to a device
+  telematics_device_id: string | null
+  last_seen_at: string | null
+  last_lat: number | null
+  last_lon: number | null
 }
 
 export interface Reservation {
@@ -257,4 +262,117 @@ export interface WebhookDelivery {
   error_message: string | null
   attempt: number
   delivered_at: string
+}
+
+// ── Telematics (Bouncie) ───────────────────────────────────────────────
+
+export type TelematicsConnectionStatus = 'active' | 'expired' | 'disconnected' | 'error'
+
+export interface TelematicsConnection {
+  id: string
+  tenant_id: string
+  provider: 'bouncie'
+  access_token: string | null
+  refresh_token: string | null
+  token_expires_at: string | null
+  scope: string | null
+  account_email: string | null
+  connected_at: string
+  last_sync_at: string | null
+  status: TelematicsConnectionStatus
+  error_message: string | null
+}
+
+export interface TelematicsDevice {
+  id: string
+  tenant_id: string
+  connection_id: string
+  imei: string
+  vin: string | null
+  nickname: string | null
+  car_id: number | null
+  last_seen_at: string | null
+  battery_voltage: number | null
+  online: boolean
+  created_at: string
+}
+
+export interface TelematicsPosition {
+  id: number
+  tenant_id: string
+  device_id: string
+  car_id: number | null
+  recorded_at: string
+  lat: number
+  lon: number
+  speed_mph: number | null
+  heading: number | null
+  odometer_mi: number | null
+  ignition: boolean | null
+}
+
+export interface TelematicsTrip {
+  id: string
+  tenant_id: string
+  device_id: string
+  car_id: number | null
+  // reservations.id is uuid in this schema, so reservation_id is a string
+  reservation_id: string | null
+  started_at: string
+  ended_at: string | null
+  start_lat: number | null
+  start_lon: number | null
+  end_lat: number | null
+  end_lon: number | null
+  distance_mi: number | null
+  duration_s: number | null
+  max_speed_mph: number | null
+  hard_braking_count: number
+  hard_accel_count: number
+  fuel_consumed_gal: number | null
+  bouncie_trip_id: string | null
+}
+
+export type TelematicsEventType =
+  | 'ignition_on' | 'ignition_off'
+  | 'trip_start' | 'trip_end'
+  | 'geofence_enter' | 'geofence_exit'
+  | 'speed_exceeded'
+  | 'hard_braking' | 'hard_accel'
+  | 'dtc_new' | 'dtc_cleared'
+  | 'battery_low'
+  | 'offline' | 'online'
+  | 'connection_expired'
+
+export type TelematicsSeverity = 'info' | 'warning' | 'critical'
+
+export interface TelematicsEvent {
+  id: string
+  tenant_id: string
+  device_id: string | null
+  car_id: number | null
+  event_type: TelematicsEventType
+  severity: TelematicsSeverity
+  occurred_at: string
+  payload: Record<string, unknown>
+  acknowledged_at: string | null
+  acknowledged_by: string | null
+}
+
+export interface GeoJsonPolygon {
+  type: 'Polygon'
+  coordinates: number[][][]  // array of rings; each ring is [lon, lat] pairs, first == last
+}
+
+export interface TelematicsGeofence {
+  id: string
+  tenant_id: string
+  name: string
+  kind: 'allowed' | 'forbidden'
+  polygon: GeoJsonPolygon
+  applies_to: 'all' | 'specific'
+  car_ids: number[]
+  speed_limit_mph: number | null
+  active: boolean
+  created_at: string
 }

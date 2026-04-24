@@ -115,6 +115,11 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
       vin: formData.vin || null,
       color: formData.color || null,
       plate: formData.plate || null,
+      // Telematics — read-only (populated by Bouncie webhook/cron), null on create
+      telematics_device_id: null,
+      last_seen_at: null,
+      last_lat: null,
+      last_lon: null,
     }
 
     startTransition(async () => {
