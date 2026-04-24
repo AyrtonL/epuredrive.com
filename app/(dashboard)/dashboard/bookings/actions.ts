@@ -363,6 +363,28 @@ export async function sendAgreement(reservationId: number): Promise<{ error: str
   return { error: null }
 }
 
+/**
+ * Return the latest auto-synced mileage for a car if it's linked to a
+ * telematics device, otherwise null. Used by BookingModal to pre-fill the
+ * odometer input on pickup/return close-out. Staff can still override the
+ * value freely — this is just a hint sourced from cars.mileage (bumped by
+ * telematics ingest). Uses RLS (regular client) so a tenant only sees
+ * their own cars.
+ */
+export async function getLatestOdometer(carId: number): Promise<number | null> {
+  if (!carId || Number.isNaN(carId)) return null
+  const supabase = createClient()
+  const tenantId = await getTenantId()
+  const { data } = await supabase
+    .from('cars')
+    .select('mileage, telematics_device_id')
+    .eq('id', carId)
+    .eq('tenant_id', tenantId)
+    .maybeSingle()
+  if (!data || !data.telematics_device_id) return null
+  return typeof data.mileage === 'number' ? data.mileage : null
+}
+
 export async function deleteReservation(id: number): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()

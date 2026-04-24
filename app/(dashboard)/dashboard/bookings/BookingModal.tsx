@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Reservation, Car } from '@/lib/supabase/types'
-import { createReservation, updateReservation, sendAgreement } from './actions'
+import { createReservation, updateReservation, sendAgreement, getLatestOdometer } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 import FuelSummary from '@/components/dashboard/FuelSummary'
 import TenantCloseOut from './TenantCloseOut'
@@ -24,6 +24,11 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
   const router = useRouter()
   
   const [formData, setFormData] = useState<Partial<Reservation>>({})
+  // When true, the currently shown odometer value(s) were prefilled from
+  // telematics (cars.mileage) rather than typed by the user. Staff can
+  // always override; the hint below the input makes the source obvious.
+  const [autoOdometerOut, setAutoOdometerOut] = useState(false)
+  const [autoOdometerIn, setAutoOdometerIn] = useState(false)
 
   useEffect(() => {
     if (reservation) {
@@ -35,7 +40,41 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
       })
     }
     setErrorStr(null)
+    setAutoOdometerOut(false)
+    setAutoOdometerIn(false)
   }, [reservation, isOpen])
+
+  // Auto-fill odometer inputs from the linked telematics device when the
+  // modal opens on an existing reservation whose car has Bouncie connected.
+  // Only fills empty fields — never overwrites what the user already typed
+  // or what the DB already contains.
+  useEffect(() => {
+    if (!isOpen || !reservation?.car_id) return
+    let cancelled = false
+    ;(async () => {
+      const latest = await getLatestOdometer(Number(reservation.car_id))
+      if (cancelled || latest == null) return
+      setFormData((prev) => {
+        const next = { ...prev }
+        let filledOut = false
+        let filledIn = false
+        if (prev.odometer_out == null || prev.odometer_out === 0) {
+          next.odometer_out = latest
+          filledOut = true
+        }
+        if (prev.odometer_in == null || prev.odometer_in === 0) {
+          next.odometer_in = latest
+          filledIn = true
+        }
+        if (filledOut) setAutoOdometerOut(true)
+        if (filledIn) setAutoOdometerIn(true)
+        return next
+      })
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, reservation?.car_id])
 
   if (!isOpen) return null
 
@@ -482,18 +521,30 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
               <input
                 type="number" min="0" placeholder="Miles at pickup"
                 value={formData.odometer_out || ''}
-                onChange={e => setFormData({...formData, odometer_out: e.target.value ? Number(e.target.value) : null})}
+                onChange={e => {
+                  setAutoOdometerOut(false)
+                  setFormData({...formData, odometer_out: e.target.value ? Number(e.target.value) : null})
+                }}
                 className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
               />
+              {autoOdometerOut && (
+                <p className="text-[10px] text-emerald-300/80 mt-1">Auto-filled from Bouncie · tap to override</p>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Odometer In</label>
               <input
                 type="number" min="0" placeholder="Miles at return"
                 value={formData.odometer_in || ''}
-                onChange={e => setFormData({...formData, odometer_in: e.target.value ? Number(e.target.value) : null})}
+                onChange={e => {
+                  setAutoOdometerIn(false)
+                  setFormData({...formData, odometer_in: e.target.value ? Number(e.target.value) : null})
+                }}
                 className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
               />
+              {autoOdometerIn && (
+                <p className="text-[10px] text-emerald-300/80 mt-1">Auto-filled from Bouncie · tap to override</p>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Fuel Out</label>
