@@ -3,6 +3,7 @@
 // Public-facing API talks in neutral DTOs (ProviderVehicle/Trip/Event);
 // Bouncie-specific types stay inside this directory.
 
+import crypto from 'node:crypto'
 import type { TelematicsProvider } from '../provider'
 import type { OAuthTokens, ProviderVehicle, ProviderTrip, ProviderEvent } from '../types'
 import { bouncieConfig } from '../config'
@@ -115,8 +116,23 @@ export class BouncieProvider implements TelematicsProvider {
 
   // ── Webhook (Tasks 8 + 9) ─────────────────────────────────────────
 
-  verifyWebhookSignature(_rawBody: string, _signatureHeader: string | null): boolean {
-    throw new Error('not implemented yet (Task 8)')
+  verifyWebhookSignature(rawBody: string, signatureHeader: string | null): boolean {
+    if (!signatureHeader) return false
+    const prefix = 'sha256='
+    if (!signatureHeader.startsWith(prefix)) return false
+    const provided = signatureHeader.slice(prefix.length)
+    // Strict hex-only, exactly 64 chars (SHA-256). Catches '', malformed input,
+    // and wrong-length strings BEFORE Buffer.from('...', 'hex') silently truncates.
+    // Audit finding #15.
+    if (!/^[0-9a-f]{64}$/i.test(provided)) return false
+    const expected = crypto
+      .createHmac('sha256', bouncieConfig.webhookSecret)
+      .update(rawBody)
+      .digest('hex')
+    const a = Buffer.from(provided, 'hex')
+    const b = Buffer.from(expected, 'hex')
+    if (a.length !== b.length) return false
+    return crypto.timingSafeEqual(a, b)
   }
 
   parseWebhookPayload(_rawBody: string): ProviderEvent[] {
