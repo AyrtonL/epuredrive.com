@@ -7,6 +7,8 @@
 // builds a fresh payload object.
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { TelematicsSeverity } from '@/lib/supabase/types'
+import { dispatchAlert } from './alerts'
 import type { ProviderEvent } from './types'
 
 export interface IngestContext {
@@ -174,4 +176,130 @@ export async function ingestTripEnd(
     },
     { onConflict: 'tenant_id,bouncie_trip_id' },
   )
+}
+
+// ── Generic event + classification + alert dispatch ───────────────────────
+
+interface Classification {
+  severity: TelematicsSeverity
+  shouldNotify: boolean
+}
+
+/**
+ * Insert a telematics_events row with the classified severity, and dispatch
+ * an alert when classification says we should notify.
+ *
+ * telematics_events.event_type has a CHECK constraint that excludes
+ * 'location_update' — those are stored in telematics_positions, not here.
+ */
+export async function ingestEvent(
+  supabase: SupabaseClient,
+  ctx: IngestContext,
+): Promise<void> {
+  const { tenant_id, device_id, car_id, event } = ctx
+
+  // location_update belongs in positions, not events. Route accordingly.
+  if (event.type === 'location_update') {
+    await ingestLocationUpdate(supabase, ctx)
+    return
+  }
+
+  const { severity, shouldNotify } = await classifyEvent(supabase, tenant_id, event)
+
+  const { data: row, error } = await supabase
+    .from('telematics_events')
+    .insert({
+      tenant_id,
+      device_id,
+      car_id,
+      event_type: event.type,
+      severity,
+      occurred_at: event.occurred_at,
+      payload: event.payload,
+    })
+    .select('id')
+    .single()
+
+  if (error || !row) return
+  const eventId = (row as { id?: unknown }).id
+  if (typeof eventId !== 'string') return
+
+  if (shouldNotify) {
+    await dispatchAlert(supabase, {
+      tenant_id,
+      car_id,
+      event_id: eventId,
+      event,
+      severity,
+    })
+  }
+}
+
+/**
+ * Map a ProviderEvent type to a severity, and decide whether to dispatch an
+ * alert. Per spec §8 the severity matrix is:
+ *   - geofence_enter(forbidden) / geofence_exit(forbidden) / connection_expired → critical
+ *   - geofence_exit(allowed) / speed_exceeded / dtc_new / battery_low / offline → warning
+ *   - everything else → info, no notification
+ *
+ * SECURITY (audit finding #10): geofence kind is resolved from the DB
+ * (telematics_geofences.kind) using the payload's geofence_id, NEVER from
+ * attacker-controllable payload fields like `geofence_kind`.
+ */
+async function classifyEvent(
+  supabase: SupabaseClient,
+  tenant_id: string,
+  event: ProviderEvent,
+): Promise<Classification> {
+  switch (event.type) {
+    case 'geofence_enter':
+    case 'geofence_exit': {
+      const geofenceId =
+        typeof event.payload.geofence_id === 'string' ? event.payload.geofence_id : null
+
+      let kind: 'allowed' | 'forbidden' = 'allowed'
+      if (geofenceId) {
+        const { data } = await supabase
+          .from('telematics_geofences')
+          .select('kind')
+          .eq('tenant_id', tenant_id)
+          .eq('id', geofenceId)
+          .maybeSingle()
+        const dbKind = (data as { kind?: unknown } | null)?.kind
+        if (dbKind === 'forbidden') kind = 'forbidden'
+      }
+
+      if (event.type === 'geofence_enter') {
+        return kind === 'forbidden'
+          ? { severity: 'critical', shouldNotify: true }
+          : { severity: 'info', shouldNotify: false }
+      }
+      // geofence_exit
+      return kind === 'forbidden'
+        ? { severity: 'critical', shouldNotify: true }
+        : { severity: 'warning', shouldNotify: true }
+    }
+
+    case 'connection_expired':
+      return { severity: 'critical', shouldNotify: true }
+
+    case 'speed_exceeded':
+    case 'dtc_new':
+    case 'battery_low':
+    case 'offline':
+      return { severity: 'warning', shouldNotify: true }
+
+    case 'hard_braking':
+    case 'hard_accel':
+    case 'dtc_cleared':
+    case 'online':
+    case 'ignition_on':
+    case 'ignition_off':
+    case 'trip_start':
+    case 'trip_end':
+      return { severity: 'info', shouldNotify: false }
+
+    default:
+      return { severity: 'info', shouldNotify: false }
+  }
 }
