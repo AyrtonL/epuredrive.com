@@ -282,6 +282,87 @@ export function reviewRequestCustomerEmail(params: {
   }
 }
 
+export function returnReminderCustomerEmail(params: {
+  customerName: string
+  brand: TenantBrand
+  carName: string
+  returnDate: string
+  returnTime?: string | null
+  returnLocation?: string | null
+  bookingCode?: string | null
+}): { subject: string; html: string } {
+  const fmt = (d: string) =>
+    d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'
+  const contactLine = [params.brand.phone, params.brand.email].filter(Boolean).join(' · ')
+  return {
+    subject: `Reminder: vehicle return tomorrow — ${params.brand.name}`,
+    html: tenantCompactLayout({
+      brand: params.brand,
+      subheadline: 'Friendly reminder',
+      headline: 'Your rental ends tomorrow.',
+      body: `Hi ${params.customerName}, just a heads-up that your <strong>${params.carName}</strong> rental with <strong>${params.brand.name}</strong> is scheduled to be returned tomorrow.`,
+      details: [
+        ...(params.bookingCode ? [{ label: 'Ref #', value: params.bookingCode }] : []),
+        { label: 'Vehicle', value: params.carName },
+        { label: 'Return Date', value: fmt(params.returnDate) },
+        ...(params.returnTime ? [{ label: 'Time', value: params.returnTime }] : []),
+        ...(params.returnLocation ? [{ label: 'Location', value: params.returnLocation }] : []),
+      ],
+      note: contactLine
+        ? `Need an extension or have questions? Contact ${params.brand.name}: ${contactLine}`
+        : `Need an extension? Reach out to ${params.brand.name} as soon as possible.`,
+    }),
+  }
+}
+
+export function returnOverdueOperatorEmail(params: {
+  tenantName: string
+  rentals: Array<{
+    customerName: string
+    carName: string
+    returnDate: string
+    daysLate: number
+    bookingCode?: string | null
+    customerPhone?: string | null
+    customerEmail?: string | null
+  }>
+}): { subject: string; html: string } {
+  const fmt = (d: string) =>
+    d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : '—'
+
+  const rows = params.rentals
+    .map(
+      (r) => `<tr>
+    <td style="padding:10px 0;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:600;color:#000;
+               font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${r.customerName}${r.bookingCode ? ` · <span style="color:#888;font-weight:500;">${r.bookingCode}</span>` : ''}</td>
+    <td style="padding:10px 0;border-bottom:1px solid #f5f5f5;font-size:12px;color:#555;
+               font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${r.carName}</td>
+    <td align="right" style="padding:10px 0;border-bottom:1px solid #f5f5f5;font-size:12px;font-weight:700;color:#cc0000;
+               font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+      ${r.daysLate} day${r.daysLate === 1 ? '' : 's'} late · was ${fmt(r.returnDate)}
+    </td>
+  </tr>`
+    )
+    .join('')
+
+  return {
+    subject: `Overdue rentals — ${params.rentals.length} vehicle(s) — ${params.tenantName}`,
+    html: compactLayout({
+      subheadline: 'Return overdue',
+      headline: `${params.rentals.length} rental${params.rentals.length !== 1 ? 's are' : ' is'} past return date.`,
+      body: `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-top:8px;">
+        <tr>
+          <th align="left" style="padding:0 0 8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;color:#bbb;font-family:-apple-system,sans-serif;">Customer</th>
+          <th align="left" style="padding:0 0 8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;color:#bbb;font-family:-apple-system,sans-serif;">Vehicle</th>
+          <th align="right" style="padding:0 0 8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;color:#bbb;font-family:-apple-system,sans-serif;">Status</th>
+        </tr>
+        ${rows}
+      </table>`,
+      cta: { label: 'Open bookings', href: `${APP_URL}/dashboard/bookings` },
+    }),
+  }
+}
+
 export function maintenanceDueEmail(params: {
   tenantName: string
   vehicles: Array<{

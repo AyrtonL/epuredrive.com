@@ -1,8 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHash } from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { agreementSignedCustomerEmail, agreementSignedOperatorEmail } from '@/lib/email/templates'
 import { rateLimit } from '@/lib/rate-limit'
+
+function sha256Hex(input: string): string {
+  return createHash('sha256').update(input).digest('hex')
+}
+
+/**
+ * Canonical hash of the signed agreement. Stored as tamper-evidence: any
+ * change to reservation fields after signing produces a different hash.
+ * Order of keys is fixed (alphabetical) to make the digest deterministic.
+ */
+function computeAgreementHash(input: {
+  reservationId: string
+  tenantId: string | null
+  customerName: string | null
+  customerEmail: string | null
+  customerDob: string | null
+  licenseNumber: string | null
+  pickupDate: string | null
+  returnDate: string | null
+  pickupLocation: string | null
+  totalAmount: number | string | null
+  securityDeposit: number | string | null
+  carId: number | null
+  agreementClauses: string | null
+  signatureUrl: string | null
+  signedAt: string
+  signedIp: string
+}): string {
+  const canonical = {
+    agreement_clauses_hash: input.agreementClauses
+      ? sha256Hex(input.agreementClauses)
+      : null,
+    car_id: input.carId,
+    customer_dob: input.customerDob,
+    customer_email: input.customerEmail,
+    customer_name: input.customerName,
+    license_number: input.licenseNumber,
+    pickup_date: input.pickupDate,
+    pickup_location: input.pickupLocation,
+    reservation_id: input.reservationId,
+    return_date: input.returnDate,
+    security_deposit:
+      input.securityDeposit != null ? Number(input.securityDeposit) : null,
+    signature_url: input.signatureUrl,
+    signed_at: input.signedAt,
+    signed_ip: input.signedIp,
+    tenant_id: input.tenantId,
+    total_amount: input.totalAmount != null ? Number(input.totalAmount) : null,
+  }
+  return sha256Hex(JSON.stringify(canonical))
+}
 
 export async function POST(req: NextRequest) {
   const limited = rateLimit(req, 'agreement-sign', { windowMs: 60_000, max: 5 })
@@ -26,7 +78,7 @@ export async function POST(req: NextRequest) {
     // Find the reservation by token
     const { data: reservation, error: fetchError } = await supabase
       .from('reservations')
-      .select('*, tenants(name, brand_name, slug, logo_url, company_address, company_phone, owner_email, owner_phone, whatsapp_phone)')
+      .select('*, tenants(name, brand_name, slug, logo_url, company_address, company_phone, owner_email, owner_phone, whatsapp_phone, agreement_clauses)')
       .eq('agreement_token', token)
       .single()
 
@@ -65,13 +117,37 @@ export async function POST(req: NextRequest) {
       req.headers.get('x-real-ip') ||
       'unknown'
 
+    const signedAt = new Date().toISOString()
+
+    // Compute tamper-evidence hash of the canonical agreement payload.
+    const tenantClauses = (reservation as { tenants?: { agreement_clauses?: string | null } | null })?.tenants?.agreement_clauses ?? null
+    const documentHash = computeAgreementHash({
+      reservationId: reservation.id,
+      tenantId: reservation.tenant_id,
+      customerName: reservation.customer_name,
+      customerEmail: reservation.customer_email,
+      customerDob: reservation.customer_dob ?? null,
+      licenseNumber: reservation.license_number ?? null,
+      pickupDate: reservation.pickup_date,
+      returnDate: reservation.return_date,
+      pickupLocation: reservation.pickup_location ?? null,
+      totalAmount: reservation.total_amount,
+      securityDeposit: reservation.security_deposit ?? null,
+      carId: reservation.car_id,
+      agreementClauses: tenantClauses,
+      signatureUrl,
+      signedAt,
+      signedIp: ip,
+    })
+
     // Update reservation with signature info
     const { error: updateError } = await supabase
       .from('reservations')
       .update({
-        agreement_signed_at: new Date().toISOString(),
+        agreement_signed_at: signedAt,
         agreement_signed_ip: ip,
         agreement_signature_url: signatureUrl,
+        agreement_document_hash: documentHash,
       })
       .eq('id', reservation.id)
 

@@ -40,6 +40,7 @@ const NAV: NavEntry[] = [
       { label: 'Taxes', href: '/dashboard/finance/taxes' },
       { label: 'Reports', href: '/dashboard/finance/reports' },
       { label: 'ROI', href: '/dashboard/finance/roi' },
+      { label: 'Utilization', href: '/dashboard/finance/utilization' },
     ],
   },
   {

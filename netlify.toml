@@ -76,6 +76,9 @@
 [functions.review-requests-cron]
   schedule = "0 14 * * *"
 
+[functions.return-reminders-cron]
+  schedule = "0 15 * * *"
+
 [functions.telematics-sync]
   schedule = "*/5 * * * *"
 
