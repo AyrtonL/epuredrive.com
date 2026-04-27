@@ -2,16 +2,16 @@ type Lang = 'en' | 'es'
 
 const COPY: Record<Lang, { title: string; sub: string }[]> = {
   en: [
-    { title: 'Stripe-secured payments', sub: 'PCI-compliant processing' },
-    { title: 'SSL encrypted', sub: 'Bank-grade security on every booking' },
+    { title: 'PCI-compliant payments', sub: 'Powered by Stripe and Square — bank-grade SSL on every booking' },
+    { title: 'Hosted on Supabase', sub: 'EU & US data residency, daily backups, 99.9% uptime' },
+    { title: 'Your data, your rules', sub: 'Export your fleet, bookings and customers anytime — no lock-in' },
     { title: 'Built by rental operators', sub: 'Designed for indie fleets, not enterprise bloat' },
-    { title: 'Cancel anytime', sub: 'No contracts, no hidden fees' },
   ],
   es: [
-    { title: 'Pagos seguros con Stripe', sub: 'Procesamiento con certificación PCI' },
-    { title: 'Cifrado SSL', sub: 'Seguridad bancaria en cada reserva' },
+    { title: 'Pagos PCI-compliant', sub: 'Procesados con Stripe y Square — SSL de nivel bancario en cada reserva' },
+    { title: 'Alojado en Supabase', sub: 'Datos en EU y US, backups diarios, 99.9% uptime' },
+    { title: 'Tus datos, tus reglas', sub: 'Exportá flota, reservas y clientes cuando quieras — sin lock-in' },
     { title: 'Hecho por operadores de rent a car', sub: 'Pensado para flotas independientes, no para grandes corporaciones' },
-    { title: 'Cancelá cuando quieras', sub: 'Sin contratos, sin costos ocultos' },
   ],
 }
 

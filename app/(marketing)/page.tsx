@@ -9,6 +9,7 @@ import TrustBar from '@/components/marketing/TrustBar'
 import HowItWorks from '@/components/marketing/HowItWorks'
 import FAQ from '@/components/marketing/FAQ'
 import DemoVideo from '@/components/marketing/DemoVideo'
+import SavingsCalculator from '@/components/marketing/SavingsCalculator'
 import JsonLd from '@/components/JsonLd'
 import {
   buildOrganizationSchema,
@@ -312,6 +313,9 @@ export default function HomePage() {
 
       {/* ─────────────────── Demo video (only if configured) ─────────────────── */}
       {DEMO_VIDEO_URL && <DemoVideo videoUrl={DEMO_VIDEO_URL} />}
+
+      {/* ─────────────────── Savings calculator ─────────────────── */}
+      <SavingsCalculator />
 
       {/* ─────────────────── Pricing (hidden during free launch) ─────────────────── */}
       {showPricing && <section className="relative py-32 bg-black" id="pricing">
