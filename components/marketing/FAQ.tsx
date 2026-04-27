@@ -1,7 +1,28 @@
 import JsonLd from '@/components/JsonLd'
 import { buildFAQPageSchema } from '@/lib/utils/jsonld'
+import { isFreeLaunchMode } from '@/lib/plan/effective-plan'
 
 type Lang = 'en' | 'es'
+
+/**
+ * Free-launch overrides: swap pricing-related answers so the FAQ doesn't
+ * contradict the Free Launch banner (paid plan messaging hidden elsewhere).
+ * Keys must match the question strings exactly.
+ */
+const FREE_LAUNCH_OVERRIDES: Record<Lang, Record<string, string>> = {
+  en: {
+    'How much does éPure Drive cost?':
+      'éPure Drive is currently free during our launch period — every account gets full access to all features (live telematics, integrations, team management, custom agreements, priority support) at no cost. A flat 1% transaction fee applies on online payments. Subscription pricing will be announced when the Free Launch period ends, and existing accounts will receive at least 30 days\' notice before any change.',
+    'What payment processors do you support?':
+      'éPure Drive integrates with Stripe and Square for online card payments. You connect your own account, so payouts go directly to your bank — we never hold your money. During the Free Launch period a flat 1% platform fee applies to every account.',
+  },
+  es: {
+    '¿Cuánto cuesta éPure Drive?':
+      'éPure Drive es gratis durante nuestro período de lanzamiento — cada cuenta tiene acceso completo a todas las funciones (telematría en vivo, integraciones, gestión de equipo, contratos personalizados, soporte prioritario) sin costo. Se aplica una comisión plana del 1% sobre pagos online. Los precios de suscripción se anunciarán cuando termine el período de lanzamiento, y las cuentas existentes tendrán al menos 30 días de aviso antes de cualquier cambio.',
+    '¿Qué procesadores de pago soportan?':
+      'éPure Drive se integra con Stripe y Square para pagos con tarjeta online. Conectás tu propia cuenta, así los depósitos van directo a tu banco — nunca tocamos tu dinero. Durante el período de lanzamiento se aplica una comisión plana del 1% a todas las cuentas.',
+  },
+}
 
 const FAQS: Record<Lang, { q: string; a: string }[]> = {
   en: [
@@ -114,8 +135,11 @@ const LABELS: Record<Lang, { pill: string; title: string; help: string; email: s
 }
 
 export default function FAQ({ lang = 'en' }: { lang?: Lang }) {
-  const faqs = FAQS[lang]
   const labels = LABELS[lang]
+  const overrides = isFreeLaunchMode() ? FREE_LAUNCH_OVERRIDES[lang] : null
+  const faqs = overrides
+    ? FAQS[lang].map((f) => (overrides[f.q] ? { ...f, a: overrides[f.q] } : f))
+    : FAQS[lang]
 
   return (
     <>

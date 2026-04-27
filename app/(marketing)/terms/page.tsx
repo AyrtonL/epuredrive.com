@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { isFreeLaunchMode } from '@/lib/plan/effective-plan'
+
+const FREE_LAUNCH = isFreeLaunchMode()
 
 export const metadata: Metadata = {
   title: 'Terms of Service — éPure Drive',
@@ -57,7 +60,12 @@ const sections = [
     title: 'Plans, Billing & Refunds',
     content: (
       <>
-        <p>Subscriptions are billed in advance on a monthly or annual basis, depending on the plan selected at signup. Fees are listed on our <Link href="/pricing" className="text-silver hover:text-white underline underline-offset-2 transition-colors">pricing page</Link> and are exclusive of any applicable taxes, which you are responsible for paying.</p>
+        {FREE_LAUNCH && (
+          <div className="glass rounded-xl p-4 mb-2 border border-emerald-500/20">
+            <strong className="text-emerald-300">Free Launch period:</strong> <span className="text-silver">all paid features are currently available at no cost. Subscription pricing described below will take effect when the Free Launch period ends. Existing accounts will receive at least 30 days&apos; notice before any subscription fee is charged.</span>
+          </div>
+        )}
+        <p>Subscriptions are billed in advance on a monthly or annual basis, depending on the plan selected at signup. Fees are communicated at signup and are exclusive of any applicable taxes, which you are responsible for paying.</p>
         <p>Payments are processed by <strong className="text-white">Stripe, Inc.</strong> By providing your payment information, you authorize us (via Stripe) to charge the applicable fees to your payment method on a recurring basis until your Subscription is cancelled.</p>
         <p>You may cancel your Subscription at any time from your dashboard. Cancellation will take effect at the end of the current billing period; you retain access to paid features until that date.</p>
         <p><strong className="text-white">Fees are non-refundable</strong> except where required by law. We do not provide pro-rated refunds for partial billing periods, unused features, or early cancellation.</p>
@@ -71,6 +79,11 @@ const sections = [
     title: 'Transaction Fees',
     content: (
       <>
+        {FREE_LAUNCH && (
+          <div className="glass rounded-xl p-4 mb-2 border border-emerald-500/20">
+            <strong className="text-emerald-300">Free Launch period:</strong> <span className="text-silver">a flat <strong className="text-white">1%</strong> transaction fee applies to every account, regardless of plan. The plan-tiered table below describes the fee structure that will apply when the Free Launch period ends.</span>
+          </div>
+        )}
         <p>When a Tenant accepts online payments from End Users through the Service via Stripe Connect, éPure charges a <strong className="text-white">transaction fee</strong> on each successful payment. This fee is automatically deducted from the payment before the remaining amount is deposited into the Tenant&apos;s connected Stripe account.</p>
         <p>Transaction fee rates vary by Subscription plan:</p>
         <div className="glass rounded-xl p-4 mt-2 mb-2">
