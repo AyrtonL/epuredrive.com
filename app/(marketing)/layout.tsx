@@ -19,10 +19,10 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
               Features
             </a>
             <a
-              href="/demo"
+              href="/#tour"
               className="text-sm text-charcoal hover:text-white transition-colors hidden sm:block"
             >
-              Demo
+              Tour
             </a>
             {showPricing && (
               <a

@@ -10,6 +10,7 @@ import HowItWorks from '@/components/marketing/HowItWorks'
 import FAQ from '@/components/marketing/FAQ'
 import DemoVideo from '@/components/marketing/DemoVideo'
 import SavingsCalculator from '@/components/marketing/SavingsCalculator'
+import InteractiveTour from '@/components/marketing/InteractiveTour'
 import JsonLd from '@/components/JsonLd'
 import {
   buildOrganizationSchema,
@@ -171,24 +172,15 @@ export default function HomePage() {
             >
               Get started free
             </TrackedCTA>
-            {DEMO_VIDEO_URL ? (
-              <a
-                href="#demo"
-                className="inline-flex items-center gap-2 text-white/80 text-sm font-medium hover:text-white transition-colors bg-white/[0.06] border border-white/[0.12] px-6 py-3.5 rounded-xl hover:bg-white/[0.10]"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-                Watch 2-min demo
-              </a>
-            ) : (
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center gap-2 text-white/80 text-sm font-medium hover:text-white transition-colors bg-white/[0.06] border border-white/[0.12] px-6 py-3.5 rounded-xl hover:bg-white/[0.10]"
-              >
-                See how it works →
-              </a>
-            )}
+            <a
+              href="#tour"
+              className="inline-flex items-center gap-2 text-white/80 text-sm font-medium hover:text-white transition-colors bg-white/[0.06] border border-white/[0.12] px-6 py-3.5 rounded-xl hover:bg-white/[0.10]"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Take the interactive tour
+            </a>
           </div>
 
           {/* Trust signals */}
@@ -307,6 +299,9 @@ export default function HomePage() {
 
         </div>
       </section>
+
+      {/* ─────────────────── Interactive tour ─────────────────── */}
+      <InteractiveTour />
 
       {/* ─────────────────── Product Showcase ─────────────────── */}
       <ProductShowcase />

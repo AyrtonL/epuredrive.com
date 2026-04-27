@@ -9,6 +9,7 @@ import HowItWorks from '@/components/marketing/HowItWorks'
 import FAQ from '@/components/marketing/FAQ'
 import DemoVideo from '@/components/marketing/DemoVideo'
 import SavingsCalculator from '@/components/marketing/SavingsCalculator'
+import InteractiveTour from '@/components/marketing/InteractiveTour'
 import JsonLd from '@/components/JsonLd'
 import {
   buildOrganizationSchema,
@@ -170,24 +171,15 @@ export default function HomePageEs() {
             >
               Empezar gratis
             </TrackedCTA>
-            {DEMO_VIDEO_URL ? (
-              <a
-                href="#demo"
-                className="inline-flex items-center gap-2 text-white/80 text-sm font-medium hover:text-white transition-colors bg-white/[0.06] border border-white/[0.12] px-6 py-3.5 rounded-xl hover:bg-white/[0.10]"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-                Ver demo de 2 min
-              </a>
-            ) : (
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center gap-2 text-white/80 text-sm font-medium hover:text-white transition-colors bg-white/[0.06] border border-white/[0.12] px-6 py-3.5 rounded-xl hover:bg-white/[0.10]"
-              >
-                Ver cómo funciona →
-              </a>
-            )}
+            <a
+              href="#tour"
+              className="inline-flex items-center gap-2 text-white/80 text-sm font-medium hover:text-white transition-colors bg-white/[0.06] border border-white/[0.12] px-6 py-3.5 rounded-xl hover:bg-white/[0.10]"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Tour interactivo
+            </a>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8 animate-fade-in-up animation-delay-300">
@@ -301,6 +293,9 @@ export default function HomePageEs() {
           </div>
         </div>
       </section>
+
+      {/* ─────────────────── Interactive tour ─────────────────── */}
+      <InteractiveTour lang="es" />
 
       {/* ─────────────────── Product Showcase ─────────────────── */}
       <ProductShowcase lang="es" />

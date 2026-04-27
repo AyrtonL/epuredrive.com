@@ -59,3 +59,7 @@ legal/compliance-checklist.md
 legal/consignment-agreement.md
 legal/llc-setup-guide.md
 .playwright/
+
+# Playwright test artifacts
+test-results/
+playwright-report/
