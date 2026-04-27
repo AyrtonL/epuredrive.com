@@ -172,7 +172,7 @@ export default function AgreementSigner({
           />
         )}
         {reservation.agreement_document_hash && (
-          <div className="border-t border-gray-100 pt-3 mt-3 text-[10px] text-gray-400 space-y-1">
+          <div className="border-t border-gray-100 pt-3 mt-3 text-[10px] text-gray-400 space-y-1.5">
             <div className="font-bold uppercase tracking-widest text-gray-500">
               Tamper-evidence
             </div>
@@ -182,7 +182,15 @@ export default function AgreementSigner({
             <div className="text-gray-400">
               This hash was computed at signing time from the agreement content,
               signature, timestamp and IP. Any later change to the agreement
-              data produces a different hash.
+              data produces a different hash.{' '}
+              <a
+                href={`https://epuredrive.com/agreement/verify?hash=${reservation.agreement_document_hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 text-gray-500 hover:text-gray-700"
+              >
+                Verify this hash →
+              </a>
             </div>
           </div>
         )}
