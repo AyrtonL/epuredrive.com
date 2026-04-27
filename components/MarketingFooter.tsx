@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import Logo from './Logo'
+import { isFreeLaunchMode } from '@/lib/plan/effective-plan'
 
 export default function MarketingFooter() {
+  const showPricing = !isFreeLaunchMode()
   return (
     <footer className="bg-black border-t border-white/[0.06] pt-16 pb-10">
       <div className="max-w-6xl mx-auto px-6">
@@ -26,11 +28,13 @@ export default function MarketingFooter() {
                   Features
                 </Link>
               </li>
-              <li>
-                <a href="/#pricing" className="text-sm text-charcoal hover:text-white transition-colors">
-                  Pricing
-                </a>
-              </li>
+              {showPricing && (
+                <li>
+                  <a href="/#pricing" className="text-sm text-charcoal hover:text-white transition-colors">
+                    Pricing
+                  </a>
+                </li>
+              )}
               <li>
                 <Link href="/sign-up" className="text-sm text-charcoal hover:text-white transition-colors">
                   Get started

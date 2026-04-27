@@ -1,8 +1,10 @@
 // app/(marketing)/layout.tsx
 import Logo from '@/components/Logo'
 import MarketingFooter from '@/components/MarketingFooter'
+import { isFreeLaunchMode } from '@/lib/plan/effective-plan'
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
+  const showPricing = !isFreeLaunchMode()
   return (
     <>
       <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-2xl border-b border-white/[0.06]">
@@ -22,12 +24,14 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             >
               Demo
             </a>
-            <a
-              href="/#pricing"
-              className="text-sm text-charcoal hover:text-white transition-colors hidden sm:block"
-            >
-              Pricing
-            </a>
+            {showPricing && (
+              <a
+                href="/#pricing"
+                className="text-sm text-charcoal hover:text-white transition-colors hidden sm:block"
+              >
+                Pricing
+              </a>
+            )}
             <a
               href="/login"
               className="text-sm text-grey hover:text-white transition-colors"

@@ -1,5 +1,6 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getEffectivePlan } from '@/lib/plan/effective-plan'
 import PageHeader from '@/components/dashboard/PageHeader'
 import type { Profile } from '@/lib/supabase/types'
 import InviteModal from './InviteModal'
@@ -50,8 +51,8 @@ export default async function RolesPage() {
     .select('plan')
     .eq('id', tenantId)
     .single()
-  const plan = tenant?.plan ?? 'free'
-  const canInvite = plan === 'pro' || plan === 'max'
+  const effectivePlan = getEffectivePlan(tenant?.plan)
+  const canInvite = effectivePlan === 'pro' || effectivePlan === 'max'
 
   // Active team members: profiles that have completed onboarding (full_name set)
   const { data: members } = await supabase

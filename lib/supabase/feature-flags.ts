@@ -1,9 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from './server'
+import { isFreeLaunchMode, isPlanGatedFlag } from '@/lib/plan/effective-plan'
 
 /**
  * Check if a feature flag is enabled for a specific tenant.
  * Resolution order:
+ *   0. Free-launch mode: plan-gated flags are forced on
  *   1. Per-tenant override in `tenant_feature_flags` → use that value
  *   2. No override → use global value from `feature_flags`
  *   3. Flag not found → return false
@@ -12,6 +14,8 @@ export async function isFeatureEnabled(
   tenantId: string,
   flagKey: string
 ): Promise<boolean> {
+  if (isFreeLaunchMode() && isPlanGatedFlag(flagKey)) return true
+
   const supabase = createClient()
 
   // Check for per-tenant override first
@@ -62,8 +66,14 @@ export async function getFeatureFlags(
   const overrideMap: Record<string, boolean> = {}
   for (const o of tenantOverrides ?? []) overrideMap[o.flag_key] = o.enabled
 
+  const freeLaunch = isFreeLaunchMode()
   const result: Record<string, boolean> = {}
   for (const key of flagKeys) {
+    // Free-launch mode forces plan-gated flags on, ignoring DB state
+    if (freeLaunch && isPlanGatedFlag(key)) {
+      result[key] = true
+      continue
+    }
     // Override takes precedence over global
     result[key] = overrideMap[key] ?? globalMap[key] ?? false
   }

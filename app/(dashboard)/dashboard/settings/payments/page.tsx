@@ -1,5 +1,6 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
+import { isFreeLaunchMode, getPlatformFeeRate } from '@/lib/plan/effective-plan'
 import PageHeader from '@/components/dashboard/PageHeader'
 import { getConnectAccountStatus, getRecentPayments } from './actions'
 import ConnectButton from './ConnectButton'
@@ -18,8 +19,9 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
     .single()
 
   const plan = tenant?.plan || 'free'
-  const FEE_BY_PLAN: Record<string, number> = { max: 0, pro: 1, free: 2 }
-  const feeRate = FEE_BY_PLAN[plan] ?? 2
+  const freeLaunch = isFreeLaunchMode()
+  // UI display value: percentage as integer (e.g. 1 for 1%)
+  const feeRate = Math.round(getPlatformFeeRate(plan) * 100)
   const params = await searchParams
   const status = await getConnectAccountStatus()
   const payments = status.chargesEnabled ? await getRecentPayments() : []
@@ -202,9 +204,13 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-white font-bold text-2xl">{feeRate}%</p>
-                <p className="text-white/40 text-xs mt-0.5">Your current rate ({plan.charAt(0).toUpperCase() + plan.slice(1)} plan)</p>
+                <p className="text-white/40 text-xs mt-0.5">
+                  {freeLaunch
+                    ? 'Flat launch rate — applied to every account'
+                    : `Your current rate (${plan.charAt(0).toUpperCase() + plan.slice(1)} plan)`}
+                </p>
               </div>
-              {feeRate > 0 && (
+              {!freeLaunch && feeRate > 0 && (
                 <a href="/dashboard/settings/billing"
                   className="px-4 py-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 text-[10px] font-bold uppercase tracking-widest hover:bg-violet-500/20 transition-colors">
                   Upgrade to lower fee
@@ -212,20 +218,22 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
               )}
             </div>
 
-            <div className="space-y-2 pt-4 border-t border-white/5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-white/40">Free</span>
-                <span className={plan === 'free' ? 'text-white font-bold' : 'text-white/40'}>2%</span>
+            {!freeLaunch && (
+              <div className="space-y-2 pt-4 border-t border-white/5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-white/40">Free</span>
+                  <span className={plan === 'free' ? 'text-white font-bold' : 'text-white/40'}>2%</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-white/40">Pro</span>
+                  <span className={plan === 'pro' ? 'text-white font-bold' : 'text-white/40'}>1%</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-white/40">Max</span>
+                  <span className={plan === 'max' ? 'text-white font-bold' : 'text-white/40'}>0%</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-white/40">Pro</span>
-                <span className={plan === 'pro' ? 'text-white font-bold' : 'text-white/40'}>1%</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-white/40">Max</span>
-                <span className={plan === 'max' ? 'text-white font-bold' : 'text-white/40'}>0%</span>
-              </div>
-            </div>
+            )}
 
             <p className="text-white/30 text-[11px] mt-4 leading-relaxed">
               This fee is automatically deducted from each online payment before funds are deposited to your Stripe account.

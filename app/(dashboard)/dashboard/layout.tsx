@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { getFeatureFlags } from '@/lib/supabase/feature-flags'
+import { getEffectivePlan } from '@/lib/plan/effective-plan'
 import Sidebar from '@/components/dashboard/Sidebar'
 import HelpButton from '@/components/dashboard/HelpButton'
 import SignUpCompleteTracker from '@/components/analytics/SignUpCompleteTracker'
@@ -88,7 +89,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </Suspense>
         </main>
       </div>
-      <HelpButton plan={plan} />
+      <HelpButton plan={getEffectivePlan(plan)} />
     </div>
   )
 }

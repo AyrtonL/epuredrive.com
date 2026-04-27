@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import JsonLd from '@/components/JsonLd'
 import { buildBreadcrumbSchema } from '@/lib/utils/jsonld'
+import { isFreeLaunchMode } from '@/lib/plan/effective-plan'
 
 const SEO_TITLE = 'Features — Car Rental Management Software | éPure Drive'
 
@@ -127,6 +128,7 @@ const DETAILED_SECTIONS = [
 ]
 
 export default function FeaturesPage() {
+  const showPricing = !isFreeLaunchMode()
   return (
     <>
       {/* ─── Hero ─── */}
@@ -154,12 +156,14 @@ export default function FeaturesPage() {
             >
               Start for free
             </Link>
-            <Link
-              href="/#pricing"
-              className="text-white/50 text-sm font-medium hover:text-white transition-colors"
-            >
-              View pricing →
-            </Link>
+            {showPricing && (
+              <Link
+                href="/#pricing"
+                className="text-white/50 text-sm font-medium hover:text-white transition-colors"
+              >
+                View pricing →
+              </Link>
+            )}
           </div>
         </div>
       </section>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe'
 import { rateLimit } from '@/lib/rate-limit'
+import { getPlatformFeeRate } from '@/lib/plan/effective-plan'
 
 export async function POST(request: NextRequest) {
   const limited = rateLimit(request, 'checkout', { windowMs: 60_000, max: 10 })
@@ -150,10 +151,8 @@ export async function POST(request: NextRequest) {
   // Calculate total for fee
   const totalCents = lineItems.reduce((sum, li) => sum + li.price_data.unit_amount * li.quantity, 0)
 
-  // Platform transaction fee by plan tier
-  const plan = tenant.plan || 'free'
-  const FEE_BY_PLAN: Record<string, number> = { max: 0, enterprise: 0, pro: 0.01, starter: 0.015, free: 0.02 }
-  const feeRate = FEE_BY_PLAN[plan] ?? 0.02
+  // Platform transaction fee — by plan tier, or flat 1% during free launch
+  const feeRate = getPlatformFeeRate(tenant.plan)
   const applicationFeeCents = Math.round(totalCents * feeRate)
 
   try {

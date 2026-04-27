@@ -1,4 +1,5 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
+import { isFreeLaunchMode } from '@/lib/plan/effective-plan'
 import PageHeader from '@/components/dashboard/PageHeader'
 import UpgradeButton from './UpgradeButton'
 import DeactivateButton from './DeactivateButton'
@@ -21,6 +22,7 @@ export default async function BillingPage({
     .single()
 
   const plan = tenant?.plan || 'free'
+  const freeLaunch = isFreeLaunchMode()
 
   const plans = [
     {
@@ -51,6 +53,20 @@ export default async function BillingPage({
     <div className="max-w-5xl mx-auto space-y-10 animate-fade-in pb-32">
       <PageHeader title="Billing & Plans" description="Manage your subscription and view invoicing history." />
 
+      {freeLaunch && (
+        <div className="p-5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-2xl text-sm flex items-start gap-3">
+          <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <div className="font-bold text-emerald-200">Free during launch — all features unlocked.</div>
+            <div className="text-emerald-300/80 text-xs mt-1">
+              Every account has full access to telematics, integrations, team management, custom agreements and priority support. Paid plans coming soon.
+            </div>
+          </div>
+        </div>
+      )}
+
       {params.success && (
         <>
           {plan !== 'free' && <SubscribeTracker plan={plan} />}
@@ -64,7 +80,7 @@ export default async function BillingPage({
           Checkout was cancelled. No changes were made to your plan.
         </div>
       )}
-      {params.upgrade === 'telematics' && (
+      {params.upgrade === 'telematics' && !freeLaunch && (
         <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-2xl text-sm">
           Telematics is available on Pro and Max plans. Upgrade to enable live tracking, alerts, and auto mileage sync.
         </div>
@@ -88,8 +104,8 @@ export default async function BillingPage({
         )}
       </div>
 
-      {/* Plan Cards */}
-      <div className="grid md:grid-cols-3 gap-6">
+      {/* Plan Cards — hidden during free launch since paid plans aren't sellable yet */}
+      {!freeLaunch && <div className="grid md:grid-cols-3 gap-6">
         {plans.map((p) => (
           <div
             key={p.name}
@@ -122,7 +138,7 @@ export default async function BillingPage({
             <UpgradeButton planName={p.name} isCurrent={p.current ?? false} />
           </div>
         ))}
-      </div>
+      </div>}
 
       {/* Invoice History */}
       <InvoiceHistory />

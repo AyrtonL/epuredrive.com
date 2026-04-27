@@ -17,6 +17,7 @@ import {
   buildPricingPlanSchema,
   buildVideoObjectSchema,
 } from '@/lib/utils/jsonld'
+import { isFreeLaunchMode } from '@/lib/plan/effective-plan'
 
 const PRICING_PLANS = [
   {
@@ -121,6 +122,7 @@ const SPLIT_FEATURES = [
 ]
 
 export default function HomePage() {
+  const showPricing = !isFreeLaunchMode()
   return (
     <>
       {/* ─────────────────── Hero ─────────────────── */}
@@ -311,8 +313,8 @@ export default function HomePage() {
       {/* ─────────────────── Demo video (only if configured) ─────────────────── */}
       {DEMO_VIDEO_URL && <DemoVideo videoUrl={DEMO_VIDEO_URL} />}
 
-      {/* ─────────────────── Pricing ─────────────────── */}
-      <section className="relative py-32 bg-black" id="pricing">
+      {/* ─────────────────── Pricing (hidden during free launch) ─────────────────── */}
+      {showPricing && <section className="relative py-32 bg-black" id="pricing">
         <div className="section-divider absolute top-0 left-0 right-0" />
         <div className="absolute inset-0 bg-dot-pattern opacity-15 pointer-events-none" />
 
@@ -499,7 +501,7 @@ export default function HomePage() {
             </a>
           </p>
         </div>
-      </section>
+      </section>}
 
       {/* ─────────────────── FAQ ─────────────────── */}
       <FAQ />
@@ -554,7 +556,7 @@ export default function HomePage() {
       <JsonLd schema={buildOrganizationSchema()} />
       <JsonLd schema={buildWebSiteSchema()} />
       <JsonLd schema={buildSoftwareApplicationSchema()} />
-      {PRICING_PLANS.map((plan) => (
+      {showPricing && PRICING_PLANS.map((plan) => (
         <JsonLd key={plan.name} schema={buildPricingPlanSchema(plan)} />
       ))}
       {DEMO_VIDEO_URL && (
