@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { generateBookingCode } from '@/lib/booking-code'
 
 const GMAIL_BASE = 'https://gmail.googleapis.com/gmail/v1/users/me'
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
@@ -343,7 +344,12 @@ async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promise<void>
       })
       .eq('id', existing[0].id)
   } else {
-    await supabase.from('reservations').insert(reservationData)
+    const { error: insertError } = await supabase
+      .from('reservations')
+      .insert({ ...reservationData, booking_code: generateBookingCode() })
+    if (insertError) {
+      throw new Error(`Insert failed for ${parsed.messageId}: ${insertError.message}`)
+    }
   }
 }
 

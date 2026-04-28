@@ -9,6 +9,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { parseIcal } from '@/lib/ical-parser'
+import { generateBookingCode } from '@/lib/booking-code'
 
 // Allowlisted iCal hosts — prevents SSRF via malicious URLs in DB
 const ALLOWED_ICAL_HOSTS = [
@@ -113,9 +114,12 @@ export async function GET(request: Request) {
       }
 
       if (events.length) {
-        await supabase
+        const { error: insertError } = await supabase
           .from('reservations')
-          .insert(events.map(e => ({ ...e, tenant_id: feed.tenant_id })))
+          .insert(events.map(e => ({ ...e, tenant_id: feed.tenant_id, booking_code: generateBookingCode() })))
+        if (insertError) {
+          throw new Error(`Insert failed for feed ${feed.id}: ${insertError.message}`)
+        }
         totalImported += events.length
       }
 

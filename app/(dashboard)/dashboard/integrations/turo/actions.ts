@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import { parseIcal } from '@/lib/ical-parser'
+import { generateBookingCode } from '@/lib/booking-code'
 
 async function getTenantId(): Promise<string> {
   const { tenantId } = await requireTenantId()
@@ -55,7 +56,9 @@ export async function syncAllFeeds(): Promise<{ imported: number; errors: number
         .ilike('notes', `%[${feed.source_name}]%`)
 
       if (events.length) {
-        await supabase.from('reservations').insert(events.map(e => ({ ...e, tenant_id: tenantId })))
+        await supabase
+          .from('reservations')
+          .insert(events.map(e => ({ ...e, tenant_id: tenantId, booking_code: generateBookingCode() })))
       }
 
       await supabase.from('turo_feeds').update({ last_synced: new Date().toISOString() }).eq('id', feed.id)
