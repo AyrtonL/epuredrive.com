@@ -47,7 +47,12 @@ export default async function ROIPage() {
 
   txRows.forEach((t) => {
     if (t.car_id != null) {
-      transactionExpenseMap[t.car_id] = (transactionExpenseMap[t.car_id] ?? 0) + (Number(t.amount) || 0)
+      const isMaintenance = (t.category ?? '').trim().toLowerCase() === 'maintenance'
+      if (isMaintenance) {
+        maintenanceMap[t.car_id] = (maintenanceMap[t.car_id] ?? 0) + (Number(t.amount) || 0)
+      } else {
+        transactionExpenseMap[t.car_id] = (transactionExpenseMap[t.car_id] ?? 0) + (Number(t.amount) || 0)
+      }
     }
   })
 
