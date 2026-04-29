@@ -106,7 +106,7 @@ export default async function TenantLayout({ children, params }: Props) {
 
             <div className="flex items-center gap-8">
               <div className="hidden md:flex items-center gap-6">
-                <a href={`/sites/${typedTenant.slug}`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>Fleet</a>
+                <a href={`/sites/${typedTenant.slug}#fleet`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>Fleet</a>
                 <a href={`/sites/${typedTenant.slug}#experience`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>Experience</a>
                 <a href={`/sites/${typedTenant.slug}#concierge`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>Concierge</a>
                 <a href={`/sites/${typedTenant.slug}/my-booking`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>My Booking</a>
