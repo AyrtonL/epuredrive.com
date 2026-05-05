@@ -315,6 +315,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
                     type="button"
                     disabled={disabled}
                     onClick={() => setActiveTab(t.key)}
+                    title={disabled ? 'Save the booking first to send the agreement' : undefined}
                     className={`text-[11px] font-bold uppercase tracking-widest px-4 py-3 border-b-2 transition-all whitespace-nowrap ${
                       disabled
                         ? 'text-white/15 border-transparent cursor-not-allowed'
