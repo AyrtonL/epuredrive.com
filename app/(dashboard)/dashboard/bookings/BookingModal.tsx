@@ -3,7 +3,14 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Reservation, Car } from '@/lib/supabase/types'
-import { createReservation, updateReservation, sendAgreement, getLatestOdometer } from './actions'
+import {
+  createReservation,
+  updateReservation,
+  sendAgreement,
+  getLatestOdometer,
+  searchCustomersForBooking,
+  type CustomerLookup,
+} from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 import FuelSummary from '@/components/dashboard/FuelSummary'
 import TenantCloseOut from './TenantCloseOut'
@@ -30,6 +37,13 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
   const [autoOdometerOut, setAutoOdometerOut] = useState(false)
   const [autoOdometerIn, setAutoOdometerIn] = useState(false)
 
+  // Existing-customer typeahead state. Lets staff reuse a saved customer
+  // (name/email/phone/DOB/address/license/insurance) instead of retyping.
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [customerResults, setCustomerResults] = useState<CustomerLookup[]>([])
+  const [showCustomerResults, setShowCustomerResults] = useState(false)
+  const [isSearchingCustomer, setIsSearchingCustomer] = useState(false)
+
   useEffect(() => {
     if (reservation) {
       setFormData(reservation)
@@ -42,7 +56,46 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
     setErrorStr(null)
     setAutoOdometerOut(false)
     setAutoOdometerIn(false)
+    setCustomerSearch('')
+    setCustomerResults([])
+    setShowCustomerResults(false)
   }, [reservation, isOpen])
+
+  // Debounced customer typeahead — only when creating a new booking.
+  useEffect(() => {
+    if (reservation) return
+    const q = customerSearch.trim()
+    if (q.length < 2) {
+      setCustomerResults([])
+      setIsSearchingCustomer(false)
+      return
+    }
+    setIsSearchingCustomer(true)
+    const handler = setTimeout(async () => {
+      const { results } = await searchCustomersForBooking(q)
+      setCustomerResults(results)
+      setIsSearchingCustomer(false)
+    }, 250)
+    return () => clearTimeout(handler)
+  }, [customerSearch, reservation])
+
+  function handlePickCustomer(c: CustomerLookup) {
+    setFormData((prev) => ({
+      ...prev,
+      customer_name: c.name ?? '',
+      customer_email: c.email ?? '',
+      customer_phone: c.phone ?? '',
+      customer_dob: c.dob ?? '',
+      customer_address: c.address ?? '',
+      license_number: c.license_number ?? '',
+      license_state: c.license_state ?? '',
+      insurance_provider: c.insurance_provider ?? '',
+      insurance_policy_number: c.insurance_policy_number ?? '',
+    }))
+    setCustomerSearch('')
+    setCustomerResults([])
+    setShowCustomerResults(false)
+  }
 
   // Auto-fill odometer inputs from the linked telematics device when the
   // modal opens on an existing reservation whose car has Bouncie connected.
@@ -170,6 +223,50 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Existing customer quick-find — only when creating new */}
+            {!isEditing && (
+              <div className="space-y-1 md:col-span-2 relative">
+                <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">
+                  Find Existing Customer <span className="text-white/30 font-medium normal-case">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or phone…"
+                  value={customerSearch}
+                  onChange={(e) => {
+                    setCustomerSearch(e.target.value)
+                    setShowCustomerResults(true)
+                  }}
+                  onFocus={() => setShowCustomerResults(true)}
+                  onBlur={() => setTimeout(() => setShowCustomerResults(false), 150)}
+                  className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+                />
+                {showCustomerResults && customerResults.length > 0 && (
+                  <div className="absolute z-20 mt-1 w-full bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden shadow-2xl max-h-64 overflow-y-auto">
+                    {customerResults.map((c, idx) => (
+                      <button
+                        key={`${c.email ?? ''}-${c.phone ?? ''}-${idx}`}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handlePickCustomer(c)}
+                        className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0"
+                      >
+                        <div className="text-white text-sm font-semibold">{c.name || '—'}</div>
+                        <div className="text-white/50 text-xs mt-0.5">
+                          {[c.email, c.phone].filter(Boolean).join(' · ') || '—'}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {customerSearch.trim().length >= 2 && !isSearchingCustomer && customerResults.length === 0 && (
+                  <p className="text-[10px] text-white/30 mt-1">
+                    No saved customers match — fill in below to create new.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Customer Contact */}
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Customer Name</label>

@@ -68,6 +68,114 @@ async function getOperatorEmails(supabase: ReturnType<typeof createClient>, tena
     .filter((email): email is string => !!email)
 }
 
+export interface CustomerLookup {
+  name: string | null
+  email: string | null
+  phone: string | null
+  dob: string | null
+  address: string | null
+  license_number: string | null
+  license_state: string | null
+  insurance_provider: string | null
+  insurance_policy_number: string | null
+}
+
+/**
+ * Search the tenant's past reservations for unique customers matching a query
+ * (name / email / phone). Used by BookingModal to let staff reuse existing
+ * customer data without retyping. The most recent reservation per customer
+ * wins so DOB / address / license / insurance reflect the latest known values.
+ */
+export async function searchCustomersForBooking(
+  query: string
+): Promise<{ results: CustomerLookup[]; error: string | null }> {
+  const trimmed = query?.trim() ?? ''
+  if (trimmed.length < 2) return { results: [], error: null }
+
+  // Strip PostgREST .or() specials (comma + parens) that would break the filter
+  const safe = trimmed.replace(/[,()]/g, '')
+  if (!safe) return { results: [], error: null }
+
+  const supabase = createClient()
+  const tenantId = await getTenantId()
+
+  const { data, error } = await supabase
+    .from('reservations')
+    .select(
+      'customer_name, customer_email, customer_phone, customer_dob, customer_address, license_number, license_state, insurance_provider, insurance_policy_number, created_at'
+    )
+    .eq('tenant_id', tenantId)
+    .or(
+      `customer_name.ilike.%${safe}%,customer_email.ilike.%${safe}%,customer_phone.ilike.%${safe}%`
+    )
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (error) return { results: [], error: error.message }
+
+  // Dedupe by email > phone > name (case-insensitive)
+  const seen = new Set<string>()
+  const unique: CustomerLookup[] = []
+  for (const r of data ?? []) {
+    const key =
+      r.customer_email?.toLowerCase().trim() ||
+      r.customer_phone?.trim() ||
+      r.customer_name?.toLowerCase().trim() ||
+      ''
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    unique.push({
+      name: r.customer_name,
+      email: r.customer_email,
+      phone: r.customer_phone,
+      dob: r.customer_dob,
+      address: r.customer_address,
+      license_number: r.license_number,
+      license_state: r.license_state,
+      insurance_provider: r.insurance_provider,
+      insurance_policy_number: r.insurance_policy_number,
+    })
+    if (unique.length >= 8) break
+  }
+
+  return { results: unique, error: null }
+}
+
+/**
+ * Add the booking's customer to the tenant's customers roster if they aren't
+ * already there. Match priority: email → phone → name (case-insensitive).
+ */
+async function upsertCustomerFromBooking(
+  supabase: ReturnType<typeof createClient>,
+  tenantId: string,
+  data: {
+    customer_name: string | null
+    customer_email: string | null
+    customer_phone: string | null
+  }
+): Promise<void> {
+  const name = data.customer_name?.trim()
+  if (!name) return
+
+  const email = data.customer_email?.trim() || null
+  const phone = data.customer_phone?.trim() || null
+
+  let lookup = supabase.from('customers').select('id').eq('tenant_id', tenantId).limit(1)
+  if (email) lookup = lookup.ilike('email', email)
+  else if (phone) lookup = lookup.eq('phone', phone)
+  else lookup = lookup.ilike('name', name)
+
+  const { data: existing } = await lookup.maybeSingle()
+  if (existing) return
+
+  await supabase.from('customers').insert({
+    name,
+    email,
+    phone,
+    tenant_id: tenantId,
+  })
+}
+
 async function getCarName(supabase: ReturnType<typeof createClient>, carId: number | null): Promise<string> {
   if (!carId) return 'Unknown Vehicle'
   const { data } = await supabase.from('cars').select('make, model, model_full').eq('id', carId).single()
@@ -99,6 +207,14 @@ export async function createReservation(
 
   if (!error) {
     const reservationId = inserted?.id ?? null
+
+    // Add to customers roster (idempotent — skips if already there)
+    upsertCustomerFromBooking(supabase, tenantId, {
+      customer_name: data.customer_name ?? null,
+      customer_email: data.customer_email ?? null,
+      customer_phone: data.customer_phone ?? null,
+    }).catch((err) => console.error('[bookings] customer upsert failed:', err))
+
     dispatchWebhookEvent(tenantId, 'booking.created', {
       reservation_id: reservationId,
       car_id: data.car_id ?? null,
