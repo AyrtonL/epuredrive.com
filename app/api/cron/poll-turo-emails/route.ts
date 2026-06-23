@@ -233,7 +233,10 @@ function parseTuroEmail(body: string, subject: string, messageId: string): Parse
     body.match(/(.+?)[\u2019']s trip with your/i)
   if (!guestMatch) return null
 
+  // Turo sometimes appends the delivery location ("Audi A3 at Fort Lauderdale … Airport").
+  // Strip the " at <location>" suffix so the vehicle name matches a fleet car.
   const vehicleMatch = body.match(/trip with your (.+?) is (?:booked|confirmed|modified)/i)
+  const vehicleName = vehicleMatch?.[1]?.replace(/\s+at\s+.+$/i, '').trim() ?? ''
   const datesMatch = body.match(/booked from (.+?\d{4}).+? to (.+?\d{4})/i)
   if (!datesMatch) return null
 
@@ -247,7 +250,7 @@ function parseTuroEmail(body: string, subject: string, messageId: string): Parse
     type: isModified ? 'modify' : 'confirm',
     messageId,
     customer_name: guestMatch[1].trim(),
-    vehicle_name: vehicleMatch?.[1]?.trim() ?? '',
+    vehicle_name: vehicleName,
     pickup_date: pickupDate,
     return_date: returnDate,
     total_amount: amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : null,

@@ -9,6 +9,7 @@ interface TuroEmailSync {
   provider: string | null
   gmail_address: string | null
   last_checked: string | null
+  active: boolean | null
 }
 
 interface Props {
@@ -104,6 +105,26 @@ export default function FeedManager({ sync, tenantId }: Props) {
               <button onClick={() => setShowIcloud(!showIcloud)}
                 className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest transition-all">
                 {showIcloud ? 'Cancel' : 'Connect iCloud'}
+              </button>
+            </div>
+          ) : sync.active === false ? (
+            <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5 flex items-center gap-4 max-w-md">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 font-black text-lg shrink-0">!</div>
+              <div className="flex-1 pr-2">
+                <div className="text-white font-bold text-sm">{sync.gmail_address}</div>
+                <div className="text-[10px] text-amber-400 font-black uppercase tracking-widest mt-0.5">
+                  Automation paused — reconnect required
+                </div>
+                {sync.last_checked && (
+                  <div className="text-[9px] text-white/30 uppercase font-bold tracking-widest mt-1">
+                    Last Polled: {new Date(sync.last_checked).toLocaleString()}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={sync.provider === 'icloud' ? () => setShowIcloud(true) : handleGmailConnect}
+                className="text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl bg-amber-500 text-black hover:brightness-110 transition-all whitespace-nowrap shrink-0">
+                Reconnect
               </button>
             </div>
           ) : (
