@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import Image from 'next/image'
-import { uploadCarImage, deleteCarImage } from './upload-actions'
+import { createClient } from '@/lib/supabase/client'
 
 const MAX_IMAGES = 10
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const BUCKET = 'car-images'
 
 interface Props {
   images: string[]
@@ -15,6 +18,13 @@ export default function ImageUploader({ images, onChange }: Props) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Upload straight from the browser to Supabase Storage. Routing the file
+  // bytes through a Server Action / Netlify Function was 500'ing (serverless
+  // payload + FormData File handling limits). The browser client carries the
+  // authenticated session, satisfying the `authenticated` RLS policy on the
+  // car-images bucket, and CSP already allows connect-src to Supabase.
+  const supabase = useMemo(() => createClient(), [])
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return
@@ -31,19 +41,37 @@ export default function ImageUploader({ images, onChange }: Props) {
 
     const newUrls: string[] = []
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setError('Your session expired. Please refresh and sign in again.')
+        return
+      }
+
       for (const file of filesToUpload) {
-        const fd = new FormData()
-        fd.append('file', file)
-        const result = await uploadCarImage(fd)
-        if (result.error) {
-          setError(result.error)
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          setError('Only JPEG, PNG, and WebP images are allowed.')
           break
         }
-        if (result.url) newUrls.push(result.url)
+        if (file.size > MAX_FILE_SIZE) {
+          setError('File must be under 10MB.')
+          break
+        }
+
+        const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+
+        const { error: upErr } = await supabase.storage
+          .from(BUCKET)
+          .upload(path, file, { contentType: file.type, upsert: false })
+        if (upErr) {
+          setError(upErr.message)
+          break
+        }
+
+        const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path)
+        newUrls.push(publicUrl)
       }
     } catch (err) {
-      // A thrown Server Action (e.g. body size limit exceeded) must not leave
-      // the UI stuck on "Uploading…" — surface it and reset state.
       setError(err instanceof Error ? err.message : 'Upload failed. Please try again.')
     } finally {
       if (newUrls.length > 0) {
@@ -55,7 +83,10 @@ export default function ImageUploader({ images, onChange }: Props) {
   }
 
   async function handleRemove(url: string) {
-    await deleteCarImage(url)
+    const match = url.match(/car-images\/(.+)$/)
+    if (match) {
+      await supabase.storage.from(BUCKET).remove([match[1]])
+    }
     onChange(images.filter(u => u !== url))
   }
 
