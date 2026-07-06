@@ -30,22 +30,28 @@ export default function ImageUploader({ images, onChange }: Props) {
     setUploading(true)
 
     const newUrls: string[] = []
-    for (const file of filesToUpload) {
-      const fd = new FormData()
-      fd.append('file', file)
-      const result = await uploadCarImage(fd)
-      if (result.error) {
-        setError(result.error)
-        break
+    try {
+      for (const file of filesToUpload) {
+        const fd = new FormData()
+        fd.append('file', file)
+        const result = await uploadCarImage(fd)
+        if (result.error) {
+          setError(result.error)
+          break
+        }
+        if (result.url) newUrls.push(result.url)
       }
-      if (result.url) newUrls.push(result.url)
+    } catch (err) {
+      // A thrown Server Action (e.g. body size limit exceeded) must not leave
+      // the UI stuck on "Uploading…" — surface it and reset state.
+      setError(err instanceof Error ? err.message : 'Upload failed. Please try again.')
+    } finally {
+      if (newUrls.length > 0) {
+        onChange([...images, ...newUrls])
+      }
+      setUploading(false)
+      if (inputRef.current) inputRef.current.value = ''
     }
-
-    if (newUrls.length > 0) {
-      onChange([...images, ...newUrls])
-    }
-    setUploading(false)
-    if (inputRef.current) inputRef.current.value = ''
   }
 
   async function handleRemove(url: string) {
