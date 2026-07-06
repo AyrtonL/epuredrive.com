@@ -22,8 +22,9 @@ export default function ImageUploader({ images, onChange }: Props) {
   // Upload straight from the browser to Supabase Storage. Routing the file
   // bytes through a Server Action / Netlify Function was 500'ing (serverless
   // payload + FormData File handling limits). The browser client carries the
-  // authenticated session, satisfying the `authenticated` RLS policy on the
-  // car-images bucket, and CSP already allows connect-src to Supabase.
+  // authenticated session; objects are written under the caller's tenant
+  // folder, which the car-images RLS policies enforce via current_tenant_id().
+  // Type/size are also enforced at the bucket level (defense in depth).
   const supabase = useMemo(() => createClient(), [])
 
   async function handleFiles(files: FileList | null) {
@@ -41,8 +42,8 @@ export default function ImageUploader({ images, onChange }: Props) {
 
     const newUrls: string[] = []
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      const { data: tenantId, error: tenantErr } = await supabase.rpc('current_tenant_id')
+      if (tenantErr || !tenantId) {
         setError('Your session expired. Please refresh and sign in again.')
         return
       }
@@ -58,7 +59,7 @@ export default function ImageUploader({ images, onChange }: Props) {
         }
 
         const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+        const path = `${tenantId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
 
         const { error: upErr } = await supabase.storage
           .from(BUCKET)
