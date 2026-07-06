@@ -17,6 +17,7 @@ interface Props {
 export default function ImageUploader({ images, onChange }: Props) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Upload straight from the browser to Supabase Storage. Routing the file
@@ -96,6 +97,23 @@ export default function ImageUploader({ images, onChange }: Props) {
     handleFiles(e.dataTransfer.files)
   }
 
+  // Reorder the gallery. Index 0 is the cover, so moving an image to the front
+  // changes which photo is used as the cover once the vehicle is saved.
+  function moveImage(from: number, to: number) {
+    if (from === to || from < 0 || to < 0 || from >= images.length || to >= images.length) return
+    const next = [...images]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    onChange(next)
+  }
+
+  function handleTileDrop(e: React.DragEvent, to: number) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (dragIndex !== null) moveImage(dragIndex, to)
+    setDragIndex(null)
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -103,7 +121,7 @@ export default function ImageUploader({ images, onChange }: Props) {
           Photos ({images.length}/{MAX_IMAGES})
         </label>
         {images.length > 0 && (
-          <span className="text-[10px] text-white/30">Drag to reorder • Click × to remove</span>
+          <span className="text-[10px] text-white/30">Drag to reorder • First photo is the cover</span>
         )}
       </div>
 
@@ -113,12 +131,32 @@ export default function ImageUploader({ images, onChange }: Props) {
           {images.map((url, idx) => {
             const src = url.startsWith('http') || url.startsWith('/') ? url : `/${url}`
             return (
-            <div key={url} className="relative group aspect-[4/3] rounded-xl overflow-hidden border border-white/10">
-              <Image src={src} alt={`Car photo ${idx + 1}`} fill className="object-cover" />
+            <div
+              key={url}
+              draggable
+              onDragStart={() => setDragIndex(idx)}
+              onDragEnd={() => setDragIndex(null)}
+              onDragOver={e => e.preventDefault()}
+              onDrop={e => handleTileDrop(e, idx)}
+              className={`relative group aspect-[4/3] rounded-xl overflow-hidden border cursor-grab active:cursor-grabbing transition-all ${
+                dragIndex === idx ? 'border-white/40 opacity-50' : 'border-white/10'
+              }`}
+            >
+              <Image src={src} alt={`Car photo ${idx + 1}`} fill className="object-cover pointer-events-none" />
               {idx === 0 && (
                 <div className="absolute top-1.5 left-1.5 bg-black/70 text-[9px] font-bold text-white px-1.5 py-0.5 rounded uppercase tracking-wider">
                   Cover
                 </div>
+              )}
+              {idx !== 0 && (
+                <button
+                  type="button"
+                  onClick={() => moveImage(idx, 0)}
+                  title="Set as cover"
+                  className="absolute bottom-1.5 left-1.5 bg-black/70 hover:bg-white hover:text-black text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  Set cover
+                </button>
               )}
               <button
                 type="button"
