@@ -63,6 +63,16 @@ export async function GET(request: Request) {
 
     // 3. Save to Supabase using service role (bypasses RLS — same pattern as iCloud connect)
     const supabase = createAdminClient()
+
+    // Preserve the existing watermark on reconnect. Resetting it 30 days back makes the next
+    // poll re-scan old emails and re-insert bookings the user already has (or deleted).
+    const { data: prior } = await supabase
+      .from('turo_email_syncs')
+      .select('last_checked')
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+    const lastChecked = prior?.last_checked ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
     const { error: upsertError } = await supabase.from('turo_email_syncs').upsert({
       tenant_id: tenantId,
       gmail_address: gmailAddress,
@@ -70,7 +80,7 @@ export async function GET(request: Request) {
       refresh_token: tokens.refresh_token,
       active: true,
       provider: 'gmail',
-      last_checked: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      last_checked: lastChecked,
     }, { onConflict: 'tenant_id' })
 
     if (upsertError) {

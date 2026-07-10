@@ -195,66 +195,85 @@ function parseTuroDate(str: string): string | null {
 interface ParsedEmail {
   type: 'confirm' | 'modify' | 'cancel'
   messageId: string
+  reservationId: string | null
   customer_name: string | null
   vehicle_name?: string
   pickup_date: string | null
   return_date: string | null
   total_amount?: number | null
-  notes?: string
   source?: string
   status?: string
+}
+
+// M/D/YY or M/D/YYYY (Turo's structured footer) → ISO YYYY-MM-DD
+function parseSlashDate(str: string): string | null {
+  const m = str.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)
+  if (!m) return null
+  const yyyy = m[3].length === 2 ? `20${m[3]}` : m[3]
+  return `${yyyy}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`
 }
 
 function parseTuroEmail(body: string, subject: string, messageId: string): ParsedEmail | null {
   const fullText = subject + ' ' + body
 
   const isCancelled = /cancel/i.test(subject)
-  const isModified = /modif|updated.*trip|trip.*updated/i.test(subject)
-  const isConfirmed = /cha.?ching|trip.*booked|booked.*trip/i.test(fullText)
+  const isModified = /changed their trip|modif|updated.*trip|trip.*updated/i.test(subject)
+  const isConfirmed = /is booked|cha.?ching|trip.*booked|booked.*trip/i.test(fullText)
 
   if (!isConfirmed && !isCancelled && !isModified) return null
 
+  // The Turo Reservation ID is stable across the confirm / modify / cancel emails for the
+  // same booking - use it as the primary key so those emails all update the one row.
+  const resIdMatch = fullText.match(/Reservation ID #?(\d+)/i) || subject.match(/\((\d{6,})\)/)
+  const reservationId = resIdMatch?.[1] ?? null
+
+  // Guest name: the subject is the most reliable source across all three email types.
+  const subjGuest =
+    subject.match(/^(.+?)[’']s trip with your/i) ||
+    subject.match(/^(.+?) has (?:changed|canceled|cancelled)/i)
+  const bodyGuest =
+    body.match(/Cha-?ching!\s*(.+?)[’']s trip with your/i) ||
+    body.match(/(.+?)[’']s trip with your/i)
+  const guestName = (subjGuest?.[1] || bodyGuest?.[1] || '').trim() || null
+
   if (isCancelled) {
-    const cancelGuestMatch =
-      body.match(/(.+?)'s trip with your/i) ||
-      body.match(/trip (?:for|with) (.+?) has been cancel/i)
-    const cancelDatesMatch = body.match(/(?:from|booked from) (.+?\d{4}).+? to (.+?\d{4})/i)
-    return {
-      type: 'cancel',
-      messageId,
-      customer_name: cancelGuestMatch?.[1]?.trim() ?? null,
-      pickup_date: cancelDatesMatch ? parseTuroDate(cancelDatesMatch[1]) : null,
-      return_date: cancelDatesMatch ? parseTuroDate(cancelDatesMatch[2]) : null,
-    }
+    return { type: 'cancel', messageId, reservationId, customer_name: guestName, pickup_date: null, return_date: null }
   }
 
-  const guestMatch =
-    body.match(/Cha-?ching!\s*(.+?)[\u2019']s trip with your/i) ||
-    body.match(/(.+?)[\u2019']s trip with your/i)
-  if (!guestMatch) return null
-
-  // Turo sometimes appends the delivery location ("Audi A3 at Fort Lauderdale … Airport").
+  // Turo sometimes appends the delivery location ("Audi A3 at Fort Lauderdale ... Airport").
   // Strip the " at <location>" suffix so the vehicle name matches a fleet car.
   const vehicleMatch = body.match(/trip with your (.+?) is (?:booked|confirmed|modified)/i)
   const vehicleName = vehicleMatch?.[1]?.replace(/\s+at\s+.+$/i, '').trim() ?? ''
-  const datesMatch = body.match(/booked from (.+?\d{4}).+? to (.+?\d{4})/i)
-  if (!datesMatch) return null
 
-  const pickupDate = parseTuroDate(datesMatch[1])
-  const returnDate = parseTuroDate(datesMatch[2])
+  // Dates: prose ("booked from ... to ...") for confirmations; structured footer
+  // ("Trip start: 7/10/26 ... Trip end: ...") for modifications and as a fallback.
+  const datesMatch = body.match(/booked from (.+?\d{4}).+? to (.+?\d{4})/i)
+  let pickupDate = datesMatch ? parseTuroDate(datesMatch[1]) : null
+  let returnDate = datesMatch ? parseTuroDate(datesMatch[2]) : null
+  if (!pickupDate) {
+    const m = body.match(/Trip start:?\s*(\d{1,2}\/\d{1,2}\/\d{2,4})/i)
+    if (m) pickupDate = parseSlashDate(m[1])
+  }
+  if (!returnDate) {
+    const m = body.match(/Trip end:?\s*(\d{1,2}\/\d{1,2}\/\d{2,4})/i)
+    if (m) returnDate = parseSlashDate(m[1])
+  }
   if (!pickupDate || !returnDate) return null
 
-  const amountMatch = body.match(/You[''\u2019]ll earn \$([0-9,]+(?:\.\d{2})?)/i)
+  const amountMatch =
+    body.match(/You[’']ll earn \$([0-9,]+(?:\.\d{2})?)/i) ||
+    body.match(/total earnings will be \$([0-9,]+(?:\.\d{2})?)/i) ||
+    body.match(/You earn:?\s*\$([0-9,]+(?:\.\d{2})?)/i)
 
   return {
     type: isModified ? 'modify' : 'confirm',
     messageId,
-    customer_name: guestMatch[1].trim(),
+    reservationId,
+    customer_name: guestName,
     vehicle_name: vehicleName,
     pickup_date: pickupDate,
     return_date: returnDate,
     total_amount: amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : null,
-    notes: `Turo #${messageId}`,
     source: 'turo',
     status: 'confirmed',
   }
@@ -293,50 +312,46 @@ async function findCarId(tenantId: string, vehicleName: string | undefined): Pro
 
 // ── Shared email processor ────────────────────────────────────────────────────
 
+// Locate the existing row for a Turo booking: by Turo reservation id first (stable across
+// the confirm / modify / cancel emails of one booking), then by gmail message id so that
+// re-fetching the same email — and rows synced before res-ids were stored — still dedupe.
+async function findExistingReservation(parsed: ParsedEmail, tenantId: string): Promise<string | null> {
+  const supabase = createAdminClient()
+  if (parsed.reservationId) {
+    const { data } = await supabase
+      .from('reservations')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .like('notes', `%Turo-Res #${parsed.reservationId}%`)
+      .limit(1)
+    if (data?.[0]) return data[0].id
+  }
+  const { data } = await supabase
+    .from('reservations')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .like('notes', `%Turo #${parsed.messageId}%`)
+    .limit(1)
+  return data?.[0]?.id ?? null
+}
+
 async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promise<void> {
   const supabase = createAdminClient()
 
   if (parsed.type === 'cancel') {
-    if (parsed.customer_name && parsed.pickup_date) {
-      const { data: matches } = await supabase
-        .from('reservations')
-        .select('id')
-        .eq('tenant_id', sync.tenant_id)
-        .eq('customer_name', parsed.customer_name)
-        .eq('pickup_date', parsed.pickup_date)
-        .eq('source', 'turo')
-
-      for (const r of matches ?? []) {
-        await supabase.from('reservations').update({ status: 'cancelled' }).eq('id', r.id)
-      }
+    const id = await findExistingReservation(parsed, sync.tenant_id)
+    if (id) {
+      await supabase.from('reservations').update({ status: 'cancelled' }).eq('id', id)
     }
     return
   }
 
-  const { data: existing } = await supabase
-    .from('reservations')
-    .select('id')
-    .eq('tenant_id', sync.tenant_id)
-    .like('notes', `%Turo #${parsed.messageId}%`)
-
+  const existingId = await findExistingReservation(parsed, sync.tenant_id)
   const carId = await findCarId(sync.tenant_id, parsed.vehicle_name)
-  const notes = carId
-    ? parsed.notes!
-    : `${parsed.notes} [vehicle: ${parsed.vehicle_name || 'unknown'}]`
+  const ref = `Turo #${parsed.messageId}${parsed.reservationId ? ` Turo-Res #${parsed.reservationId}` : ''}`
+  const notes = carId ? ref : `${ref} [vehicle: ${parsed.vehicle_name || 'unknown'}]`
 
-  const reservationData = {
-    tenant_id: sync.tenant_id,
-    car_id: carId,
-    customer_name: parsed.customer_name,
-    pickup_date: parsed.pickup_date,
-    return_date: parsed.return_date,
-    total_amount: parsed.total_amount,
-    status: parsed.status,
-    source: parsed.source,
-    notes,
-  }
-
-  if (existing && existing.length > 0) {
+  if (existingId) {
     await supabase
       .from('reservations')
       .update({
@@ -344,12 +359,23 @@ async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promise<void>
         return_date: parsed.return_date,
         total_amount: parsed.total_amount,
         status: parsed.status,
+        notes,
+        ...(carId ? { car_id: carId } : {}),
       })
-      .eq('id', existing[0].id)
+      .eq('id', existingId)
   } else {
-    const { error: insertError } = await supabase
-      .from('reservations')
-      .insert({ ...reservationData, booking_code: generateBookingCode() })
+    const { error: insertError } = await supabase.from('reservations').insert({
+      tenant_id: sync.tenant_id,
+      car_id: carId,
+      customer_name: parsed.customer_name,
+      pickup_date: parsed.pickup_date,
+      return_date: parsed.return_date,
+      total_amount: parsed.total_amount,
+      status: parsed.status,
+      source: parsed.source,
+      notes,
+      booking_code: generateBookingCode(),
+    })
     if (insertError) {
       throw new Error(`Insert failed for ${parsed.messageId}: ${insertError.message}`)
     }
