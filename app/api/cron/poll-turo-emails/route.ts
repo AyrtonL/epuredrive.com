@@ -402,6 +402,10 @@ async function pollGmail(sync: EmailSync, msgErrors?: string[]): Promise<number>
 
   if (!messages.length) return 0
 
+  // Gmail returns newest-first; process oldest-first so the most recent email for a
+  // booking (e.g. a cancellation after a confirmation) is applied last and wins.
+  messages.reverse()
+
   let synced = 0
   for (const msg of messages) {
     try {
