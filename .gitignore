@@ -63,3 +63,6 @@ legal/llc-setup-guide.md
 # Playwright test artifacts
 test-results/
 playwright-report/
+
+# Local Claude Code permission grants (may capture secrets in command strings)
+.claude/settings.local.json

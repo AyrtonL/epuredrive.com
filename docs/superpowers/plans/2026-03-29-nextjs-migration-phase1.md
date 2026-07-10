@@ -373,7 +373,7 @@ Expected: `.env.local` appears. If not, add it.
 ```bash
 curl -s -X POST \
   "https://api.netlify.com/api/v1/accounts/5f56928be319ee80a35d7d89/env?site_id=aca8175e-457e-4e87-b38b-1c5ca1e03dc8" \
-  -H "Authorization: Bearer nfp_bFdMPn4ARKz2d9ArL8CdHZMKG7wZF6FU28d4" \
+  -H "Authorization: Bearer $NETLIFY_TOKEN" \
   -H "Content-Type: application/json" \
   -d '[
     {"key":"NEXT_PUBLIC_SUPABASE_URL","values":[{"context":"all","value":"${SUPABASE_URL}"}]},
@@ -1651,7 +1651,7 @@ Also add it to Netlify:
 ```bash
 curl -s -X POST \
   "https://api.netlify.com/api/v1/accounts/5f56928be319ee80a35d7d89/env?site_id=aca8175e-457e-4e87-b38b-1c5ca1e03dc8" \
-  -H "Authorization: Bearer nfp_bFdMPn4ARKz2d9ArL8CdHZMKG7wZF6FU28d4" \
+  -H "Authorization: Bearer $NETLIFY_TOKEN" \
   -H "Content-Type: application/json" \
   -d '[{"key":"NEXT_PUBLIC_EPUREDRIVE_SLUG","values":[{"context":"all","value":"ayrtonn-lg-1774229361678"}]}]'
 ```
@@ -1914,7 +1914,7 @@ git push origin main
 ```bash
 # Check build status
 curl -s "https://api.netlify.com/api/v1/sites/aca8175e-457e-4e87-b38b-1c5ca1e03dc8/deploys?per_page=1" \
-  -H "Authorization: Bearer nfp_bFdMPn4ARKz2d9ArL8CdHZMKG7wZF6FU28d4" \
+  -H "Authorization: Bearer $NETLIFY_TOKEN" \
   | python3 -c "import sys,json; d=json.load(sys.stdin)[0]; print(d['state'], d.get('error_message',''))"
 ```
 
