@@ -510,6 +510,29 @@ export async function GET(request: Request) {
     return NextResponse.json({ totalSynced: 0, errors: 0, noActiveSync: true })
   }
 
+  // TEMP diagnostic: /api/cron/poll-turo-emails?debug=1 (cron-secret only) — trace the Gmail boundary.
+  if (new URL(request.url).searchParams.get('debug') === '1' && tenantFilter === null) {
+    const s = syncs.find((x) => (x.provider ?? 'gmail') === 'gmail') as EmailSync | undefined
+    if (!s) return NextResponse.json({ debug: 'no gmail sync' })
+    try {
+      const checkedAt = s.last_checked ? new Date(s.last_checked) : new Date(0)
+      const afterTs = Math.floor(checkedAt.getTime() / 1000)
+      const q = `from:noreply@mail.turo.com after:${afterTs}`
+      const list = await gmailFetch(`/messages?q=${encodeURIComponent(q)}&maxResults=50`, s)
+      const msgs: { id: string }[] = list.messages ?? []
+      const traced = []
+      for (const m of msgs) {
+        const full = await gmailFetch(`/messages/${m.id}?format=full`, s)
+        const subject = full.payload?.headers?.find((h: { name: string }) => h.name.toLowerCase() === 'subject')?.value || ''
+        const parsed = parseTuroEmail(getMessageBody(full.payload), subject, m.id)
+        traced.push({ subject: subject.slice(0, 60), parsed: parsed ? { type: parsed.type, name: parsed.customer_name, pickup: parsed.pickup_date } : null })
+      }
+      return NextResponse.json({ debug: true, last_checked: s.last_checked, afterTs, isNaN: Number.isNaN(afterTs), query: q, count: msgs.length, traced })
+    } catch (err: unknown) {
+      return NextResponse.json({ debug: true, error: err instanceof Error ? err.message : String(err) })
+    }
+  }
+
   let totalSynced = 0
   let errors = 0
   const errorDetails: string[] = []
