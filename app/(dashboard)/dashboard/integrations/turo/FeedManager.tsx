@@ -68,7 +68,7 @@ export default function FeedManager({ sync, tenantId }: Props) {
       if (result.noActiveSync) {
         throw new Error('No active email connection — reconnect your inbox.')
       }
-      if (result.errors > 0) {
+      if (result.errors > 0 || result.errorDetails?.length) {
         throw new Error(result.errorDetails?.[0] ?? `${result.errors} sync error(s).`)
       }
       setSyncMsg(`Sync complete — ${result.totalSynced ?? 0} booking(s) processed.`)
