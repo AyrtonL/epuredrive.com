@@ -507,11 +507,12 @@ export async function GET(request: Request) {
   }
 
   if (!syncs?.length) {
-    return NextResponse.json({ synced: 0, errors: 0 })
+    return NextResponse.json({ totalSynced: 0, errors: 0, noActiveSync: true })
   }
 
   let totalSynced = 0
   let errors = 0
+  const errorDetails: string[] = []
 
   for (const sync of syncs) {
     try {
@@ -533,10 +534,11 @@ export async function GET(request: Request) {
       if (/token refresh failed|403|access.?denied|insufficient.?permission|authenticationfailed/i.test(msg)) {
         await supabase.from('turo_email_syncs').update({ active: false }).eq('id', sync.id)
       }
+      errorDetails.push(msg.slice(0, 500))
       errors++
     }
   }
 
   console.info(`[poll-turo-emails] Done: ${totalSynced} synced, ${errors} error(s)`)
-  return NextResponse.json({ totalSynced, errors })
+  return NextResponse.json({ totalSynced, errors, ...(errorDetails.length ? { errorDetails } : {}) })
 }

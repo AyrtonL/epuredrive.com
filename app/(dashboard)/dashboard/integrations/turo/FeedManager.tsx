@@ -65,6 +65,12 @@ export default function FeedManager({ sync, tenantId }: Props) {
       })
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || 'Sync failed')
+      if (result.noActiveSync) {
+        throw new Error('No active email connection — reconnect your inbox.')
+      }
+      if (result.errors > 0) {
+        throw new Error(result.errorDetails?.[0] ?? `${result.errors} sync error(s).`)
+      }
       setSyncMsg(`Sync complete — ${result.totalSynced ?? 0} booking(s) processed.`)
     } catch (err: any) {
       setSyncMsg('Sync failed: ' + err.message)
