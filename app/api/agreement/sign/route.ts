@@ -183,6 +183,13 @@ export async function POST(req: NextRequest) {
     }
     const carName = car ? `${car.make} ${car.model_full || car.model}` : 'Vehicle'
 
+    // Link the customer back to their signed agreement (view / download PDF).
+    // The client-side PDF is uploaded after signing, so we point at the
+    // agreement page rather than the raw PDF URL (which may not exist yet).
+    const tenantSlug = tenant?.slug || ''
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${tenantSlug}.epuredrive.com`
+    const agreementUrl = tenantSlug ? `${baseUrl}/sites/${tenantSlug}/agreement/${token}` : undefined
+
     // Send emails (fire and forget — don't block response)
     Promise.resolve().then(async () => {
       try {
@@ -201,6 +208,7 @@ export async function POST(req: NextRequest) {
                 carName,
                 pickupDate: reservation.pickup_date || '',
                 returnDate: reservation.return_date || '',
+                agreementUrl,
               }),
             })
           )

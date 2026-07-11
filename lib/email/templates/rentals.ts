@@ -149,6 +149,7 @@ export function agreementSignedCustomerEmail(params: {
   carName: string
   pickupDate: string
   returnDate: string
+  agreementUrl?: string
 }): { subject: string; html: string } {
   const fmt = (d: string) =>
     d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'
@@ -157,13 +158,16 @@ export function agreementSignedCustomerEmail(params: {
     html: tenantCompactLayout({
       brand: params.brand,
       headline: 'Agreement signed.',
-      body: `Hi ${params.customerName}, your rental agreement with <strong>${params.brand.name}</strong> has been signed. Please keep this email for your records.`,
+      body: `Hi ${params.customerName}, your rental agreement with <strong>${params.brand.name}</strong> has been signed. Please keep this email for your records — you can view or download your signed copy anytime using the button below.`,
       details: [
         { label: 'Vehicle', value: params.carName },
         { label: 'Pickup', value: fmt(params.pickupDate) },
         { label: 'Return', value: fmt(params.returnDate) },
         { label: 'Signed', value: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) },
       ],
+      ...(params.agreementUrl
+        ? { cta: { label: 'View Your Signed Agreement', href: params.agreementUrl } }
+        : {}),
       note: `If you have questions about your rental, please contact ${params.brand.name} directly.`,
     }),
   }
