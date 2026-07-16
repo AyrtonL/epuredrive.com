@@ -64,26 +64,15 @@
   [headers.values]
     Cache-Control = "public, max-age=86400"
 
-[functions.sync-ical-cron]
-  schedule = "*/30 * * * *"
-
-[functions.poll-turo-emails]
-  schedule = "*/15 * * * *"
-
-[functions.maintenance-alerts-cron]
-  schedule = "0 13 * * *"
-
-[functions.review-requests-cron]
-  schedule = "0 14 * * *"
-
-[functions.return-reminders-cron]
-  schedule = "0 15 * * *"
-
+# NOTE: These crons are now driven by Supabase pg_cron (net.http_get/http_post to
+# /api/cron/*, secret from Supabase Vault), NOT Netlify — Netlify's scheduler
+# silently stopped firing scheduled functions (2026-07-15). pg_cron jobs:
+# poll-turo-emails (*/15), sync-ical (*/30), maintenance-alerts (0 13),
+# review-requests (0 14), return-reminders (0 15), telematics-positions-prune (0 3).
+# Schedules removed here to avoid double-firing (esp. email crons) if Netlify ever revives.
+# telematics-sync has no HTTP endpoint, so it stays on Netlify for now.
 [functions.telematics-sync]
   schedule = "*/5 * * * *"
-
-[functions.telematics-positions-prune]
-  schedule = "0 3 * * *"
 
 # Edge Functions
 [[edge_functions]]
