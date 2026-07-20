@@ -16,6 +16,15 @@ import { generateBookingCode } from '@/lib/booking-code'
 const GMAIL_BASE = 'https://gmail.googleapis.com/gmail/v1/users/me'
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 
+// Re-scan window applied to the `last_checked` cursor. Turo emails reach the synced
+// mailbox via iCloud→Gmail forwarding, which can lag by minutes. Because the poll
+// advances the cursor to now() each run, an email that lands *after* a run but carries
+// an earlier internalDate would fall before the cursor and be skipped forever (this is
+// exactly how Stephane's 7/19 trip-change was missed). Re-scanning a few days on every
+// run closes that gap; reprocessing is idempotent (dedup by Turo reservation id + the
+// uniq_turo_res_id index), so the only cost is fetching a few extra low-volume emails.
+const CURSOR_LOOKBACK_MS = 3 * 24 * 60 * 60 * 1000
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 function verifyCronSecret(request: Request): boolean {
@@ -386,7 +395,7 @@ async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promise<void>
 
 async function pollGmail(sync: EmailSync, msgErrors?: string[]): Promise<number> {
   const checkedAt = sync.last_checked
-    ? new Date(sync.last_checked)
+    ? new Date(new Date(sync.last_checked).getTime() - CURSOR_LOOKBACK_MS)
     : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
   const afterTimestamp = Math.floor(checkedAt.getTime() / 1000)
   const query = `from:noreply@mail.turo.com after:${afterTimestamp}`
@@ -441,7 +450,7 @@ async function pollIcloud(sync: EmailSync): Promise<number> {
     const lock = await client.getMailboxLock('INBOX')
     try {
       const checkedAt = sync.last_checked
-        ? new Date(sync.last_checked)
+        ? new Date(new Date(sync.last_checked).getTime() - CURSOR_LOOKBACK_MS)
         : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
 
       const allUids: number[] = (await client.search(
@@ -540,28 +549,6 @@ export async function GET(request: Request) {
 
   if (!syncs?.length) {
     return NextResponse.json({ totalSynced: 0, errors: 0, noActiveSync: true })
-  }
-
-  // TEMP diagnostic (read-only): ?debug=1 reports the built Gmail query, how many
-  // messages it returns, and whether the first few parse — without mutating last_checked.
-  if (new URL(request.url).searchParams.get('debug') === '1') {
-    const s = syncs[0] as EmailSync
-    const checkedAt = s.last_checked ? new Date(s.last_checked) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    const afterTimestamp = Math.floor(checkedAt.getTime() / 1000)
-    const query = `from:noreply@mail.turo.com after:${afterTimestamp}`
-    const page = await gmailFetch(`/messages?q=${encodeURIComponent(query)}&maxResults=50`, s)
-    const ids: string[] = (page.messages || []).map((m: { id: string }) => m.id)
-    const samples: { id: string; subject: string; parsed: boolean }[] = []
-    for (const id of ids.slice(0, 8)) {
-      const full = await gmailFetch(`/messages/${id}?format=full`, s)
-      const subject = full.payload?.headers?.find((h: { name: string }) => h.name.toLowerCase() === 'subject')?.value || ''
-      const body = getMessageBody(full.payload)
-      samples.push({ id, subject, parsed: !!parseTuroEmail(body, subject, id) })
-    }
-    return NextResponse.json({
-      debug: true, provider: s.provider ?? null, last_checked: s.last_checked,
-      afterTimestamp, query, rawCount: ids.length, resultSizeEstimate: page.resultSizeEstimate, samples,
-    })
   }
 
   let totalSynced = 0
