@@ -191,6 +191,9 @@ export interface CarService {
   next_service_mileage: number | null
   notes: string | null
   tenant_id: string | null
+  // Set by trg_maintenance_before(): the auto-created expense in `transactions`
+  // that mirrors this service's cost. DB-managed — never supplied by the client.
+  transaction_id?: string | null
 }
 
 

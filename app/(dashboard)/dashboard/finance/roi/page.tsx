@@ -18,9 +18,9 @@ export default async function ROIPage() {
   ] = await Promise.all([
     supabase.from('reservations').select('car_id, total_amount, status').eq('tenant_id', tenantId).eq('status', 'completed'),
     supabase.from('cars').select('id, make, model, model_full, daily_rate').eq('tenant_id', tenantId),
-    supabase.from('car_services').select('car_id, cost').eq('tenant_id', tenantId),
+    supabase.from('car_services').select('car_id, cost, transaction_id').eq('tenant_id', tenantId),
     supabase.from('consignments').select('car_id, owner_percentage, owner_name').eq('tenant_id', tenantId),
-    supabase.from('transactions').select('amount, category, car_id').eq('tenant_id', tenantId),
+    supabase.from('transactions').select('id, amount, category, car_id').eq('tenant_id', tenantId),
   ])
 
   const rows = (reservations as Reservation[]) ?? []
@@ -45,12 +45,19 @@ export default async function ROIPage() {
     }
   })
 
-  // car_services is the single source of truth for maintenance cost. Per-car
-  // transactions all count as "other expenses" — NOT re-added to maintenance —
-  // so a service logged in both places is never double-counted. Net profit is
-  // unchanged (every distinct expense record is still deducted exactly once).
+  // Each maintenance cost is auto-mirrored into a `transactions` expense by the
+  // trg_maintenance_before() DB trigger (linked via car_services.transaction_id).
+  // Exclude those mirror rows here so the same cost isn't counted twice — once as
+  // maintenance (above) and again as an expense (below).
+  const mirroredTxnIds = new Set(
+    serviceRows.map((s) => s.transaction_id).filter((id): id is string => id != null)
+  )
+
+  // car_services is the single source of truth for maintenance cost. Remaining
+  // per-car transactions (manual expenses, not maintenance mirrors) count as
+  // "other expenses" — so every distinct expense is deducted exactly once.
   txRows.forEach((t) => {
-    if (t.car_id != null) {
+    if (t.car_id != null && !mirroredTxnIds.has(String(t.id))) {
       transactionExpenseMap[t.car_id] = (transactionExpenseMap[t.car_id] ?? 0) + (Number(t.amount) || 0)
     }
   })
