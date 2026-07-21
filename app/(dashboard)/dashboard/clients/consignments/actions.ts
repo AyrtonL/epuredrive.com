@@ -47,11 +47,15 @@ export async function updateOwner(id: string, data: Partial<OwnerInput>): Promis
 export async function deleteOwner(id: string): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await tenant()
-  const { count } = await supabase
+  const { count, error: countError } = await supabase
     .from('consignments')
     .select('id', { count: 'exact', head: true })
     .eq('owner_id', id)
     .eq('tenant_id', tenantId)
+  // Fail closed: if we cannot verify the car count, do not risk deleting.
+  if (countError) {
+    return { error: 'Could not verify this owner has no cars. Please try again.' }
+  }
   if ((count ?? 0) > 0) {
     return { error: "Remove or reassign this owner's cars first." }
   }
