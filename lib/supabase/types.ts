@@ -152,9 +152,22 @@ export interface Customer {
   created_at?: string
 }
 
+export interface ConsignmentOwner {
+  id: string
+  tenant_id: string | null
+  name: string
+  email: string | null
+  phone: string | null
+  default_percentage: number | null
+  notes: string | null
+  created_at?: string | null
+}
+
 export interface Consignment {
-  id: number
+  id: string
   car_id: number | null
+  owner_id: string | null
+  // Legacy owner fields — kept until the drop migration; do not read in new code.
   owner_name: string | null
   owner_email: string | null
   owner_phone: string | null
