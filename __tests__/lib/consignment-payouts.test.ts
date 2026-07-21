@@ -8,7 +8,7 @@ function res(p: Partial<Reservation>): Reservation {
     total_amount: 1000, status: 'completed', ...p,
   } as Reservation
 }
-function con(p: Partial<Consignment>): Consignment {
+function con(p: Partial<Consignment> = {}): Consignment {
   return {
     id: 'c1', car_id: 26, owner_id: 'o1',
     owner_name: null, owner_email: null, owner_phone: null,
@@ -22,9 +22,9 @@ function owner(p: Partial<ConsignmentOwner>): ConsignmentOwner {
     default_percentage: 70, notes: null, ...p,
   } as ConsignmentOwner
 }
-function tx(p: Partial<Transaction>): Transaction {
+function tx(p: Partial<Transaction> = {}): Transaction {
   return { id: 1, transaction_date: '2026-06-11', type: 'expense',
-    category: 'fuel', amount: 100, description: null, car_id: 26 } as Transaction
+    category: 'fuel', amount: 100, description: null, car_id: 26, ...p } as Transaction
 }
 
 const WIDE_FROM = '0001-01-01'
