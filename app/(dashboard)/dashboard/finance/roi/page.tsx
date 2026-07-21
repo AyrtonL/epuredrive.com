@@ -45,14 +45,13 @@ export default async function ROIPage() {
     }
   })
 
+  // car_services is the single source of truth for maintenance cost. Per-car
+  // transactions all count as "other expenses" — NOT re-added to maintenance —
+  // so a service logged in both places is never double-counted. Net profit is
+  // unchanged (every distinct expense record is still deducted exactly once).
   txRows.forEach((t) => {
     if (t.car_id != null) {
-      const isMaintenance = (t.category ?? '').trim().toLowerCase() === 'maintenance'
-      if (isMaintenance) {
-        maintenanceMap[t.car_id] = (maintenanceMap[t.car_id] ?? 0) + (Number(t.amount) || 0)
-      } else {
-        transactionExpenseMap[t.car_id] = (transactionExpenseMap[t.car_id] ?? 0) + (Number(t.amount) || 0)
-      }
+      transactionExpenseMap[t.car_id] = (transactionExpenseMap[t.car_id] ?? 0) + (Number(t.amount) || 0)
     }
   })
 
@@ -75,7 +74,7 @@ export default async function ROIPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <PageHeader title="Return on Investment" description="Revenue vs Maintenance & Owner Splits per vehicle." />
+      <PageHeader title="Net Profit by Vehicle" description="Earned revenue minus maintenance, owner splits, and expenses per vehicle. (True ROI, which needs each vehicle's purchase cost, is coming with fleet cost-basis tracking.)" />
 
       {/* Fleet Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

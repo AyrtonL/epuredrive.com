@@ -94,32 +94,39 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
       return
     }
 
-    const dataToSubmit: Omit<Car, 'id' | 'tenant_id'> = {
+    // Parse a numeric field to a number, preserving a legitimate 0 (a promo
+    // rate or a brand-new 0-mile car). Only empty/invalid input becomes null.
+    const numOrNull = (v: string | number | null | undefined): number | null => {
+      if (v === '' || v == null) return null
+      const n = Number(v)
+      return Number.isFinite(n) ? n : null
+    }
+
+    // NOTE: telematics_device_id / last_seen_at / last_lat / last_lon are
+    // deliberately NOT included. They are owned by the Bouncie webhook/cron.
+    // Omitting them means an edit never touches (and never wipes) a car's
+    // device binding or last-known GPS. New cars default these to null in the DB.
+    const dataToSubmit: Partial<Omit<Car, 'id' | 'tenant_id'>> = {
       make: formData.make,
       model: formData.model,
       model_full: formData.model_full || null,
-      year: Number(formData.year) || null,
-      daily_rate: Number(formData.daily_rate) || null,
+      year: numOrNull(formData.year),
+      daily_rate: numOrNull(formData.daily_rate),
       category: formData.category || 'economy',
       status: formData.status || 'active',
       image_url: formData.image_url || null,
       gallery: formData.gallery || null,
       badge: formData.badge || null,
-      seats: Number(formData.seats) || null,
+      seats: numOrNull(formData.seats),
       transmission: formData.transmission || null,
       hp: formData.hp || null,
       features: formData.features || null,
       description: formData.description || null,
       turo_vehicle_id: formData.turo_vehicle_id || null,
-      mileage: Number(formData.mileage) || null,
+      mileage: numOrNull(formData.mileage),
       vin: formData.vin || null,
       color: formData.color || null,
       plate: formData.plate || null,
-      // Telematics — read-only (populated by Bouncie webhook/cron), null on create
-      telematics_device_id: null,
-      last_seen_at: null,
-      last_lat: null,
-      last_lon: null,
     }
 
     startTransition(async () => {

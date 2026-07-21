@@ -3,6 +3,14 @@
 import { useState, useMemo } from 'react'
 import type { Reservation, Transaction } from '@/lib/supabase/types'
 import FleetPerformanceTab from './FleetPerformanceTab'
+import {
+  reservationsInRange,
+  sumEarnedRevenue,
+  sumUpcomingRevenue,
+  isEarned,
+  todayISO,
+  daysAgoISO,
+} from '@/lib/finance/revenue'
 
 interface ReportCar {
   id: number
@@ -21,15 +29,9 @@ function fmt(n: number) {
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-function daysAgo(n: number) {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return d.toISOString().split('T')[0]
-}
-
-function today() {
-  return new Date().toISOString().split('T')[0]
-}
+// Timezone-safe (app timezone), not UTC — avoids off-by-one near midnight.
+const daysAgo = (n: number) => daysAgoISO(n)
+const today = () => todayISO()
 
 export default function ReportsClient({ reservations, expenses, cars }: Props) {
   const [activeTab, setActiveTab] = useState<'finance' | 'fleet'>('finance')
@@ -48,17 +50,17 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
     setDateTo(to)
   }
 
-  // Filter reservations by date range
-  const filteredAllRes = useMemo(() => {
-    return reservations.filter((r) => {
-      if (!r.pickup_date) return false
-      return r.pickup_date >= dateFrom && (r.return_date || r.pickup_date) <= dateTo
-    })
-  }, [reservations, dateFrom, dateTo])
+  // Reservations that OVERLAP the window (not just those entirely inside it) —
+  // the old containment filter dropped long rentals near the range edges.
+  // Also excludes cancelled.
+  const filteredAllRes = useMemo(
+    () => reservationsInRange(reservations, dateFrom, dateTo),
+    [reservations, dateFrom, dateTo]
+  )
 
-  const filteredRes = useMemo(() => {
-    return filteredAllRes.filter(r => r.status === 'completed' || r.status === 'confirmed' || r.status === 'active')
-  }, [filteredAllRes])
+  // Earned revenue = completed only (the shared policy). Confirmed/active are
+  // surfaced separately as A/R and in-progress, not counted as revenue.
+  const filteredRes = useMemo(() => filteredAllRes.filter(isEarned), [filteredAllRes])
 
   // Filter expenses by date range
   const filteredExp = useMemo(() => {
@@ -68,8 +70,10 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
     })
   }, [expenses, dateFrom, dateTo])
 
-  const totalRevenue = filteredRes.reduce((s, r) => s + (Number(r.total_amount) || 0), 0)
-  const accountsReceivable = filteredRes.filter(r => r.status === 'confirmed').reduce((s, r) => s + (Number(r.total_amount) || 0), 0)
+  // Revenue = earned (completed) only. A/R = confirmed/pending (booked, unearned)
+  // taken from the full non-cancelled set — no longer double-counted in revenue.
+  const totalRevenue = sumEarnedRevenue(filteredAllRes)
+  const accountsReceivable = sumUpcomingRevenue(filteredAllRes)
   const totalExpenses = filteredExp.reduce((s, e) => s + (Number(e.amount) || 0), 0)
   const netProfit = totalRevenue - totalExpenses
   
@@ -95,25 +99,31 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
     return Math.min(100, Math.round((reservedDays / (cars.length * days)) * 100))
   }, [cars, dateFrom, dateTo, filteredAllRes])
 
-  // Source Distribution
+  // Source Distribution — only buckets that actually occur (no always-zero 'direct')
   const sources = useMemo(() => {
-    const map: Record<string, number> = { turo: 0, admin: 0, direct: 0 }
+    const map: Record<string, number> = {}
     filteredRes.forEach(r => {
-      const src = (r as any).source?.toLowerCase() || 'admin'
-      const key = src === 'turo' ? 'turo' : src === 'direct' ? 'direct' : 'admin'
+      const key = (r.source ?? 'admin').toLowerCase()
       map[key] = (map[key] || 0) + 1
     })
     return map
   }, [filteredRes])
 
-  // Revenue grouped by car
+  // Revenue grouped by car — keyed on car id (grouping by `model` string
+  // collapsed distinct cars that share a model).
   const byCar = useMemo(() => {
-    const map: Record<string, number> = {}
+    const map = new Map<number, number>()
     filteredRes.forEach(r => {
-      const carName = cars.find(c => c.id === r.car_id)?.model || `Car #${r.car_id}`
-      map[carName] = (map[carName] ?? 0) + (Number(r.total_amount) || 0)
+      if (r.car_id == null) return
+      map.set(r.car_id, (map.get(r.car_id) ?? 0) + (Number(r.total_amount) || 0))
     })
-    return Object.entries(map).sort(([, a], [, b]) => b - a)
+    return Array.from(map.entries())
+      .map(([carId, total]) => {
+        const car = cars.find(c => c.id === carId)
+        const name = car ? `${car.make} ${car.model_full || car.model}` : `Car #${carId}`
+        return [name, total] as [string, number]
+      })
+      .sort(([, a], [, b]) => b - a)
   }, [filteredRes, cars])
 
   // Revenue grouped by month

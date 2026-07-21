@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useToast } from '@/components/ui/Toast'
 
 interface PaymentProcessorToggleProps {
   current: string
@@ -9,6 +10,7 @@ interface PaymentProcessorToggleProps {
 }
 
 export default function PaymentProcessorToggle({ current, stripeConnected, squareConnected }: PaymentProcessorToggleProps) {
+  const toast = useToast()
   const [processor, setProcessor] = useState(current)
   const [saving, setSaving] = useState(false)
 
@@ -18,15 +20,23 @@ export default function PaymentProcessorToggle({ current, stripeConnected, squar
     if (value === 'square' && !squareConnected) return
 
     setSaving(true)
-    const res = await fetch('/api/square/set-processor', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ processor: value }),
-    })
-    if (res.ok) {
-      setProcessor(value)
+    try {
+      const res = await fetch('/api/square/set-processor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ processor: value }),
+      })
+      if (res.ok) {
+        setProcessor(value)
+        toast.success(`${value === 'stripe' ? 'Stripe' : 'Square'} is now your active processor.`)
+      } else {
+        toast.error('Could not switch payment processor. Please try again.')
+      }
+    } catch {
+      toast.error('Could not switch payment processor. Check your connection and try again.')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   return (

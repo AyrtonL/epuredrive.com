@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useTransition } from 'react'
 import type { Profile } from '@/lib/supabase/types'
 import { updateMemberRole, removeMember } from './actions'
+import { useToast } from '@/components/ui/Toast'
 
 interface Props {
   members: Profile[]
@@ -11,29 +12,37 @@ interface Props {
 
 const ROLE_STYLES: Record<string, string> = {
   admin:   'bg-white/10 text-white border-white/20',
+  manager: 'bg-violet-500/20 text-violet-300 border-violet-500/20',
   staff:   'bg-blue-500/20 text-blue-300 border-blue-500/20',
   finance: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/20',
 }
 
 export default function TeamManager({ members, currentUserId }: Props) {
   const [isPending, startTransition] = useTransition()
+  const toast = useToast()
 
   function handleRoleChange(profileId: string, newRole: string) {
     startTransition(async () => {
-      await updateMemberRole(profileId, newRole as 'admin' | 'staff' | 'finance')
+      const result = await updateMemberRole(profileId, newRole as 'admin' | 'manager' | 'staff' | 'finance')
+      if (result?.error) toast.error(`Could not update role: ${result.error}`)
+      else toast.success('Role updated.')
     })
   }
 
   function handleRemove(profileId: string, name: string) {
     if (!confirm(`Remove ${name} from your team? They will lose dashboard access.`)) return
-    startTransition(async () => { await removeMember(profileId) })
+    startTransition(async () => {
+      const result = await removeMember(profileId)
+      if (result?.error) toast.error(`Could not remove ${name}: ${result.error}`)
+      else toast.success(`${name} removed from your team.`)
+    })
   }
 
   return (
     <div>
       <div className="mb-6 p-4 bg-white/5 rounded-2xl border border-white/10 text-xs text-white/40 leading-relaxed">
-        To <strong className="text-white/60">invite a new member</strong>, have them sign up at your dashboard URL and then assign them a role here.
-        Roles: <span className="text-white font-bold">Admin</span> (full access) · <span className="text-blue-300 font-bold">Staff</span> (operations only) · <span className="text-yellow-300 font-bold">Finance</span> (finance tabs only).
+        To <strong className="text-white/60">invite a new member</strong>, use <strong className="text-white/60">Settings → Roles</strong> to send an email invite, then adjust their role here.
+        Roles: <span className="text-white font-bold">Admin</span> (full access) · <span className="text-violet-300 font-bold">Manager</span> (operations + finance) · <span className="text-blue-300 font-bold">Staff</span> (operations only) · <span className="text-yellow-300 font-bold">Finance</span> (finance tabs only).
       </div>
 
       {members.length === 0 ? (
@@ -69,6 +78,7 @@ export default function TeamManager({ members, currentUserId }: Props) {
                     className={`text-xs font-bold px-3 py-1.5 rounded-full border bg-transparent cursor-pointer focus:outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed ${ROLE_STYLES[m.role ?? 'admin'] ?? 'bg-white/5 text-white/40 border-white/10'}`}
                   >
                     <option value="admin" className="bg-[#0d0d0d] text-white">Admin</option>
+                    <option value="manager" className="bg-[#0d0d0d] text-white">Manager</option>
                     <option value="staff" className="bg-[#0d0d0d] text-white">Staff</option>
                     <option value="finance" className="bg-[#0d0d0d] text-white">Finance</option>
                   </select>
@@ -77,7 +87,7 @@ export default function TeamManager({ members, currentUserId }: Props) {
                     <button
                       onClick={() => handleRemove(m.id, displayName)}
                       disabled={isPending}
-                      className="text-white/20 hover:text-red-400 transition-colors text-xs disabled:opacity-20 opacity-0 group-hover:opacity-100"
+                      className="text-white/40 hover:text-red-400 transition-colors text-xs disabled:opacity-20 md:opacity-0 md:group-hover:opacity-100"
                     >
                       Remove
                     </button>

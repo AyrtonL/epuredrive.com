@@ -7,6 +7,7 @@ import { getFeatureFlags } from '@/lib/supabase/feature-flags'
 import { getEffectivePlan } from '@/lib/plan/effective-plan'
 import Sidebar from '@/components/dashboard/Sidebar'
 import HelpButton from '@/components/dashboard/HelpButton'
+import { ToastProvider } from '@/components/ui/Toast'
 import SignUpCompleteTracker from '@/components/analytics/SignUpCompleteTracker'
 import { notifyInviterOnFirstLogin } from '@/lib/team/invite-notifier'
 
@@ -73,6 +74,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
+    <ToastProvider>
     <div className="bg-background text-primary min-h-screen selection:bg-white/30 selection:text-white">
       <Suspense fallback={null}>
         <SignUpCompleteTracker />
@@ -91,6 +93,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </div>
       <HelpButton plan={getEffectivePlan(plan)} />
     </div>
+    </ToastProvider>
   )
 }
 

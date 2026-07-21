@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { Car } from '@/lib/supabase/types'
 import { deleteCar } from './actions'
 import CarModal from './CarModal'
+import { useToast } from '@/components/ui/Toast'
 
 interface Props {
   initialCars: Car[]
@@ -12,29 +13,37 @@ interface Props {
 
 export default function FleetManager({ initialCars }: Props) {
   const router = useRouter()
+  const toast = useToast()
   const [filter, setFilter] = useState('')
+  const [showRetired, setShowRetired] = useState(false)
   const [, startTransition] = useTransition()
-  
+
   const [modalOpen, setModalOpen] = useState(false)
   const [editingCar, setEditingCar] = useState<Car | null>(null)
 
+  const retiredCount = initialCars.filter((c) => c.status === 'retired').length
   const filtered = initialCars.filter((c) => {
+    if (!showRetired && c.status === 'retired') return false
     const q = filter.toLowerCase()
     return (
       !q ||
       c.make.toLowerCase().includes(q) ||
       c.model.toLowerCase().includes(q) ||
-      (c.model_full ?? '').toLowerCase().includes(q)
+      (c.model_full ?? '').toLowerCase().includes(q) ||
+      (c.plate ?? '').toLowerCase().includes(q) ||
+      String(c.year ?? '').includes(q)
     )
   })
 
-  function handleDelete(id: number) {
-    if (!confirm('Decommission this car? This cannot be undone.')) return
+  function handleDelete(id: number, name: string) {
+    if (!confirm(`Retire ${name}? It will be moved out of your active fleet, but all its bookings, revenue, and service history are kept.`)) return
     startTransition(async () => {
       const result = await deleteCar(id)
       if (result.error) {
-        alert(`Failed to delete car: ${result.error}`)
+        toast.error(`Could not retire vehicle: ${result.error}`)
+        return
       }
+      toast.success(`${name} retired. History preserved.`)
       router.refresh()
     })
   }
@@ -60,12 +69,26 @@ export default function FleetManager({ initialCars }: Props) {
           onChange={(e) => setFilter(e.target.value)}
           className="w-full max-w-sm dash-input px-4 py-3"
         />
-        <button
-          onClick={openNew}
-          className="bg-white text-black hover:bg-white/90 px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-lg shadow-white/10 flex-shrink-0"
-        >
-          + Add Vehicle
-        </button>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {retiredCount > 0 && (
+            <button
+              onClick={() => setShowRetired((v) => !v)}
+              className={`px-4 py-3 rounded-xl text-xs font-bold transition-all border ${
+                showRetired
+                  ? 'bg-white/10 border-white/20 text-white'
+                  : 'bg-white/[0.03] border-white/10 text-white/50 hover:text-white/80'
+              }`}
+            >
+              {showRetired ? 'Hide' : 'Show'} retired ({retiredCount})
+            </button>
+          )}
+          <button
+            onClick={openNew}
+            className="bg-white text-black hover:bg-white/90 px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-lg shadow-white/10"
+          >
+            + Add Vehicle
+          </button>
+        </div>
       </div>
 
       {/* Grid */}
@@ -127,7 +150,7 @@ export default function FleetManager({ initialCars }: Props) {
                     </span>
                   </div>
                   
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="flex gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                     <button
                       onClick={() => openEdit(c)}
                       className="bg-white/10 hover:bg-white/20 text-white w-9 h-9 rounded-full flex items-center justify-center transition-colors"
@@ -135,13 +158,15 @@ export default function FleetManager({ initialCars }: Props) {
                     >
                       <span className="text-xs">✎</span>
                     </button>
-                    <button
-                      onClick={() => handleDelete(c.id)}
-                      className="bg-red-500/10 hover:bg-red-500/20 text-red-400 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
-                      title="Delete"
-                    >
-                      <span className="text-xs">✕</span>
-                    </button>
+                    {c.status !== 'retired' && (
+                      <button
+                        onClick={() => handleDelete(c.id, `${c.make} ${c.model_full || c.model}`)}
+                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+                        title="Retire vehicle"
+                      >
+                        <span className="text-xs">✕</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

@@ -44,6 +44,13 @@ export interface Tenant {
   square_location_id: string | null
   payment_processor: string | null  // 'stripe' | 'square'
   site_theme: 'dark' | 'light'
+  // Lifecycle
+  status: string | null  // 'active' | 'suspended'
+  suspended_at: string | null
+  suspended_reason: string | null
+  // Stripe identifiers (for accurate MRR + subscription mapping)
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
 }
 
 export interface Car {

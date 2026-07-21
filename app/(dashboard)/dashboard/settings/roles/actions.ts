@@ -7,7 +7,7 @@ import { sendEmail } from '@/lib/email/resend'
 import { teamInviteEmail } from '@/lib/email/templates/platform'
 
 export type InviteResult =
-  | { success: true }
+  | { success: true; emailSent: boolean; inviteUrl: string | null }
   | { success: false; error: string }
 
 export async function inviteTeamMember(
@@ -60,7 +60,9 @@ export async function inviteTeamMember(
     })
   }
 
-  // Send branded invite email
+  // Send branded invite email. Report whether it actually went out so the UI
+  // doesn't claim "invitation sent" when the recipient got nothing.
+  let emailSent = false
   if (inviteUrl) {
     const { data: tenantData } = await adminClient
       .from('tenants')
@@ -68,11 +70,16 @@ export async function inviteTeamMember(
       .eq('id', tenantId)
       .single()
     const companyName = tenantData?.brand_name || tenantData?.name || 'the team'
-    await sendEmail({
-      to: email,
-      ...teamInviteEmail({ invitedBy: 'Your team admin', companyName, role, inviteUrl }),
-    }).catch(() => {})
+    try {
+      await sendEmail({
+        to: email,
+        ...teamInviteEmail({ invitedBy: 'Your team admin', companyName, role, inviteUrl }),
+      })
+      emailSent = true
+    } catch {
+      emailSent = false
+    }
   }
 
-  return { success: true }
+  return { success: true, emailSent, inviteUrl: inviteUrl ?? null }
 }

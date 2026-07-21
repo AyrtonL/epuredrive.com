@@ -127,11 +127,16 @@ export async function updateCar(
   return { error: error?.message ?? null }
 }
 
+/**
+ * Retire a car. This is a SOFT delete — it sets status to 'retired' and keeps
+ * all reservations, revenue, and service history intact. Previously this
+ * hard-deleted reservations/turo_feeds/blocked_dates, permanently destroying
+ * the data needed for lifetime P&L and financial reports.
+ */
 export async function deleteCar(id: number): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
 
-  // Verify the car belongs to this tenant before cascading deletes
   const { data: car } = await supabase
     .from('cars')
     .select('id')
@@ -143,20 +148,13 @@ export async function deleteCar(id: number): Promise<{ error: string | null }> {
     return { error: 'Car not found or access denied' }
   }
 
-  // Delete related records that have NO ACTION foreign keys
-  const admin = createAdminClient()
-  const deletes = await Promise.all([
-    admin.from('blocked_dates').delete().eq('car_id', id),
-    admin.from('turo_feeds').delete().eq('car_id', id),
-    admin.from('reservations').delete().eq('car_id', id),
-  ])
+  const { error } = await supabase
+    .from('cars')
+    .update({ status: 'retired' })
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
 
-  const relatedError = deletes.find(d => d.error)
-  if (relatedError?.error) {
-    return { error: `Failed to remove related records: ${relatedError.error.message}` }
-  }
-
-  const { error } = await admin.from('cars').delete().eq('id', id).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/fleet')
+  revalidatePath(`/dashboard/fleet/${id}`)
   return { error: error?.message ?? null }
 }

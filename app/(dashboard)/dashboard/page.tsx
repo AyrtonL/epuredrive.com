@@ -6,6 +6,7 @@ import UtilizationPanel from '@/components/dashboard/UtilizationPanel'
 import NotificationBell from '@/components/dashboard/NotificationBell'
 import MaintenanceAlerts from './maintenance/MaintenanceAlerts'
 import type { Reservation, Car, CarService, Transaction } from '@/lib/supabase/types'
+import { overlapsRange, inclusiveDays, daysAgoISO } from '@/lib/finance/revenue'
 
 const STATUS_COLORS: Record<string, string> = {
   confirmed: 'text-emerald-400 bg-emerald-500/10',
@@ -51,7 +52,6 @@ export default async function DashboardPage() {
   const [
     { data: tenant },
     { data: cars },
-    { data: allRes },
     { data: thisMonthRes },
     { data: lastMonthRes },
     { data: services },
@@ -60,18 +60,20 @@ export default async function DashboardPage() {
     { data: recentReservations },
     { data: thisMonthCustomers },
     { data: pendingRes },
+    { data: utilWindowRes },
   ] = await Promise.all([
     supabase.from('tenants').select('slug').eq('id', tenantId).single(),
     supabase.from('cars').select('id, make, model, model_full, status, mileage').eq('tenant_id', tenantId),
-    supabase.from('reservations').select('total_amount, status').eq('tenant_id', tenantId).eq('status', 'completed'),
-    supabase.from('reservations').select('total_amount').eq('tenant_id', tenantId).gte('pickup_date', firstOfMonth),
-    supabase.from('reservations').select('total_amount').eq('tenant_id', tenantId).gte('pickup_date', firstOfLastMonth).lte('pickup_date', lastOfLastMonth),
+    supabase.from('reservations').select('total_amount').eq('tenant_id', tenantId).eq('status', 'completed').gte('pickup_date', firstOfMonth),
+    supabase.from('reservations').select('total_amount').eq('tenant_id', tenantId).eq('status', 'completed').gte('pickup_date', firstOfLastMonth).lte('pickup_date', lastOfLastMonth),
     supabase.from('car_services').select('cost, next_service_date').eq('tenant_id', tenantId),
     supabase.from('transactions').select('amount').eq('tenant_id', tenantId),
     supabase.from('reservations').select('car_id').eq('tenant_id', tenantId).not('status', 'in', '(completed,cancelled)').lte('pickup_date', today).gte('return_date', today),
     supabase.from('reservations').select('id, customer_name, car_id, pickup_date, return_date, status, total_amount').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(7),
     supabase.from('reservations').select('customer_name').eq('tenant_id', tenantId).gte('created_at', firstOfMonth),
     supabase.from('reservations').select('id').eq('tenant_id', tenantId).eq('status', 'pending'),
+    // Trailing 30-day reservations with dates → real per-car utilization
+    supabase.from('reservations').select('car_id, pickup_date, return_date, status').eq('tenant_id', tenantId).not('status', 'eq', 'cancelled').gte('return_date', daysAgoISO(30)),
   ])
 
   const carRows = (cars ?? []) as Car[]
@@ -97,26 +99,30 @@ export default async function DashboardPage() {
     (s) => s.next_service_date && new Date(s.next_service_date) < new Date()
   ).length
 
-  // --- Car utilization data (based on completed reservations per car) ---
-  const totalCompleted = (allRes ?? []).length
-  const carResCounts: Record<string, number> = {}
+  // --- Real per-car utilization over the trailing 30 days ---
+  // Utilization % = rented days in the window ÷ window length (30). Computed
+  // from actual reservation date overlaps — never estimated or randomised.
   const carMap: Record<string, string> = {}
   for (const c of carRows) {
     carMap[c.id] = `${c.make} ${c.model_full || c.model}`
-    carResCounts[c.id] = 0
   }
-  // Count active rentals as utilization proxy
-  for (const r of activeRentals ?? []) {
-    if (r.car_id && carResCounts[r.car_id] !== undefined) {
-      carResCounts[r.car_id] = 100
-    }
+  const windowStart = daysAgoISO(30)
+  const windowEnd = today
+  const WINDOW_DAYS = 30
+  const rentedDaysByCar: Record<number, number> = {}
+  for (const r of (utilWindowRes ?? []) as Reservation[]) {
+    if (r.car_id == null || !r.pickup_date) continue
+    if (!overlapsRange(r, windowStart, windowEnd)) continue
+    const start = r.pickup_date > windowStart ? r.pickup_date : windowStart
+    const end = (r.return_date ?? windowEnd) < windowEnd ? (r.return_date ?? windowEnd) : windowEnd
+    if (end < start) continue
+    rentedDaysByCar[r.car_id] = (rentedDaysByCar[r.car_id] ?? 0) + inclusiveDays(start, end)
   }
-  // For non-rented cars, estimate from total bookings
   const carUtilization = carRows
     .filter((c) => c.status !== 'retired')
     .map((c) => ({
       name: carMap[c.id],
-      percentage: rentedCarIds.has(c.id) ? 100 : c.status === 'maintenance' ? 0 : Math.floor(Math.random() * 40 + 20),
+      percentage: Math.min(100, Math.round(((rentedDaysByCar[c.id] ?? 0) / WINDOW_DAYS) * 100)),
     }))
     .sort((a, b) => b.percentage - a.percentage)
     .slice(0, 6)
@@ -169,10 +175,10 @@ export default async function DashboardPage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          label="Active Bookings"
+          label="Revenue · This Month"
           value={`$${thisMonthRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           trend={revenueTrend}
-          sub="vs. last month"
+          sub="earned, vs. last month"
           accentColor="bg-emerald-400"
           variant="primary"
         />

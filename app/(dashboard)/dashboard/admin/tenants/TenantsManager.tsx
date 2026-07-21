@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { createTenant, updateTenantPlan, deleteTenant } from '../actions'
+import { createTenant, updateTenantPlan, deleteTenant, setTenantSuspended } from '../actions'
 import type { Tenant } from '@/lib/supabase/types'
 
 interface Props {
@@ -68,8 +68,19 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
     })
   }
 
+  function handleToggleSuspend(tenantId: string, currentlySuspended: boolean) {
+    setMsg('')
+    startTransition(async () => {
+      const result = await setTenantSuspended(tenantId, !currentlySuspended)
+      if (result.error) setMsg(result.error)
+      else setMsg(currentlySuspended ? 'Tenant reactivated.' : 'Tenant suspended.')
+    })
+  }
+
   const freePlan = tenants.filter(t => !t.plan || t.plan === 'free').length
   const paidPlan = tenants.filter(t => t.plan && t.plan !== 'free').length
+  const activeCount = tenants.filter(t => t.status !== 'suspended').length
+  const suspendedCount = tenants.filter(t => t.status === 'suspended').length
 
   return (
     <div className="space-y-6">
@@ -84,7 +95,7 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Total Tenants', value: tenants.length },
-          { label: 'Active', value: tenants.length },
+          { label: suspendedCount > 0 ? `Active · ${suspendedCount} suspended` : 'Active', value: activeCount },
           { label: 'Free Plan', value: freePlan },
           { label: 'Paid Plans', value: paidPlan },
         ].map((s) => (
@@ -177,7 +188,12 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
                       {(t.brand_name || t.name || '?')[0].toUpperCase()}
                     </div>
                     <div>
-                      <div className="text-white font-medium">{t.brand_name || t.name}</div>
+                      <div className="text-white font-medium flex items-center gap-2">
+                        {t.brand_name || t.name}
+                        {t.status === 'suspended' && (
+                          <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-red-500/15 text-red-300 border border-red-500/30">Suspended</span>
+                        )}
+                      </div>
                       {t.brand_name && t.brand_name !== t.name && (
                         <div className="text-white/30 text-xs">{t.name}</div>
                       )}
@@ -242,6 +258,13 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
                         className="px-3 py-1.5 rounded-lg bg-white/5 text-white/40 text-xs hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
                       >
                         Edit Plan
+                      </button>
+                      <button
+                        onClick={() => handleToggleSuspend(t.id, t.status === 'suspended')}
+                        disabled={isPending}
+                        className={`px-3 py-1.5 rounded-lg bg-white/5 text-white/40 text-xs transition-colors ${t.status === 'suspended' ? 'hover:text-emerald-400 hover:bg-emerald-500/10' : 'hover:text-yellow-400 hover:bg-yellow-500/10'}`}
+                      >
+                        {t.status === 'suspended' ? 'Reactivate' : 'Suspend'}
                       </button>
                       <button
                         onClick={() => setConfirmDelete(t.id)}

@@ -1,4 +1,5 @@
 import type { Reservation } from '@/lib/supabase/types'
+import { isEarned } from '@/lib/finance/revenue'
 
 export interface CarStats {
   carId: number
@@ -43,7 +44,9 @@ export function calcCarStats(
     if (r.odometer_out != null && r.odometer_in != null) {
       miles += Math.max(0, r.odometer_in - r.odometer_out)
     }
-    revenue += Number(r.total_amount) || 0
+    // Revenue = earned (completed) only, per the shared policy. Occupancy days
+    // above still count all non-cancelled bookings.
+    if (isEarned(r)) revenue += Number(r.total_amount) || 0
   }
 
   const utilization = Math.min(100, Math.round((rentedDays / totalDays) * 100))

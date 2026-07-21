@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useToast } from '@/components/ui/Toast'
 
 interface EventConfig {
   key: string
@@ -39,6 +40,7 @@ function ChannelIcon({ type, className }: { type: string; className?: string }) 
 }
 
 export default function NotificationSettings() {
+  const toast = useToast()
   const [prefs, setPrefs] = useState<Prefs>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -72,13 +74,18 @@ export default function NotificationSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ preferences: prefs }),
       })
-      if (res.ok) setSaved(true)
+      if (res.ok) {
+        setSaved(true)
+        toast.success('Notification preferences saved.')
+      } else {
+        toast.error('Could not save notification preferences. Please try again.')
+      }
     } catch {
-      // silent
+      toast.error('Could not save notification preferences. Check your connection and try again.')
     } finally {
       setSaving(false)
     }
-  }, [prefs])
+  }, [prefs, toast])
 
   if (loading) {
     return (

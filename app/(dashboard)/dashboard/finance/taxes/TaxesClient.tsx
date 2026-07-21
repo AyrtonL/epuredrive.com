@@ -2,12 +2,18 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { Transaction, TaxSetting } from '@/lib/supabase/types'
+import type { Transaction, TaxSetting, Reservation } from '@/lib/supabase/types'
 
 interface Props {
   transactions: Transaction[]
+  reservations: Reservation[]
   taxSettings: TaxSetting[]
   tenantId: string
+}
+
+/** Recognition date for a completed rental = when it ended (return), else pickup. */
+function recognitionDate(r: Reservation): string | null {
+  return r.return_date ?? r.pickup_date ?? null
 }
 
 function fmt(n: number) {
@@ -29,7 +35,7 @@ function localDaysAgo(n: number) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export default function TaxesClient({ transactions, taxSettings: initialSettings, tenantId }: Props) {
+export default function TaxesClient({ transactions, reservations, taxSettings: initialSettings, tenantId }: Props) {
   const [dateFrom, setDateFrom] = useState(`${new Date().getFullYear()}-01-01`)
   const [dateTo, setDateTo] = useState(localToday())
   const [settings, setSettings] = useState<TaxSetting[]>(initialSettings)
@@ -56,13 +62,21 @@ export default function TaxesClient({ transactions, taxSettings: initialSettings
     })
   }, [transactions, dateFrom, dateTo])
 
-  const income = useMemo(() => filtered.filter(r => r.type === 'income'), [filtered])
+  // Income comes from COMPLETED reservations (rental revenue), not income
+  // transactions (which the app never writes). Each becomes {date, amount}.
+  const incomeRows = useMemo(() => {
+    return reservations
+      .map(r => ({ date: recognitionDate(r), amount: Number(r.total_amount) || 0 }))
+      .filter((r): r is { date: string; amount: number } =>
+        r.date != null && r.date >= dateFrom && r.date <= dateTo)
+  }, [reservations, dateFrom, dateTo])
+
   const expenses = useMemo(() => filtered.filter(r => r.type === 'expense'), [filtered])
 
   const activeRates = useMemo(() => settings.filter(s => s.is_active), [settings])
 
   // Calculate estimated tax liability based on configured rates
-  const totalRevenue = income.reduce((s, r) => s + (Number(r.amount) || 0), 0)
+  const totalRevenue = incomeRows.reduce((s, r) => s + r.amount, 0)
   const totalExpenses = expenses.reduce((s, r) => s + (Number(r.amount) || 0), 0)
   const taxableIncome = totalRevenue - totalExpenses
 
@@ -84,23 +98,24 @@ export default function TaxesClient({ transactions, taxSettings: initialSettings
   }, [expenses, activeRates])
   const totalTaxPaid = taxExpenses.reduce((s, r) => s + (Number(r.amount) || 0), 0)
 
-  // Quarterly breakdown
+  // Quarterly breakdown. Dates are YYYY-MM-DD strings — derive year/quarter by
+  // slicing (not new Date(), which parses as UTC and shifts quarters near edges).
+  const quarterKey = (d: string) => `${d.slice(0, 4)}-Q${Math.ceil(Number(d.slice(5, 7)) / 3)}`
   const quarters = useMemo(() => {
     const map = new Map<string, { revenue: number; expenses: number; taxPaid: number; estimated: number }>()
-    for (const r of filtered) {
+    const bump = (key: string) => map.get(key) ?? { revenue: 0, expenses: 0, taxPaid: 0, estimated: 0 }
+    for (const r of incomeRows) {
+      const key = quarterKey(r.date)
+      const entry = bump(key); entry.revenue += r.amount; map.set(key, entry)
+    }
+    for (const r of expenses) {
       if (!r.transaction_date) continue
-      const date = new Date(r.transaction_date)
-      const q = Math.ceil((date.getMonth() + 1) / 3)
-      const key = `${date.getFullYear()}-Q${q}`
-      const entry = map.get(key) ?? { revenue: 0, expenses: 0, taxPaid: 0, estimated: 0 }
+      const key = quarterKey(r.transaction_date)
+      const entry = bump(key)
       const amt = Number(r.amount) || 0
-      if (r.type === 'income') {
-        entry.revenue += amt
-      } else {
-        entry.expenses += amt
-        if (activeRates.some(rate => (r.category ?? '').toLowerCase() === rate.name.toLowerCase())) {
-          entry.taxPaid += amt
-        }
+      entry.expenses += amt
+      if (activeRates.some(rate => (r.category ?? '').toLowerCase() === rate.name.toLowerCase())) {
+        entry.taxPaid += amt
       }
       map.set(key, entry)
     }
@@ -110,28 +125,29 @@ export default function TaxesClient({ transactions, taxSettings: initialSettings
       entry.estimated = activeRates.reduce((s, rate) => s + taxable * Number(rate.rate), 0)
     })
     return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a))
-  }, [filtered, activeRates])
+  }, [incomeRows, expenses, activeRates])
 
   // Monthly breakdown
   const months = useMemo(() => {
     const map = new Map<string, { income: number; expenses: number; tax: number }>()
-    for (const r of filtered) {
+    const bump = (month: string) => map.get(month) ?? { income: 0, expenses: 0, tax: 0 }
+    for (const r of incomeRows) {
+      const month = r.date.slice(0, 7)
+      const entry = bump(month); entry.income += r.amount; map.set(month, entry)
+    }
+    for (const r of expenses) {
       if (!r.transaction_date) continue
       const month = r.transaction_date.slice(0, 7)
-      const entry = map.get(month) ?? { income: 0, expenses: 0, tax: 0 }
+      const entry = bump(month)
       const amt = Number(r.amount) || 0
-      if (r.type === 'income') {
-        entry.income += amt
-      } else {
-        entry.expenses += amt
-        if (activeRates.some(rate => (r.category ?? '').toLowerCase() === rate.name.toLowerCase())) {
-          entry.tax += amt
-        }
+      entry.expenses += amt
+      if (activeRates.some(rate => (r.category ?? '').toLowerCase() === rate.name.toLowerCase())) {
+        entry.tax += amt
       }
       map.set(month, entry)
     }
     return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a))
-  }, [filtered, activeRates])
+  }, [incomeRows, expenses, activeRates])
 
   // ---- CRUD operations for tax settings ----
   const clearError = useCallback(() => setError(null), [])

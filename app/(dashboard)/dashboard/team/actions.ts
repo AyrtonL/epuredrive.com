@@ -11,7 +11,7 @@ async function getTenantId(): Promise<string> {
 
 export async function updateMemberRole(
   profileId: string,
-  role: 'admin' | 'staff' | 'finance'
+  role: 'admin' | 'manager' | 'staff' | 'finance'
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()

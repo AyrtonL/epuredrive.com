@@ -122,32 +122,45 @@ export async function deleteTenant(
     .eq('id', tenantId)
     .single()
 
-  // Delete child records with NO ACTION FK constraints (order matters)
-  // 1. reservations (references cars & customers)
-  await supabase.from('reservations').delete().eq('tenant_id', tenantId)
-  // 2. blocked_dates (references cars)
-  await supabase.from('blocked_dates').delete().eq('tenant_id', tenantId)
-  // 3. car_services (references cars)
-  await supabase.from('car_services').delete().eq('tenant_id', tenantId)
-  // 4. consignment_expenses (references consignments)
-  await supabase.from('consignment_expenses').delete().eq('tenant_id', tenantId)
-  // 5. consignments (references cars)
-  await supabase.from('consignments').delete().eq('tenant_id', tenantId)
-  // 6. cars
-  await supabase.from('cars').delete().eq('tenant_id', tenantId)
-  // 7. customers
-  await supabase.from('customers').delete().eq('tenant_id', tenantId)
-  // 8. Unlink profiles (don't delete users, just orphan them)
-  await supabase.from('profiles').update({ tenant_id: null }).eq('tenant_id', tenantId)
-
-  const { error } = await supabase
-    .from('tenants')
-    .delete()
-    .eq('id', tenantId)
+  // Single transactional cascade (Postgres RPC). Either everything is deleted
+  // or nothing is — no more orphaned child rows from a mid-way failure.
+  const { error } = await supabase.rpc('delete_tenant_cascade', { p_tenant_id: tenantId })
 
   if (error) return { error: error.message }
 
   await log(supabase, 'warning', 'admin', `Tenant deleted: "${tenant?.name}"`, null, userId)
+  revalidatePath('/dashboard/admin/tenants')
+  revalidatePath('/dashboard/admin/stats')
+  return { error: null }
+}
+
+/** Suspend or reactivate a tenant without destroying any data. */
+export async function setTenantSuspended(
+  tenantId: string,
+  suspended: boolean,
+  reason?: string
+): Promise<{ error: string | null }> {
+  const { supabase, userId } = await requireSuperuserAction()
+
+  const { data: tenant } = await supabase
+    .from('tenants').select('name').eq('id', tenantId).single()
+
+  const { error } = await supabase
+    .from('tenants')
+    .update({
+      status: suspended ? 'suspended' : 'active',
+      suspended_at: suspended ? new Date().toISOString() : null,
+      suspended_reason: suspended ? (reason ?? null) : null,
+    })
+    .eq('id', tenantId)
+
+  if (error) return { error: error.message }
+
+  await log(
+    supabase, suspended ? 'warning' : 'info', 'admin',
+    `Tenant ${suspended ? 'suspended' : 'reactivated'}: "${tenant?.name}"`,
+    tenantId, userId
+  )
   revalidatePath('/dashboard/admin/tenants')
   revalidatePath('/dashboard/admin/stats')
   return { error: null }
@@ -171,6 +184,12 @@ export async function updateUserRole(
     .select('full_name, role')
     .eq('id', profileId)
     .single()
+
+  // Self-lockout guard: a superuser cannot demote themselves out of superuser
+  // (which would remove their own platform access with no way back in-app).
+  if (profileId === userId && target?.role === 'superuser' && role !== 'superuser') {
+    return { error: 'You cannot remove your own superuser access. Ask another superuser to do it.' }
+  }
 
   const { error } = await supabase
     .from('profiles')

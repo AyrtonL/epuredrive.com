@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import type { WebhookEndpoint } from '@/lib/supabase/types'
 import { updateWebhookEndpoint, deleteWebhookEndpoint, rotateWebhookSecret } from './actions'
 import WebhookEndpointModal from './WebhookEndpointModal'
+import { useToast } from '@/components/ui/Toast'
 
 const WEBHOOK_EVENT_OPTIONS = [
   'booking.created', 'booking.updated', 'booking.cancelled',
@@ -22,6 +23,7 @@ function truncateUrl(url: string, max = 40): string {
 }
 
 export default function WebhookEndpointsList({ initialEndpoints, webhooksEnabled }: WebhookEndpointsListProps) {
+  const toast = useToast()
   const [endpoints, setEndpoints] = useState<WebhookEndpoint[]>(initialEndpoints)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingEndpoint, setEditingEndpoint] = useState<WebhookEndpoint | null>(null)
@@ -53,6 +55,9 @@ export default function WebhookEndpointsList({ initialEndpoints, webhooksEnabled
       setEndpoints((prev) =>
         prev.map((e) => (e.id === ep.id ? { ...e, active: !e.active } : e))
       )
+      toast.success(ep.active ? 'Endpoint disabled.' : 'Endpoint enabled.')
+    } else {
+      toast.error(`Could not update endpoint: ${result.error}`)
     }
     setTogglingId(null)
   }
@@ -61,6 +66,9 @@ export default function WebhookEndpointsList({ initialEndpoints, webhooksEnabled
     const result = await deleteWebhookEndpoint(id)
     if (!result.error) {
       setEndpoints((prev) => prev.filter((e) => e.id !== id))
+      toast.success('Endpoint deleted.')
+    } else {
+      toast.error(`Could not delete endpoint: ${result.error}`)
     }
     setConfirmDeleteId(null)
   }
@@ -70,6 +78,9 @@ export default function WebhookEndpointsList({ initialEndpoints, webhooksEnabled
     if (result.secret) {
       setRevealedSecret({ id, secret: result.secret })
       setTimeout(() => setRevealedSecret(null), 15000)
+      toast.success('Signing secret rotated. Copy it now — it won’t be shown again.')
+    } else {
+      toast.error(`Could not rotate secret: ${result.error ?? 'please try again'}`)
     }
   }
 

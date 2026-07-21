@@ -58,6 +58,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
   const [isPending, startTransition] = useTransition()
   const [isSendingAgreement, setIsSendingAgreement] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
+  const [conflict, setConflict] = useState<string | null>(null)
   const [agreementMsg, setAgreementMsg] = useState<string | null>(null)
   const router = useRouter()
 
@@ -158,9 +159,10 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
     setShowCustomerResults(false)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent, allowOverlap = false) {
     e.preventDefault()
     setErrorStr(null)
+    if (!allowOverlap) setConflict(null)
 
     if (!formData.customer_name?.trim()) {
       setErrorStr('Customer name is required.')
@@ -222,10 +224,14 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
 
     startTransition(async () => {
       const result = isEditing && reservation?.id
-        ? await updateReservation(reservation.id, dataToSubmit)
-        : await createReservation(dataToSubmit as any)
-      if (result.error) setErrorStr(result.error)
-      else {
+        ? await updateReservation(reservation.id, dataToSubmit, { allowOverlap })
+        : await createReservation(dataToSubmit as any, { allowOverlap })
+      if (result.conflict && !allowOverlap) {
+        setConflict(result.conflict)
+        setActiveTab('trip')
+      } else if (result.error) {
+        setErrorStr(result.error)
+      } else {
         router.refresh()
         onClose()
       }
@@ -337,6 +343,23 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
               {errorStr && (
                 <div className="p-4 bg-red-500/20 text-red-300 rounded-xl text-sm border border-red-500/30">
                   {errorStr}
+                </div>
+              )}
+
+              {conflict && (
+                <div className="p-4 bg-amber-500/15 text-amber-200 rounded-xl text-sm border border-amber-500/30 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <svg className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                    <span>{conflict}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => handleSubmit(e, true)}
+                    disabled={isPending}
+                    className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-100 text-xs font-bold transition-colors disabled:opacity-50"
+                  >
+                    Book anyway (allow overlap)
+                  </button>
                 </div>
               )}
 

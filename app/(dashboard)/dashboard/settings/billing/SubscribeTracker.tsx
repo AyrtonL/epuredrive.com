@@ -8,9 +8,13 @@ interface Props {
   plan: string
 }
 
+// Must match the real monthly prices (see billing/page.tsx and UpgradeButton).
+// Previously 49/99, which reported inflated revenue to Meta Pixel / Google Ads
+// and corrupted ROAS + predicted LTV.
 const PLAN_VALUES: Record<string, number> = {
-  pro: 49,
-  max: 99,
+  starter: 0,
+  pro: 19,
+  max: 39,
 }
 
 export default function SubscribeTracker({ plan }: Props) {

@@ -321,57 +321,75 @@ async function findCarId(tenantId: string, vehicleName: string | undefined): Pro
 
 // ── Shared email processor ────────────────────────────────────────────────────
 
+interface ExistingReservation {
+  id: string
+  status: string | null
+}
+
 // Locate the existing row for a Turo booking: by Turo reservation id first (stable across
 // the confirm / modify / cancel emails of one booking), then by gmail message id so that
 // re-fetching the same email — and rows synced before res-ids were stored — still dedupe.
-async function findExistingReservation(parsed: ParsedEmail, tenantId: string): Promise<string | null> {
+async function findExistingReservation(
+  parsed: ParsedEmail,
+  tenantId: string,
+): Promise<ExistingReservation | null> {
   const supabase = createAdminClient()
   if (parsed.reservationId) {
     const { data } = await supabase
       .from('reservations')
-      .select('id')
+      .select('id, status')
       .eq('tenant_id', tenantId)
       .like('notes', `%Turo-Res #${parsed.reservationId}%`)
       .limit(1)
-    if (data?.[0]) return data[0].id
+    if (data?.[0]) return data[0]
   }
   const { data } = await supabase
     .from('reservations')
-    .select('id')
+    .select('id, status')
     .eq('tenant_id', tenantId)
     .like('notes', `%Turo #${parsed.messageId}%`)
     .limit(1)
-  return data?.[0]?.id ?? null
+  return data?.[0] ?? null
 }
+
+// Lifecycle statuses that a Turo confirm/modify email must never overwrite. Once a trip is
+// picked up (active) or finished (completed), re-processing an old confirm email — which the
+// 3-day cursor lookback does every poll — must NOT regress it back to "confirmed". Manual
+// operator changes to these terminal/forward states are preserved. (Stephane Karim Pierre's
+// finished 7/20 trip kept flipping back to confirmed before this guard.)
+const PROTECTED_STATUSES = new Set(['active', 'completed'])
 
 async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promise<void> {
   const supabase = createAdminClient()
 
   if (parsed.type === 'cancel') {
-    const id = await findExistingReservation(parsed, sync.tenant_id)
-    if (id) {
-      await supabase.from('reservations').update({ status: 'cancelled' }).eq('id', id)
+    const existing = await findExistingReservation(parsed, sync.tenant_id)
+    if (existing) {
+      await supabase.from('reservations').update({ status: 'cancelled' }).eq('id', existing.id)
     }
     return
   }
 
-  const existingId = await findExistingReservation(parsed, sync.tenant_id)
+  const existing = await findExistingReservation(parsed, sync.tenant_id)
   const carId = await findCarId(sync.tenant_id, parsed.vehicle_name)
   const ref = `Turo #${parsed.messageId}${parsed.reservationId ? ` Turo-Res #${parsed.reservationId}` : ''}`
   const notes = carId ? ref : `${ref} [vehicle: ${parsed.vehicle_name || 'unknown'}]`
 
-  if (existingId) {
+  if (existing) {
+    // Refresh trip details from the email but never regress the lifecycle: a re-scanned
+    // confirm/modify email must not flip an active/completed trip back to confirmed.
+    const preserveStatus = PROTECTED_STATUSES.has(existing.status ?? '')
     await supabase
       .from('reservations')
       .update({
         pickup_date: parsed.pickup_date,
         return_date: parsed.return_date,
         total_amount: parsed.total_amount,
-        status: parsed.status,
         notes,
+        ...(preserveStatus ? {} : { status: parsed.status }),
         ...(carId ? { car_id: carId } : {}),
       })
-      .eq('id', existingId)
+      .eq('id', existing.id)
   } else {
     const { error: insertError } = await supabase.from('reservations').insert({
       tenant_id: sync.tenant_id,

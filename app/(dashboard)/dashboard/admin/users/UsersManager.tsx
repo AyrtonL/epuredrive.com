@@ -32,6 +32,10 @@ export default function UsersManager({ profiles, tenants }: Props) {
   }
 
   function handleRoleChange(profileId: string, role: string) {
+    // Granting full platform access is high-stakes — confirm explicitly.
+    if (role === 'superuser' && !confirm('Grant SUPERUSER access? This gives full control of the entire platform, including every tenant. Continue?')) {
+      return
+    }
     setMsg('')
     startTransition(async () => {
       const result = await updateUserRole(profileId, role)

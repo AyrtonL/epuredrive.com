@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { CarService, Car } from '@/lib/supabase/types'
 import { updateCarMileage } from './actions'
 import ServiceModal from './ServiceModal'
+import { useToast } from '@/components/ui/Toast'
 
 interface Props {
   cars: Car[]
@@ -13,6 +14,7 @@ interface Props {
 
 export default function FleetMileagePanel({ cars, services }: Props) {
   const router = useRouter()
+  const toast = useToast()
   const [editingCarId, setEditingCarId] = useState<number | null>(null)
   const [mileageInput, setMileageInput] = useState('')
   const [isPending, startTransition] = useTransition()
@@ -40,10 +42,23 @@ export default function FleetMileagePanel({ cars, services }: Props) {
 
   function saveMileage(carId: number) {
     const miles = Number(mileageInput)
-    if (!miles || miles <= 0) return
+    if (!Number.isFinite(miles) || miles <= 0) {
+      toast.error('Enter a valid mileage greater than 0.')
+      return
+    }
+    const car = cars.find((c) => c.id === carId)
+    if (car && car.mileage != null && miles < car.mileage) {
+      toast.error(`Mileage can't go backwards — current reading is ${car.mileage.toLocaleString()} mi.`)
+      return
+    }
     startTransition(async () => {
-      await updateCarMileage(carId, miles)
+      const result = await updateCarMileage(carId, miles)
+      if (result?.error) {
+        toast.error(`Could not update mileage: ${result.error}`)
+        return
+      }
       setEditingCarId(null)
+      toast.success('Mileage updated.')
       router.refresh()
     })
   }

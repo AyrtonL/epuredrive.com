@@ -53,9 +53,12 @@ function overlapDays(
   windowStart: Date,
   windowEnd: Date,
 ): number {
-  if (!pickup || !ret) return 0
+  if (!pickup) return 0
   const start = parseDate(pickup)
-  const end = parseDate(ret)
+  // In-progress rentals have no return_date → treat as ongoing through the
+  // window end (today). Previously these were dropped, undercounting exactly
+  // the cars that are out on rental right now.
+  const end = ret ? parseDate(ret) : windowEnd
   if (end < windowStart || start > windowEnd) return 0
   const overlapStart = start > windowStart ? start : windowStart
   const overlapEnd = end < windowEnd ? end : windowEnd
@@ -103,13 +106,15 @@ export default async function UtilizationPage({
       .from('cars')
       .select('id, make, model, model_full, daily_rate, status')
       .eq('tenant_id', tenantId),
-    // Pull anything that overlaps the period — both active and completed count toward utilization.
+    // Pull anything that overlaps the period — both active and completed count
+    // toward utilization. NOTE: no `.gte('return_date', ...)` filter — that
+    // excluded in-progress rentals with a null return_date. Overlap is computed
+    // in JS (overlapDays), which handles open-ended rentals correctly.
     supabase
       .from('reservations')
       .select('id, car_id, pickup_date, return_date, status, total_amount')
       .eq('tenant_id', tenantId)
       .in('status', ['active', 'completed'])
-      .gte('return_date', periodStartStr)
       .lte('pickup_date', periodEndStr),
   ])
 
@@ -127,8 +132,9 @@ export default async function UtilizationPage({
     const days = overlapDays(r.pickup_date, r.return_date, periodStart, periodEnd)
     if (days <= 0) continue
     const existing = stats.get(r.car_id) ?? { daysRented: 0, bookings: 0, revenue: 0 }
-    const totalDays = r.pickup_date && r.return_date
-      ? dayDiffInclusive(parseDate(r.pickup_date), parseDate(r.return_date))
+    // Open-ended rentals prorate over pickup → today.
+    const totalDays = r.pickup_date
+      ? dayDiffInclusive(parseDate(r.pickup_date), r.return_date ? parseDate(r.return_date) : periodEnd)
       : 0
     const proratedRevenue =
       r.total_amount != null && totalDays > 0
@@ -168,7 +174,10 @@ export default async function UtilizationPage({
   const fleetRentedDays = rows.reduce((sum, r) => sum + r.daysRented, 0)
   const fleetUtilization = fleetAvailableDays > 0 ? (fleetRentedDays / fleetAvailableDays) * 100 : 0
   const fleetRevenue = rows.reduce((sum, r) => sum + r.revenue, 0)
-  const fleetIdleDays = Math.max(0, fleetAvailableDays - fleetRentedDays)
+  // Capture rate = actual revenue ÷ theoretical max if every car rented every
+  // day at its daily rate. The single best "money left on the table" signal.
+  const fleetPotentialRevenue = rows.reduce((sum, r) => sum + r.potentialRevenue, 0)
+  const captureRate = fleetPotentialRevenue > 0 ? (fleetRevenue / fleetPotentialRevenue) * 100 : 0
 
   const summaryCards = [
     {
@@ -177,7 +186,11 @@ export default async function UtilizationPage({
       color: fleetUtilization >= 60 ? 'text-emerald-400' : fleetUtilization >= 40 ? 'text-yellow-400' : 'text-red-400',
     },
     { label: 'Days rented', value: `${fleetRentedDays}`, color: 'text-white' },
-    { label: 'Idle days', value: `${fleetIdleDays}`, color: 'text-white/60' },
+    {
+      label: 'Revenue capture',
+      value: fmtPct(captureRate),
+      color: captureRate >= 60 ? 'text-emerald-400' : captureRate >= 35 ? 'text-yellow-400' : 'text-red-400',
+    },
     { label: 'Revenue (period)', value: fmtCurrency(fleetRevenue), color: 'text-emerald-400' },
   ]
 

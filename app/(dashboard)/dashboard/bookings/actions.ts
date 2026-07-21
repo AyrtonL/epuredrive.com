@@ -10,6 +10,7 @@ import { sendEmail } from '@/lib/email/resend'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 import { createInAppNotification } from '@/lib/notifications/create'
 import { generateBookingCode } from '@/lib/booking-code'
+import { findOverlappingReservations, describeConflicts, type OverlapCandidate } from '@/lib/reservations/overlap'
 import {
   newBookingEmail,
   bookingCancelledEmail,
@@ -193,11 +194,43 @@ async function getTenantBrand(supabase: ReturnType<typeof createClient>, tenantI
   return rowToBrand(data as TenantBrandRow | null)
 }
 
+/**
+ * Overbooking guard. Returns a conflict message if the candidate overlaps an
+ * existing pending/confirmed/active reservation on the same car, unless the
+ * caller explicitly allows overlap. Returns null when there is no conflict.
+ */
+async function overbookingConflict(
+  supabase: ReturnType<typeof createClient>,
+  tenantId: string,
+  candidate: OverlapCandidate
+): Promise<string | null> {
+  if (candidate.car_id == null || !candidate.pickup_date) return null
+  const { data: existing } = await supabase
+    .from('reservations')
+    .select('id, booking_code, car_id, customer_name, pickup_date, return_date, status')
+    .eq('tenant_id', tenantId)
+    .eq('car_id', candidate.car_id)
+    .in('status', ['pending', 'confirmed', 'active'])
+  const conflicts = findOverlappingReservations(candidate, (existing as Reservation[]) ?? [])
+  return conflicts.length > 0 ? describeConflicts(conflicts) : null
+}
+
 export async function createReservation(
-  data: Omit<Reservation, 'id' | 'tenant_id' | 'created_at' | 'booking_code'>
-): Promise<{ error: string | null }> {
+  data: Omit<Reservation, 'id' | 'tenant_id' | 'created_at' | 'booking_code'>,
+  options?: { allowOverlap?: boolean }
+): Promise<{ error: string | null; conflict?: string }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
+
+  if (!options?.allowOverlap) {
+    const conflict = await overbookingConflict(supabase, tenantId, {
+      car_id: data.car_id ?? null,
+      pickup_date: data.pickup_date ?? null,
+      return_date: data.return_date ?? null,
+    })
+    if (conflict) return { error: conflict, conflict }
+  }
+
   const { data: inserted, error } = await supabase
     .from('reservations')
     .insert({ ...data, tenant_id: tenantId, booking_code: generateBookingCode() })
@@ -264,10 +297,31 @@ export async function createReservation(
 
 export async function updateReservation(
   id: number,
-  data: Partial<Omit<Reservation, 'id' | 'tenant_id'>>
-): Promise<{ error: string | null }> {
+  data: Partial<Omit<Reservation, 'id' | 'tenant_id'>>,
+  options?: { allowOverlap?: boolean }
+): Promise<{ error: string | null; conflict?: string }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
+
+  // Overbooking guard — only when the car or dates are changing, and only if
+  // the new state isn't a cancellation. Merges the change onto the current row
+  // to get the effective car/date window, then checks for overlap (excluding
+  // this reservation itself).
+  const changesSchedule = 'car_id' in data || 'pickup_date' in data || 'return_date' in data
+  const becomingCancelled = data.status === 'cancelled' || data.status === 'rejected'
+  if (!options?.allowOverlap && changesSchedule && !becomingCancelled) {
+    const { data: current } = await supabase
+      .from('reservations')
+      .select('car_id, pickup_date, return_date')
+      .eq('id', id).eq('tenant_id', tenantId).single()
+    const conflict = await overbookingConflict(supabase, tenantId, {
+      id,
+      car_id: data.car_id ?? current?.car_id ?? null,
+      pickup_date: data.pickup_date ?? current?.pickup_date ?? null,
+      return_date: data.return_date ?? current?.return_date ?? null,
+    })
+    if (conflict) return { error: conflict, conflict }
+  }
 
   // Fetch current reservation before update (for status change notifications)
   let prevReservation: Reservation | null = null

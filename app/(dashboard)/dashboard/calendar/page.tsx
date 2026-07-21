@@ -15,7 +15,9 @@ export default async function CalendarPage() {
       .order('pickup_date', { ascending: true }),
     supabase
       .from('cars')
-      .select('id, make, model, model_full')
+      // daily_rate is required so the reservation detail modal can render the
+      // late-fee estimate (overdue days × daily rate) instead of showing $0.
+      .select('id, make, model, model_full, daily_rate')
       .eq('tenant_id', tenantId),
     supabase
       .from('blocked_dates')

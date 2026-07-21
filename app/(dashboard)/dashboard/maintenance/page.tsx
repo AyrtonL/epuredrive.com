@@ -19,8 +19,33 @@ export default async function MaintenancePage() {
   const totalCost = rows.reduce((s, r) => s + (Number(r.cost) || 0), 0)
   const now = new Date()
   const in30Days = new Date(now); in30Days.setDate(now.getDate() + 30)
-  const overdue = rows.filter(s => s.next_service_date && new Date(s.next_service_date) < now).length
-  const upcoming = rows.filter(s => s.next_service_date && new Date(s.next_service_date) >= now && new Date(s.next_service_date) <= in30Days).length
+  // Parse date-only strings as local midnight (avoids UTC off-by-one near boundaries)
+  const parseLocal = (d: string) => new Date(d + 'T00:00:00')
+  const upcoming = rows.filter(s => s.next_service_date && parseLocal(s.next_service_date) >= now && parseLocal(s.next_service_date) <= in30Days).length
+
+  // "Overdue" counts VEHICLES that are past due by DATE or by MILEAGE, so the
+  // headline agrees with the mileage-aware alerts below it (previously it only
+  // counted date-overdue and silently ignored mileage-overdue cars).
+  const soonestDueMileageByCar = new Map<number, number>()
+  for (const s of rows) {
+    if (s.car_id != null && s.next_service_mileage != null) {
+      const prev = soonestDueMileageByCar.get(s.car_id)
+      if (prev == null || s.next_service_mileage < prev) soonestDueMileageByCar.set(s.car_id, s.next_service_mileage)
+    }
+  }
+  const carHasDateOverdue = new Set(
+    rows.filter(s => s.car_id != null && s.next_service_date && parseLocal(s.next_service_date) < now).map(s => s.car_id as number)
+  )
+  const overdue = carRows.filter(c => {
+    if (carHasDateOverdue.has(c.id)) return true
+    const dueMi = soonestDueMileageByCar.get(c.id)
+    return dueMi != null && (c.mileage ?? 0) >= dueMi
+  }).length
+
+  const trackedCars = carRows.filter(c => (c.mileage ?? 0) > 0)
+  const avgMileage = trackedCars.length > 0
+    ? Math.round(trackedCars.reduce((acc, car) => acc + (car.mileage || 0), 0) / trackedCars.length)
+    : 0
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -29,8 +54,8 @@ export default async function MaintenancePage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Service Records" value={rows.length} />
         <StatCard label="Total Cost" value={`$${totalCost.toLocaleString()}`} />
-        <StatCard label="Overdue" value={overdue} sub={upcoming > 0 ? `${upcoming} due in 30 days` : undefined} />
-        <StatCard label="Fleet Mileage" value={`${carRows.reduce((acc, car) => acc + (car.mileage || 0), 0).toLocaleString()} mi`} />
+        <StatCard label="Overdue" value={overdue} sub={upcoming > 0 ? `${upcoming} due in 30 days` : 'by date or mileage'} />
+        <StatCard label="Avg Mileage" value={`${avgMileage.toLocaleString()} mi`} sub={trackedCars.length > 0 ? `across ${trackedCars.length} vehicles` : undefined} />
       </div>
 
       <MaintenanceAlerts services={rows} cars={carRows} />
