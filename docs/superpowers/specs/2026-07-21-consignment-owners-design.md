@@ -72,8 +72,33 @@ Expected result: Jorge Pauliac becomes one owner row; cars 26 & 27 both point to
 
 Top-level **"+ New Owner"** opens an owner modal (name/email/phone/default split/notes).
 
-The period filter (from/to dates) behaves exactly as today; per-car revenue and
-expense math is unchanged — the owner card just sums each car's owner share.
+## Financials — payout basis (earned/completed, + active shown)
+
+**Change from today.** The current card counts `status !== 'cancelled'`, which
+over-counts (includes active + future confirmed/pending) and disagrees with every
+other finance surface. The redesign switches to the shared policy in
+`lib/finance/revenue.ts`:
+
+Per car, over the selected period (using `overlapsRange`, not raw `pickup_date`, so
+multi-day and open-ended rentals are handled correctly):
+
+```
+earnedGross  = Σ total_amount of COMPLETED reservations for the car in range
+activeGross  = Σ total_amount of ACTIVE  reservations for the car in range  (informational)
+expenses     = Σ direct expenses for the car in range
+net          = max(0, earnedGross − expenses)
+ownerShare   = net × owner% / 100        ← the payout
+épureShare   = net × (100 − owner%) / 100
+```
+
+The owner card shows:
+- **Combined owner payout (earned)** = Σ of each car's `ownerShare`.
+- **In progress (active)** = Σ each car's `activeGross` (or its owner-split portion),
+  shown as an informational figure, never added to the payout.
+
+Use `isEarned` / `revenueBucket` / `overlapsRange` from `lib/finance/revenue.ts`;
+do not re-derive revenue inline. This keeps the consignment page consistent with
+Reports, ROI, and Taxes.
 
 ### Components
 
@@ -113,7 +138,9 @@ expense math is unchanged — the owner card just sums each car's owner share.
 
 - Unit: owner-grouping and combined-payout helpers (pure functions over
   consignments + reservations + expenses), covering multi-car owners, period
-  filtering, and zero-car owners.
+  filtering, zero-car owners, and the earned-vs-active split (a car with only
+  active/upcoming rentals contributes $0 to payout but a non-zero "in progress"
+  figure).
 - Manual/DB verification: run the migration on a branch, confirm Jorge Pauliac
   collapses to one owner with cars 26 & 27 linked, `owner_id` non-null on all rows,
   and the UI shows one card with the combined payout matching the sum of the two
