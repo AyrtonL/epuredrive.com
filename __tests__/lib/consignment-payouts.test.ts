@@ -85,6 +85,19 @@ describe('computeCarPayout', () => {
     )
     expect(out.earnedGross).toBe(0) // outside window
   })
+
+  it('coerces a Supabase numeric string owner_percentage to a real number', () => {
+    // Supabase returns `numeric` columns as strings, e.g. "62.00".
+    const out = computeCarPayout(
+      con({ owner_percentage: '62.00' as unknown as number }),
+      [res({ total_amount: 1000, status: 'completed' })],
+      [],
+      WIDE_FROM, WIDE_TO
+    )
+    expect(out.ownerPct).toBe(62)          // number, not "62.00"
+    expect(out.ownerShare).toBe(620)       // 1000 * 0.62
+    expect(out.epureShare).toBe(380)       // 1000 * 0.38
+  })
 })
 
 describe('groupOwnerPayouts', () => {

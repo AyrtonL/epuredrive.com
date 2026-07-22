@@ -49,10 +49,10 @@ export default function ConsignmentsManager({ owners, consignments, cars, reserv
   function openEditOwner(o: ConsignmentOwner) { setEditingOwner(o); setOwnerModalOpen(true) }
 
   function openAddCar(o: ConsignmentOwner) {
-    setCarOwnerId(o.id); setCarDefaultPct(o.default_percentage ?? 70); setEditingCar(null); setCarModalOpen(true)
+    setCarOwnerId(o.id); setCarDefaultPct(o.default_percentage == null ? 70 : Number(o.default_percentage)); setEditingCar(null); setCarModalOpen(true)
   }
   function openEditCar(o: ConsignmentOwner, c: Consignment) {
-    setCarOwnerId(o.id); setCarDefaultPct(o.default_percentage ?? 70); setEditingCar(c); setCarModalOpen(true)
+    setCarOwnerId(o.id); setCarDefaultPct(o.default_percentage == null ? 70 : Number(o.default_percentage)); setEditingCar(c); setCarModalOpen(true)
   }
 
   function handleDeleteOwner(o: ConsignmentOwner) {
@@ -110,7 +110,7 @@ export default function ConsignmentsManager({ owners, consignments, cars, reserv
                   <div className="text-white font-bold text-base">{g.owner.name}</div>
                   <div className="text-white/40 text-xs mt-1">
                     {g.owner.email || ''}{g.owner.phone ? ` · ${g.owner.phone}` : ''}
-                    {g.owner.default_percentage != null ? ` · default ${g.owner.default_percentage}%` : ''}
+                    {g.owner.default_percentage != null ? ` · default ${Number(g.owner.default_percentage)}%` : ''}
                   </div>
                 </div>
                 <div className="flex gap-2 shrink-0">

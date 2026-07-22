@@ -50,7 +50,8 @@ export function computeCarPayout(
   from: string,
   to: string
 ): CarPayout {
-  const ownerPct = consignment.owner_percentage ?? 70
+  // Supabase returns `numeric` as a string; coerce to a real number (preserve 0).
+  const ownerPct = consignment.owner_percentage == null ? 70 : Number(consignment.owner_percentage)
   const carId = consignment.car_id
 
   const forCar = reservations.filter(
