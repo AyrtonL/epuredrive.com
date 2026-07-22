@@ -3,50 +3,54 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Consignment, Car } from '@/lib/supabase/types'
-import { createConsignment, updateConsignment } from './actions'
+import { createConsignment, updateConsignment, type ConsignmentInput } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 
 interface Props {
   isOpen: boolean
   onClose: () => void
+  ownerId: string
   consignment?: Consignment | null
   cars: Car[]
+  defaultPercentage?: number | null
 }
 
-export default function ConsignmentModal({ isOpen, onClose, consignment, cars }: Props) {
+const inputCls =
+  'w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white'
+const labelCls = 'text-[11px] font-bold text-white/50 uppercase tracking-widest'
+
+export default function ConsignmentModal({ isOpen, onClose, ownerId, consignment, cars, defaultPercentage }: Props) {
   const [isPending, startTransition] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
   const router = useRouter()
-  const [formData, setFormData] = useState<Partial<Consignment>>({})
+  const [form, setForm] = useState<Partial<Consignment>>({})
 
   useEffect(() => {
-    setFormData(consignment ?? { owner_percentage: 70 })
+    setForm(consignment ?? { owner_percentage: defaultPercentage ?? 70 })
     setErrorStr(null)
-  }, [consignment, isOpen])
+  }, [consignment, isOpen, defaultPercentage])
 
   if (!isOpen) return null
   const isEditing = !!consignment
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!formData.car_id || !formData.owner_name) {
-      setErrorStr('Car and Owner Name are required.')
+    if (!form.car_id) {
+      setErrorStr('Please select a vehicle.')
       return
     }
-    const data: Omit<Consignment, 'id' | 'tenant_id'> = {
-      car_id: Number(formData.car_id),
-      owner_name: formData.owner_name,
-      owner_email: formData.owner_email || null,
-      owner_phone: formData.owner_phone || null,
-      owner_percentage: Number(formData.owner_percentage) || 70,
-      contract_start: formData.contract_start || null,
-      contract_end: formData.contract_end || null,
-      notes: formData.notes || null,
+    const data: ConsignmentInput = {
+      owner_id: ownerId,
+      car_id: Number(form.car_id),
+      owner_percentage: Number(form.owner_percentage) || 70,
+      contract_start: form.contract_start || null,
+      contract_end: form.contract_end || null,
+      notes: form.notes || null,
     }
     startTransition(async () => {
       const result = isEditing && consignment?.id
         ? await updateConsignment(consignment.id, data)
-        : await createConsignment(data as any)
+        : await createConsignment(data)
       if (result.error) setErrorStr(result.error)
       else { router.refresh(); onClose() }
     })
@@ -54,76 +58,58 @@ export default function ConsignmentModal({ isOpen, onClose, consignment, cars }:
 
   return (
     <ModalPortal>
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="glass w-full max-w-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up my-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
-          <h3 className="text-lg font-bold text-white">{isEditing ? 'Edit Consignment' : 'New Consignment'}</h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">✕</button>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+        <div className="glass w-full max-w-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up my-auto">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
+            <h3 className="text-lg font-bold text-white">{isEditing ? 'Edit Car' : 'Add Car'}</h3>
+            <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">✕</button>
+          </div>
+          <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+            {errorStr && <div className="p-3 bg-red-500/20 text-red-300 rounded-xl text-sm border border-red-500/30">{errorStr}</div>}
+
+            <div className="space-y-1">
+              <label className={labelCls}>Vehicle</label>
+              <select required value={form.car_id || ''} onChange={e => setForm({ ...form, car_id: Number(e.target.value) })}
+                className={inputCls}>
+                <option value="" disabled className="bg-[#0d0d0d]">Select vehicle...</option>
+                {cars.map(c => <option key={c.id} value={c.id} className="bg-[#0d0d0d]">{c.make} {c.model_full || c.model}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className={labelCls}>Owner Split % (e.g. 70 = owner gets 70%)</label>
+              <input type="number" min="0" max="100" step="1" required value={form.owner_percentage ?? 70}
+                onChange={e => setForm({ ...form, owner_percentage: Number(e.target.value) })} className={inputCls} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className={labelCls}>Contract Start</label>
+                <input type="date" value={form.contract_start || ''} onChange={e => setForm({ ...form, contract_start: e.target.value })}
+                  className={`${inputCls} [color-scheme:dark]`} />
+              </div>
+              <div className="space-y-1">
+                <label className={labelCls}>Contract End</label>
+                <input type="date" value={form.contract_end || ''} onChange={e => setForm({ ...form, contract_end: e.target.value })}
+                  className={`${inputCls} [color-scheme:dark]`} />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className={labelCls}>Notes</label>
+              <textarea rows={2} value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })}
+                className={`${inputCls} resize-none`} />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              <button type="button" onClick={onClose} className="bg-white/5 hover:bg-white/10 text-white/80 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">Cancel</button>
+              <button type="submit" disabled={isPending} className="bg-white text-black hover:bg-white/90 px-6 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50">
+                {isPending ? 'Saving...' : 'Save Car'}
+              </button>
+            </div>
+          </form>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
-          {errorStr && <div className="p-3 bg-red-500/20 text-red-300 rounded-xl text-sm border border-red-500/30">{errorStr}</div>}
-
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Vehicle</label>
-            <select required value={formData.car_id || ''} onChange={e => setFormData({ ...formData, car_id: Number(e.target.value) })}
-              className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white">
-              <option value="" disabled className="bg-[#0d0d0d]">Select vehicle...</option>
-              {cars.map(c => <option key={c.id} value={c.id} className="bg-[#0d0d0d]">{c.make} {c.model_full || c.model}</option>)}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1 col-span-2">
-              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Owner Name</label>
-              <input type="text" required placeholder="John Smith" value={formData.owner_name || ''} onChange={e => setFormData({ ...formData, owner_name: e.target.value })}
-                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Owner Email</label>
-              <input type="email" value={formData.owner_email || ''} onChange={e => setFormData({ ...formData, owner_email: e.target.value })}
-                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Owner Phone</label>
-              <input type="text" value={formData.owner_phone || ''} onChange={e => setFormData({ ...formData, owner_phone: e.target.value })}
-                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Owner Split % (e.g. 70 = owner gets 70%)</label>
-            <input type="number" min="0" max="100" step="1" required value={formData.owner_percentage ?? 70} onChange={e => setFormData({ ...formData, owner_percentage: Number(e.target.value) })}
-              className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Contract Start</label>
-              <input type="date" value={formData.contract_start || ''} onChange={e => setFormData({ ...formData, contract_start: e.target.value })}
-                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white [color-scheme:dark]" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Contract End</label>
-              <input type="date" value={formData.contract_end || ''} onChange={e => setFormData({ ...formData, contract_end: e.target.value })}
-                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white [color-scheme:dark]" />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Notes</label>
-            <textarea rows={2} value={formData.notes || ''} onChange={e => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white resize-none" />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-            <button type="button" onClick={onClose} className="bg-white/5 hover:bg-white/10 text-white/80 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">Cancel</button>
-            <button type="submit" disabled={isPending} className="bg-white text-black hover:bg-white/90 px-6 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50">
-              {isPending ? 'Saving...' : 'Save Consignment'}
-            </button>
-          </div>
-        </form>
       </div>
-    </div>
     </ModalPortal>
   )
 }
