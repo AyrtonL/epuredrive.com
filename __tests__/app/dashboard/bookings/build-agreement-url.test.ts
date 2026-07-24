@@ -8,7 +8,8 @@ describe('buildAgreementUrl', () => {
   const originalEnv = process.env.NEXT_PUBLIC_APP_URL
 
   afterEach(() => {
-    process.env.NEXT_PUBLIC_APP_URL = originalEnv
+    if (originalEnv === undefined) delete process.env.NEXT_PUBLIC_APP_URL
+    else process.env.NEXT_PUBLIC_APP_URL = originalEnv
   })
 
   it('uses NEXT_PUBLIC_APP_URL when set', () => {
