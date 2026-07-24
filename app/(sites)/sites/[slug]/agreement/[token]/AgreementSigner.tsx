@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import SignatureCanvas from 'react-signature-canvas'
+import { generateAgreementPdfBlob } from '@/lib/agreements/pdf'
 import AgreementDocument, {
   type AgreementCar,
   type AgreementReservation,
@@ -93,7 +94,7 @@ export default function AgreementSigner({
       }
 
       // 2. Generate PDF client-side and upload — best-effort, non-blocking
-      void generateAndUploadPDF(signatureDataUrl)
+      void generateAndUploadPDF()
 
       setStep('done')
     } catch (err: unknown) {
@@ -102,41 +103,12 @@ export default function AgreementSigner({
     }
   }
 
-  async function generateAndUploadPDF(signatureDataUrl: string) {
+  async function generateAndUploadPDF() {
     const element = agreementRef.current
     if (!element) return
 
     try {
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import('html2canvas'),
-        import('jspdf'),
-      ])
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-      })
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.92)
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' })
-      const pageW = pdf.internal.pageSize.getWidth()
-      const pageH = pdf.internal.pageSize.getHeight()
-      const imgH = (canvas.height * pageW) / canvas.width
-      let y = 0
-      let remaining = imgH
-
-      while (remaining > 0) {
-        pdf.addImage(imgData, 'JPEG', 0, -y, pageW, imgH)
-        remaining -= pageH
-        if (remaining > 0) {
-          pdf.addPage()
-          y += pageH
-        }
-      }
-
-      const pdfBlob = pdf.output('blob')
+      const pdfBlob = await generateAgreementPdfBlob(element)
       const formData = new FormData()
       formData.append('pdf', pdfBlob, `agreement-${reservation.id}.pdf`)
       formData.append('token', token)
