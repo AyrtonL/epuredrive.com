@@ -46,6 +46,11 @@ function rowToBrand(row: TenantBrandRow | null): TenantBrand {
   }
 }
 
+export function buildAgreementUrl(tenantSlug: string, token: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${tenantSlug}.epuredrive.com`
+  return `${baseUrl}/sites/${tenantSlug}/agreement/${token}`
+}
+
 async function getTenantId(): Promise<string> {
   const { tenantId } = await requireTenantId()
   return tenantId
@@ -507,8 +512,7 @@ export async function sendAgreement(reservationId: number): Promise<{ error: str
   const tenantSlug = (tenantRow as TenantBrandRow | null)?.slug || ''
   const carName = await getCarName(supabase, reservation.car_id ?? null)
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${tenantSlug}.epuredrive.com`
-  const agreementUrl = `${baseUrl}/sites/${tenantSlug}/agreement/${newToken}`
+  const agreementUrl = buildAgreementUrl(tenantSlug, newToken)
 
   try {
     await sendEmail({
