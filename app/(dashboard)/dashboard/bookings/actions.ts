@@ -46,7 +46,7 @@ function rowToBrand(row: TenantBrandRow | null): TenantBrand {
   }
 }
 
-export function buildAgreementUrl(tenantSlug: string, token: string): string {
+export async function buildAgreementUrl(tenantSlug: string, token: string): Promise<string> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${tenantSlug}.epuredrive.com`
   return `${baseUrl}/sites/${tenantSlug}/agreement/${token}`
 }
@@ -512,7 +512,7 @@ export async function sendAgreement(reservationId: number): Promise<{ error: str
   const tenantSlug = (tenantRow as TenantBrandRow | null)?.slug || ''
   const carName = await getCarName(supabase, reservation.car_id ?? null)
 
-  const agreementUrl = buildAgreementUrl(tenantSlug, newToken)
+  const agreementUrl = await buildAgreementUrl(tenantSlug, newToken)
 
   try {
     await sendEmail({
@@ -565,7 +565,7 @@ export async function getAgreementViewUrl(
     return { url: null, error: 'Tenant configuration is missing a slug' }
   }
 
-  return { url: buildAgreementUrl(tenantSlug, reservation.agreement_token), error: null }
+  return { url: await buildAgreementUrl(tenantSlug, reservation.agreement_token), error: null }
 }
 
 /**

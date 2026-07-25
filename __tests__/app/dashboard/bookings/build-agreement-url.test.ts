@@ -12,15 +12,15 @@ describe('buildAgreementUrl', () => {
     else process.env.NEXT_PUBLIC_APP_URL = originalEnv
   })
 
-  it('uses NEXT_PUBLIC_APP_URL when set', () => {
+  it('uses NEXT_PUBLIC_APP_URL when set', async () => {
     process.env.NEXT_PUBLIC_APP_URL = 'https://app.epuredrive.com'
-    const url = buildAgreementUrl('acme', 'tok-123')
+    const url = await buildAgreementUrl('acme', 'tok-123')
     expect(url).toBe('https://app.epuredrive.com/sites/acme/agreement/tok-123')
   })
 
-  it('falls back to the tenant subdomain when NEXT_PUBLIC_APP_URL is not set', () => {
+  it('falls back to the tenant subdomain when NEXT_PUBLIC_APP_URL is not set', async () => {
     delete process.env.NEXT_PUBLIC_APP_URL
-    const url = buildAgreementUrl('acme', 'tok-123')
+    const url = await buildAgreementUrl('acme', 'tok-123')
     expect(url).toBe('https://acme.epuredrive.com/sites/acme/agreement/tok-123')
   })
 })
