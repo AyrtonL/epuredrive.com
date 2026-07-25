@@ -46,6 +46,11 @@ function rowToBrand(row: TenantBrandRow | null): TenantBrand {
   }
 }
 
+export async function buildAgreementUrl(tenantSlug: string, token: string): Promise<string> {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${tenantSlug}.epuredrive.com`
+  return `${baseUrl}/sites/${tenantSlug}/agreement/${token}`
+}
+
 async function getTenantId(): Promise<string> {
   const { tenantId } = await requireTenantId()
   return tenantId
@@ -507,8 +512,7 @@ export async function sendAgreement(reservationId: number): Promise<{ error: str
   const tenantSlug = (tenantRow as TenantBrandRow | null)?.slug || ''
   const carName = await getCarName(supabase, reservation.car_id ?? null)
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${tenantSlug}.epuredrive.com`
-  const agreementUrl = `${baseUrl}/sites/${tenantSlug}/agreement/${newToken}`
+  const agreementUrl = await buildAgreementUrl(tenantSlug, newToken)
 
   try {
     await sendEmail({
@@ -531,6 +535,37 @@ export async function sendAgreement(reservationId: number): Promise<{ error: str
 
   revalidatePath('/dashboard/bookings')
   return { error: null }
+}
+
+export async function getAgreementViewUrl(
+  reservationId: number
+): Promise<{ url: string | null; error: string | null }> {
+  const supabase = createClient()
+  const tenantId = await getTenantId()
+
+  const { data: reservation } = await supabase
+    .from('reservations')
+    .select('agreement_token')
+    .eq('id', reservationId)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (!reservation || !reservation.agreement_token) {
+    return { url: null, error: 'No agreement has been sent for this reservation yet' }
+  }
+
+  const { data: tenantRow } = await supabase
+    .from('tenants')
+    .select('slug')
+    .eq('id', tenantId)
+    .single()
+
+  const tenantSlug = tenantRow?.slug || ''
+  if (!tenantSlug) {
+    return { url: null, error: 'Tenant configuration is missing a slug' }
+  }
+
+  return { url: await buildAgreementUrl(tenantSlug, reservation.agreement_token), error: null }
 }
 
 /**

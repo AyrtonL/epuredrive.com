@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import SignatureCanvas from 'react-signature-canvas'
+import { generateAgreementPdfBlob } from '@/lib/agreements/pdf'
 import AgreementDocument, {
   type AgreementCar,
   type AgreementReservation,
@@ -53,6 +54,8 @@ export default function AgreementSigner({
   const [error, setError] = useState<string | null>(null)
   const [sigEmpty, setSigEmpty] = useState(true)
   const [canvasSize, setCanvasSize] = useState<{ w: number; h: number } | null>(null)
+  const [downloading, setDownloading] = useState(false)
+  const [downloadError, setDownloadError] = useState<string | null>(null)
 
   useEffect(() => {
     if (step !== 'sign') return
@@ -66,6 +69,56 @@ export default function AgreementSigner({
   function clearSignature() {
     sigRef.current?.clear()
     setSigEmpty(true)
+  }
+
+  async function handlePrint() {
+    window.print()
+  }
+
+  async function handleDownload() {
+    const element = agreementRef.current
+    if (!element) return
+
+    setDownloading(true)
+    setDownloadError(null)
+
+    try {
+      const blob = await generateAgreementPdfBlob(element)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `agreement-${reservation.booking_code || reservation.id}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      setDownloadError('Could not generate the PDF. Please try again.')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  function printDownloadControls() {
+    return (
+      <div className="flex items-center gap-2 print:hidden">
+        <button
+          type="button"
+          onClick={handlePrint}
+          className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-bold transition-all"
+        >
+          Print
+        </button>
+        <button
+          type="button"
+          onClick={handleDownload}
+          disabled={downloading}
+          className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {downloading ? 'Preparing…' : 'Download PDF'}
+        </button>
+      </div>
+    )
   }
 
   async function handleSubmit() {
@@ -93,7 +146,7 @@ export default function AgreementSigner({
       }
 
       // 2. Generate PDF client-side and upload — best-effort, non-blocking
-      void generateAndUploadPDF(signatureDataUrl)
+      void generateAndUploadPDF()
 
       setStep('done')
     } catch (err: unknown) {
@@ -102,41 +155,12 @@ export default function AgreementSigner({
     }
   }
 
-  async function generateAndUploadPDF(signatureDataUrl: string) {
+  async function generateAndUploadPDF() {
     const element = agreementRef.current
     if (!element) return
 
     try {
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import('html2canvas'),
-        import('jspdf'),
-      ])
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-      })
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.92)
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' })
-      const pageW = pdf.internal.pageSize.getWidth()
-      const pageH = pdf.internal.pageSize.getHeight()
-      const imgH = (canvas.height * pageW) / canvas.width
-      let y = 0
-      let remaining = imgH
-
-      while (remaining > 0) {
-        pdf.addImage(imgData, 'JPEG', 0, -y, pageW, imgH)
-        remaining -= pageH
-        if (remaining > 0) {
-          pdf.addPage()
-          y += pageH
-        }
-      }
-
-      const pdfBlob = pdf.output('blob')
+      const pdfBlob = await generateAgreementPdfBlob(element)
       const formData = new FormData()
       formData.append('pdf', pdfBlob, `agreement-${reservation.id}.pdf`)
       formData.append('token', token)
@@ -198,23 +222,27 @@ export default function AgreementSigner({
     )
 
     return (
-      <div className="min-h-screen bg-gray-100 py-8 px-4">
+      <div className="min-h-screen bg-gray-100 py-8 px-4 print:bg-white print:py-0 print:px-0">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Banner */}
-          <div className="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-4 border-l-4" style={{ borderColor: accentColor }}>
-            {tenant.logo_url && (
-              <Image src={tenant.logo_url} alt={tenantName} width={100} height={40} className="h-10 w-auto object-contain" />
-            )}
-            <div>
-              <h1 className="font-bold text-gray-900">{tenantName} — Rental Agreement</h1>
-              <p className="text-xs text-green-600 font-semibold">
-                {reservation.tenant_signed_at ? 'Finalized — Both parties have signed' : 'Signed — Pending operator close-out'}
-              </p>
+          <div className="bg-white rounded-2xl shadow-sm p-5 flex items-center justify-between gap-4 border-l-4 print:hidden" style={{ borderColor: accentColor }}>
+            <div className="flex items-center gap-4">
+              {tenant.logo_url && (
+                <Image src={tenant.logo_url} alt={tenantName} width={100} height={40} className="h-10 w-auto object-contain" />
+              )}
+              <div>
+                <h1 className="font-bold text-gray-900">{tenantName} — Rental Agreement</h1>
+                <p className="text-xs text-green-600 font-semibold">
+                  {reservation.tenant_signed_at ? 'Finalized — Both parties have signed' : 'Signed — Pending operator close-out'}
+                </p>
+              </div>
             </div>
+            {printDownloadControls()}
           </div>
+          {downloadError && <p className="text-red-500 text-sm print:hidden">{downloadError}</p>}
 
           {/* Full Agreement Document */}
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div ref={agreementRef} className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <AgreementDocument
               reservation={reservation}
               tenant={tenant}
@@ -304,21 +332,25 @@ export default function AgreementSigner({
   )
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
+    <div className="min-h-screen bg-gray-100 py-8 px-4 print:bg-white print:py-0 print:px-0">
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* ── Banner ── */}
-        <div className="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-4 border-l-4" style={{ borderColor: accentColor }}>
-          {tenant.logo_url && (
-            <Image src={tenant.logo_url} alt={tenantName} width={100} height={40} className="h-10 w-auto object-contain" />
-          )}
-          <div>
-            <h1 className="font-bold text-gray-900">{tenantName} — Rental Agreement</h1>
-            <p className="text-xs text-gray-500">
-              Please review the agreement carefully and sign at the bottom.
-            </p>
+        <div className="bg-white rounded-2xl shadow-sm p-5 flex items-center justify-between gap-4 border-l-4 print:hidden" style={{ borderColor: accentColor }}>
+          <div className="flex items-center gap-4">
+            {tenant.logo_url && (
+              <Image src={tenant.logo_url} alt={tenantName} width={100} height={40} className="h-10 w-auto object-contain" />
+            )}
+            <div>
+              <h1 className="font-bold text-gray-900">{tenantName} — Rental Agreement</h1>
+              <p className="text-xs text-gray-500">
+                Please review the agreement carefully and sign at the bottom.
+              </p>
+            </div>
           </div>
+          {printDownloadControls()}
         </div>
+        {downloadError && <p className="text-red-500 text-sm print:hidden">{downloadError}</p>}
 
         {/* ── Agreement Document ── */}
         <div ref={agreementRef} className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -334,7 +366,7 @@ export default function AgreementSigner({
 
         {/* ── Action Bar ── */}
         {step === 'sign' && (
-          <div className="bg-white rounded-2xl shadow-sm p-5 flex items-center justify-between gap-4">
+          <div className="bg-white rounded-2xl shadow-sm p-5 flex items-center justify-between gap-4 print:hidden">
             {error && (
               <p className="text-red-500 text-sm flex-1">{error}</p>
             )}
@@ -355,7 +387,7 @@ export default function AgreementSigner({
         )}
 
         {step === 'submitting' && (
-          <div className="bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center gap-3">
+          <div className="bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center gap-3 print:hidden">
             <div className="w-4 h-4 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin" />
             <span className="text-sm text-gray-600">Signing your agreement and generating PDF...</span>
           </div>
