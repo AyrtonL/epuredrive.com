@@ -537,6 +537,37 @@ export async function sendAgreement(reservationId: number): Promise<{ error: str
   return { error: null }
 }
 
+export async function getAgreementViewUrl(
+  reservationId: number
+): Promise<{ url: string | null; error: string | null }> {
+  const supabase = createClient()
+  const tenantId = await getTenantId()
+
+  const { data: reservation } = await supabase
+    .from('reservations')
+    .select('agreement_token')
+    .eq('id', reservationId)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (!reservation || !reservation.agreement_token) {
+    return { url: null, error: 'No agreement has been sent for this reservation yet' }
+  }
+
+  const { data: tenantRow } = await supabase
+    .from('tenants')
+    .select('slug')
+    .eq('id', tenantId)
+    .single()
+
+  const tenantSlug = tenantRow?.slug || ''
+  if (!tenantSlug) {
+    return { url: null, error: 'Tenant configuration is missing a slug' }
+  }
+
+  return { url: buildAgreementUrl(tenantSlug, reservation.agreement_token), error: null }
+}
+
 /**
  * Return the latest auto-synced mileage for a car if it's linked to a
  * telematics device, otherwise null. Used by BookingModal to pre-fill the
