@@ -7,6 +7,7 @@ import {
   createReservation,
   updateReservation,
   sendAgreement,
+  getAgreementViewUrl,
   getLatestOdometer,
   searchCustomersForBooking,
   type CustomerLookup,
@@ -57,6 +58,7 @@ function calcNights(pickup: string | null | undefined, ret: string | null | unde
 export default function BookingModal({ isOpen, onClose, reservation, cars, chargePerLevel }: Props) {
   const [isPending, startTransition] = useTransition()
   const [isSendingAgreement, setIsSendingAgreement] = useTransition()
+  const [isOpeningAgreement, setIsOpeningAgreement] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
   const [conflict, setConflict] = useState<string | null>(null)
   const [agreementMsg, setAgreementMsg] = useState<string | null>(null)
@@ -845,6 +847,26 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
                         )}
                       </div>
                       <div className="flex items-center gap-2">
+                        {reservation.agreement_token && (
+                          <button
+                            type="button"
+                            disabled={isOpeningAgreement}
+                            onClick={() => {
+                              setAgreementMsg(null)
+                              setIsOpeningAgreement(async () => {
+                                const result = await getAgreementViewUrl(reservation.id)
+                                if (result.error || !result.url) {
+                                  setAgreementMsg('Error: ' + (result.error || 'Could not open agreement'))
+                                } else {
+                                  window.open(result.url, '_blank', 'noopener,noreferrer')
+                                }
+                              })
+                            }}
+                            className="text-xs bg-white/5 hover:bg-white/10 text-white/70 px-3 py-1.5 rounded-lg font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {isOpeningAgreement ? 'Opening…' : 'View / Print / Download'}
+                          </button>
+                        )}
                         {reservation.agreement_pdf_url && (
                           <a
                             href={reservation.agreement_pdf_url}
