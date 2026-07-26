@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { Consignment, Car } from '@/lib/supabase/types'
 import { createConsignment, updateConsignment, type ConsignmentInput } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
+import DatePicker from '@/components/ui/DatePicker'
 
 interface Props {
   isOpen: boolean
@@ -85,13 +86,13 @@ export default function ConsignmentModal({ isOpen, onClose, ownerId, consignment
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className={labelCls}>Contract Start</label>
-                <input type="date" value={form.contract_start || ''} onChange={e => setForm({ ...form, contract_start: e.target.value })}
-                  className={`${inputCls} [color-scheme:dark]`} />
+                <DatePicker value={form.contract_start || ''} onChange={(v) => setForm({ ...form, contract_start: v })}
+                  className={inputCls} />
               </div>
               <div className="space-y-1">
                 <label className={labelCls}>Contract End</label>
-                <input type="date" value={form.contract_end || ''} onChange={e => setForm({ ...form, contract_end: e.target.value })}
-                  className={`${inputCls} [color-scheme:dark]`} />
+                <DatePicker value={form.contract_end || ''} onChange={(v) => setForm({ ...form, contract_end: v })}
+                  min={form.contract_start || undefined} className={inputCls} />
               </div>
             </div>
 

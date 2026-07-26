@@ -7,6 +7,7 @@ import { deleteOwner, deleteConsignment } from './actions'
 import { groupOwnerPayouts } from '@/lib/consignments/payouts'
 import OwnerModal from './OwnerModal'
 import ConsignmentModal from './ConsignmentModal'
+import DatePicker from '@/components/ui/DatePicker'
 
 interface Props {
   owners: ConsignmentOwner[]
@@ -81,11 +82,11 @@ export default function ConsignmentsManager({ owners, consignments, cars, reserv
       <div className="flex flex-wrap gap-4 mb-6 items-center justify-between">
         <div className="flex gap-3 items-center flex-wrap">
           <span className="text-xs text-white/40 uppercase tracking-widest font-bold">Period:</span>
-          <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-white/20" />
+          <DatePicker value={fromDate} onChange={setFromDate}
+            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20" />
           <span className="text-white/30">→</span>
-          <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-white/20" />
+          <DatePicker value={toDate} onChange={setToDate} min={fromDate || undefined}
+            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20" />
           {(fromDate || toDate) && (
             <button onClick={() => { setFromDate(''); setToDate('') }} className="text-xs text-white/40 hover:text-white transition-colors">Clear</button>
           )}

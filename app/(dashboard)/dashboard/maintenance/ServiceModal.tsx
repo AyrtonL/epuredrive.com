@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { CarService, Car } from '@/lib/supabase/types'
 import { createService, updateService, updateCarMileage } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
+import DatePicker from '@/components/ui/DatePicker'
 
 interface Props {
   isOpen: boolean
@@ -196,11 +197,11 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
                   <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">
                     Date <span className="text-primary">*</span>
                   </label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={formData.service_date || ''}
-                    onChange={e => setFormData({ ...formData, service_date: e.target.value })}
-                    className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white [color-scheme:dark]"
+                    onChange={(v) => setFormData({ ...formData, service_date: v })}
+                    clearable={false}
+                    className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
                   />
                 </div>
                 <div className="space-y-1">
@@ -258,11 +259,10 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
                   </div>
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Due Date</label>
-                    <input
-                      type="date"
+                    <DatePicker
                       value={formData.next_service_date || ''}
-                      onChange={e => setFormData({ ...formData, next_service_date: e.target.value })}
-                      className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white [color-scheme:dark]"
+                      onChange={(v) => setFormData({ ...formData, next_service_date: v })}
+                      className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
                     />
                   </div>
                 </div>

@@ -7,6 +7,7 @@
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import TripDetailModal, { type TripDetailMeta } from './TripDetailModal'
+import DatePicker from '@/components/ui/DatePicker'
 
 export interface TripRow {
   id: string
@@ -122,28 +123,27 @@ export default function TripsTable({ trips, cars, initialFilters }: Props) {
     <>
       <div className="glass border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-3">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <label className="block">
+          <div className="block">
             <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
               From
             </span>
-            <input
-              type="date"
+            <DatePicker
               value={from}
-              onChange={(e) => setFrom(e.target.value)}
+              onChange={setFrom}
               className="mt-1 w-full bg-white/5 border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-white/30"
             />
-          </label>
-          <label className="block">
+          </div>
+          <div className="block">
             <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
               To
             </span>
-            <input
-              type="date"
+            <DatePicker
               value={to}
-              onChange={(e) => setTo(e.target.value)}
+              onChange={setTo}
+              min={from || undefined}
               className="mt-1 w-full bg-white/5 border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-white/30"
             />
-          </label>
+          </div>
           <label className="block">
             <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
               Min distance (mi)

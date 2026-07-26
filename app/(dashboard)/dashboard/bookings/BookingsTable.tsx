@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { Reservation, Car } from '@/lib/supabase/types'
 import { updateReservation, deleteReservation, bulkUpdateReservations } from './actions'
 import BookingModal from './BookingModal'
+import DatePicker from '@/components/ui/DatePicker'
 
 const STATUS_COLORS: Record<string, string> = {
   confirmed: 'bg-green-500/20 text-green-400',
@@ -174,22 +175,19 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
             ))}
           </select>
           <div className="flex items-center gap-2">
-            <input
-              type="date"
+            <DatePicker
               value={dateFrom}
-              onChange={e => { setDateFrom(e.target.value); setPage(1); setSelectedIds(new Set()) }}
+              onChange={v => { setDateFrom(v); setPage(1); setSelectedIds(new Set()) }}
               placeholder="From"
-              title="From date"
-              className="dash-input px-3 py-2.5 [color-scheme:dark]"
+              className="dash-input px-3 py-2.5"
             />
             <span className="text-white/30 text-xs">to</span>
-            <input
-              type="date"
+            <DatePicker
               value={dateTo}
-              onChange={e => { setDateTo(e.target.value); setPage(1); setSelectedIds(new Set()) }}
+              onChange={v => { setDateTo(v); setPage(1); setSelectedIds(new Set()) }}
               placeholder="To"
-              title="To date"
-              className="dash-input px-3 py-2.5 [color-scheme:dark]"
+              min={dateFrom || undefined}
+              className="dash-input px-3 py-2.5"
             />
             {(dateFrom || dateTo) && (
               <button

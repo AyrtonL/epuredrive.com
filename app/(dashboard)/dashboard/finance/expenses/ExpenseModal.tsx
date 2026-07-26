@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { Transaction, Car } from '@/lib/supabase/types'
 import { createTransaction, updateTransaction } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
+import DatePicker from '@/components/ui/DatePicker'
 
 interface Props {
   isOpen: boolean
@@ -104,11 +105,11 @@ export default function ExpenseModal({ isOpen, onClose, expense, cars }: Props) 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Date</label>
-                <input 
-                  type="date" required
-                  value={formData.transaction_date || ''} 
-                  onChange={e => setFormData({...formData, transaction_date: e.target.value})}
-                  className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white [color-scheme:dark]" 
+                <DatePicker
+                  value={formData.transaction_date || ''}
+                  onChange={(v) => setFormData({...formData, transaction_date: v})}
+                  clearable={false}
+                  className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
                 />
               </div>
               <div className="space-y-1">

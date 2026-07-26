@@ -10,6 +10,7 @@
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import AlertRow, { type AlertRowData } from './AlertRow'
+import DatePicker from '@/components/ui/DatePicker'
 import { ackManyAction } from '@/app/(dashboard)/dashboard/telematics/alerts/actions'
 import { useInterval } from './useInterval'
 import type {
@@ -247,29 +248,28 @@ export default function AlertsClient({
             </select>
           </label>
 
-          <label className="block">
+          <div className="block">
             <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
               From
             </span>
-            <input
-              type="date"
+            <DatePicker
               value={from}
-              onChange={(e) => setFrom(e.target.value)}
+              onChange={setFrom}
               className="mt-1 w-full bg-white/5 border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-white/30"
             />
-          </label>
+          </div>
 
-          <label className="block">
+          <div className="block">
             <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
               To
             </span>
-            <input
-              type="date"
+            <DatePicker
               value={to}
-              onChange={(e) => setTo(e.target.value)}
+              onChange={setTo}
+              min={from || undefined}
               className="mt-1 w-full bg-white/5 border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-white/30"
             />
-          </label>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">

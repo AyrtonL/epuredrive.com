@@ -15,6 +15,8 @@ import {
 import ModalPortal from '@/components/ui/ModalPortal'
 import FuelSummary from '@/components/dashboard/FuelSummary'
 import TenantCloseOut from './TenantCloseOut'
+import DatePicker from '@/components/ui/DatePicker'
+import TimePicker from '@/components/ui/TimePicker'
 
 interface Props {
   isOpen: boolean
@@ -474,11 +476,10 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
                   </div>
                   <div className="space-y-1">
                     <label className={LABEL_CLASS}>Date of Birth</label>
-                    <input
-                      type="date"
+                    <DatePicker
                       value={formData.customer_dob || ''}
-                      onChange={(e) => setFormData({ ...formData, customer_dob: e.target.value })}
-                      className={`${INPUT_CLASS} [color-scheme:dark]`}
+                      onChange={(v) => setFormData({ ...formData, customer_dob: v })}
+                      className={INPUT_CLASS}
                     />
                   </div>
                   <div className="space-y-1">
@@ -528,13 +529,10 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
                     </div>
                     <div className="space-y-1">
                       <label className={LABEL_CLASS}>License Expiration Date</label>
-                      <input
-                        type="date"
+                      <DatePicker
                         value={formData.license_expiration_date || ''}
-                        onChange={(e) =>
-                          setFormData({ ...formData, license_expiration_date: e.target.value })
-                        }
-                        className={`${INPUT_CLASS} [color-scheme:dark]`}
+                        onChange={(v) => setFormData({ ...formData, license_expiration_date: v })}
+                        className={INPUT_CLASS}
                       />
                     </div>
                     <div className="space-y-1">
@@ -563,13 +561,10 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
                     </div>
                     <div className="space-y-1">
                       <label className={LABEL_CLASS}>Insurance Expiration Date</label>
-                      <input
-                        type="date"
+                      <DatePicker
                         value={formData.insurance_expiration_date || ''}
-                        onChange={(e) =>
-                          setFormData({ ...formData, insurance_expiration_date: e.target.value })
-                        }
-                        className={`${INPUT_CLASS} [color-scheme:dark]`}
+                        onChange={(v) => setFormData({ ...formData, insurance_expiration_date: v })}
+                        className={INPUT_CLASS}
                       />
                     </div>
                   </div>
@@ -599,40 +594,37 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
                   </div>
                   <div className="space-y-1">
                     <label className={LABEL_CLASS}>Pickup Date *</label>
-                    <input
-                      type="date"
-                      required
+                    <DatePicker
                       value={formData.pickup_date || ''}
-                      onChange={(e) => setFormData({ ...formData, pickup_date: e.target.value })}
-                      className={`${INPUT_CLASS} [color-scheme:dark]`}
+                      onChange={(v) => setFormData({ ...formData, pickup_date: v })}
+                      className={INPUT_CLASS}
+                      clearable={false}
                     />
                   </div>
                   <div className="space-y-1">
                     <label className={LABEL_CLASS}>Pickup Time</label>
-                    <input
-                      type="time"
+                    <TimePicker
                       value={formData.pickup_time || '10:00'}
-                      onChange={(e) => setFormData({ ...formData, pickup_time: e.target.value })}
-                      className={`${INPUT_CLASS} [color-scheme:dark]`}
+                      onChange={(v) => setFormData({ ...formData, pickup_time: v })}
+                      className={INPUT_CLASS}
                     />
                   </div>
                   <div className="space-y-1">
                     <label className={LABEL_CLASS}>Return Date *</label>
-                    <input
-                      type="date"
-                      required
+                    <DatePicker
                       value={formData.return_date || ''}
-                      onChange={(e) => setFormData({ ...formData, return_date: e.target.value })}
-                      className={`${INPUT_CLASS} [color-scheme:dark]`}
+                      onChange={(v) => setFormData({ ...formData, return_date: v })}
+                      className={INPUT_CLASS}
+                      min={formData.pickup_date || undefined}
+                      clearable={false}
                     />
                   </div>
                   <div className="space-y-1">
                     <label className={LABEL_CLASS}>Return Time</label>
-                    <input
-                      type="time"
+                    <TimePicker
                       value={formData.return_time || '10:00'}
-                      onChange={(e) => setFormData({ ...formData, return_time: e.target.value })}
-                      className={`${INPUT_CLASS} [color-scheme:dark]`}
+                      onChange={(v) => setFormData({ ...formData, return_time: v })}
+                      className={INPUT_CLASS}
                     />
                   </div>
                   {nights != null && (

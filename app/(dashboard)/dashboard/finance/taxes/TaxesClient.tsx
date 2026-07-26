@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Transaction, TaxSetting, Reservation } from '@/lib/supabase/types'
+import DatePicker from '@/components/ui/DatePicker'
 
 interface Props {
   transactions: Transaction[]
@@ -282,13 +283,13 @@ export default function TaxesClient({ transactions, reservations, taxSettings: i
           <div className="flex flex-wrap gap-4 items-end">
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-white/30 uppercase tracking-widest">From</label>
-              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
-                className="bg-white/5 border border-white/10 text-white rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 [color-scheme:dark]" />
+              <DatePicker value={dateFrom} onChange={setDateFrom}
+                className="bg-white/5 border border-white/10 text-white rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-white/30 uppercase tracking-widest">To</label>
-              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
-                className="bg-white/5 border border-white/10 text-white rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 [color-scheme:dark]" />
+              <DatePicker value={dateTo} onChange={setDateTo} min={dateFrom || undefined}
+                className="bg-white/5 border border-white/10 text-white rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
