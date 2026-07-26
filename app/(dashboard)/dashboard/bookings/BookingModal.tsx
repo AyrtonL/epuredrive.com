@@ -141,6 +141,19 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
   }, [cars, formData.car_id])
   const nights = calcNights(formData.pickup_date, formData.return_date)
 
+  const expirationWarnings = useMemo(() => {
+    const returnDate = formData.return_date
+    if (!returnDate) return []
+    const warnings: string[] = []
+    if (formData.license_expiration_date && formData.license_expiration_date < returnDate) {
+      warnings.push('Driver license expires before the return date.')
+    }
+    if (formData.insurance_expiration_date && formData.insurance_expiration_date < returnDate) {
+      warnings.push('Insurance policy expires before the return date.')
+    }
+    return warnings
+  }, [formData.return_date, formData.license_expiration_date, formData.insurance_expiration_date])
+
   if (!isOpen) return null
 
   function handlePickCustomer(c: CustomerLookup) {
@@ -153,6 +166,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
       customer_address: c.address ?? '',
       license_number: c.license_number ?? '',
       license_state: c.license_state ?? '',
+      license_expiration_date: c.license_expiration_date ?? '',
       insurance_provider: c.insurance_provider ?? '',
       insurance_policy_number: c.insurance_policy_number ?? '',
       insurance_expiration_date: c.insurance_expiration_date ?? '',
@@ -219,6 +233,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
       notes: formData.notes || null,
       license_number: formData.license_number || null,
       license_state: formData.license_state || null,
+      license_expiration_date: formData.license_expiration_date || null,
       insurance_provider: formData.insurance_provider || null,
       insurance_policy_number: formData.insurance_policy_number || null,
       insurance_expiration_date: formData.insurance_expiration_date || null,
@@ -367,6 +382,17 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
                 </div>
               )}
 
+              {expirationWarnings.length > 0 && (
+                <div className="p-4 bg-amber-500/15 text-amber-200 rounded-xl text-sm border border-amber-500/30 space-y-1.5">
+                  {expirationWarnings.map((w) => (
+                    <div key={w} className="flex items-start gap-2">
+                      <svg className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                      <span>{w}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* CUSTOMER TAB */}
               <div className={activeTab === 'customer' ? 'space-y-5' : 'hidden'}>
                 {!isEditing && (
@@ -486,6 +512,17 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
                         value={formData.license_state || ''}
                         onChange={(e) => setFormData({ ...formData, license_state: e.target.value })}
                         className={INPUT_CLASS}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className={LABEL_CLASS}>License Expiration Date</label>
+                      <input
+                        type="date"
+                        value={formData.license_expiration_date || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, license_expiration_date: e.target.value })
+                        }
+                        className={`${INPUT_CLASS} [color-scheme:dark]`}
                       />
                     </div>
                     <div className="space-y-1">

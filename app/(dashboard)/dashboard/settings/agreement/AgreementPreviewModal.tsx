@@ -64,6 +64,7 @@ function buildSampleReservation(): AgreementReservation {
     fuel_in: null,
     license_number: 'S123-456-78-900-0',
     license_state: 'FL',
+    license_expiration_date: null,
     insurance_provider: null,
     insurance_policy_number: null,
     insurance_expiration_date: null,

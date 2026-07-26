@@ -82,6 +82,7 @@ export interface CustomerLookup {
   address: string | null
   license_number: string | null
   license_state: string | null
+  license_expiration_date: string | null
   insurance_provider: string | null
   insurance_policy_number: string | null
   insurance_expiration_date: string | null
@@ -109,7 +110,7 @@ export async function searchCustomersForBooking(
   const { data, error } = await supabase
     .from('reservations')
     .select(
-      'customer_name, customer_email, customer_phone, customer_dob, customer_address, license_number, license_state, insurance_provider, insurance_policy_number, insurance_expiration_date, created_at'
+      'customer_name, customer_email, customer_phone, customer_dob, customer_address, license_number, license_state, license_expiration_date, insurance_provider, insurance_policy_number, insurance_expiration_date, created_at'
     )
     .eq('tenant_id', tenantId)
     .or(
@@ -139,6 +140,7 @@ export async function searchCustomersForBooking(
       address: r.customer_address,
       license_number: r.license_number,
       license_state: r.license_state,
+      license_expiration_date: r.license_expiration_date,
       insurance_provider: r.insurance_provider,
       insurance_policy_number: r.insurance_policy_number,
       insurance_expiration_date: r.insurance_expiration_date,

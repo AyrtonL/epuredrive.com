@@ -45,6 +45,7 @@ export interface AgreementReservation {
   fuel_in: string | null
   license_number: string | null
   license_state: string | null
+  license_expiration_date: string | null
   insurance_provider: string | null
   insurance_policy_number: string | null
   insurance_expiration_date: string | null
@@ -218,8 +219,14 @@ export default function AgreementDocument({
                   {reservation.license_number || '—'}
                   {reservation.license_state && ` (${reservation.license_state})`}
                 </td>
+                <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">License Expires</td>
+                <td className="border border-gray-200 px-3 py-2">
+                  {reservation.license_expiration_date ? formatDate(reservation.license_expiration_date) : '—'}
+                </td>
+              </tr>
+              <tr>
                 <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Address</td>
-                <td className="border border-gray-200 px-3 py-2">{reservation.customer_address || '—'}</td>
+                <td colSpan={3} className="border border-gray-200 px-3 py-2">{reservation.customer_address || '—'}</td>
               </tr>
               {(reservation.insurance_provider ||
                 reservation.insurance_policy_number ||
