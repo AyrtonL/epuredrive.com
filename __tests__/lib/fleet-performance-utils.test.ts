@@ -36,6 +36,7 @@ const makeRes = (overrides: Partial<Reservation> = {}): Reservation => ({
   agreement_signature_url: null,
   customer_dob: null,
   customer_address: null,
+  customer_zip: null,
   security_deposit: null,
   surcharge: null,
   amount_outstanding: null,

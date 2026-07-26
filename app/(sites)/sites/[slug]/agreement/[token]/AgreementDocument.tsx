@@ -29,6 +29,7 @@ export interface AgreementReservation {
   customer_phone: string | null
   customer_dob: string | null
   customer_address: string | null
+  customer_zip: string | null
   pickup_date: string | null
   pickup_time: string | null
   return_date: string | null
@@ -80,6 +81,21 @@ function formatDateTime(dateStr: string | null, timeStr: string | null): string 
   const ampm = h >= 12 ? 'PM' : 'AM'
   const hour = h % 12 || 12
   return `${date} — ${hour}:${m.toString().padStart(2, '0')} ${ampm}`
+}
+
+const HEX_COLOR_RE = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/
+
+function renderCarColor(color: string | null): React.ReactNode {
+  if (!color) return '—'
+  const trimmed = color.trim()
+  if (!HEX_COLOR_RE.test(trimmed)) return trimmed
+  return (
+    <span
+      className="inline-block w-5 h-5 rounded-full border border-gray-300 align-middle"
+      style={{ backgroundColor: trimmed }}
+      title={trimmed}
+    />
+  )
 }
 
 export default function AgreementDocument({
@@ -167,7 +183,7 @@ export default function AgreementDocument({
                 </tr>
                 <tr>
                   <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Color</td>
-                  <td className="border border-gray-200 px-3 py-2">{car.color || '—'}</td>
+                  <td className="border border-gray-200 px-3 py-2">{renderCarColor(car.color)}</td>
                   <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Plate</td>
                   <td className="border border-gray-200 px-3 py-2">{car.plate || '—'}</td>
                 </tr>
@@ -226,7 +242,9 @@ export default function AgreementDocument({
               </tr>
               <tr>
                 <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Address</td>
-                <td colSpan={3} className="border border-gray-200 px-3 py-2">{reservation.customer_address || '—'}</td>
+                <td className="border border-gray-200 px-3 py-2">{reservation.customer_address || '—'}</td>
+                <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">ZIP Code</td>
+                <td className="border border-gray-200 px-3 py-2">{reservation.customer_zip || '—'}</td>
               </tr>
               {(reservation.insurance_provider ||
                 reservation.insurance_policy_number ||

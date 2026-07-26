@@ -167,11 +167,13 @@ export default function AgreementSettings({ tenant }: Props) {
               <div className="grid grid-cols-2 gap-1 text-[11px] text-white/40 font-mono">
                 {[
                   '{{customer_name}}', '{{customer_email}}', '{{customer_phone}}',
+                  '{{customer_address}}', '{{customer_zip}}',
                   '{{car_make}}', '{{car_model}}', '{{car_year}}', '{{car_vin}}',
                   '{{pickup_date}}', '{{pickup_time}}', '{{return_date}}', '{{return_time}}',
                   '{{pickup_location}}', '{{total_amount}}', '{{agreement_number}}',
                   '{{tenant_name}}', '{{tenant_address}}', '{{tenant_phone}}',
-                  '{{license_number}}', '{{license_state}}', '{{insurance_provider}}',
+                  '{{license_number}}', '{{license_state}}', '{{license_expiration_date}}',
+                  '{{insurance_provider}}', '{{insurance_policy_number}}', '{{insurance_expiration_date}}',
                 ].map(p => (
                   <span key={p} className="truncate">{p}</span>
                 ))}

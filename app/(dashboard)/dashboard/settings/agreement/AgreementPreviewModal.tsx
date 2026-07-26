@@ -48,6 +48,7 @@ function buildSampleReservation(): AgreementReservation {
     customer_phone: '(786) 555-0123',
     customer_dob: '1990-05-14',
     customer_address: '456 Ocean Dr, Miami Beach, FL 33139',
+    customer_zip: '33139',
     pickup_date: iso(pickup),
     pickup_time: '10:00',
     return_date: iso(ret),

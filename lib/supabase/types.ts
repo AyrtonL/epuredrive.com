@@ -117,6 +117,7 @@ export interface Reservation {
   // renter extras
   customer_dob: string | null
   customer_address: string | null
+  customer_zip: string | null
   // charges
   security_deposit: number | null
   surcharge: number | null
@@ -150,6 +151,16 @@ export interface Customer {
   name: string
   email: string | null
   phone: string | null
+  address: string | null
+  dob: string | null
+  zip_code: string | null
+  license_number: string | null
+  license_state: string | null
+  license_country: string | null
+  license_expiration_date: string | null
+  insurance_provider: string | null
+  insurance_policy_number: string | null
+  insurance_expiration_date: string | null
   tenant_id: string | null
   created_at?: string
 }

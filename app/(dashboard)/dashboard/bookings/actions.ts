@@ -80,6 +80,7 @@ export interface CustomerLookup {
   phone: string | null
   dob: string | null
   address: string | null
+  zip_code: string | null
   license_number: string | null
   license_state: string | null
   license_expiration_date: string | null
@@ -89,10 +90,12 @@ export interface CustomerLookup {
 }
 
 /**
- * Search the tenant's past reservations for unique customers matching a query
- * (name / email / phone). Used by BookingModal to let staff reuse existing
- * customer data without retyping. The most recent reservation per customer
- * wins so DOB / address / license / insurance reflect the latest known values.
+ * Search the tenant's customers roster (name / email / phone). Used by
+ * BookingModal to let staff reuse existing customer data without retyping.
+ * The roster is the canonical current profile — it's kept in sync by
+ * upsertCustomerFromBooking on every create/update, so it always reflects
+ * the latest known DOB / address / license / insurance, regardless of how
+ * old the customer's most recent reservation is.
  */
 export async function searchCustomersForBooking(
   query: string
@@ -108,61 +111,48 @@ export async function searchCustomersForBooking(
   const tenantId = await getTenantId()
 
   const { data, error } = await supabase
-    .from('reservations')
+    .from('customers')
     .select(
-      'customer_name, customer_email, customer_phone, customer_dob, customer_address, license_number, license_state, license_expiration_date, insurance_provider, insurance_policy_number, insurance_expiration_date, created_at'
+      'name, email, phone, dob, address, zip_code, license_number, license_state, license_expiration_date, insurance_provider, insurance_policy_number, insurance_expiration_date'
     )
     .eq('tenant_id', tenantId)
-    .or(
-      `customer_name.ilike.%${safe}%,customer_email.ilike.%${safe}%,customer_phone.ilike.%${safe}%`
-    )
-    .order('created_at', { ascending: false })
-    .limit(50)
+    .or(`name.ilike.%${safe}%,email.ilike.%${safe}%,phone.ilike.%${safe}%`)
+    .order('name')
+    .limit(8)
 
   if (error) return { results: [], error: error.message }
 
-  // Dedupe by email > phone > name (case-insensitive)
-  const seen = new Set<string>()
-  const unique: CustomerLookup[] = []
-  for (const r of data ?? []) {
-    const key =
-      r.customer_email?.toLowerCase().trim() ||
-      r.customer_phone?.trim() ||
-      r.customer_name?.toLowerCase().trim() ||
-      ''
-    if (!key || seen.has(key)) continue
-    seen.add(key)
-    unique.push({
-      name: r.customer_name,
-      email: r.customer_email,
-      phone: r.customer_phone,
-      dob: r.customer_dob,
-      address: r.customer_address,
-      license_number: r.license_number,
-      license_state: r.license_state,
-      license_expiration_date: r.license_expiration_date,
-      insurance_provider: r.insurance_provider,
-      insurance_policy_number: r.insurance_policy_number,
-      insurance_expiration_date: r.insurance_expiration_date,
-    })
-    if (unique.length >= 8) break
-  }
+  return { results: data ?? [], error: null }
+}
 
-  return { results: unique, error: null }
+interface CustomerProfileInput {
+  customer_name: string | null
+  customer_email: string | null
+  customer_phone: string | null
+  customer_dob?: string | null
+  customer_address?: string | null
+  customer_zip?: string | null
+  license_number?: string | null
+  license_state?: string | null
+  license_country?: string | null
+  license_expiration_date?: string | null
+  insurance_provider?: string | null
+  insurance_policy_number?: string | null
+  insurance_expiration_date?: string | null
 }
 
 /**
- * Add the booking's customer to the tenant's customers roster if they aren't
- * already there. Match priority: email → phone → name (case-insensitive).
+ * Sync the booking's customer info into the tenant's customers roster.
+ * Inserts a new customer if none match, otherwise updates the existing
+ * customer with any newly provided (non-blank) fields — a blank field on
+ * the booking form never clears a value the roster already has, so the
+ * roster always reflects the most complete known profile.
+ * Match priority: email → phone → name (case-insensitive).
  */
 async function upsertCustomerFromBooking(
   supabase: ReturnType<typeof createClient>,
   tenantId: string,
-  data: {
-    customer_name: string | null
-    customer_email: string | null
-    customer_phone: string | null
-  }
+  data: CustomerProfileInput
 ): Promise<void> {
   const name = data.customer_name?.trim()
   if (!name) return
@@ -176,13 +166,33 @@ async function upsertCustomerFromBooking(
   else lookup = lookup.ilike('name', name)
 
   const { data: existing } = await lookup.maybeSingle()
-  if (existing) return
+
+  const profileFields: Record<string, string> = {}
+  if (data.customer_dob) profileFields.dob = data.customer_dob
+  if (data.customer_address) profileFields.address = data.customer_address
+  if (data.customer_zip) profileFields.zip_code = data.customer_zip
+  if (data.license_number) profileFields.license_number = data.license_number
+  if (data.license_state) profileFields.license_state = data.license_state
+  if (data.license_country) profileFields.license_country = data.license_country
+  if (data.license_expiration_date) profileFields.license_expiration_date = data.license_expiration_date
+  if (data.insurance_provider) profileFields.insurance_provider = data.insurance_provider
+  if (data.insurance_policy_number) profileFields.insurance_policy_number = data.insurance_policy_number
+  if (data.insurance_expiration_date) profileFields.insurance_expiration_date = data.insurance_expiration_date
+
+  if (existing) {
+    const updates: Record<string, string> = { name, ...profileFields }
+    if (email) updates.email = email
+    if (phone) updates.phone = phone
+    await supabase.from('customers').update(updates).eq('id', existing.id)
+    return
+  }
 
   await supabase.from('customers').insert({
     name,
     email,
     phone,
     tenant_id: tenantId,
+    ...profileFields,
   })
 }
 
@@ -250,11 +260,21 @@ export async function createReservation(
   if (!error) {
     const reservationId = inserted?.id ?? null
 
-    // Add to customers roster (idempotent — skips if already there)
+    // Sync customer roster with this booking's profile data
     upsertCustomerFromBooking(supabase, tenantId, {
       customer_name: data.customer_name ?? null,
       customer_email: data.customer_email ?? null,
       customer_phone: data.customer_phone ?? null,
+      customer_dob: data.customer_dob ?? null,
+      customer_address: data.customer_address ?? null,
+      customer_zip: data.customer_zip ?? null,
+      license_number: data.license_number ?? null,
+      license_state: data.license_state ?? null,
+      license_country: data.license_country ?? null,
+      license_expiration_date: data.license_expiration_date ?? null,
+      insurance_provider: data.insurance_provider ?? null,
+      insurance_policy_number: data.insurance_policy_number ?? null,
+      insurance_expiration_date: data.insurance_expiration_date ?? null,
     }).catch((err) => console.error('[bookings] customer upsert failed:', err))
 
     dispatchWebhookEvent(tenantId, 'booking.created', {
@@ -345,6 +365,25 @@ export async function updateReservation(
     .eq('id', id)
     .eq('tenant_id', tenantId)
   revalidatePath('/dashboard/bookings')
+
+  if (!error) {
+    // Sync customer roster with this booking's profile data
+    upsertCustomerFromBooking(supabase, tenantId, {
+      customer_name: data.customer_name ?? null,
+      customer_email: data.customer_email ?? null,
+      customer_phone: data.customer_phone ?? null,
+      customer_dob: data.customer_dob ?? null,
+      customer_address: data.customer_address ?? null,
+      customer_zip: data.customer_zip ?? null,
+      license_number: data.license_number ?? null,
+      license_state: data.license_state ?? null,
+      license_country: data.license_country ?? null,
+      license_expiration_date: data.license_expiration_date ?? null,
+      insurance_provider: data.insurance_provider ?? null,
+      insurance_policy_number: data.insurance_policy_number ?? null,
+      insurance_expiration_date: data.insurance_expiration_date ?? null,
+    }).catch((err) => console.error('[bookings] customer upsert failed:', err))
+  }
 
   if (!error && data.status === 'cancelled' && prevReservation) {
     dispatchWebhookEvent(tenantId, 'booking.cancelled', {

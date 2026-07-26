@@ -16,6 +16,14 @@ const STATUS_COLORS: Record<string, string> = {
 
 const PAGE_SIZE = 25
 
+function expiringDocs(r: Reservation): string[] {
+  if (!r.return_date || r.status === 'completed' || r.status === 'cancelled') return []
+  const issues: string[] = []
+  if (r.license_expiration_date && r.license_expiration_date < r.return_date) issues.push('License')
+  if (r.insurance_expiration_date && r.insurance_expiration_date < r.return_date) issues.push('Insurance')
+  return issues
+}
+
 interface Props {
   reservations: Reservation[]
   cars: Car[]
@@ -268,7 +276,17 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
                       <span className="font-mono text-xs text-white/70 bg-white/5 px-2 py-0.5 rounded">{r.booking_code}</span>
                     </td>
                     <td className="py-4 pr-4">
-                      <div className="font-semibold text-white tracking-wide">{r.customer_name || '—'}</div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="font-semibold text-white tracking-wide">{r.customer_name || '—'}</div>
+                        {expiringDocs(r).length > 0 && (
+                          <span
+                            title={`${expiringDocs(r).join(' & ')} expires before the return date`}
+                            className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500/20 text-amber-400 shrink-0"
+                          >
+                            <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                          </span>
+                        )}
+                      </div>
                       <div className="text-white/55 text-[11px] mt-0.5">{r.customer_email || r.customer_phone}</div>
                     </td>
                     <td className="py-4 pr-4 text-white/80 font-medium">

@@ -164,6 +164,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
       customer_phone: c.phone ?? '',
       customer_dob: c.dob ?? '',
       customer_address: c.address ?? '',
+      customer_zip: c.zip_code ?? '',
       license_number: c.license_number ?? '',
       license_state: c.license_state ?? '',
       license_expiration_date: c.license_expiration_date ?? '',
@@ -214,6 +215,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
       customer_phone: formData.customer_phone || null,
       customer_dob: formData.customer_dob || null,
       customer_address: formData.customer_address || null,
+      customer_zip: formData.customer_zip || null,
       pickup_date: formData.pickup_date || null,
       pickup_time: formData.pickup_time || '10:00',
       return_date: formData.return_date || null,
@@ -479,13 +481,23 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
                       className={`${INPUT_CLASS} [color-scheme:dark]`}
                     />
                   </div>
-                  <div className="space-y-1 md:col-span-2">
+                  <div className="space-y-1">
                     <label className={LABEL_CLASS}>Address</label>
                     <input
                       type="text"
                       placeholder="Full address…"
                       value={formData.customer_address || ''}
                       onChange={(e) => setFormData({ ...formData, customer_address: e.target.value })}
+                      className={INPUT_CLASS}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className={LABEL_CLASS}>ZIP Code</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 33180"
+                      value={formData.customer_zip || ''}
+                      onChange={(e) => setFormData({ ...formData, customer_zip: e.target.value })}
                       className={INPUT_CLASS}
                     />
                   </div>
