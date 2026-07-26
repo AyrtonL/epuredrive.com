@@ -66,6 +66,7 @@ function buildSampleReservation(): AgreementReservation {
     license_state: 'FL',
     insurance_provider: null,
     insurance_policy_number: null,
+    insurance_expiration_date: null,
     damage_checkin: null,
     damage_checkout: null,
     tenant_signed_at: null,

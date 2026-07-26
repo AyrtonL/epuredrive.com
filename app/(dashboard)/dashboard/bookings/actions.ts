@@ -84,6 +84,7 @@ export interface CustomerLookup {
   license_state: string | null
   insurance_provider: string | null
   insurance_policy_number: string | null
+  insurance_expiration_date: string | null
 }
 
 /**
@@ -108,7 +109,7 @@ export async function searchCustomersForBooking(
   const { data, error } = await supabase
     .from('reservations')
     .select(
-      'customer_name, customer_email, customer_phone, customer_dob, customer_address, license_number, license_state, insurance_provider, insurance_policy_number, created_at'
+      'customer_name, customer_email, customer_phone, customer_dob, customer_address, license_number, license_state, insurance_provider, insurance_policy_number, insurance_expiration_date, created_at'
     )
     .eq('tenant_id', tenantId)
     .or(
@@ -140,6 +141,7 @@ export async function searchCustomersForBooking(
       license_state: r.license_state,
       insurance_provider: r.insurance_provider,
       insurance_policy_number: r.insurance_policy_number,
+      insurance_expiration_date: r.insurance_expiration_date,
     })
     if (unique.length >= 8) break
   }

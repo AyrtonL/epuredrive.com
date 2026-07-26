@@ -155,6 +155,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
       license_state: c.license_state ?? '',
       insurance_provider: c.insurance_provider ?? '',
       insurance_policy_number: c.insurance_policy_number ?? '',
+      insurance_expiration_date: c.insurance_expiration_date ?? '',
     }))
     setCustomerSearch('')
     setCustomerResults([])
@@ -220,6 +221,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
       license_state: formData.license_state || null,
       insurance_provider: formData.insurance_provider || null,
       insurance_policy_number: formData.insurance_policy_number || null,
+      insurance_expiration_date: formData.insurance_expiration_date || null,
       damage_checkin: formData.damage_checkin || null,
       damage_checkout: formData.damage_checkout || null,
     }
@@ -508,6 +510,17 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
                           setFormData({ ...formData, insurance_policy_number: e.target.value })
                         }
                         className={INPUT_CLASS}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className={LABEL_CLASS}>Insurance Expiration Date</label>
+                      <input
+                        type="date"
+                        value={formData.insurance_expiration_date || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, insurance_expiration_date: e.target.value })
+                        }
+                        className={`${INPUT_CLASS} [color-scheme:dark]`}
                       />
                     </div>
                   </div>

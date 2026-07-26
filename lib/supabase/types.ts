@@ -106,6 +106,7 @@ export interface Reservation {
   license_country: string | null
   insurance_provider: string | null
   insurance_policy_number: string | null
+  insurance_expiration_date: string | null
   agreement_token: string | null
   agreement_sent_at: string | null
   agreement_signed_at: string | null

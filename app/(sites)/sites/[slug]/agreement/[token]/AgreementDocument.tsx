@@ -47,6 +47,7 @@ export interface AgreementReservation {
   license_state: string | null
   insurance_provider: string | null
   insurance_policy_number: string | null
+  insurance_expiration_date: string | null
   damage_checkin: string | null
   damage_checkout: string | null
   // tenant counter-signature
@@ -220,12 +221,18 @@ export default function AgreementDocument({
                 <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Address</td>
                 <td className="border border-gray-200 px-3 py-2">{reservation.customer_address || '—'}</td>
               </tr>
-              {(reservation.insurance_provider || reservation.insurance_policy_number) && (
+              {(reservation.insurance_provider ||
+                reservation.insurance_policy_number ||
+                reservation.insurance_expiration_date) && (
                 <tr>
                   <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Insurance</td>
-                  <td colSpan={3} className="border border-gray-200 px-3 py-2">
-                    {reservation.insurance_provider}
+                  <td className="border border-gray-200 px-3 py-2">
+                    {reservation.insurance_provider || '—'}
                     {reservation.insurance_policy_number && ` — Policy: ${reservation.insurance_policy_number}`}
+                  </td>
+                  <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">Insurance Expires</td>
+                  <td className="border border-gray-200 px-3 py-2">
+                    {reservation.insurance_expiration_date ? formatDate(reservation.insurance_expiration_date) : '—'}
                   </td>
                 </tr>
               )}

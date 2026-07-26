@@ -26,6 +26,7 @@ const makeRes = (overrides: Partial<Reservation> = {}): Reservation => ({
   license_country: null,
   insurance_provider: null,
   insurance_policy_number: null,
+  insurance_expiration_date: null,
   agreement_token: null,
   agreement_sent_at: null,
   agreement_signed_at: null,
