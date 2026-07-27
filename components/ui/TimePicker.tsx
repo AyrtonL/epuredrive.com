@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useMemo, type CSSProperties } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 
 interface Props {
@@ -72,6 +72,25 @@ export default function TimePicker({
     return () => {
       window.removeEventListener('scroll', reposition)
       window.removeEventListener('resize', reposition)
+    }
+  }, [open])
+
+  // Clamp the popup back onto the viewport if it would overflow the right
+  // or bottom edge (e.g. a trigger near the screen edge on mobile).
+  useLayoutEffect(() => {
+    if (!open || !popupRef.current) return
+    const margin = 8
+    const rect = popupRef.current.getBoundingClientRect()
+    let left = rect.left
+    let top = rect.top
+    if (rect.right > window.innerWidth - margin) {
+      left = Math.max(margin, window.innerWidth - rect.width - margin)
+    }
+    if (rect.bottom > window.innerHeight - margin) {
+      top = Math.max(margin, window.innerHeight - rect.height - margin)
+    }
+    if (left !== rect.left || top !== rect.top) {
+      setPopupStyle((prev) => ({ ...prev, left, top }))
     }
   }, [open])
 

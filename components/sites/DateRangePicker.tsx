@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, CSSProperties } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { DayPicker, type DateRange } from 'react-day-picker'
 import 'react-day-picker/style.css'
@@ -62,6 +62,26 @@ export default function DateRangePicker({
     }
     window.addEventListener('scroll', handler, { passive: true })
     return () => window.removeEventListener('scroll', handler)
+  }, [open])
+
+  // Clamp the popup back onto the viewport if it would overflow the right
+  // or bottom edge — important on mobile, where the trigger often sits
+  // close to the screen edge.
+  useLayoutEffect(() => {
+    if (!open || !popupRef.current) return
+    const margin = 8
+    const rect = popupRef.current.getBoundingClientRect()
+    let left = rect.left
+    let top = rect.top
+    if (rect.right > window.innerWidth - margin) {
+      left = Math.max(margin, window.innerWidth - rect.width - margin)
+    }
+    if (rect.bottom > window.innerHeight - margin) {
+      top = Math.max(margin, window.innerHeight - rect.height - margin)
+    }
+    if (left !== rect.left || top !== rect.top) {
+      setPopupStyle(prev => ({ ...prev, left, top }))
+    }
   }, [open])
 
   const today = new Date()
