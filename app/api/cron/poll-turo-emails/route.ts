@@ -573,16 +573,25 @@ export async function GET(request: Request) {
   // messages it returns, and whether the first few parse — without mutating last_checked.
   if (new URL(request.url).searchParams.get('debug') === '1') {
     const s = syncs[0] as EmailSync
+    const sinceDaysParam = new URL(request.url).searchParams.get('sinceDays')
+    const lookbackMs = sinceDaysParam ? Number(sinceDaysParam) * 24 * 60 * 60 * 1000 : CURSOR_LOOKBACK_MS
     const checkedAt = s.last_checked
-      ? new Date(new Date(s.last_checked).getTime() - CURSOR_LOOKBACK_MS)
+      ? new Date(new Date(s.last_checked).getTime() - lookbackMs)
       : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     const afterTimestamp = Math.floor(checkedAt.getTime() / 1000)
     const query = `from:noreply@mail.turo.com after:${afterTimestamp}`
-    const page = await gmailFetch(`/messages?q=${encodeURIComponent(query)}&maxResults=50`, s)
-    const ids: string[] = (page.messages || []).map((m: { id: string }) => m.id)
+
+    const allIds: string[] = []
+    let pt: string | undefined
+    do {
+      const p = await gmailFetch(`/messages?q=${encodeURIComponent(query)}&maxResults=50${pt ? `&pageToken=${pt}` : ''}`, s)
+      if (p.messages) allIds.push(...p.messages.map((m: { id: string }) => m.id))
+      pt = p.nextPageToken
+    } while (pt)
+    const ids = allIds
     const apply = new URL(request.url).searchParams.get('apply') === '1'
     const samples: { id: string; subject: string; parsed: boolean; processResult?: string }[] = []
-    for (const id of ids.slice(0, 16)) {
+    for (const id of ids) {
       const full = await gmailFetch(`/messages/${id}?format=full`, s)
       const subject = full.payload?.headers?.find((h: { name: string }) => h.name.toLowerCase() === 'subject')?.value || ''
       const body = getMessageBody(full.payload)
@@ -600,7 +609,7 @@ export async function GET(request: Request) {
     }
     return NextResponse.json({
       debug: true, provider: s.provider ?? null, last_checked: s.last_checked, access_token_len: s.access_token?.length ?? 0,
-      afterTimestamp, query, rawCount: ids.length, resultSizeEstimate: page.resultSizeEstimate, samples,
+      afterTimestamp, query, rawCount: ids.length, samples,
     })
   }
 
