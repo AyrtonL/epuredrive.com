@@ -580,12 +580,23 @@ export async function GET(request: Request) {
     const query = `from:noreply@mail.turo.com after:${afterTimestamp}`
     const page = await gmailFetch(`/messages?q=${encodeURIComponent(query)}&maxResults=50`, s)
     const ids: string[] = (page.messages || []).map((m: { id: string }) => m.id)
-    const samples: { id: string; subject: string; parsed: boolean }[] = []
-    for (const id of ids.slice(0, 8)) {
+    const apply = new URL(request.url).searchParams.get('apply') === '1'
+    const samples: { id: string; subject: string; parsed: boolean; processResult?: string }[] = []
+    for (const id of ids.slice(0, 16)) {
       const full = await gmailFetch(`/messages/${id}?format=full`, s)
       const subject = full.payload?.headers?.find((h: { name: string }) => h.name.toLowerCase() === 'subject')?.value || ''
       const body = getMessageBody(full.payload)
-      samples.push({ id, subject, parsed: !!parseTuroEmail(body, subject, id) })
+      const parsed = parseTuroEmail(body, subject, id)
+      const entry: { id: string; subject: string; parsed: boolean; processResult?: string } = { id, subject, parsed: !!parsed }
+      if (parsed && apply) {
+        try {
+          await processEmail(parsed, s)
+          entry.processResult = 'ok'
+        } catch (err: unknown) {
+          entry.processResult = `error: ${err instanceof Error ? err.message : String(err)}`
+        }
+      }
+      samples.push(entry)
     }
     return NextResponse.json({
       debug: true, provider: s.provider ?? null, last_checked: s.last_checked, access_token_len: s.access_token?.length ?? 0,
