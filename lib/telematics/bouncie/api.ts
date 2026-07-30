@@ -48,12 +48,17 @@ export const bouncieApi = {
       body: form.toString(),
     }, 1),
 
-  /** GET with Bearer token against the API base URL. */
+  /**
+   * GET against the API base URL. Bouncie expects the raw access token in
+   * the Authorization header — no "Bearer " prefix (confirmed against the
+   * bounciepy and streetsmartslabs/bouncie reference clients). Sending
+   * "Bearer <token>" is rejected with 401 on every call.
+   */
   get: <T>(path: string, accessToken: string) => {
     const url = path.startsWith('http') ? path : `${bouncieConfig.apiBaseUrl}${path}`
     return bouncieFetch<T>(url, {
       method: 'GET',
-      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      headers: { Authorization: accessToken, Accept: 'application/json' },
     })
   },
 }

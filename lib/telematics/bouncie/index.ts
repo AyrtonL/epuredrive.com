@@ -54,7 +54,7 @@ export class BouncieProvider implements TelematicsProvider {
     try {
       await fetch(`${bouncieConfig.apiBaseUrl}/logout`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: { Authorization: accessToken },
       })
     } catch {
       // ignore
