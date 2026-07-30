@@ -76,6 +76,22 @@ function mkSupabase(): MockSupabase {
               return Promise.resolve({ data: null, error: null })
             },
           }),
+          // seedDevice() calls .upsert(row, opts).select(cols).single() when
+          // a vehicle has no matching device row yet.
+          upsert: (row: Record<string, unknown>, opts: Record<string, unknown>) => {
+            upserts.push({ table, row, opts })
+            const seeded = {
+              id: `dev-${String(row.imei)}`,
+              car_id: null,
+              last_seen_at: row.last_seen_at ?? null,
+            }
+            devicesByImei[String(row.imei)] = seeded
+            return {
+              select: (_cols: string) => ({
+                single: () => Promise.resolve({ data: seeded, error: null }),
+              }),
+            }
+          },
         }
       }
 
@@ -311,5 +327,55 @@ describe('syncConnection', () => {
     expect(syncPatch).toBeUndefined()
 
     warnSpy.mockRestore()
+  })
+
+  test('auto-seeds a telematics_devices row for a vehicle with no existing device, then ingests its position', async () => {
+    const vehicle = {
+      imei: 'imei-new',
+      vin: 'VIN123',
+      nickname: 'New Car',
+      online: true,
+      last_seen_at: '2026-07-30T20:00:00.000Z',
+      last_lat: 25.7,
+      last_lon: -80.2,
+      odometer_mi: 1000,
+      battery_voltage: null,
+    }
+    ;(getProvider as jest.Mock).mockReturnValue({
+      refreshAccessToken: jest.fn(),
+      listVehicles: jest.fn().mockResolvedValue([vehicle]),
+    })
+
+    const sb = mkSupabase()
+    // no setDevice() call — imei-new has no matching row yet
+
+    await syncConnection(sb as never, mkConnection())
+
+    // device row was created via upsert (not skipped)
+    const seedUpsert = sb.upserts.find(
+      (u) => u.table === 'telematics_devices' && u.row.imei === 'imei-new',
+    )
+    expect(seedUpsert).toBeDefined()
+    expect(seedUpsert?.row).toMatchObject({
+      tenant_id: 't1',
+      connection_id: 'conn-1',
+      imei: 'imei-new',
+      vin: 'VIN123',
+      nickname: 'New Car',
+    })
+    expect(seedUpsert?.opts).toMatchObject({ onConflict: 'tenant_id,imei' })
+
+    // freshly seeded device (devSeen === provSeen) is not "fresher", so no
+    // position write is expected on this same pass — it self-heals the
+    // device row and lets the *next* cycle pick up movement.
+    const positionUpsert = sb.upserts.find((u) => u.table === 'telematics_positions')
+    expect(positionUpsert).toBeUndefined()
+
+    // sync still completes successfully
+    const successPatch = sb.updates.find(
+      (u) =>
+        u.table === 'telematics_connections' && u.patch.last_sync_at !== undefined,
+    )
+    expect(successPatch).toBeDefined()
   })
 })

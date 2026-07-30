@@ -20,6 +20,7 @@ import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
 import { bouncieConfig } from '@/lib/telematics/config'
 import { getProvider } from '@/lib/telematics/registry'
 import { safeErrorMessage } from '@/lib/telematics/alerts'
+import { seedDevice } from '@/lib/telematics/devices'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -139,26 +140,11 @@ export async function GET(request: Request) {
   try {
     const vehicles = await getProvider('bouncie').listVehicles(tokens.access_token)
     for (const v of vehicles) {
-      const { error: devErr } = await admin
-        .from('telematics_devices')
-        .upsert(
-          {
-            tenant_id: tenantId,
-            connection_id: connectionId,
-            imei: v.imei,
-            vin: v.vin,
-            nickname: v.nickname,
-            last_seen_at: v.last_seen_at,
-            battery_voltage: v.battery_voltage,
-            online: v.online,
-          },
-          { onConflict: 'tenant_id,imei' },
-        )
-      if (devErr) {
+      const seeded = await seedDevice(admin, tenantId, connectionId, v)
+      if (!seeded) {
         console.warn('[bouncie oauth] device upsert failed', {
           tenantId,
           imei: v.imei,
-          msg: safeErrorMessage(devErr),
         })
       }
     }

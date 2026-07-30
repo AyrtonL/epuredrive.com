@@ -9,10 +9,13 @@
 //      connection_expired critical event.
 //   2. Call provider.listVehicles(accessToken).
 //   3. For each returned vehicle, look up the matching telematics_devices
-//      row by (tenant_id, imei). When the provider's last_seen_at is newer
-//      than the device's and lat/lon are present, feed a synthetic
-//      ProviderEvent into ingestLocationUpdate (which upserts a position,
-//      refreshes device.last_seen_at, and bumps the linked car).
+//      row by (tenant_id, imei) — seeding one via seedDevice() if it
+//      doesn't exist yet (self-heals a failed initial OAuth-callback seed,
+//      or a vehicle added to the provider account later). When the
+//      provider's last_seen_at is newer than the device's and lat/lon are
+//      present, feed a synthetic ProviderEvent into ingestLocationUpdate
+//      (which upserts a position, refreshes device.last_seen_at, and bumps
+//      the linked car).
 //   4. On success → bump last_sync_at, clear error_message.
 //   5. On any thrown error during vehicle fetch → status='error',
 //      error_message=safe(err).
@@ -29,6 +32,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { TelematicsConnection } from '@/lib/supabase/types'
 import { getProvider } from './registry'
 import { ingestLocationUpdate } from './ingest'
+import { seedDevice, type DeviceRow } from './devices'
 import type { ProviderEvent } from './types'
 
 const TOKEN_REFRESH_SKEW_MS = 60_000 // refresh when <60s remain
@@ -148,12 +152,11 @@ export async function syncConnection(
         .eq('imei', v.imei)
         .maybeSingle()
 
-      if (!dev) continue // device not yet linked to this tenant — skip
-      const devRow = dev as {
-        id: string
-        car_id: number | null
-        last_seen_at: string | null
-      }
+      const devRow: DeviceRow | null =
+        (dev as DeviceRow | null) ??
+        (await seedDevice(supabase, connection.tenant_id, connection.id, v))
+
+      if (!devRow) continue // seeding failed — retry next cycle
 
       const provSeen = v.last_seen_at
       const devSeen = devRow.last_seen_at
