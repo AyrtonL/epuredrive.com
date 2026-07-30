@@ -1,14 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import type { Reservation, Transaction } from '@/lib/supabase/types'
+import { useState, useMemo, useCallback } from 'react'
+import type { Reservation, Transaction, Consignment } from '@/lib/supabase/types'
 import FleetPerformanceTab from './FleetPerformanceTab'
 import DatePicker from '@/components/ui/DatePicker'
 import {
   reservationsInRange,
-  sumEarnedRevenue,
-  sumUpcomingRevenue,
   isEarned,
+  revenueBucket,
   todayISO,
   daysAgoISO,
 } from '@/lib/finance/revenue'
@@ -20,10 +19,13 @@ interface ReportCar {
   model_full: string | null
 }
 
+type ReportConsignment = Pick<Consignment, 'car_id' | 'owner_percentage'>
+
 interface Props {
   reservations: Reservation[]
   expenses: Transaction[]
   cars: ReportCar[]
+  consignments: ReportConsignment[]
 }
 
 function fmt(n: number) {
@@ -34,7 +36,7 @@ function fmt(n: number) {
 const daysAgo = (n: number) => daysAgoISO(n)
 const today = () => todayISO()
 
-export default function ReportsClient({ reservations, expenses, cars }: Props) {
+export default function ReportsClient({ reservations, expenses, cars, consignments }: Props) {
   const [activeTab, setActiveTab] = useState<'finance' | 'fleet'>('finance')
   const [dateFrom, setDateFrom] = useState(daysAgo(30))
   const [dateTo, setDateTo] = useState(today())
@@ -71,10 +73,34 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
     })
   }, [expenses, dateFrom, dateTo])
 
-  // Revenue = earned (completed) only. A/R = confirmed/pending (booked, unearned)
-  // taken from the full non-cancelled set — no longer double-counted in revenue.
-  const totalRevenue = sumEarnedRevenue(filteredAllRes)
-  const accountsReceivable = sumUpcomingRevenue(filteredAllRes)
+  // Consignment cars only bring in their owner's split as pass-through — the
+  // company's actual revenue on those bookings is just its cut. Map car_id →
+  // owner_percentage so every "revenue" figure below counts the earned share,
+  // not the full tariff, for consigned vehicles.
+  const ownerPctByCar = useMemo(() => {
+    const map = new Map<number, number>()
+    consignments.forEach((c) => {
+      if (c.car_id != null && c.owner_percentage != null) {
+        map.set(c.car_id, Number(c.owner_percentage) || 0)
+      }
+    })
+    return map
+  }, [consignments])
+
+  const companyAmount = useCallback((r: Pick<Reservation, 'car_id' | 'total_amount'>): number => {
+    const total = Number(r.total_amount) || 0
+    if (r.car_id == null) return total
+    const ownerPct = ownerPctByCar.get(r.car_id)
+    return ownerPct ? total * (1 - ownerPct / 100) : total
+  }, [ownerPctByCar])
+
+  // Revenue = earned (completed) only, net of consignment owner splits. A/R =
+  // confirmed/pending (booked, unearned) taken from the full non-cancelled set
+  // — no longer double-counted in revenue.
+  const totalRevenue = filteredRes.reduce((s, r) => s + companyAmount(r), 0)
+  const accountsReceivable = filteredAllRes
+    .filter((r) => revenueBucket(r.status) === 'upcoming')
+    .reduce((s, r) => s + companyAmount(r), 0)
   const totalExpenses = filteredExp.reduce((s, e) => s + (Number(e.amount) || 0), 0)
   const netProfit = totalRevenue - totalExpenses
   
@@ -116,7 +142,7 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
     const map = new Map<number, number>()
     filteredRes.forEach(r => {
       if (r.car_id == null) return
-      map.set(r.car_id, (map.get(r.car_id) ?? 0) + (Number(r.total_amount) || 0))
+      map.set(r.car_id, (map.get(r.car_id) ?? 0) + companyAmount(r))
     })
     return Array.from(map.entries())
       .map(([carId, total]) => {
@@ -125,17 +151,17 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
         return [name, total] as [string, number]
       })
       .sort(([, a], [, b]) => b - a)
-  }, [filteredRes, cars])
+  }, [filteredRes, cars, companyAmount])
 
   // Revenue grouped by month
   const byMonth = useMemo(() => {
     const map: Record<string, number> = {}
     filteredRes.forEach((r) => {
       const month = r.pickup_date!.slice(0, 7)
-      map[month] = (map[month] ?? 0) + (Number(r.total_amount) || 0)
+      map[month] = (map[month] ?? 0) + companyAmount(r)
     })
     return Object.entries(map).sort(([a], [b]) => b.localeCompare(a))
-  }, [filteredRes])
+  }, [filteredRes, companyAmount])
 
   const maxMonth = byMonth.length > 0 ? Math.max(...byMonth.map(([, v]) => v)) : 1
 
@@ -160,7 +186,7 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
         type: 'BOOKING',
         date: r.pickup_date,
         label: `${r.customer_name} — ${cars.find(c => c.id === r.car_id)?.model || 'Car'}`,
-        amount: Number(r.total_amount) || 0,
+        amount: companyAmount(r),
         status: r.status,
         color: 'text-emerald-400'
       })),
@@ -174,7 +200,7 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
       }))
     ]
     return combined.sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 15)
-  }, [filteredAllRes, filteredExp, cars])
+  }, [filteredAllRes, filteredExp, cars, companyAmount])
 
   // CSV Export
   function exportCSV() {
@@ -184,7 +210,7 @@ export default function ReportsClient({ reservations, expenses, cars }: Props) {
       r.customer_name ?? '',
       r.customer_email ?? '',
       r.customer_phone ?? '',
-      r.total_amount ?? 0,
+      companyAmount(r),
       r.status ?? '',
     ])
     const csv = [header, ...rows]
