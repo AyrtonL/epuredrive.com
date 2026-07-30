@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { Car } from '@/lib/supabase/types'
 import { updateCar } from '../actions'
 import ImageUploader from '../ImageUploader'
+import { COMMON_CAR_COLORS } from '@/lib/constants/car-colors'
 
 interface Props {
   car: Car
@@ -26,6 +27,10 @@ export default function CarEditForm({ car }: Props) {
   const [saved, setSaved] = useState(false)
   const [isDecoding, setIsDecoding] = useState(false)
   const [vin, setVin] = useState(car.vin || '')
+  const [color, setColor] = useState(car.color || '')
+  const [showCustomColor, setShowCustomColor] = useState(
+    !!car.color && !COMMON_CAR_COLORS.includes(car.color)
+  )
   const [decoded, setDecoded] = useState<DecodedFields>({})
   const [images, setImages] = useState<string[]>([
     ...(car.image_url ? [car.image_url] : []),
@@ -93,7 +98,7 @@ export default function CarEditForm({ car }: Props) {
       description: (fd.get('description') as string) || null,
       status: fd.get('status') as string,
       vin: vin || null,
-      color: (fd.get('color') as string) || null,
+      color: color || null,
       plate: (fd.get('plate') as string) || null,
       image_url: images[0] || null,
       gallery: images.slice(1).length > 0 ? images.slice(1) : null,
@@ -161,13 +166,36 @@ export default function CarEditForm({ car }: Props) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-white/60 mb-1">Color</label>
-          <input
-            type="text"
-            name="color"
-            placeholder="e.g. Blue, White..."
-            defaultValue={car.color ?? ''}
+          <select
+            value={showCustomColor ? 'Other' : color}
+            onChange={e => {
+              const val = e.target.value
+              if (val === 'Other') {
+                setShowCustomColor(true)
+                setColor('')
+              } else {
+                setShowCustomColor(false)
+                setColor(val)
+              }
+            }}
             className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-white/30"
-          />
+          >
+            <option value="" className="bg-[#0d0d0d]">Select color...</option>
+            {COMMON_CAR_COLORS.map(c => (
+              <option key={c} value={c} className="bg-[#0d0d0d]">{c}</option>
+            ))}
+            <option value="Other" className="bg-[#0d0d0d]">Other...</option>
+          </select>
+          {showCustomColor && (
+            <input
+              type="text"
+              placeholder="Enter custom color..."
+              autoFocus
+              value={color}
+              onChange={e => setColor(e.target.value)}
+              className="w-full mt-2 bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-white/30"
+            />
+          )}
         </div>
         <div>
           <label className="block text-sm text-white/60 mb-1">License Plate</label>

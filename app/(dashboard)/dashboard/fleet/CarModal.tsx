@@ -6,6 +6,7 @@ import type { Car } from '@/lib/supabase/types'
 import { createCar, updateCar } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 import ImageUploader from './ImageUploader'
+import { COMMON_CAR_COLORS } from '@/lib/constants/car-colors'
 
 interface Props {
   isOpen: boolean
@@ -20,15 +21,18 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
   const router = useRouter()
 
   const [formData, setFormData] = useState<Partial<Car>>({})
+  const [showCustomColor, setShowCustomColor] = useState(false)
 
   useEffect(() => {
     if (car) {
       setFormData(car)
+      setShowCustomColor(!!(car as any).color && !COMMON_CAR_COLORS.includes((car as any).color))
     } else {
       setFormData({
         status: 'active',
         category: 'economy',
       })
+      setShowCustomColor(false)
     }
     setErrorStr(null)
   }, [car, isOpen])
@@ -266,12 +270,35 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
 
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Color</label>
-              <input
-                type="text" placeholder="e.g. Blue, White, Black..."
-                value={(formData as any).color || ''}
-                onChange={e => setFormData({...formData, color: e.target.value} as any)}
+              <select
+                value={showCustomColor ? 'Other' : ((formData as any).color || '')}
+                onChange={e => {
+                  const val = e.target.value
+                  if (val === 'Other') {
+                    setShowCustomColor(true)
+                    setFormData({...formData, color: ''} as any)
+                  } else {
+                    setShowCustomColor(false)
+                    setFormData({...formData, color: val} as any)
+                  }
+                }}
                 className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
-              />
+              >
+                <option value="" className="bg-[#0d0d0d]">Select color...</option>
+                {COMMON_CAR_COLORS.map(c => (
+                  <option key={c} value={c} className="bg-[#0d0d0d]">{c}</option>
+                ))}
+                <option value="Other" className="bg-[#0d0d0d]">Other...</option>
+              </select>
+              {showCustomColor && (
+                <input
+                  type="text" placeholder="Enter custom color..."
+                  autoFocus
+                  value={(formData as any).color || ''}
+                  onChange={e => setFormData({...formData, color: e.target.value} as any)}
+                  className="w-full mt-2 bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+                />
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">License Plate</label>
