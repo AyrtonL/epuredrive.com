@@ -2,6 +2,7 @@
 
 import type React from 'react'
 import Image from 'next/image'
+import type { ReservationExtra } from '@/lib/supabase/types'
 
 export interface AgreementCar {
   make: string
@@ -30,6 +31,7 @@ export interface AgreementReservation {
   customer_dob: string | null
   customer_address: string | null
   customer_zip: string | null
+  extras: ReservationExtra[] | null
   pickup_date: string | null
   pickup_time: string | null
   return_date: string | null
@@ -276,6 +278,15 @@ export default function AgreementDocument({
                 <span className="text-gray-600">Rental ({days || '?'} day{days !== 1 ? 's' : ''})</span>
                 <span className="font-medium">${reservation.total_amount.toLocaleString()}</span>
               </div>
+              {(reservation.extras ?? []).map((extra) => (
+                <div key={extra.extra_id} className="flex justify-between py-1.5 border-b border-gray-200">
+                  <span className="text-gray-600">
+                    {extra.name}
+                    {extra.pricing_type === 'per_day' && ` (${extra.quantity} day${extra.quantity !== 1 ? 's' : ''} @ $${extra.unit_price})`}
+                  </span>
+                  <span className="font-medium">${extra.subtotal.toLocaleString()}</span>
+                </div>
+              ))}
               {reservation.surcharge != null && (
                 <div className="flex justify-between py-1.5 border-b border-gray-200">
                   <span className="text-gray-600">Surcharge</span>

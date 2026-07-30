@@ -56,6 +56,9 @@ function buildSampleReservation(): AgreementReservation {
     pickup_location: 'Miami, FL',
     return_location: 'Miami, FL',
     total_amount: 750,
+    extras: [
+      { extra_id: 'preview-cdw', name: 'Damage Waiver / CDW', pricing_type: 'per_day', unit_price: 25, quantity: 5, subtotal: 125 },
+    ],
     security_deposit: 250,
     surcharge: null,
     amount_outstanding: null,

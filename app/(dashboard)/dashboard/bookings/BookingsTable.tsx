@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Reservation, Car } from '@/lib/supabase/types'
+import type { Reservation, Car, RentalExtra } from '@/lib/supabase/types'
 import { updateReservation, deleteReservation, bulkUpdateReservations } from './actions'
 import BookingModal from './BookingModal'
 import DatePicker from '@/components/ui/DatePicker'
@@ -28,10 +28,11 @@ function expiringDocs(r: Reservation): string[] {
 interface Props {
   reservations: Reservation[]
   cars: Car[]
+  rentalExtras: RentalExtra[]
   chargePerLevel: number
 }
 
-export default function BookingsTable({ reservations, cars, chargePerLevel }: Props) {
+export default function BookingsTable({ reservations, cars, rentalExtras, chargePerLevel }: Props) {
   const router = useRouter()
   const [filter, setFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -357,6 +358,7 @@ export default function BookingsTable({ reservations, cars, chargePerLevel }: Pr
         onClose={() => setModalOpen(false)}
         reservation={editingRes}
         cars={cars}
+        rentalExtras={rentalExtras}
         chargePerLevel={chargePerLevel}
       />
     </div>

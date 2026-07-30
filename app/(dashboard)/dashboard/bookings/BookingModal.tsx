@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Reservation, Car } from '@/lib/supabase/types'
+import type { Reservation, Car, RentalExtra, ReservationExtra } from '@/lib/supabase/types'
 import {
   createReservation,
   updateReservation,
@@ -23,6 +23,7 @@ interface Props {
   onClose: () => void
   reservation?: Reservation | null
   cars: Car[]
+  rentalExtras: RentalExtra[]
   chargePerLevel: number
 }
 
@@ -57,7 +58,7 @@ function calcNights(pickup: string | null | undefined, ret: string | null | unde
   return diff >= 0 ? diff : null
 }
 
-export default function BookingModal({ isOpen, onClose, reservation, cars, chargePerLevel }: Props) {
+export default function BookingModal({ isOpen, onClose, reservation, cars, rentalExtras, chargePerLevel }: Props) {
   const [isPending, startTransition] = useTransition()
   const [isSendingAgreement, setIsSendingAgreement] = useTransition()
   const [isOpeningAgreement, setIsOpeningAgreement] = useTransition()
@@ -158,6 +159,34 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
 
   if (!isOpen) return null
 
+  function toggleExtra(extra: RentalExtra) {
+    const current = formData.extras ?? []
+    const existing = current.find((e) => e.extra_id === extra.id)
+    if (existing) {
+      setFormData({
+        ...formData,
+        extras: current.filter((e) => e.extra_id !== extra.id),
+        total_amount: (Number(formData.total_amount) || 0) - existing.subtotal,
+      })
+      return
+    }
+    const quantity = extra.pricing_type === 'per_day' ? nights || 1 : 1
+    const subtotal = extra.price * quantity
+    const newExtra: ReservationExtra = {
+      extra_id: extra.id,
+      name: extra.name,
+      pricing_type: extra.pricing_type,
+      unit_price: extra.price,
+      quantity,
+      subtotal,
+    }
+    setFormData({
+      ...formData,
+      extras: [...current, newExtra],
+      total_amount: (Number(formData.total_amount) || 0) + subtotal,
+    })
+  }
+
   function handlePickCustomer(c: CustomerLookup) {
     setFormData((prev) => ({
       ...prev,
@@ -243,6 +272,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
       insurance_expiration_date: formData.insurance_expiration_date || null,
       damage_checkin: formData.damage_checkin || null,
       damage_checkout: formData.damage_checkout || null,
+      extras: formData.extras && formData.extras.length > 0 ? formData.extras : null,
     }
 
     startTransition(async () => {
@@ -480,6 +510,8 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
                       value={formData.customer_dob || ''}
                       onChange={(v) => setFormData({ ...formData, customer_dob: v })}
                       className={INPUT_CLASS}
+                      captionLayout="dropdown"
+                      max={new Date().toISOString().split('T')[0]}
                     />
                   </div>
                   <div className="space-y-1">
@@ -746,6 +778,52 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, charg
                     />
                   </div>
                 </div>
+
+                {rentalExtras.length > 0 && (
+                  <div className="pt-4 border-t border-white/[0.06]">
+                    <p className={`${SECTION_HEADING} mb-4`}>Extras &amp; Add-ons</p>
+                    <div className="space-y-2">
+                      {rentalExtras.map((extra) => {
+                        const selected = (formData.extras ?? []).find((e) => e.extra_id === extra.id)
+                        const previewQty = extra.pricing_type === 'per_day' ? nights || 1 : 1
+                        const previewSubtotal = extra.price * previewQty
+                        return (
+                          <label
+                            key={extra.id}
+                            className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 cursor-pointer transition-colors border ${
+                              selected
+                                ? 'bg-white/10 border-white/20'
+                                : 'bg-white/[0.03] border-white/5 hover:bg-white/5'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={!!selected}
+                                onChange={() => toggleExtra(extra)}
+                                className="rounded border-white/20 bg-black/50 text-white focus:ring-1 focus:ring-white shrink-0"
+                              />
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold text-white truncate">{extra.name}</div>
+                                {extra.description && (
+                                  <div className="text-[11px] text-white/40 truncate">{extra.description}</div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <div className="text-sm font-bold text-white">
+                                ${(selected ? selected.subtotal : previewSubtotal).toLocaleString()}
+                              </div>
+                              <div className="text-[10px] text-white/30 uppercase tracking-widest">
+                                {extra.pricing_type === 'per_day' ? `$${extra.price}/day` : 'flat'}
+                              </div>
+                            </div>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* VEHICLE STATE TAB */}

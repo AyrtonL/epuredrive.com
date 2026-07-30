@@ -3,12 +3,12 @@ import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import StatCard from '@/components/dashboard/StatCard'
 import BookingsTable from './BookingsTable'
-import type { Reservation, Car } from '@/lib/supabase/types'
+import type { Reservation, Car, RentalExtra } from '@/lib/supabase/types'
 
 export default async function BookingsPage() {
   const { supabase, tenantId } = await requireTenantId()
 
-  const [{ data: reservations }, { data: cars }, { data: tenant }] = await Promise.all([
+  const [{ data: reservations }, { data: cars }, { data: tenant }, { data: extras }] = await Promise.all([
     supabase
       .from('reservations')
       .select('*')
@@ -23,10 +23,17 @@ export default async function BookingsPage() {
       .select('fuel_charge_per_level')
       .eq('id', tenantId)
       .single(),
+    supabase
+      .from('rental_extras')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .order('sort_order'),
   ])
 
   const rows = (reservations as Reservation[]) ?? []
   const carRows = (cars as Car[]) ?? []
+  const extraRows = (extras as RentalExtra[]) ?? []
 
   const confirmed = rows.filter((r) => r.status === 'confirmed').length
   const pending = rows.filter((r) => r.status === 'pending').length
@@ -46,7 +53,7 @@ export default async function BookingsPage() {
       </div>
 
       <div className="glass border border-white/10 rounded-3xl p-6 md:p-8">
-        <BookingsTable reservations={rows} cars={carRows} chargePerLevel={tenant?.fuel_charge_per_level ?? 20} />
+        <BookingsTable reservations={rows} cars={carRows} rentalExtras={extraRows} chargePerLevel={tenant?.fuel_charge_per_level ?? 20} />
       </div>
     </div>
   )
