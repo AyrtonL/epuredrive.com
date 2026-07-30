@@ -412,6 +412,13 @@ async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promise<void>
 // ── Provider pollers ──────────────────────────────────────────────────────────
 
 async function pollGmail(sync: EmailSync, msgErrors?: string[]): Promise<number> {
+  // Always force a fresh access token before searching, rather than reusing a cached one
+  // until it 401s. A cached token has twice now been observed to keep authenticating (200 OK)
+  // while silently returning an empty/stale messages.list result set — no error, no 401, just
+  // nothing new ever found. A forced refresh each run is one extra token-endpoint call every
+  // 15 min and eliminates that entire failure mode.
+  await refreshAccessToken(sync)
+
   const checkedAt = sync.last_checked
     ? new Date(new Date(sync.last_checked).getTime() - CURSOR_LOOKBACK_MS)
     : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
