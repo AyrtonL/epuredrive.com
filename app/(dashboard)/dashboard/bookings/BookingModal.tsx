@@ -65,6 +65,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
   const [errorStr, setErrorStr] = useState<string | null>(null)
   const [conflict, setConflict] = useState<string | null>(null)
   const [agreementMsg, setAgreementMsg] = useState<string | null>(null)
+  const [agreementCc, setAgreementCc] = useState('')
   const router = useRouter()
 
   const [formData, setFormData] = useState<Partial<Reservation>>({})
@@ -1028,7 +1029,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                           onClick={() => {
                             setAgreementMsg(null)
                             setIsSendingAgreement(async () => {
-                              const result = await sendAgreement(reservation.id)
+                              const result = await sendAgreement(reservation.id, agreementCc)
                               if (result.error) setAgreementMsg('Error: ' + result.error)
                               else {
                                 setAgreementMsg('Agreement sent successfully!')
@@ -1046,6 +1047,20 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                             : 'Send Agreement'}
                         </button>
                       </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className={LABEL_CLASS}>CC (optional)</label>
+                      <input
+                        type="email"
+                        placeholder="extra-recipient@example.com"
+                        value={agreementCc}
+                        onChange={(e) => setAgreementCc(e.target.value)}
+                        className={INPUT_CLASS}
+                      />
+                      <p className="text-[11px] text-white/30">
+                        The business owner is CC'd automatically. Add another address here if needed.
+                      </p>
                     </div>
 
                     {agreementMsg && (

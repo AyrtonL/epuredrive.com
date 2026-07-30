@@ -519,7 +519,12 @@ export async function updateReservation(
   return { error: error?.message ?? null }
 }
 
-export async function sendAgreement(reservationId: number): Promise<{ error: string | null }> {
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+export async function sendAgreement(
+  reservationId: number,
+  extraCc?: string
+): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
 
@@ -533,17 +538,10 @@ export async function sendAgreement(reservationId: number): Promise<{ error: str
   if (!reservation) return { error: 'Reservation not found' }
   if (!reservation.customer_email) return { error: 'Customer email is required to send agreement' }
 
-  // Refresh token and set sent_at
-  const newToken = crypto.randomUUID()
-  const { error: updateError } = await supabase
-    .from('reservations')
-    .update({
-      agreement_token: newToken,
-      agreement_sent_at: new Date().toISOString(),
-    })
-    .eq('id', reservationId)
-
-  if (updateError) return { error: updateError.message }
+  const trimmedCc = extraCc?.trim()
+  if (trimmedCc && !EMAIL_RE.test(trimmedCc)) {
+    return { error: 'CC address is not a valid email' }
+  }
 
   const { data: tenantRow } = await supabase
     .from('tenants')
@@ -555,26 +553,47 @@ export async function sendAgreement(reservationId: number): Promise<{ error: str
   const tenantSlug = (tenantRow as TenantBrandRow | null)?.slug || ''
   const carName = await getCarName(supabase, reservation.car_id ?? null)
 
+  // Generate a fresh token but don't persist it (or agreement_sent_at) until the send confirms.
+  const newToken = crypto.randomUUID()
   const agreementUrl = await buildAgreementUrl(tenantSlug, newToken)
 
-  try {
-    await sendEmail({
-      to: reservation.customer_email,
-      fromName: brand.name,
-      replyTo: brand.email ?? undefined,
-      ...agreementRequestEmail({
-        customerName: reservation.customer_name || 'Renter',
-        brand,
-        carName,
-        pickupDate: reservation.pickup_date || '',
-        returnDate: reservation.return_date || '',
-        agreementUrl,
-      }),
-    })
-  } catch (e) {
-    console.error('[sendAgreement] Email failed:', e)
-    return { error: 'Failed to send agreement email' }
+  const ccList = Array.from(
+    new Set(
+      [brand.email, trimmedCc]
+        .filter((addr): addr is string => !!addr)
+        .filter((addr) => addr.toLowerCase() !== reservation.customer_email!.toLowerCase())
+    )
+  )
+
+  const { error: sendError } = await sendEmail({
+    to: reservation.customer_email,
+    cc: ccList.length ? ccList : undefined,
+    fromName: brand.name,
+    replyTo: brand.email ?? undefined,
+    ...agreementRequestEmail({
+      customerName: reservation.customer_name || 'Renter',
+      brand,
+      carName,
+      pickupDate: reservation.pickup_date || '',
+      returnDate: reservation.return_date || '',
+      agreementUrl,
+    }),
+  })
+
+  if (sendError) {
+    console.error('[sendAgreement] Email failed:', sendError)
+    return { error: sendError }
   }
+
+  const { error: updateError } = await supabase
+    .from('reservations')
+    .update({
+      agreement_token: newToken,
+      agreement_sent_at: new Date().toISOString(),
+    })
+    .eq('id', reservationId)
+
+  if (updateError) return { error: updateError.message }
 
   revalidatePath('/dashboard/bookings')
   return { error: null }
