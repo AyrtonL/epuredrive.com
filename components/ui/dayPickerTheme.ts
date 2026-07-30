@@ -105,4 +105,27 @@ export const DARK_DAYPICKER_CSS = `
     background: rgba(255,255,255,0.1);
   }
   .rdp-outside .rdp-day_button { opacity: 0; pointer-events: none; }
+  .rdp-dropdowns {
+    gap: 8px;
+  }
+  .rdp-dropdown_root {
+    border-radius: 8px;
+    padding: 4px 8px;
+    background: rgba(255,255,255,0.06);
+    transition: background 0.15s;
+  }
+  .rdp-dropdown_root:hover {
+    background: rgba(255,255,255,0.12);
+  }
+  .rdp-dropdown {
+    color-scheme: dark;
+    cursor: pointer;
+  }
+  .rdp-caption_label {
+    gap: 4px;
+    cursor: pointer;
+  }
+  .rdp-chevron {
+    fill: rgba(255,255,255,0.4);
+  }
 `

@@ -15,6 +15,7 @@ interface Props {
   max?: string // 'YYYY-MM-DD' — dates after this are disabled
   disabled?: boolean
   clearable?: boolean
+  captionLayout?: 'label' | 'dropdown' // 'dropdown' shows month/year selects — use for birth dates etc.
 }
 
 function toDate(s: string): Date {
@@ -37,6 +38,7 @@ const CalendarIcon = () => (
 
 export default function DatePicker({
   value, onChange, placeholder = 'Select date', className, min, max, disabled, clearable = true,
+  captionLayout = 'label',
 }: Props) {
   const [open, setOpen] = useState(false)
   const [popupStyle, setPopupStyle] = useState<CSSProperties>({})
@@ -138,6 +140,7 @@ export default function DatePicker({
             disabled={disabledMatchers.length ? disabledMatchers : undefined}
             defaultMonth={value ? toDate(value) : (min ? toDate(min) : new Date())}
             showOutsideDays={false}
+            captionLayout={captionLayout}
           />
           {clearable && value && (
             <div className="border-t border-white/5 mt-1 pt-3 flex justify-end">
