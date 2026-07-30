@@ -1059,7 +1059,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                         className={INPUT_CLASS}
                       />
                       <p className="text-[11px] text-white/30">
-                        The business owner is CC'd automatically. Add another address here if needed.
+                        The business owner is CC&apos;d automatically. Add another address here if needed.
                       </p>
                     </div>
 
