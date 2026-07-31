@@ -68,11 +68,9 @@
 # /api/cron/*, secret from Supabase Vault), NOT Netlify — Netlify's scheduler
 # silently stopped firing scheduled functions (2026-07-15). pg_cron jobs:
 # poll-turo-emails (*/15), sync-ical (*/30), maintenance-alerts (0 13),
-# review-requests (0 14), return-reminders (0 15), telematics-positions-prune (0 3).
+# review-requests (0 14), return-reminders (0 15), telematics-positions-prune (0 3),
+# telematics-sync (*/5).
 # Schedules removed here to avoid double-firing (esp. email crons) if Netlify ever revives.
-# telematics-sync has no HTTP endpoint, so it stays on Netlify for now.
-[functions.telematics-sync]
-  schedule = "*/5 * * * *"
 
 # Edge Functions
 [[edge_functions]]
