@@ -6,8 +6,12 @@
 // Security (spec §5.3, §13.1 and audit findings):
 //   1. Body size guard BEFORE reading — 1 MiB cap (both content-length and
 //      length-of-text re-check).
-//   2. HMAC verify BEFORE any parsing (constant-time compare, strict hex
-//      length in the provider).
+//   2. Auth verify BEFORE any parsing. Bouncie has no HMAC signature scheme
+//      — it echoes the configured authKey verbatim in the Authorization /
+//      X-Bouncie-Authorization headers (both carry the same value; the
+//      second exists because some platforms strip Authorization before it
+//      reaches app code). Verification is a constant-time string compare
+//      against BOUNCIE_WEBHOOK_SECRET, done in the provider.
 //   3. Timestamp freshness — events older/newer than 300 s are dropped
 //      (audit #2). Matches Stripe-webhook policy in this codebase.
 //   4. Batch cap — first 100 events per payload only; extras logged + dropped.
@@ -24,6 +28,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getProvider } from '@/lib/telematics/registry'
 import {
   ingestLocationUpdate,
+  ingestTripStart,
+  ingestTripMetrics,
   ingestTripEnd,
   ingestEvent,
   type IngestContext,
@@ -59,11 +65,14 @@ export async function POST(req: Request) {
     return new NextResponse('Payload too large', { status: 413 })
   }
 
-  // 3. Verify HMAC before any parsing.
+  // 3. Verify auth before any parsing. Prefer X-Bouncie-Authorization (the
+  // failsafe header Bouncie documents for platforms that strip
+  // Authorization) and fall back to Authorization.
   const provider = getProvider('bouncie')
-  const signature = req.headers.get('x-bouncie-signature')
-  if (!provider.verifyWebhookSignature(raw, signature)) {
-    return new NextResponse('Invalid signature', { status: 401 })
+  const authHeader =
+    req.headers.get('x-bouncie-authorization') ?? req.headers.get('authorization')
+  if (!provider.verifyWebhookAuth(authHeader)) {
+    return new NextResponse('Invalid authorization', { status: 401 })
   }
 
   // 4. Parse payload. Invalid JSON → empty array (parser handles this).
@@ -117,6 +126,12 @@ export async function POST(req: Request) {
 
       if (event.type === 'location_update') {
         await ingestLocationUpdate(supabase, ctx)
+      } else if (event.type === 'trip_start') {
+        await ingestTripStart(supabase, ctx)
+        await ingestEvent(supabase, ctx)
+      } else if (event.type === 'trip_metrics') {
+        // Internal-only: patches telematics_trips, never surfaced as an alert.
+        await ingestTripMetrics(supabase, ctx)
       } else if (event.type === 'trip_end') {
         await ingestTripEnd(supabase, ctx)
         await ingestEvent(supabase, ctx)

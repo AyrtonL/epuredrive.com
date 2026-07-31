@@ -379,6 +379,7 @@ export type TelematicsEventType =
   | 'battery_low'
   | 'offline' | 'online'
   | 'connection_expired'
+  | 'vin_changed'
 
 export type TelematicsSeverity = 'info' | 'warning' | 'critical'
 

@@ -8,13 +8,14 @@
  *   - '@/lib/email/telematics'  → silence the email sender (dispatchAlert)
  *
  * We assert:
- *   1. Invalid HMAC signature → 401, no writes.
- *   2. Valid signature, fresh timestamp → 200 + expected ingest writes.
+ *   1. Invalid/missing Authorization → 401, no writes.
+ *   2. Valid auth, fresh timestamp → 200 + expected ingest writes.
  *   3. content-length > 1 MiB → 413, no body read.
- *   4. Valid signature but stale timestamp (10 min old) → 200 + no writes.
+ *   4. Valid auth but stale timestamp (10 min old) → 200 + no writes.
+ *
+ * Bouncie has no HMAC signature scheme — it echoes the configured authKey
+ * verbatim in the Authorization / X-Bouncie-Authorization headers.
  */
-
-import crypto from 'node:crypto'
 
 // Silence email module so dispatchAlert's import works in node env.
 jest.mock('../../lib/email/telematics', () => ({
@@ -68,7 +69,12 @@ function buildAdminClient() {
       update: (patch: Record<string, unknown>) => ({
         eq: (_col: string, _val: unknown) => {
           ensureTable(table).updates.push(patch)
-          return Promise.resolve({ data: null, error: null })
+          return {
+            eq: (_c2: string, _v2: unknown) => Promise.resolve({ data: null, error: null }),
+            select: () => ({
+              maybeSingle: () => Promise.resolve({ data: { id: 'trip-1', started_at: '2026-04-23T10:00:00Z' }, error: null }),
+            }),
+          }
         },
       }),
       select: (_cols?: string) => {
@@ -118,16 +124,12 @@ jest.mock('../../lib/supabase/admin', () => ({
 
 const SECRET = 'test-webhook-secret'
 
-function signBody(body: string): string {
-  return 'sha256=' + crypto.createHmac('sha256', SECRET).update(body).digest('hex')
-}
-
-function makeRequest(body: string, sig: string | null, contentLength?: string) {
+function makeRequest(body: string, authKey: string | null, contentLength?: string) {
   const headers: Record<string, string> = {
     'content-type': 'application/json',
     'content-length': contentLength ?? String(Buffer.byteLength(body)),
   }
-  if (sig) headers['x-bouncie-signature'] = sig
+  if (authKey) headers['x-bouncie-authorization'] = authKey
   return new Request('https://app.epuredrive.com/api/telematics/webhook/bouncie', {
     method: 'POST',
     body,
@@ -139,6 +141,16 @@ function resetRecorder() {
   recorder.tables = {}
   recorder.deviceLookupImei = null
   recorder.deviceLookupStatus = null
+}
+
+function tripDataBody(timestamp: string): string {
+  return JSON.stringify({
+    eventType: 'tripData',
+    imei: '123',
+    vin: 'VIN1',
+    transactionId: 'txn-1',
+    data: [{ timestamp, speed: 42, gps: { lat: 25.76, lon: -80.19, heading: 100 } }],
+  })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────
@@ -157,54 +169,45 @@ describe('POST /api/telematics/webhook/bouncie', () => {
     resetRecorder()
   })
 
-  test('rejects invalid signature with 401', async () => {
-    const body = JSON.stringify({
-      eventType: 'location-update',
-      imei: '123',
-      timestamp: new Date().toISOString(),
-      data: { lat: 25.76, lon: -80.19 },
-    })
-    const res = await POST(makeRequest(body, 'sha256=' + 'f'.repeat(64)))
+  test('rejects invalid authorization with 401', async () => {
+    const body = tripDataBody(new Date().toISOString())
+    const res = await POST(makeRequest(body, 'wrong-key'))
     expect(res.status).toBe(401)
     expect(recorder.tables['telematics_positions']?.upserts?.length ?? 0).toBe(0)
   })
 
-  test('accepts valid signature + fresh timestamp → 200 and writes', async () => {
-    const body = JSON.stringify({
-      eventType: 'location-update',
-      imei: '123',
-      timestamp: new Date().toISOString(),
-      data: { lat: 25.76, lon: -80.19, speed: 42, odometer: 42015 },
-    })
-    const res = await POST(makeRequest(body, signBody(body)))
+  test('rejects missing authorization with 401', async () => {
+    const body = tripDataBody(new Date().toISOString())
+    const res = await POST(makeRequest(body, null))
+    expect(res.status).toBe(401)
+  })
+
+  test('accepts valid auth + fresh timestamp → 200 and writes', async () => {
+    const body = tripDataBody(new Date().toISOString())
+    const res = await POST(makeRequest(body, SECRET))
     expect(res.status).toBe(200)
 
     // device lookup used the active-connection join
     expect(recorder.deviceLookupImei).toBe('123')
     expect(recorder.deviceLookupStatus).toBe('active')
 
-    // location_update → positions upsert
+    // tripData sample → location_update → positions upsert
     expect(recorder.tables['telematics_positions']?.upserts?.length ?? 0).toBe(1)
   })
 
   test('rejects oversized payload with 413 (content-length > 1 MiB)', async () => {
     const tinyBody = '{}'
     const huge = String(1_048_577) // > 1 MiB
-    const res = await POST(makeRequest(tinyBody, 'sha256=' + 'a'.repeat(64), huge))
+    const res = await POST(makeRequest(tinyBody, SECRET, huge))
     expect(res.status).toBe(413)
-    // No writes because we rejected before signature verification even runs.
+    // No writes because we rejected before auth verification even runs.
     expect(Object.keys(recorder.tables).length).toBe(0)
   })
 
-  test('drops stale timestamps (>300 s old) even when signature is valid', async () => {
+  test('drops stale timestamps (>300 s old) even when auth is valid', async () => {
     const staleTs = new Date(Date.now() - 10 * 60 * 1000).toISOString() // 10 min ago
-    const body = JSON.stringify({
-      eventType: 'location-update',
-      imei: '123',
-      timestamp: staleTs,
-      data: { lat: 25.76, lon: -80.19 },
-    })
-    const res = await POST(makeRequest(body, signBody(body)))
+    const body = tripDataBody(staleTs)
+    const res = await POST(makeRequest(body, SECRET))
     expect(res.status).toBe(200)
     // The event was filtered before ingest — no position written.
     expect(recorder.tables['telematics_positions']?.upserts?.length ?? 0).toBe(0)

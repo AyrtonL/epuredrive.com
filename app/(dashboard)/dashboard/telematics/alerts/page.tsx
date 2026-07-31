@@ -66,6 +66,7 @@ const ALLOWED_EVENT_TYPES = new Set<TelematicsEventType>([
   'offline',
   'online',
   'connection_expired',
+  'vin_changed',
 ])
 
 function parseStatus(raw: string | undefined): StatusFilter {

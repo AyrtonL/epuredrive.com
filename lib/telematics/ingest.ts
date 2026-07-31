@@ -100,20 +100,12 @@ export async function ingestLocationUpdate(
   }
 }
 
-// ── Trip end ──────────────────────────────────────────────────────────────
-
-interface BouncieTripPayload {
-  transactionId?: string
-  startTime?: string
-  endTime?: string
-  distance?: number
-  maxSpeed?: number
-  duration?: number
-  hardBrakingCount?: number
-  hardAccelerationCount?: number
-  fuelConsumed?: number
-  gpsTrail?: Array<{ lat: number; lon: number }>
-}
+// ── Trips ────────────────────────────────────────────────────────────────
+// Bouncie assembles a single trip out of up to four separate webhook
+// deliveries, correlated by `transactionId` (our `bouncie_trip_id`):
+//   tripStart → tripData (0..n, GPS/speed samples) → tripMetrics → tripEnd
+// Each ingest*  function below only writes the columns it actually knows,
+// so a partial delivery never clobbers fields set by another one.
 
 function num(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
@@ -123,46 +115,123 @@ function str(value: unknown): string | null {
   return typeof value === 'string' ? value : null
 }
 
-function firstTrailPoint(
-  trail: Array<{ lat: number; lon: number }> | undefined,
-): { lat: number; lon: number } | null {
-  if (!trail || trail.length === 0) return null
-  const p = trail[0]
-  return typeof p.lat === 'number' && typeof p.lon === 'number' ? p : null
-}
-
-function lastTrailPoint(
-  trail: Array<{ lat: number; lon: number }> | undefined,
-): { lat: number; lon: number } | null {
-  if (!trail || trail.length === 0) return null
-  const p = trail[trail.length - 1]
-  return typeof p.lat === 'number' && typeof p.lon === 'number' ? p : null
+/** Best-effort mileage bump — safe to call with a null car/odometer. */
+async function bumpCarMileage(
+  supabase: SupabaseClient,
+  car_id: number | null,
+  odometer_mi: number | null,
+): Promise<void> {
+  if (car_id === null || odometer_mi === null) return
+  const { error } = await supabase
+    .from('cars')
+    .update({ mileage: Math.round(odometer_mi) })
+    .eq('id', car_id)
+  if (error) {
+    console.warn('[telematics] car mileage update failed', safeErrorMessage(error))
+  }
 }
 
 /**
- * Upsert a completed trip into `telematics_trips` and best-effort match it to
- * a reservation (same tenant + car, with the trip start date falling inside
- * the reservation's pickup/return window).
- *
- * The unique (tenant_id, bouncie_trip_id) constraint plus onConflict upsert
- * make this safe to call repeatedly for the same provider trip.
+ * tripStart: creates the telematics_trips row. Idempotent via the unique
+ * (tenant_id, bouncie_trip_id) constraint — a retried delivery just re-sets
+ * the same starting fields.
+ */
+export async function ingestTripStart(
+  supabase: SupabaseClient,
+  ctx: IngestContext,
+): Promise<void> {
+  const { tenant_id, device_id, car_id, event } = ctx
+  const transactionId = str(event.payload.transactionId)
+  if (!transactionId) return
+
+  const { error } = await supabase.from('telematics_trips').upsert(
+    {
+      tenant_id,
+      device_id,
+      car_id,
+      started_at: event.occurred_at,
+      hard_braking_count: 0,
+      hard_accel_count: 0,
+      bouncie_trip_id: transactionId,
+    },
+    { onConflict: 'tenant_id,bouncie_trip_id' },
+  )
+  if (error) {
+    console.warn('[telematics] trip start upsert failed', safeErrorMessage(error))
+  }
+
+  await bumpCarMileage(supabase, car_id, event.odometer_mi)
+}
+
+/**
+ * tripMetrics: patches the aggregate stats onto an existing trip row. A
+ * plain update (not upsert) — if tripStart hasn't been ingested yet
+ * (out-of-order delivery), this is a harmless no-op; the trip's numbers
+ * just stay unset for this cycle.
+ */
+export async function ingestTripMetrics(
+  supabase: SupabaseClient,
+  ctx: IngestContext,
+): Promise<void> {
+  const { tenant_id, event } = ctx
+  const transactionId = str(event.payload.transactionId)
+  if (!transactionId) return
+
+  const duration = num(event.payload.tripTime)
+  const distance = num(event.payload.tripDistance)
+  const maxSpeed = num(event.payload.maxSpeed)
+  const hardBraking = num(event.payload.hardBrakingCounts)
+  const hardAccel = num(event.payload.hardAccelerationCounts)
+
+  const patch: Record<string, unknown> = {}
+  if (duration !== null) patch.duration_s = Math.round(duration)
+  if (distance !== null) patch.distance_mi = distance
+  if (maxSpeed !== null) patch.max_speed_mph = maxSpeed
+  if (hardBraking !== null) patch.hard_braking_count = hardBraking
+  if (hardAccel !== null) patch.hard_accel_count = hardAccel
+  if (Object.keys(patch).length === 0) return
+
+  const { error } = await supabase
+    .from('telematics_trips')
+    .update(patch)
+    .eq('tenant_id', tenant_id)
+    .eq('bouncie_trip_id', transactionId)
+  if (error) {
+    console.warn('[telematics] trip metrics update failed', safeErrorMessage(error))
+  }
+}
+
+/**
+ * tripEnd: closes out the trip row, best-effort matches it to a reservation
+ * (same tenant + car, with the trip's *start* date inside the reservation's
+ * pickup/return window), and bumps the car's mileage from the end odometer.
  */
 export async function ingestTripEnd(
   supabase: SupabaseClient,
   ctx: IngestContext,
 ): Promise<void> {
-  const { tenant_id, device_id, car_id, event } = ctx
-  const p = event.payload as BouncieTripPayload
+  const { tenant_id, car_id, event } = ctx
+  const transactionId = str(event.payload.transactionId)
+  if (!transactionId) return
 
-  const transactionId = str(p.transactionId)
-  const startTime = str(p.startTime)
-  if (!transactionId || !startTime) return
+  const fuelConsumed = num(event.payload.fuelConsumed)
+  const patch: Record<string, unknown> = { ended_at: event.occurred_at }
+  if (fuelConsumed !== null) patch.fuel_consumed_gal = fuelConsumed
 
-  // Attempt reservation match when we know which car this trip belongs to.
-  // reservations.id is uuid in this schema → reservation_id is a string.
-  let reservation_id: string | null = null
-  if (car_id !== null) {
-    const startDate = startTime.slice(0, 10) // YYYY-MM-DD
+  const { data: row, error } = await supabase
+    .from('telematics_trips')
+    .update(patch)
+    .eq('tenant_id', tenant_id)
+    .eq('bouncie_trip_id', transactionId)
+    .select('id, started_at')
+    .maybeSingle()
+  if (error) {
+    console.warn('[telematics] trip end update failed', safeErrorMessage(error))
+  }
+
+  const tripRow = row as { id: string; started_at: string } | null
+  if (car_id !== null && tripRow) {
+    const startDate = tripRow.started_at.slice(0, 10) // YYYY-MM-DD
     const { data: res } = await supabase
       .from('reservations')
       .select('id')
@@ -171,38 +240,16 @@ export async function ingestTripEnd(
       .lte('pickup_date', startDate)
       .gte('return_date', startDate)
       .maybeSingle()
-    const matchedId = (res as { id?: unknown } | null)?.id
-    reservation_id = typeof matchedId === 'string' ? matchedId : null
+    const reservationId = (res as { id?: unknown } | null)?.id
+    if (typeof reservationId === 'string') {
+      await supabase
+        .from('telematics_trips')
+        .update({ reservation_id: reservationId })
+        .eq('id', tripRow.id)
+    }
   }
 
-  const first = firstTrailPoint(p.gpsTrail)
-  const last = lastTrailPoint(p.gpsTrail)
-
-  const { error: tripErr } = await supabase.from('telematics_trips').upsert(
-    {
-      tenant_id,
-      device_id,
-      car_id,
-      reservation_id,
-      started_at: startTime,
-      ended_at: str(p.endTime),
-      start_lat: first?.lat ?? null,
-      start_lon: first?.lon ?? null,
-      end_lat: last?.lat ?? null,
-      end_lon: last?.lon ?? null,
-      distance_mi: num(p.distance) ?? 0,
-      duration_s: num(p.duration),
-      max_speed_mph: num(p.maxSpeed),
-      hard_braking_count: num(p.hardBrakingCount) ?? 0,
-      hard_accel_count: num(p.hardAccelerationCount) ?? 0,
-      fuel_consumed_gal: num(p.fuelConsumed),
-      bouncie_trip_id: transactionId,
-    },
-    { onConflict: 'tenant_id,bouncie_trip_id' },
-  )
-  if (tripErr) {
-    console.warn('[telematics] trips upsert failed', safeErrorMessage(tripErr))
-  }
+  await bumpCarMileage(supabase, car_id, event.odometer_mi)
 }
 
 // ── Generic event + classification + alert dispatch ───────────────────────
@@ -333,6 +380,7 @@ async function classifyEvent(
     case 'dtc_new':
     case 'battery_low':
     case 'offline':
+    case 'vin_changed':
       return { severity: 'warning', shouldNotify: true }
 
     case 'hard_braking':

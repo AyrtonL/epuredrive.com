@@ -49,6 +49,7 @@ const EVENT_LABELS: Record<TelematicsEventType, string> = {
   offline: 'Device offline',
   online: 'Device online',
   connection_expired: 'Connection expired',
+  vin_changed: 'VIN changed',
 }
 
 function formatTime(iso: string): string {

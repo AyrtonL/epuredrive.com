@@ -115,25 +115,17 @@ export class BouncieProvider implements TelematicsProvider {
     }))
   }
 
-  // ── Webhook (Tasks 8 + 9) ─────────────────────────────────────────
+  // ── Webhook ──────────────────────────────────────────────────────
 
-  verifyWebhookSignature(rawBody: string, signatureHeader: string | null): boolean {
-    if (!signatureHeader) return false
-    const prefix = 'sha256='
-    if (!signatureHeader.startsWith(prefix)) return false
-    const provided = signatureHeader.slice(prefix.length)
-    // Strict hex-only, exactly 64 chars (SHA-256). Catches '', malformed input,
-    // and wrong-length strings BEFORE Buffer.from('...', 'hex') silently truncates.
-    // Audit finding #15.
-    if (!/^[0-9a-f]{64}$/i.test(provided)) return false
-    const expected = crypto
-      .createHmac('sha256', bouncieConfig.webhookSecret)
-      .update(rawBody)
-      .digest('hex')
-    const a = Buffer.from(provided, 'hex')
-    const b = Buffer.from(expected, 'hex')
-    if (a.length !== b.length) return false
-    return crypto.timingSafeEqual(a, b)
+  // Bouncie has no HMAC signature scheme — it echoes the authKey configured
+  // on the webhook verbatim in the Authorization / X-Bouncie-Authorization
+  // headers. Verification is a constant-time string compare, not a digest.
+  verifyWebhookAuth(authHeader: string | null): boolean {
+    if (!authHeader) return false
+    const expected = Buffer.from(bouncieConfig.webhookSecret)
+    const provided = Buffer.from(authHeader)
+    if (provided.length !== expected.length) return false
+    return crypto.timingSafeEqual(provided, expected)
   }
 
   parseWebhookPayload(rawBody: string): ProviderEvent[] {

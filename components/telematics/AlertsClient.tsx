@@ -61,6 +61,7 @@ const EVENT_TYPES: TelematicsEventType[] = [
   'offline',
   'online',
   'connection_expired',
+  'vin_changed',
 ]
 
 function dateKey(iso: string): string {

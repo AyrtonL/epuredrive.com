@@ -19,6 +19,11 @@ export interface TelematicsProvider {
   listTrips(accessToken: string, imei: string, since: Date): Promise<ProviderTrip[]>
 
   // ── Webhook (push) ─────────────────────────────────────────────────
-  verifyWebhookSignature(rawBody: string, signatureHeader: string | null): boolean
+  // Bouncie webhooks are NOT HMAC-signed. Bouncie sends the raw authKey
+  // (configured when the webhook was created) verbatim in both the
+  // `Authorization` and `X-Bouncie-Authorization` headers — verification is
+  // a constant-time string compare against our configured secret, not a
+  // digest. See https://docs.bouncie.dev/ "Webhook Security".
+  verifyWebhookAuth(authHeader: string | null): boolean
   parseWebhookPayload(rawBody: string): ProviderEvent[]
 }

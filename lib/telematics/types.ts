@@ -41,9 +41,10 @@ export interface ProviderTrip {
   fuel_consumed_gal: number | null
 }
 
-// `location_update` is an ingestion-only event type (we insert into positions,
-// not events). All other types persist as telematics_events rows.
-export type ProviderEventType = TelematicsEventType | 'location_update'
+// `location_update` and `trip_metrics` are ingestion-only event types (they
+// update telematics_positions / telematics_trips, never telematics_events
+// directly). All other types persist as telematics_events rows.
+export type ProviderEventType = TelematicsEventType | 'location_update' | 'trip_metrics'
 
 export interface ProviderEvent {
   provider_event_id: string | null

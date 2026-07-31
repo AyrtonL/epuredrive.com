@@ -106,12 +106,18 @@ export function titleFor(
     }
     case 'dtc_cleared':
       return 'Diagnostic code cleared'
-    case 'battery_low':
-      return 'Low battery voltage'
+    case 'battery_low': {
+      const value = typeof payload.value === 'string' ? payload.value : null
+      return value === 'critical' ? 'Critical battery voltage' : 'Low battery voltage'
+    }
     case 'offline':
       return 'Device offline'
     case 'online':
       return 'Device back online'
+    case 'vin_changed': {
+      const newVin = typeof payload.newVin === 'string' ? payload.newVin : null
+      return newVin ? `Device VIN changed to ${newVin}` : 'Device VIN changed'
+    }
     case 'connection_expired':
       return 'Bouncie connection expired — reconnect required'
     case 'hard_braking':
