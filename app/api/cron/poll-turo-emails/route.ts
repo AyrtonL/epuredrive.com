@@ -68,13 +68,19 @@ async function refreshAccessToken(sync: EmailSync): Promise<string> {
   return data.access_token
 }
 
-async function gmailFetch(path: string, sync: EmailSync, retried = false): Promise<any> {
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+async function gmailFetch(path: string, sync: EmailSync, attempt = 0): Promise<any> {
   const res = await fetch(`${GMAIL_BASE}${path}`, {
     headers: { Authorization: `Bearer ${sync.access_token}` },
   })
-  if (res.status === 401 && !retried) {
+  // A just-refreshed token has occasionally still 401'd here — Google's token-verification
+  // edge doesn't always see a brand-new token as valid within the first moment it's minted.
+  // Back off briefly and retry a couple of times before treating it as a real auth failure.
+  if (res.status === 401 && attempt < 2) {
+    await sleep(500 * (attempt + 1))
     await refreshAccessToken(sync)
-    return gmailFetch(path, sync, true)
+    return gmailFetch(path, sync, attempt + 1)
   }
   if (!res.ok) throw new Error(`Gmail API ${path} → ${res.status}: ${await res.text()}`)
   return res.json()
