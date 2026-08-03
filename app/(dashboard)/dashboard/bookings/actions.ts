@@ -215,6 +215,110 @@ async function getTenantBrand(supabase: ReturnType<typeof createClient>, tenantI
   return rowToBrand(data as TenantBrandRow | null)
 }
 
+interface ReservationForNotify {
+  id: number
+  customer_name: string | null
+  customer_email: string | null
+  customer_phone: string | null
+  car_id: number | null
+  pickup_date: string | null
+  pickup_time: string | null
+  pickup_location: string | null
+  return_date: string | null
+  return_time: string | null
+  return_location: string | null
+  booking_code: string
+  notes: string | null
+}
+
+/**
+ * Fires the customer + operator "booking confirmed" emails and creates the
+ * Google Calendar event. Called the first time a reservation reaches
+ * confirmed/active from any entry point (manual dashboard confirm, creating a
+ * booking that's already confirmed/active, etc). NOT called from the Turo
+ * email sync — Turo already sends its own calendar invite, and duplicating
+ * that would just clutter the operator's calendar with two events per trip.
+ */
+function notifyAndSyncConfirmedReservation(
+  supabase: ReturnType<typeof createClient>,
+  tenantId: string,
+  reservation: ReservationForNotify
+): void {
+  Promise.resolve().then(async () => {
+    try {
+      const [carName, brand, emails] = await Promise.all([
+        getCarName(supabase, reservation.car_id),
+        getTenantBrand(supabase, tenantId),
+        getOperatorEmails(supabase, tenantId),
+      ])
+
+      if (reservation.customer_email) {
+        await sendEmail({
+          to: reservation.customer_email,
+          fromName: brand.name,
+          replyTo: brand.email ?? undefined,
+          ...bookingConfirmedCustomerEmail({
+            customerName: reservation.customer_name || 'Customer',
+            brand,
+            carName,
+            pickupDate: reservation.pickup_date || 'TBD',
+            returnDate: reservation.return_date || 'TBD',
+            pickupLocation: reservation.pickup_location || 'To be confirmed',
+            pickupTime: reservation.pickup_time ?? undefined,
+            returnTime: reservation.return_time ?? undefined,
+            reservationId: reservation.id,
+            bookingCode: reservation.booking_code,
+          }),
+        })
+      }
+
+      if (emails.length > 0) {
+        const tenantName = await getTenantName(supabase, tenantId)
+        await sendEmail({
+          to: emails,
+          ...bookingConfirmedEmail({
+            customerName: reservation.customer_name || 'Unknown',
+            carName,
+            pickupDate: reservation.pickup_date || 'TBD',
+            returnDate: reservation.return_date || 'TBD',
+            pickupLocation: reservation.pickup_location || 'To be confirmed',
+            pickupTime: reservation.pickup_time ?? undefined,
+            returnTime: reservation.return_time ?? undefined,
+            bookingCode: reservation.booking_code,
+            tenantName,
+          }),
+        })
+      }
+    } catch (e) {
+      console.error('[notify] Confirmed notification failed:', e)
+    }
+  })
+
+  Promise.resolve().then(async () => {
+    try {
+      const carName = await getCarName(supabase, reservation.car_id)
+      const eventId = await createReservationCalendarEvent(tenantId, {
+        customerName: reservation.customer_name || 'Customer',
+        customerPhone: reservation.customer_phone,
+        carName,
+        pickupDate: reservation.pickup_date,
+        pickupTime: reservation.pickup_time,
+        pickupLocation: reservation.pickup_location,
+        returnDate: reservation.return_date,
+        returnTime: reservation.return_time,
+        returnLocation: reservation.return_location,
+        bookingCode: reservation.booking_code,
+        notes: reservation.notes,
+      })
+      if (eventId) {
+        await supabase.from('reservations').update({ google_calendar_event_id: eventId }).eq('id', reservation.id).eq('tenant_id', tenantId)
+      }
+    } catch (e) {
+      console.error('[calendar] Event creation failed:', e)
+    }
+  })
+}
+
 /**
  * Overbooking guard. Returns a conflict message if the candidate overlaps an
  * existing pending/confirmed/active reservation on the same car, unless the
@@ -252,9 +356,10 @@ export async function createReservation(
     if (conflict) return { error: conflict, conflict }
   }
 
+  const bookingCode = generateBookingCode()
   const { data: inserted, error } = await supabase
     .from('reservations')
-    .insert({ ...data, tenant_id: tenantId, booking_code: generateBookingCode() })
+    .insert({ ...data, tenant_id: tenantId, booking_code: bookingCode })
     .select('id')
     .single()
   revalidatePath('/dashboard/bookings')
@@ -321,6 +426,12 @@ export async function createReservation(
       body: `${data.customer_name || 'A customer'} booked ${data.pickup_date || ''} → ${data.return_date || ''}`,
       metadata: { reservation_id: reservationId, car_id: data.car_id, customer_name: data.customer_name },
     }).catch(() => {})
+
+    // If staff created it already confirmed/active (skipping the pending step),
+    // fire the same confirmation email + Google Calendar sync as the status-change path.
+    if (reservationId && (data.status === 'confirmed' || data.status === 'active')) {
+      notifyAndSyncConfirmedReservation(supabase, tenantId, { ...data, id: reservationId, booking_code: bookingCode })
+    }
   }
 
   return { error: error?.message ?? null }
@@ -457,89 +568,27 @@ export async function updateReservation(
     }).catch(() => {})
   }
 
-  // Confirmed → notify customer, notify operator, sync to Google Calendar
-  if (!error && data.status === 'confirmed' && prevReservation) {
+  // Confirmed/Active for the first time → notify customer, notify operator, sync to
+  // Google Calendar. Guarded on !google_calendar_event_id so this only fires once per
+  // reservation — e.g. confirmed → active later doesn't re-send everything.
+  if (
+    !error &&
+    (data.status === 'confirmed' || data.status === 'active') &&
+    prevReservation &&
+    !prevReservation.google_calendar_event_id
+  ) {
     dispatchWebhookEvent(tenantId, 'booking.updated', {
       reservation_id: id,
-      status: 'confirmed',
+      status: data.status,
       car_id: prevReservation?.car_id ?? null,
       customer_name: prevReservation?.customer_name ?? null,
       customer_email: prevReservation?.customer_email ?? null,
     }).catch((err) => console.error('[bookings] webhook dispatch failed:', err))
 
-    Promise.resolve().then(async () => {
-      try {
-        const [carName, brand, emails] = await Promise.all([
-          getCarName(supabase, prevReservation!.car_id ?? null),
-          getTenantBrand(supabase, tenantId),
-          getOperatorEmails(supabase, tenantId),
-        ])
-
-        if (prevReservation!.customer_email) {
-          await sendEmail({
-            to: prevReservation!.customer_email,
-            fromName: brand.name,
-            replyTo: brand.email ?? undefined,
-            ...bookingConfirmedCustomerEmail({
-              customerName: prevReservation!.customer_name || 'Customer',
-              brand,
-              carName,
-              pickupDate: prevReservation!.pickup_date || 'TBD',
-              returnDate: prevReservation!.return_date || 'TBD',
-              pickupLocation: prevReservation!.pickup_location || 'To be confirmed',
-              pickupTime: prevReservation!.pickup_time ?? undefined,
-              returnTime: prevReservation!.return_time ?? undefined,
-              reservationId: prevReservation!.id,
-              bookingCode: prevReservation!.booking_code,
-            }),
-          })
-        }
-
-        if (emails.length > 0) {
-          const tenantName = await getTenantName(supabase, tenantId)
-          await sendEmail({
-            to: emails,
-            ...bookingConfirmedEmail({
-              customerName: prevReservation!.customer_name || 'Unknown',
-              carName,
-              pickupDate: prevReservation!.pickup_date || 'TBD',
-              returnDate: prevReservation!.return_date || 'TBD',
-              pickupLocation: prevReservation!.pickup_location || 'To be confirmed',
-              pickupTime: prevReservation!.pickup_time ?? undefined,
-              returnTime: prevReservation!.return_time ?? undefined,
-              bookingCode: prevReservation!.booking_code,
-              tenantName,
-            }),
-          })
-        }
-      } catch (e) {
-        console.error('[notify] Confirmed notification failed:', e)
-      }
-    })
-
-    Promise.resolve().then(async () => {
-      try {
-        const carName = await getCarName(supabase, prevReservation!.car_id ?? null)
-        const eventId = await createReservationCalendarEvent(tenantId, {
-          customerName: prevReservation!.customer_name || 'Customer',
-          customerPhone: prevReservation!.customer_phone ?? null,
-          carName,
-          pickupDate: prevReservation!.pickup_date,
-          pickupTime: prevReservation!.pickup_time,
-          pickupLocation: prevReservation!.pickup_location,
-          returnDate: prevReservation!.return_date,
-          returnTime: prevReservation!.return_time,
-          returnLocation: prevReservation!.return_location,
-          bookingCode: prevReservation!.booking_code,
-          notes: prevReservation!.notes,
-        })
-        if (eventId) {
-          await supabase.from('reservations').update({ google_calendar_event_id: eventId }).eq('id', id).eq('tenant_id', tenantId)
-        }
-      } catch (e) {
-        console.error('[calendar] Event creation failed:', e)
-      }
-    })
+    // Merge in this update's changes — data.status is 'confirmed'/'active' by the guard
+    // above, but other fields (pickup time/location, etc.) may also be changing in this
+    // same call, and prevReservation only holds pre-update values.
+    notifyAndSyncConfirmedReservation(supabase, tenantId, { ...prevReservation, ...data, id })
   }
 
   // Rejected → clean up any Google Calendar event (unusual transition, but a reservation
