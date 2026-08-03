@@ -16,9 +16,12 @@
 //      present, feed a synthetic ProviderEvent into ingestLocationUpdate
 //      (which upserts a position, refreshes device.last_seen_at, and bumps
 //      the linked car).
-//   4. On success → bump last_sync_at, clear error_message.
+//   4. On success → status='active', bump last_sync_at, clear error_message
+//      (always resets 'active', even recovering from a prior 'error').
 //   5. On any thrown error during vehicle fetch → status='error',
-//      error_message=safe(err).
+//      error_message=safe(err). The cron retries 'error' connections on
+//      the next cycle (see app/api/cron/telematics-sync/route.ts) so a
+//      transient failure self-heals instead of being stranded.
 //
 // Security (audit #7 + #8):
 //   - We NEVER log raw `err` objects or response bodies (bearer tokens and
@@ -212,9 +215,13 @@ export async function syncConnection(
       })
     }
 
+    // A successful pull always clears a prior 'error' status — otherwise a
+    // connection that failed once stays excluded from the cron's ['active',
+    // 'error'] query forever (nothing else resets it back to 'active' until
+    // the next token-refresh cycle, up to ~1h away).
     await supabase
       .from('telematics_connections')
-      .update({ last_sync_at: nowIso(), error_message: null })
+      .update({ status: 'active', last_sync_at: nowIso(), error_message: null })
       .eq('id', connection.id)
   } catch (err: unknown) {
     const message = safeErr(err)

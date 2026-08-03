@@ -32,10 +32,18 @@ export async function GET(request: Request) {
   }
 
   const supabase = createAdminClient()
+  // 'error' is retried automatically — it covers transient failures (a
+  // dropped connection, a one-off 401/5xx from the provider) and the
+  // status is exactly what syncConnection() sets on any listVehicles
+  // failure. Excluding it here would permanently strand a connection
+  // after a single blip, since nothing else clears 'error' back to
+  // 'active' until the next token-refresh cycle (up to ~1h away).
+  // 'expired' (refresh_token itself rejected) and 'disconnected' (user
+  // action) genuinely need re-auth, so those stay excluded.
   const { data, error } = await supabase
     .from('telematics_connections')
     .select('*')
-    .eq('status', 'active')
+    .in('status', ['active', 'error'])
 
   if (error) {
     console.warn('[cron/telematics-sync] failed to list active connections', error.message)

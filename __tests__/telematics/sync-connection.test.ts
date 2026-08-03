@@ -403,6 +403,24 @@ describe('syncConnection', () => {
     expect(successPatch).toBeDefined()
   })
 
+  test('a successful sync resets status to active, recovering a connection stranded in error', async () => {
+    ;(getProvider as jest.Mock).mockReturnValue({
+      refreshAccessToken: jest.fn(),
+      listVehicles: jest.fn().mockResolvedValue([]),
+    })
+
+    const sb = mkSupabase()
+    // simulate a connection stuck in 'error' from a prior transient failure
+    await syncConnection(sb as never, mkConnection({ status: 'error', error_message: 'Bouncie API 401' }))
+
+    const successPatch = sb.updates.find(
+      (u) =>
+        u.table === 'telematics_connections' && u.patch.last_sync_at !== undefined,
+    )
+    expect(successPatch).toBeDefined()
+    expect(successPatch?.patch).toMatchObject({ status: 'active', error_message: null })
+  })
+
   test('recovers a missed check-engine (MIL) webhook by diffing provider state against the last known device state', async () => {
     const vehicle = {
       imei: 'imei-cayenne',
