@@ -204,6 +204,8 @@ export function bookingConfirmedCustomerEmail(params: {
   pickupDate: string
   returnDate: string
   pickupLocation: string
+  pickupTime?: string
+  returnTime?: string
   reservationId: number
   bookingCode?: string
 }): { subject: string; html: string } {
@@ -218,10 +220,44 @@ export function bookingConfirmedCustomerEmail(params: {
         { label: 'Ref #', value: params.bookingCode || `#${params.reservationId}` },
         { label: 'Vehicle', value: params.carName },
         { label: 'Pickup', value: params.pickupDate },
+        ...(params.pickupTime ? [{ label: 'Pickup Time', value: params.pickupTime }] : []),
         { label: 'Return', value: params.returnDate },
+        ...(params.returnTime ? [{ label: 'Return Time', value: params.returnTime }] : []),
         { label: 'Location', value: params.pickupLocation || 'To be confirmed' },
       ],
       note: contactLine ? `Questions? Contact ${params.brand.name}: ${contactLine}` : undefined,
+    }),
+  }
+}
+
+export function bookingConfirmedEmail(params: {
+  customerName: string
+  carName: string
+  pickupDate: string
+  returnDate: string
+  pickupLocation: string
+  pickupTime?: string
+  returnTime?: string
+  bookingCode?: string
+  tenantName: string
+}): { subject: string; html: string } {
+  return {
+    subject: `Booking Confirmed: ${params.customerName} — ${params.carName}`,
+    html: compactLayout({
+      subheadline: params.tenantName,
+      headline: 'Booking confirmed.',
+      body: `${params.customerName}'s reservation has been confirmed.`,
+      details: [
+        { label: 'Customer', value: params.customerName },
+        { label: 'Vehicle', value: params.carName },
+        { label: 'Pickup', value: params.pickupDate },
+        ...(params.pickupTime ? [{ label: 'Pickup Time', value: params.pickupTime }] : []),
+        { label: 'Pickup Location', value: params.pickupLocation || 'To be confirmed' },
+        { label: 'Return', value: params.returnDate },
+        ...(params.returnTime ? [{ label: 'Return Time', value: params.returnTime }] : []),
+        ...(params.bookingCode ? [{ label: 'Ref #', value: params.bookingCode }] : []),
+      ],
+      cta: { label: 'View Booking', href: `${APP_URL}/dashboard/bookings` },
     }),
   }
 }

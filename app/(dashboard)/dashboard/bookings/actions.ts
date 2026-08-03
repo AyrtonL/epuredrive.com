@@ -14,11 +14,13 @@ import { findOverlappingReservations, describeConflicts, type OverlapCandidate }
 import {
   newBookingEmail,
   bookingCancelledEmail,
+  bookingConfirmedEmail,
   agreementRequestEmail,
   bookingConfirmedCustomerEmail,
   bookingCancelledCustomerEmail,
   bookingRejectedCustomerEmail,
 } from '@/lib/email/templates'
+import { createReservationCalendarEvent, deleteReservationCalendarEvent } from '@/lib/google-calendar'
 import type { TenantBrand } from '@/lib/email/templates/_layout'
 
 const TENANT_BRAND_COLUMNS =
@@ -432,6 +434,20 @@ export async function updateReservation(
       }
     })
 
+    if (prevReservation.google_calendar_event_id) {
+      const reservationTenantId = prevReservation.tenant_id
+      const eventId = prevReservation.google_calendar_event_id
+      Promise.resolve().then(async () => {
+        try {
+          if (!reservationTenantId) return
+          await deleteReservationCalendarEvent(reservationTenantId, eventId)
+          await supabase.from('reservations').update({ google_calendar_event_id: null }).eq('id', id).eq('tenant_id', tenantId)
+        } catch (e) {
+          console.error('[calendar] Event deletion failed:', e)
+        }
+      })
+    }
+
     createInAppNotification({
       tenantId,
       event: 'booking_cancelled',
@@ -441,8 +457,8 @@ export async function updateReservation(
     }).catch(() => {})
   }
 
-  // Confirmed → notify customer
-  if (!error && data.status === 'confirmed' && prevReservation?.customer_email) {
+  // Confirmed → notify customer, notify operator, sync to Google Calendar
+  if (!error && data.status === 'confirmed' && prevReservation) {
     dispatchWebhookEvent(tenantId, 'booking.updated', {
       reservation_id: id,
       status: 'confirmed',
@@ -453,28 +469,91 @@ export async function updateReservation(
 
     Promise.resolve().then(async () => {
       try {
-        const [carName, brand] = await Promise.all([
+        const [carName, brand, emails] = await Promise.all([
           getCarName(supabase, prevReservation!.car_id ?? null),
           getTenantBrand(supabase, tenantId),
+          getOperatorEmails(supabase, tenantId),
         ])
 
-        await sendEmail({
-          to: prevReservation!.customer_email!,
-          fromName: brand.name,
-          replyTo: brand.email ?? undefined,
-          ...bookingConfirmedCustomerEmail({
-            customerName: prevReservation!.customer_name || 'Customer',
-            brand,
-            carName,
-            pickupDate: prevReservation!.pickup_date || 'TBD',
-            returnDate: prevReservation!.return_date || 'TBD',
-            pickupLocation: prevReservation!.pickup_location || 'To be confirmed',
-            reservationId: prevReservation!.id,
-            bookingCode: prevReservation!.booking_code,
-          }),
-        })
+        if (prevReservation!.customer_email) {
+          await sendEmail({
+            to: prevReservation!.customer_email,
+            fromName: brand.name,
+            replyTo: brand.email ?? undefined,
+            ...bookingConfirmedCustomerEmail({
+              customerName: prevReservation!.customer_name || 'Customer',
+              brand,
+              carName,
+              pickupDate: prevReservation!.pickup_date || 'TBD',
+              returnDate: prevReservation!.return_date || 'TBD',
+              pickupLocation: prevReservation!.pickup_location || 'To be confirmed',
+              pickupTime: prevReservation!.pickup_time ?? undefined,
+              returnTime: prevReservation!.return_time ?? undefined,
+              reservationId: prevReservation!.id,
+              bookingCode: prevReservation!.booking_code,
+            }),
+          })
+        }
+
+        if (emails.length > 0) {
+          const tenantName = await getTenantName(supabase, tenantId)
+          await sendEmail({
+            to: emails,
+            ...bookingConfirmedEmail({
+              customerName: prevReservation!.customer_name || 'Unknown',
+              carName,
+              pickupDate: prevReservation!.pickup_date || 'TBD',
+              returnDate: prevReservation!.return_date || 'TBD',
+              pickupLocation: prevReservation!.pickup_location || 'To be confirmed',
+              pickupTime: prevReservation!.pickup_time ?? undefined,
+              returnTime: prevReservation!.return_time ?? undefined,
+              bookingCode: prevReservation!.booking_code,
+              tenantName,
+            }),
+          })
+        }
       } catch (e) {
-        console.error('[notify] Confirmed customer email failed:', e)
+        console.error('[notify] Confirmed notification failed:', e)
+      }
+    })
+
+    Promise.resolve().then(async () => {
+      try {
+        const carName = await getCarName(supabase, prevReservation!.car_id ?? null)
+        const eventId = await createReservationCalendarEvent(tenantId, {
+          customerName: prevReservation!.customer_name || 'Customer',
+          customerPhone: prevReservation!.customer_phone ?? null,
+          carName,
+          pickupDate: prevReservation!.pickup_date,
+          pickupTime: prevReservation!.pickup_time,
+          pickupLocation: prevReservation!.pickup_location,
+          returnDate: prevReservation!.return_date,
+          returnTime: prevReservation!.return_time,
+          returnLocation: prevReservation!.return_location,
+          bookingCode: prevReservation!.booking_code,
+          notes: prevReservation!.notes,
+        })
+        if (eventId) {
+          await supabase.from('reservations').update({ google_calendar_event_id: eventId }).eq('id', id).eq('tenant_id', tenantId)
+        }
+      } catch (e) {
+        console.error('[calendar] Event creation failed:', e)
+      }
+    })
+  }
+
+  // Rejected → clean up any Google Calendar event (unusual transition, but a reservation
+  // could have been confirmed and then reversed to rejected)
+  if (!error && data.status === 'rejected' && prevReservation?.google_calendar_event_id) {
+    const reservationTenantId = prevReservation.tenant_id
+    const eventId = prevReservation.google_calendar_event_id
+    Promise.resolve().then(async () => {
+      try {
+        if (!reservationTenantId) return
+        await deleteReservationCalendarEvent(reservationTenantId, eventId)
+        await supabase.from('reservations').update({ google_calendar_event_id: null }).eq('id', id).eq('tenant_id', tenantId)
+      } catch (e) {
+        console.error('[calendar] Event deletion failed:', e)
       }
     })
   }

@@ -56,6 +56,7 @@ const NAV: NavEntry[] = [
       { label: 'Turo', href: '/dashboard/integrations/turo' },
       { label: 'QuickBooks', href: '/dashboard/integrations/quickbooks' },
       { label: 'Bouncie', href: '/dashboard/integrations/bouncie' },
+      { label: 'Google Calendar', href: '/dashboard/integrations/google-calendar' },
     ],
   },
   {

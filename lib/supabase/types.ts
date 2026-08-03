@@ -144,6 +144,8 @@ export interface Reservation {
   tenant_signed_at: string | null
   tenant_signature_url: string | null
   tenant_signed_by: string | null
+  // Google Calendar sync
+  google_calendar_event_id: string | null
 }
 
 export interface Customer {
