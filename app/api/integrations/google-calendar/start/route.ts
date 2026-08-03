@@ -19,7 +19,8 @@ export const dynamic = 'force-dynamic'
 
 const STATE_COOKIE = 'gcal_oauth_state'
 const STATE_TTL_SECONDS = 600
-const SCOPE = 'https://www.googleapis.com/auth/calendar.events'
+// userinfo.email is needed to show which Google account is connected in the dashboard
+const SCOPE = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email'
 
 function getSiteUrl(req: Request): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin
