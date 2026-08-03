@@ -86,6 +86,16 @@ const NAV: NavEntry[] = [
   },
 ]
 
+// Real brand logos for integration entries (rest of the nav uses abstract
+// vector icons from ./icons — these are actual company marks, so they render
+// as images instead, sized by height with natural aspect ratio).
+const LOGO_IMAGES: Record<string, { src: string; width: number; height: number }> = {
+  Turo: { src: '/assets/logos/turo.svg', width: 88, height: 32 },
+  QuickBooks: { src: '/assets/logos/quickbooks.svg', width: 270, height: 69 },
+  Bouncie: { src: '/assets/logos/bouncie.svg', width: 130, height: 26 },
+  'Google Calendar': { src: '/assets/logos/google-calendar.svg', width: 200, height: 200 },
+}
+
 const ADMIN_NAV: NavGroup = {
   label: 'Admin',
   children: [
@@ -199,6 +209,23 @@ export default function Sidebar({ email, role, name, tenantName, tenantLogoUrl, 
   const allHiddenItems = [...hidden, ...flagHiddenItems]
 
   const renderIcon = (label: string, className: string) => {
+    const logo = LOGO_IMAGES[label]
+    if (logo) {
+      const sizeClass = className.includes('w-4') ? 'h-4' : 'h-3.5'
+      const extraClasses = className
+        .split(' ')
+        .filter((c) => !/^[wh]-/.test(c))
+        .join(' ')
+      return (
+        <Image
+          src={logo.src}
+          alt=""
+          width={logo.width}
+          height={logo.height}
+          className={`${sizeClass} w-auto object-contain ${extraClasses}`}
+        />
+      )
+    }
     const Icon = ICONS[label]
     return Icon ? <Icon className={className} /> : null
   }
