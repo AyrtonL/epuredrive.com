@@ -129,7 +129,7 @@ export function agreementRequestEmail(params: {
     subject: `Please Sign Your Rental Agreement — ${params.brand.name}`,
     html: tenantCompactLayout({
       brand: params.brand,
-      subheadline: 'Action Required',
+      subheadline: 'Next Step',
       headline: 'Sign your rental agreement.',
       body: `Hi ${params.customerName}, your rental is almost confirmed. Please review and sign the agreement to complete your booking with <strong>${params.brand.name}</strong>.`,
       details: [

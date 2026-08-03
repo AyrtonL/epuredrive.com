@@ -698,6 +698,11 @@ export async function sendAgreement(
     cc: ccList.length ? ccList : undefined,
     fromName: brand.name,
     replyTo: brand.email ?? undefined,
+    tags: [
+      { name: 'reservation_id', value: String(reservationId) },
+      { name: 'tenant_id', value: tenantId },
+      { name: 'email_type', value: 'agreement_request' },
+    ],
     ...agreementRequestEmail({
       customerName: reservation.customer_name || 'Renter',
       brand,
@@ -756,6 +761,41 @@ export async function getAgreementViewUrl(
   }
 
   return { url: await buildAgreementUrl(tenantSlug, reservation.agreement_token), error: null }
+}
+
+const EMAIL_ISSUE_LABELS: Record<string, string> = {
+  'email.bounced': 'bounced',
+  'email.complained': 'marked as spam',
+  'email.delivery_delayed': 'delayed',
+  'email.failed': 'failed to send',
+}
+
+/**
+ * Returns the most recent delivery problem (bounce/complaint/delay) reported
+ * by Resend for this reservation's agreement email, if any. Lets the
+ * dashboard show "this may not have reached the customer" instead of a
+ * blind "sent" status once staff clicks Send/Resend.
+ */
+export async function getAgreementEmailIssue(
+  reservationId: number
+): Promise<{ label: string | null; occurredAt: string | null }> {
+  const supabase = createClient()
+
+  const { data } = await supabase
+    .from('email_events')
+    .select('event_type, created_at')
+    .eq('reservation_id', reservationId)
+    .eq('email_type', 'agreement_request')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!data) return { label: null, occurredAt: null }
+
+  return {
+    label: EMAIL_ISSUE_LABELS[data.event_type] ?? data.event_type,
+    occurredAt: data.created_at,
+  }
 }
 
 /**

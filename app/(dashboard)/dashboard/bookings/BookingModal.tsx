@@ -8,6 +8,7 @@ import {
   updateReservation,
   sendAgreement,
   getAgreementViewUrl,
+  getAgreementEmailIssue,
   getLatestOdometer,
   searchCustomersForBooking,
   type CustomerLookup,
@@ -66,6 +67,10 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
   const [conflict, setConflict] = useState<string | null>(null)
   const [agreementMsg, setAgreementMsg] = useState<string | null>(null)
   const [agreementCc, setAgreementCc] = useState('')
+  const [agreementEmailIssue, setAgreementEmailIssue] = useState<{ label: string | null; occurredAt: string | null }>({
+    label: null,
+    occurredAt: null,
+  })
   const router = useRouter()
 
   const [formData, setFormData] = useState<Partial<Reservation>>({})
@@ -137,6 +142,21 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
       cancelled = true
     }
   }, [isOpen, reservation?.car_id])
+
+  // Surface bounce/complaint/delay events Resend reported for the agreement email
+  useEffect(() => {
+    if (!isOpen || !reservation?.id || !reservation.agreement_sent_at) {
+      setAgreementEmailIssue({ label: null, occurredAt: null })
+      return
+    }
+    let cancelled = false
+    getAgreementEmailIssue(reservation.id).then((result) => {
+      if (!cancelled) setAgreementEmailIssue(result)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, reservation?.id, reservation?.agreement_sent_at])
 
   const isEditing = !!reservation
   const carName = useMemo(() => {
@@ -1033,6 +1053,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                               if (result.error) setAgreementMsg('Error: ' + result.error)
                               else {
                                 setAgreementMsg('Agreement sent successfully!')
+                                setAgreementEmailIssue({ label: null, occurredAt: null })
                                 router.refresh()
                               }
                             })
@@ -1048,6 +1069,21 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                         </button>
                       </div>
                     </div>
+
+                    {agreementEmailIssue.label && (
+                      <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">
+                        <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+                        <span className="text-xs text-red-300">
+                          <span className="font-bold">Delivery issue:</span> this email {agreementEmailIssue.label}
+                          {agreementEmailIssue.occurredAt &&
+                            ` (${new Date(agreementEmailIssue.occurredAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })})`}
+                          . The customer likely never saw it — consider resending or sharing the link directly.
+                        </span>
+                      </div>
+                    )}
 
                     <div className="space-y-1">
                       <label className={LABEL_CLASS}>CC (optional)</label>
