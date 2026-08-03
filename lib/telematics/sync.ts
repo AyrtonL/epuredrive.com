@@ -31,7 +31,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { TelematicsConnection } from '@/lib/supabase/types'
 import { getProvider } from './registry'
-import { ingestLocationUpdate } from './ingest'
+import { ingestLocationUpdate, ingestEvent } from './ingest'
 import { seedDevice, type DeviceRow } from './devices'
 import type { ProviderEvent } from './types'
 
@@ -82,6 +82,20 @@ function synthesizeLocationEvent(v: {
     lon: v.last_lon,
     speed_mph: null,
     odometer_mi: v.odometer_mi,
+    payload: {},
+  }
+}
+
+function synthesizeMilEvent(v: { imei: string; last_seen_at: string | null }, milOn: boolean): ProviderEvent {
+  return {
+    provider_event_id: null,
+    imei: v.imei,
+    type: milOn ? 'dtc_new' : 'dtc_cleared',
+    occurred_at: v.last_seen_at ?? nowIso(),
+    lat: null,
+    lon: null,
+    speed_mph: null,
+    odometer_mi: null,
     payload: {},
   }
 }
@@ -147,7 +161,7 @@ export async function syncConnection(
     for (const v of vehicles) {
       const { data: dev } = await supabase
         .from('telematics_devices')
-        .select('id, car_id, last_seen_at')
+        .select('id, car_id, last_seen_at, mil_on')
         .eq('tenant_id', connection.tenant_id)
         .eq('imei', v.imei)
         .maybeSingle()
@@ -157,6 +171,24 @@ export async function syncConnection(
         (await seedDevice(supabase, connection.tenant_id, connection.id, v))
 
       if (!devRow) continue // seeding failed — retry next cycle
+
+      // ── MIL (check engine) reconciliation ─────────────────────────
+      // Bouncie's 'mil' webhook isn't guaranteed for every state change,
+      // so a dropped delivery would otherwise never surface. Compare the
+      // provider's current MIL state against what we last recorded and
+      // emit the missed dtc_new/dtc_cleared event when they diverge.
+      if (v.mil_on !== null && v.mil_on !== devRow.mil_on) {
+        await ingestEvent(supabase, {
+          tenant_id: connection.tenant_id,
+          device_id: devRow.id,
+          car_id: devRow.car_id,
+          event: synthesizeMilEvent(v, v.mil_on),
+        })
+        await supabase
+          .from('telematics_devices')
+          .update({ mil_on: v.mil_on })
+          .eq('id', devRow.id)
+      }
 
       const provSeen = v.last_seen_at
       const devSeen = devRow.last_seen_at

@@ -22,6 +22,10 @@ export interface ProviderVehicle {
   last_lon: number | null
   odometer_mi: number | null
   battery_voltage: number | null
+  // Check-engine (MIL) state from the provider's vehicle-status endpoint.
+  // null when the provider doesn't report it. Used to reconcile a dropped
+  // 'mil' webhook delivery — see lib/telematics/sync.ts.
+  mil_on: boolean | null
 }
 
 export interface ProviderTrip {

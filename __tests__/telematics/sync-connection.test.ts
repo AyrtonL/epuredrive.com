@@ -84,6 +84,7 @@ function mkSupabase(): MockSupabase {
               id: `dev-${String(row.imei)}`,
               car_id: null,
               last_seen_at: row.last_seen_at ?? null,
+              mil_on: row.mil_on ?? null,
             }
             devicesByImei[String(row.imei)] = seeded
             return {
@@ -108,10 +109,32 @@ function mkSupabase(): MockSupabase {
 
       if (table === 'telematics_events') {
         return {
+          // ingestEvent() chains .insert(row).select('id').single(), while
+          // the connection_expired path (sync.ts) just awaits .insert(row)
+          // directly — support both by returning a thenable that also
+          // exposes .select().single().
           insert: (row: Record<string, unknown>) => {
             inserts.push({ table, row })
-            return Promise.resolve({ data: null, error: null })
+            const result = { data: { id: `evt-${inserts.length}` }, error: null }
+            return {
+              then: (resolve: (v: typeof result) => void) => resolve(result),
+              select: (_cols: string) => ({
+                single: () => Promise.resolve(result),
+              }),
+            }
           },
+        }
+      }
+
+      if (table === 'notifications' || table === 'tenant_notification_prefs') {
+        // dispatchAlert() side effects — irrelevant to sync reconciliation
+        // tests, and any failure here is swallowed by ingestEvent's
+        // try/catch, so a minimal stub is enough.
+        return {
+          insert: () => Promise.resolve({ data: null, error: null }),
+          select: () => ({
+            eq: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: null }) }),
+          }),
         }
       }
 
@@ -340,6 +363,7 @@ describe('syncConnection', () => {
       last_lon: -80.2,
       odometer_mi: 1000,
       battery_voltage: null,
+      mil_on: null,
     }
     ;(getProvider as jest.Mock).mockReturnValue({
       refreshAccessToken: jest.fn(),
@@ -377,5 +401,125 @@ describe('syncConnection', () => {
         u.table === 'telematics_connections' && u.patch.last_sync_at !== undefined,
     )
     expect(successPatch).toBeDefined()
+  })
+
+  test('recovers a missed check-engine (MIL) webhook by diffing provider state against the last known device state', async () => {
+    const vehicle = {
+      imei: 'imei-cayenne',
+      vin: 'VIN-CAYENNE',
+      nickname: 'Cayenne',
+      online: true,
+      last_seen_at: '2026-08-03T10:00:00.000Z',
+      last_lat: null,
+      last_lon: null,
+      odometer_mi: null,
+      battery_voltage: null,
+      mil_on: true, // Bouncie's /vehicles endpoint reports the light is on...
+    }
+    ;(getProvider as jest.Mock).mockReturnValue({
+      refreshAccessToken: jest.fn(),
+      listVehicles: jest.fn().mockResolvedValue([vehicle]),
+    })
+
+    const sb = mkSupabase()
+    // ...but our last recorded state (from before/missed webhook) says off.
+    sb.setDevice('imei-cayenne', {
+      id: 'dev-cayenne',
+      car_id: 42,
+      last_seen_at: '2026-08-03T09:00:00.000Z',
+      mil_on: false,
+    })
+
+    await syncConnection(sb as never, mkConnection())
+
+    const dtcEvent = sb.inserts.find(
+      (i) => i.table === 'telematics_events' && i.row.event_type === 'dtc_new',
+    )
+    expect(dtcEvent).toBeDefined()
+    expect(dtcEvent?.row).toMatchObject({
+      tenant_id: 't1',
+      device_id: 'dev-cayenne',
+      car_id: 42,
+      event_type: 'dtc_new',
+      severity: 'warning',
+    })
+
+    // the device's recorded mil_on state is updated so the next cycle
+    // doesn't re-fire the same alert.
+    const milPatch = sb.updates.find(
+      (u) =>
+        u.table === 'telematics_devices' &&
+        u.match.id === 'dev-cayenne' &&
+        u.patch.mil_on === true,
+    )
+    expect(milPatch).toBeDefined()
+  })
+
+  test('does not re-emit a dtc_new event when provider MIL state matches the last recorded state', async () => {
+    const vehicle = {
+      imei: 'imei-steady',
+      vin: 'VIN-STEADY',
+      nickname: 'Steady',
+      online: true,
+      last_seen_at: '2026-08-03T10:00:00.000Z',
+      last_lat: null,
+      last_lon: null,
+      odometer_mi: null,
+      battery_voltage: null,
+      mil_on: true,
+    }
+    ;(getProvider as jest.Mock).mockReturnValue({
+      refreshAccessToken: jest.fn(),
+      listVehicles: jest.fn().mockResolvedValue([vehicle]),
+    })
+
+    const sb = mkSupabase()
+    sb.setDevice('imei-steady', {
+      id: 'dev-steady',
+      car_id: 7,
+      last_seen_at: '2026-08-03T09:00:00.000Z',
+      mil_on: true, // already recorded as on — no new transition
+    })
+
+    await syncConnection(sb as never, mkConnection())
+
+    const dtcEvent = sb.inserts.find(
+      (i) => i.table === 'telematics_events' && i.row.event_type === 'dtc_new',
+    )
+    expect(dtcEvent).toBeUndefined()
+  })
+
+  test('does not attempt MIL reconciliation when the provider does not report mil_on', async () => {
+    const vehicle = {
+      imei: 'imei-unsupported',
+      vin: null,
+      nickname: null,
+      online: true,
+      last_seen_at: '2026-08-03T10:00:00.000Z',
+      last_lat: null,
+      last_lon: null,
+      odometer_mi: null,
+      battery_voltage: null,
+      mil_on: null, // provider doesn't expose MIL state
+    }
+    ;(getProvider as jest.Mock).mockReturnValue({
+      refreshAccessToken: jest.fn(),
+      listVehicles: jest.fn().mockResolvedValue([vehicle]),
+    })
+
+    const sb = mkSupabase()
+    sb.setDevice('imei-unsupported', {
+      id: 'dev-unsupported',
+      car_id: null,
+      last_seen_at: '2026-08-03T09:00:00.000Z',
+      mil_on: false,
+    })
+
+    await syncConnection(sb as never, mkConnection())
+
+    const dtcEvent = sb.inserts.find(
+      (i) => i.table === 'telematics_events' && i.row.event_type === 'dtc_new',
+    )
+    expect(dtcEvent).toBeUndefined()
   })
 })

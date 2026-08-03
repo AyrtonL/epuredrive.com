@@ -16,6 +16,7 @@ export interface DeviceRow {
   id: string
   car_id: number | null
   last_seen_at: string | null
+  mil_on: boolean | null
 }
 
 export async function seedDevice(
@@ -36,10 +37,11 @@ export async function seedDevice(
         last_seen_at: vehicle.last_seen_at,
         battery_voltage: vehicle.battery_voltage,
         online: vehicle.online,
+        mil_on: vehicle.mil_on,
       },
       { onConflict: 'tenant_id,imei' },
     )
-    .select('id, car_id, last_seen_at')
+    .select('id, car_id, last_seen_at, mil_on')
     .single()
 
   if (error || !data) return null

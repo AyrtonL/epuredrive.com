@@ -35,7 +35,22 @@ describe('BouncieProvider.listVehicles', () => {
       last_lat: 25.76,
       last_lon: -80.19,
       odometer_mi: 42015,
+      mil_on: false,
     })
+  })
+
+  test('maps a lit MIL (check engine) flag through to mil_on', async () => {
+    const litVehicle = {
+      ...mockVehicle,
+      stats: { ...mockVehicle.stats, mil: { milOn: true } },
+    }
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify([litVehicle]), {
+        status: 200, headers: { 'content-type': 'application/json' },
+      }),
+    )
+    const [v] = await provider.listVehicles('token')
+    expect(v.mil_on).toBe(true)
   })
 
   test('marks vehicle offline when lastUpdated is >6h old', async () => {
@@ -63,6 +78,7 @@ describe('BouncieProvider.listVehicles', () => {
     expect(v.online).toBe(false)
     expect(v.odometer_mi).toBeNull()
     expect(v.last_lat).toBeNull()
+    expect(v.mil_on).toBeNull()
   })
 })
 

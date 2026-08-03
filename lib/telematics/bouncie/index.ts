@@ -91,6 +91,7 @@ export class BouncieProvider implements TelematicsProvider {
       last_lon: v.stats?.location?.lon ?? null,
       odometer_mi: v.stats?.odometer ?? null,
       battery_voltage: null,
+      mil_on: v.stats?.mil?.milOn ?? null,
     }))
   }
 
