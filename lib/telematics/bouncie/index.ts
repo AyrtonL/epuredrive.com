@@ -92,6 +92,9 @@ export class BouncieProvider implements TelematicsProvider {
       odometer_mi: v.stats?.odometer ?? null,
       battery_voltage: null,
       mil_on: v.stats?.mil?.milOn ?? null,
+      mil_codes: v.stats?.mil?.qualifiedDtcList?.length
+        ? v.stats.mil.qualifiedDtcList.map(d => d.code).join(',')
+        : null,
     }))
   }
 

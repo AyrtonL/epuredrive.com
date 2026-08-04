@@ -64,7 +64,17 @@ function buildAdminClient() {
       },
       upsert: (row: Record<string, unknown>, opts: Record<string, unknown>) => {
         ensureTable(table).upserts.push({ row, opts })
-        return Promise.resolve({ data: null, error: null })
+        // Support both call shapes: telematics_positions awaits the upsert
+        // directly (no chain), while ingestEvent() chains
+        // .upsert(row, opts).select('id').maybeSingle() for telematics_events.
+        const result = { data: null, error: null }
+        return {
+          then: (resolve: (v: typeof result) => void) => resolve(result),
+          select: () => ({
+            maybeSingle: () => Promise.resolve({ data: { id: 'ev-1' }, error: null }),
+            single: () => Promise.resolve({ data: { id: 'ev-1' }, error: null }),
+          }),
+        }
       },
       update: (patch: Record<string, unknown>) => ({
         eq: (_col: string, _val: unknown) => {
@@ -84,6 +94,13 @@ function buildAdminClient() {
           if (table === 'telematics_devices') {
             if (col === 'imei') recorder.deviceLookupImei = String(val)
             if (col === 'connection.status') recorder.deviceLookupStatus = String(val)
+          }
+          return q
+        }
+        q.neq = (col: string, val: unknown) => {
+          state.filters[col] = val
+          if (table === 'telematics_devices' && col === 'connection.status') {
+            recorder.deviceLookupStatus = `neq:${String(val)}`
           }
           return q
         }
@@ -187,9 +204,10 @@ describe('POST /api/telematics/webhook/bouncie', () => {
     const res = await POST(makeRequest(body, SECRET))
     expect(res.status).toBe(200)
 
-    // device lookup used the active-connection join
+    // device lookup excludes disconnected connections (not "must be active" —
+    // see resolveDevice's comment on why 'error'/'expired' still route)
     expect(recorder.deviceLookupImei).toBe('123')
-    expect(recorder.deviceLookupStatus).toBe('active')
+    expect(recorder.deviceLookupStatus).toBe('neq:disconnected')
 
     // tripData sample → location_update → positions upsert
     expect(recorder.tables['telematics_positions']?.upserts?.length ?? 0).toBe(1)

@@ -26,6 +26,10 @@ export interface ProviderVehicle {
   // null when the provider doesn't report it. Used to reconcile a dropped
   // 'mil' webhook delivery — see lib/telematics/sync.ts.
   mil_on: boolean | null
+  // Comma-joined DTC codes when mil_on is true and the provider exposes
+  // them (Bouncie's REST /vehicles response does, via qualifiedDtcList;
+  // the webhook path already carries its own codes separately).
+  mil_codes: string | null
 }
 
 export interface ProviderTrip {

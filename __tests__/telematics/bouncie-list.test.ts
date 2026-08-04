@@ -53,6 +53,43 @@ describe('BouncieProvider.listVehicles', () => {
     expect(v.mil_on).toBe(true)
   })
 
+  test('joins qualifiedDtcList codes into mil_codes', async () => {
+    const withCodes = {
+      ...mockVehicle,
+      stats: {
+        ...mockVehicle.stats,
+        mil: {
+          milOn: true,
+          qualifiedDtcList: [
+            { code: 'P0420', name: ['Catalyst System Efficiency Below Threshold'] },
+            { code: 'P0301', name: ['Cylinder 1 Misfire Detected'] },
+          ],
+        },
+      },
+    }
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify([withCodes]), {
+        status: 200, headers: { 'content-type': 'application/json' },
+      }),
+    )
+    const [v] = await provider.listVehicles('token')
+    expect(v.mil_codes).toBe('P0420,P0301')
+  })
+
+  test('mil_codes is null when qualifiedDtcList is empty', async () => {
+    const noCodes = {
+      ...mockVehicle,
+      stats: { ...mockVehicle.stats, mil: { milOn: false, qualifiedDtcList: [] } },
+    }
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify([noCodes]), {
+        status: 200, headers: { 'content-type': 'application/json' },
+      }),
+    )
+    const [v] = await provider.listVehicles('token')
+    expect(v.mil_codes).toBeNull()
+  })
+
   test('marks vehicle offline when lastUpdated is >6h old', async () => {
     const stale = {
       ...mockVehicle,

@@ -57,22 +57,50 @@ function mkSupabase(): MockSupabase {
     from(table: string) {
       if (table === 'telematics_devices') {
         return {
-          select: (_cols: string) => ({
-            eq: (_col1: string, _val1: unknown) => ({
-              eq: (_col2: string, val2: unknown) => ({
-                maybeSingle: () =>
-                  Promise.resolve({
-                    data: devicesByImei[String(val2)] ?? null,
-                    error: null,
-                  }),
-              }),
-            }),
-          }),
+          // Flexible chain: sync.ts looks up by .eq('tenant_id',_).eq('imei',_),
+          // while isStaleMilEvent (ingest.ts) looks up by a single
+          // .eq('id',_) — support any number of .eq() calls before
+          // .maybeSingle(), resolving by whichever of imei/id was filtered.
+          select: (_cols: string) => {
+            const filters: Record<string, unknown> = {}
+            const api: {
+              eq: (col: string, val: unknown) => typeof api
+              maybeSingle: () => Promise<{ data: unknown; error: null }>
+            } = {
+              eq: (col: string, val: unknown) => {
+                filters[col] = val
+                return api
+              },
+              maybeSingle: () => {
+                let found: unknown = null
+                if ('imei' in filters) {
+                  found = devicesByImei[String(filters.imei)] ?? null
+                } else if ('id' in filters) {
+                  found =
+                    Object.values(devicesByImei).find(
+                      (d) => (d as { id?: unknown } | null)?.id === filters.id,
+                    ) ?? null
+                }
+                return Promise.resolve({ data: found, error: null })
+              },
+            }
+            return api
+          },
           // ingestLocationUpdate also calls .update(...).eq('id', ...) on
-          // telematics_devices when it forwards a position.
+          // telematics_devices when it forwards a position, and
+          // isStaleMilEvent calls .update({mil_on}).eq('id', device_id) —
+          // mutate our fake row store too so a re-read in the same test
+          // sees the persisted state.
           update: (patch: Record<string, unknown>) => ({
             eq: (col: string, val: unknown) => {
               updates.push({ table, match: { [col]: val }, patch })
+              if (col === 'id') {
+                for (const [imei, dev] of Object.entries(devicesByImei)) {
+                  if ((dev as { id?: unknown } | null)?.id === val) {
+                    devicesByImei[imei] = { ...(dev as object), ...patch }
+                  }
+                }
+              }
               return Promise.resolve({ data: null, error: null })
             },
           }),
@@ -109,17 +137,19 @@ function mkSupabase(): MockSupabase {
 
       if (table === 'telematics_events') {
         return {
-          // ingestEvent() chains .insert(row).select('id').single(), while
-          // the connection_expired path (sync.ts) just awaits .insert(row)
-          // directly — support both by returning a thenable that also
-          // exposes .select().single().
+          // sync.ts's connection_expired path awaits .insert(row) directly.
           insert: (row: Record<string, unknown>) => {
+            inserts.push({ table, row })
+            return Promise.resolve({ data: null, error: null })
+          },
+          // ingestEvent() chains .upsert(row, opts).select('id').maybeSingle() —
+          // this stub doesn't model the unique-index skip, it always "succeeds".
+          upsert: (row: Record<string, unknown>, _opts: Record<string, unknown>) => {
             inserts.push({ table, row })
             const result = { data: { id: `evt-${inserts.length}` }, error: null }
             return {
-              then: (resolve: (v: typeof result) => void) => resolve(result),
               select: (_cols: string) => ({
-                single: () => Promise.resolve(result),
+                maybeSingle: () => Promise.resolve(result),
               }),
             }
           },

@@ -265,6 +265,13 @@ interface Classification {
  *
  * telematics_events.event_type has a CHECK constraint that excludes
  * 'location_update' — those are stored in telematics_positions, not here.
+ *
+ * Idempotent write: Bouncie redelivers webhooks (confirmed in production —
+ * trip_start/trip_end routinely arrive twice for the same transactionId),
+ * and the MIL reconciliation in sync.ts can re-fire while a vehicle's
+ * last_seen_at is frozen. The (tenant_id, device_id, event_type,
+ * occurred_at) unique index + ignoreDuplicates makes a redelivery/re-fire a
+ * no-op instead of a duplicate row — same pattern as telematics_positions.
  */
 export async function ingestEvent(
   supabase: SupabaseClient,
@@ -278,31 +285,45 @@ export async function ingestEvent(
     return
   }
 
+  // dtc_new/dtc_cleared only mean something as a *transition*. Per Bouncie's
+  // docs the 'mil' webhook only ever carries value:"ON" (there is no
+  // webhook for the light turning off) and gets resent repeatedly while the
+  // condition persists, not just once — and the REST reconciliation in
+  // sync.ts polls on a timer, so it can see the same "still on" state many
+  // cycles in a row. Gate both paths through the device's last-known state
+  // here so neither re-notifies for something already reported.
+  if (event.type === 'dtc_new' || event.type === 'dtc_cleared') {
+    const stale = await isStaleMilEvent(supabase, device_id, event.type === 'dtc_new')
+    if (stale) return
+  }
+
   const { severity, shouldNotify } = await classifyEvent(supabase, tenant_id, event)
 
   const { data: row, error } = await supabase
     .from('telematics_events')
-    .insert({
-      tenant_id,
-      device_id,
-      car_id,
-      event_type: event.type,
-      severity,
-      occurred_at: event.occurred_at,
-      payload: event.payload,
-    })
+    .upsert(
+      {
+        tenant_id,
+        device_id,
+        car_id,
+        event_type: event.type,
+        severity,
+        occurred_at: event.occurred_at,
+        payload: event.payload,
+      },
+      { onConflict: 'tenant_id,device_id,event_type,occurred_at', ignoreDuplicates: true },
+    )
     .select('id')
-    .single()
+    .maybeSingle()
 
-  if (error || !row) {
-    if (error) {
-      console.warn(
-        '[telematics] events insert failed',
-        safeErrorMessage(error),
-      )
-    }
+  if (error) {
+    console.warn(
+      '[telematics] events insert failed',
+      safeErrorMessage(error),
+    )
     return
   }
+  if (!row) return // duplicate delivery — already recorded, skip re-alerting
   const eventId = (row as { id?: unknown }).id
   if (typeof eventId !== 'string') return
 
@@ -326,6 +347,37 @@ export async function ingestEvent(
       )
     }
   }
+}
+
+/**
+ * Whether a dtc_new/dtc_cleared event is a real MIL transition. Compares
+ * against telematics_devices.mil_on (shared by the webhook path and the
+ * sync.ts REST reconciliation — see ingestEvent's call site) and, when it
+ * IS a real transition, persists the new state so the next delivery from
+ * either path sees it. Returns true (event is stale, caller should drop
+ * it) when the recorded state already matches.
+ */
+async function isStaleMilEvent(
+  supabase: SupabaseClient,
+  device_id: string,
+  targetOn: boolean,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from('telematics_devices')
+    .select('mil_on')
+    .eq('id', device_id)
+    .maybeSingle()
+  const current = (data as { mil_on?: boolean | null } | null)?.mil_on ?? null
+  if (current === targetOn) return true
+
+  const { error } = await supabase
+    .from('telematics_devices')
+    .update({ mil_on: targetOn })
+    .eq('id', device_id)
+  if (error) {
+    console.warn('[telematics] mil_on update failed', safeErrorMessage(error))
+  }
+  return false
 }
 
 /**

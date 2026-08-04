@@ -10,18 +10,28 @@ export interface BouncieTokenResponse {
   scope?: string
 }
 
+// Matches https://docs.bouncie.dev/openapi.json's GET /v1/vehicles response
+// exactly (verified against the raw spec, not just the rendered docs page).
 export interface BouncieVehicle {
   imei: string
   vin: string | null
   nickName: string | null
-  model: { year: number; make: string; model: string } | null
+  model: { year: number; make: string; name: string } | null
   stats: {
     lastUpdated: string
     location: { lat: number; lon: number } | null
     odometer: number | null
     fuelLevel?: number | null
-    batteryStatus?: 'normal' | 'low' | null
-    mil?: { milOn: boolean; lastUpdated?: string | null; qualifiedEvent?: boolean | null } | null
+    // Battery status lives under stats.mil.battery, not as a top-level
+    // field — Bouncie only ever exposes a status enum, never a raw
+    // voltage (ProviderVehicle.battery_voltage stays null via this path;
+    // the `battery` webhook event is the only battery signal we surface).
+    mil?: {
+      milOn: boolean
+      lastUpdated?: string | null
+      qualifiedDtcList?: Array<{ code: string; name: string[] }> | null
+      battery?: { status: 'normal' | 'low' | 'critical'; lastUpdated: string } | null
+    } | null
   } | null
 }
 

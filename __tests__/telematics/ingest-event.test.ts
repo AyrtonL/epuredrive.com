@@ -42,11 +42,13 @@ function mkSupabaseWithNotificationsError(): {
     from(table: string) {
       if (table === 'telematics_events') {
         return {
-          insert: (_row: Record<string, unknown>) => {
+          // ingestEvent() now upserts (dedupe on tenant_id/device_id/
+          // event_type/occurred_at) instead of a plain insert.
+          upsert: (_row: Record<string, unknown>, _opts: Record<string, unknown>) => {
             calls.push({ table, op: 'insert' })
             return {
               select: () => ({
-                single: () =>
+                maybeSingle: () =>
                   Promise.resolve({ data: { id: 'ev-xyz' }, error: null }),
               }),
             }
@@ -112,5 +114,119 @@ describe('ingestEvent — dispatchAlert failure isolation (HIGH #1)', () => {
     )
 
     warnSpy.mockRestore()
+  })
+})
+
+/**
+ * Build a supabase stub that tracks a single telematics_devices row's
+ * mil_on state and every telematics_events insert, for exercising
+ * isStaleMilEvent's transition gating.
+ */
+function mkSupabaseWithDevice(initialMilOn: boolean | null): {
+  events: Array<Record<string, unknown>>
+  device: { mil_on: boolean | null }
+  client: unknown
+} {
+  const events: Array<Record<string, unknown>> = []
+  const device = { mil_on: initialMilOn }
+  const client = {
+    from(table: string) {
+      if (table === 'telematics_devices') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: () => Promise.resolve({ data: { mil_on: device.mil_on }, error: null }),
+            }),
+          }),
+          update: (patch: { mil_on: boolean }) => ({
+            eq: () => {
+              device.mil_on = patch.mil_on
+              return Promise.resolve({ data: null, error: null })
+            },
+          }),
+        }
+      }
+      if (table === 'telematics_events') {
+        return {
+          upsert: (row: Record<string, unknown>) => {
+            events.push(row)
+            return {
+              select: () => ({
+                maybeSingle: () =>
+                  Promise.resolve({ data: { id: `ev-${events.length}` }, error: null }),
+              }),
+            }
+          },
+        }
+      }
+      return {
+        insert: () => Promise.resolve({ data: null, error: null }),
+        select: () => ({
+          eq: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: null }) }),
+        }),
+      }
+    },
+  }
+  return { events, device, client }
+}
+
+describe('ingestEvent — MIL transition gating', () => {
+  test('a genuine ON transition (mil_on false→true) is recorded and updates device state', async () => {
+    const { events, device, client } = mkSupabaseWithDevice(false)
+
+    await ingestEvent(client as never, {
+      tenant_id: 't1',
+      device_id: 'd1',
+      car_id: 42,
+      event: mkEvent('dtc_new', { payload: { code: 'P0420' } }),
+    })
+
+    expect(events).toHaveLength(1)
+    expect(device.mil_on).toBe(true)
+  })
+
+  test('Bouncie resending mil ON while already known-on is dropped, not re-alerted', async () => {
+    // Reproduces the production bug: Bouncie's 'mil' webhook has no "off"
+    // value and resends "ON" repeatedly while the light stays lit — this
+    // must not create a fresh alert every time.
+    const { events, device, client } = mkSupabaseWithDevice(true)
+
+    await ingestEvent(client as never, {
+      tenant_id: 't1',
+      device_id: 'd1',
+      car_id: 42,
+      event: mkEvent('dtc_new', { occurred_at: '2026-04-23T13:00:00Z' }),
+    })
+
+    expect(events).toHaveLength(0)
+    expect(device.mil_on).toBe(true)
+  })
+
+  test('a genuine cleared transition (mil_on true→false) is recorded', async () => {
+    const { events, device, client } = mkSupabaseWithDevice(true)
+
+    await ingestEvent(client as never, {
+      tenant_id: 't1',
+      device_id: 'd1',
+      car_id: 42,
+      event: mkEvent('dtc_cleared'),
+    })
+
+    expect(events).toHaveLength(1)
+    expect(device.mil_on).toBe(false)
+  })
+
+  test('a redundant cleared event when already off is dropped', async () => {
+    const { events, device, client } = mkSupabaseWithDevice(false)
+
+    await ingestEvent(client as never, {
+      tenant_id: 't1',
+      device_id: 'd1',
+      car_id: 42,
+      event: mkEvent('dtc_cleared'),
+    })
+
+    expect(events).toHaveLength(0)
+    expect(device.mil_on).toBe(false)
   })
 })

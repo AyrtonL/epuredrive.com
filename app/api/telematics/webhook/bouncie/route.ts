@@ -152,11 +152,21 @@ export async function POST(req: Request) {
 }
 
 /**
- * Resolve an IMEI to its device row, joining `telematics_connections` with
- * status='active'. This JOIN is the authoritative defense against cross-tenant
- * IMEI routing (audit #1) — UNIQUE(tenant_id, imei) alone would theoretically
- * let two tenants register the same IMEI; the active-connection filter ensures
- * only one wins at ingest time.
+ * Resolve an IMEI to its device row, joining `telematics_connections` and
+ * excluding 'disconnected' ones. This JOIN is the authoritative defense
+ * against cross-tenant IMEI routing (audit #1) — UNIQUE(tenant_id, imei)
+ * alone would theoretically let two tenants register the same IMEI; the
+ * connection-status filter ensures only one wins at ingest time.
+ *
+ * Deliberately status != 'disconnected' rather than status = 'active':
+ * webhook ingestion never uses the connection's access_token (unlike the
+ * cron pull-sync), so a connection sitting in 'error' or 'expired' is still
+ * a legitimate, tenant-owned mapping — only an explicit disconnectAction()
+ * call (which the user triggers) should stop us trusting it. Requiring
+ * 'active' here meant a single transient sync failure (see
+ * lib/telematics/sync.ts) silently dropped every live webhook for that
+ * tenant, and since we always 200 OK the request, Bouncie never retried —
+ * that data was gone for good, not just delayed.
  */
 async function resolveDevice(
   supabase: SupabaseClient,
@@ -168,7 +178,7 @@ async function resolveDevice(
       'id, tenant_id, car_id, connection:telematics_connections!inner(id,status)',
     )
     .eq('imei', imei)
-    .eq('connection.status', 'active')
+    .neq('connection.status', 'disconnected')
     .maybeSingle()
 
   if (error) {
