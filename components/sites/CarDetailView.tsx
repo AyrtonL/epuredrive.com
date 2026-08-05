@@ -10,6 +10,7 @@ interface Props {
   slug?: string
   paymentsEnabled?: boolean
   paymentProcessor?: string
+  cardSurchargeRate?: number | null
   whatsappPhone?: string | null
   pickupLocations?: PickupLocation[]
   rentalExtras?: RentalExtra[]
@@ -21,7 +22,7 @@ function resolveImageUrl(url: string | null): string {
   return `/${url}`
 }
 
-export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, paymentProcessor, whatsappPhone, pickupLocations = [], rentalExtras = [] }: Props) {
+export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, paymentProcessor, cardSurchargeRate, whatsappPhone, pickupLocations = [], rentalExtras = [] }: Props) {
   const gallery: string[] = Array.isArray(car.gallery) && car.gallery.length > 0
     ? car.gallery
     : car.image_url
@@ -148,6 +149,7 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
               whatsappPhone={whatsappPhone}
               paymentsEnabled={paymentsEnabled}
               paymentProcessor={paymentProcessor}
+              cardSurchargeRate={cardSurchargeRate}
               rentalExtras={rentalExtras}
             />
           </div>

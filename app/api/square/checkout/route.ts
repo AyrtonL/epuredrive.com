@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Currency } from 'square'
 import { getSquareClient } from '@/lib/square/client'
 import { refreshSquareToken } from '@/lib/square/oauth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit } from '@/lib/rate-limit'
 import { decryptSquareToken, encryptSquareToken } from '@/lib/square/token-crypto'
+import { calculateCardSurcharge, getCardSurchargeRate } from '@/lib/pricing/cardSurcharge'
 import crypto from 'crypto'
 
 function isAllowedOrigin(origin: string | null): boolean {
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
   // Fetch tenant with Square credentials
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, brand_name, slug, plan, square_merchant_id, square_access_token, square_refresh_token, square_token_expires_at, square_location_id')
+    .select('id, name, brand_name, slug, plan, square_merchant_id, square_access_token, square_refresh_token, square_token_expires_at, square_location_id, card_surcharge_rate')
     .eq('id', tenantId)
     .single()
 
@@ -148,7 +150,13 @@ export async function POST(request: NextRequest) {
   }
 
   const rentalCents = Math.round(car.daily_rate * days * 100)
-  const totalCents = rentalCents + extrasCents
+  const subtotalCents = rentalCents + extrasCents
+
+  // Card payment surcharge — computed server-side from the tenant's configured rate
+  const surchargeRate = getCardSurchargeRate(tenant.card_surcharge_rate)
+  const surchargeCents = calculateCardSurcharge(subtotalCents, tenant.card_surcharge_rate)
+  const totalCents = subtotalCents + surchargeCents
+
   const redirectOrigin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const carName = `${car.make} ${car.model}`
 
@@ -182,15 +190,32 @@ export async function POST(request: NextRequest) {
     const client = getSquareClient(accessToken)
     const idempotencyKey = crypto.randomUUID()
 
+    const orderLineItems = [
+      {
+        name: `${carName} — ${days}-day rental`,
+        quantity: '1',
+        basePriceMoney: {
+          amount: BigInt(subtotalCents),
+          currency: Currency.Usd,
+        },
+      },
+      ...(surchargeCents > 0
+        ? [{
+            name: `Card payment surcharge (${(surchargeRate * 100).toFixed(2).replace(/\.?0+$/, '')}%)`,
+            quantity: '1',
+            basePriceMoney: {
+              amount: BigInt(surchargeCents),
+              currency: Currency.Usd,
+            },
+          }]
+        : []),
+    ]
+
     const result = await client.checkout.paymentLinks.create({
       idempotencyKey,
-      quickPay: {
-        name: `${carName} — ${days}-day rental`,
-        priceMoney: {
-          amount: BigInt(totalCents),
-          currency: 'USD',
-        },
+      order: {
         locationId: tenant.square_location_id,
+        lineItems: orderLineItems,
       },
       checkoutOptions: {
         redirectUrl: `${redirectOrigin}/sites/${tenant.slug}/${carId}?booked=true`,

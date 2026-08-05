@@ -20,7 +20,7 @@ export default async function BookingsPage() {
       .eq('tenant_id', tenantId),
     supabase
       .from('tenants')
-      .select('fuel_charge_per_level')
+      .select('fuel_charge_per_level, card_surcharge_rate')
       .eq('id', tenantId)
       .single(),
     supabase
@@ -53,7 +53,13 @@ export default async function BookingsPage() {
       </div>
 
       <div className="glass border border-white/10 rounded-3xl p-6 md:p-8">
-        <BookingsTable reservations={rows} cars={carRows} rentalExtras={extraRows} chargePerLevel={tenant?.fuel_charge_per_level ?? 20} />
+        <BookingsTable
+          reservations={rows}
+          cars={carRows}
+          rentalExtras={extraRows}
+          chargePerLevel={tenant?.fuel_charge_per_level ?? 20}
+          cardSurchargeRate={tenant?.card_surcharge_rate ?? null}
+        />
       </div>
     </div>
   )

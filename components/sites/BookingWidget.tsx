@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import type { Car, PickupLocation, RentalExtra, ReservationExtra } from '@/lib/supabase/types'
 import DateRangePicker from './DateRangePicker'
 import { trackBookingStart, trackBookingSubmit, trackWhatsAppInquiry } from '@/lib/analytics'
+import { calculateCardSurcharge, getCardSurchargeRate } from '@/lib/pricing/cardSurcharge'
 
 interface Props {
   car: Car
@@ -12,6 +13,7 @@ interface Props {
   whatsappPhone?: string | null
   paymentsEnabled?: boolean
   paymentProcessor?: string
+  cardSurchargeRate?: number | null
   rentalExtras?: RentalExtra[]
 }
 
@@ -32,7 +34,7 @@ function formatBookedRange(from: string, to: string): string {
   return `${fmt(from)} – ${fmt(to)}`
 }
 
-export default function BookingWidget({ car, tenantId, pickupLocations = [], whatsappPhone, paymentsEnabled, paymentProcessor, rentalExtras = [] }: Props) {
+export default function BookingWidget({ car, tenantId, pickupLocations = [], whatsappPhone, paymentsEnabled, paymentProcessor, cardSurchargeRate, rentalExtras = [] }: Props) {
   const [pickDate, setPickDate] = useState('')
   const [retDate, setRetDate] = useState('')
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([])
@@ -42,6 +44,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   const [locationIdx, setLocationIdx] = useState(0)
 
   const [selectedExtras, setSelectedExtras] = useState<Record<string, boolean>>({})
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card')
 
   const selectedLocation: PickupLocation | null = pickupLocations[locationIdx] ?? null
 
@@ -95,18 +98,28 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
     setDateConflict(conflict)
   }, [pickDate, retDate, bookedRanges])
 
-  const { total, locFee, extrasTotal, baseCost } = useMemo(() => {
+  const { total, locFee, extrasTotal, baseCost, surcharge } = useMemo(() => {
     const baserate = Number(car.daily_rate) || 0
     const base = days * baserate
     const lFee = selectedLocation?.fee ?? 0
     const eTotal = rentalExtras
       .filter(e => selectedExtras[e.id])
       .reduce((sum, e) => sum + (e.pricing_type === 'per_day' ? days * e.price : e.price), 0)
+    const subtotal = base + lFee + eTotal
+    const applySurcharge = !!paymentsEnabled && paymentMethod === 'card'
+    const surchargeAmount = applySurcharge
+      ? calculateCardSurcharge(Math.round(subtotal * 100), cardSurchargeRate ?? null) / 100
+      : 0
     return {
-      baseCost: base, locFee: lFee, extrasTotal: eTotal,
-      total: base + lFee + eTotal
+      baseCost: base, locFee: lFee, extrasTotal: eTotal, surcharge: surchargeAmount,
+      total: subtotal + surchargeAmount
     }
-  }, [days, car.daily_rate, selectedLocation, selectedExtras, rentalExtras])
+  }, [days, car.daily_rate, selectedLocation, selectedExtras, rentalExtras, paymentsEnabled, paymentMethod, cardSurchargeRate])
+
+  const surchargePercentLabel = useMemo(() => {
+    const rate = getCardSurchargeRate(cardSurchargeRate ?? null)
+    return (rate * 100).toLocaleString('en-US', { maximumFractionDigits: 2 })
+  }, [cardSurchargeRate])
 
   // Build ReservationExtra[] for API submission
   const buildExtrasPayload = (): ReservationExtra[] => {
@@ -173,8 +186,8 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
     setSubmitting(true)
     setFormError('')
     try {
-      // If tenant has payments enabled, redirect to checkout for payment
-      if (paymentsEnabled) {
+      // If tenant has payments enabled and customer chose to pay by card, redirect to checkout
+      if (paymentsEnabled && paymentMethod === 'card') {
         const extras = buildExtrasPayload()
         const checkoutEndpoint = paymentProcessor === 'square' ? '/api/square/checkout' : '/api/checkout'
         const res = await fetch(checkoutEndpoint, {
@@ -215,7 +228,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
         return
       }
 
-      // No Stripe Connect — submit as booking request (no payment)
+      // Cash payment chosen, or tenant has no online payments configured — submit as a request (no charge now)
       await submitBookingRequest()
     } catch {
       setFormError('Network error. Please try again.')
@@ -394,8 +407,38 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
           </div>
         )}
 
+        {/* Payment Method Selection */}
+        {paymentsEnabled && (
+          <div className="space-y-3 pt-4">
+            <div className="text-[9px] font-black text-white/30 uppercase tracking-widest ml-1 mb-2">Payment Method</div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setPaymentMethod('card')}
+                className={`p-4 rounded-2xl border transition-all duration-300 text-[11px] font-black uppercase tracking-tight ${paymentMethod === 'card' ? 'bg-primary/10 border-primary/30 text-white' : 'bg-white/5 border-white/5 text-white/40 hover:border-white/10'}`}
+              >
+                Card
+              </button>
+              <button
+                onClick={() => setPaymentMethod('cash')}
+                className={`p-4 rounded-2xl border transition-all duration-300 text-[11px] font-black uppercase tracking-tight ${paymentMethod === 'cash' ? 'bg-primary/10 border-primary/30 text-white' : 'bg-white/5 border-white/5 text-white/40 hover:border-white/10'}`}
+              >
+                Cash
+              </button>
+            </div>
+            {paymentMethod === 'cash' && (
+              <p className="text-[9px] text-white/25 font-bold uppercase tracking-widest ml-1">Reserve now, pay in cash at pickup — no surcharge</p>
+            )}
+          </div>
+        )}
+
         {/* Summary / Total */}
         <div className="pt-8 space-y-4">
+          {surcharge > 0 && (
+            <div className="flex items-center justify-between px-2 text-white/40">
+              <span className="text-[9px] font-bold uppercase tracking-widest">Card surcharge ({surchargePercentLabel}%)</span>
+              <span className="text-xs font-bold">${surcharge.toLocaleString()}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between px-2">
             <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Est. Investment</span>
             <div className="text-right">
@@ -464,8 +507,8 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
                 className="w-full bg-white text-black font-black uppercase tracking-[0.2em] text-[11px] py-5 rounded-2xl hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting
-                  ? (paymentsEnabled ? 'Redirecting to Payment...' : 'Submitting...')
-                  : (paymentsEnabled ? 'Pay & Reserve Now' : 'Confirm Reservation Request')}
+                  ? (paymentsEnabled && paymentMethod === 'card' ? 'Redirecting to Payment...' : 'Submitting...')
+                  : (paymentsEnabled && paymentMethod === 'card' ? 'Pay & Reserve Now' : 'Confirm Reservation Request')}
               </button>
               <button
                 onClick={() => setShowBookingForm(false)}

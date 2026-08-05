@@ -30,9 +30,10 @@ interface Props {
   cars: Car[]
   rentalExtras: RentalExtra[]
   chargePerLevel: number
+  cardSurchargeRate: number | null
 }
 
-export default function BookingsTable({ reservations, cars, rentalExtras, chargePerLevel }: Props) {
+export default function BookingsTable({ reservations, cars, rentalExtras, chargePerLevel, cardSurchargeRate }: Props) {
   const router = useRouter()
   const [filter, setFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -360,6 +361,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
         cars={cars}
         rentalExtras={rentalExtras}
         chargePerLevel={chargePerLevel}
+        cardSurchargeRate={cardSurchargeRate}
       />
     </div>
   )

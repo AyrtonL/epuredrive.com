@@ -178,6 +178,7 @@ export async function POST(request: NextRequest) {
         booking_code: bookingCode,
         notes: `Paid online — ${days > 0 ? `${days} day${days !== 1 ? 's' : ''} ` : ''}via Square`,
         extras: pendingCheckout?.extras || null,
+        payment_method: 'card',
       })
       .select('id, booking_code')
       .single()

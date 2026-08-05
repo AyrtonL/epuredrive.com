@@ -44,7 +44,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, brand_name, slug, stripe_account_id, square_merchant_id, payment_processor, whatsapp_phone, pickup_locations')
+    .select('id, name, brand_name, slug, stripe_account_id, square_merchant_id, payment_processor, whatsapp_phone, pickup_locations, card_surcharge_rate')
     .eq('slug', params.slug)
     .single()
 
@@ -120,6 +120,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
         slug={tenant.slug!}
         paymentsEnabled={!!tenant.stripe_account_id || !!tenant.square_merchant_id}
         paymentProcessor={tenant.payment_processor ?? 'stripe'}
+        cardSurchargeRate={tenant.card_surcharge_rate ?? null}
         whatsappPhone={tenant.whatsapp_phone ?? null}
         pickupLocations={pickupLocations}
         rentalExtras={(rentalExtras as RentalExtra[]) ?? []}

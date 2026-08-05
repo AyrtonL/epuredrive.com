@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe'
 import { rateLimit } from '@/lib/rate-limit'
 import { getPlatformFeeRate } from '@/lib/plan/effective-plan'
+import { calculateCardSurcharge, getCardSurchargeRate } from '@/lib/pricing/cardSurcharge'
 
 export async function POST(request: NextRequest) {
   const limited = rateLimit(request, 'checkout', { windowMs: 60_000, max: 10 })
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, brand_name, stripe_account_id, slug, plan, payment_processor')
+    .select('id, name, brand_name, stripe_account_id, slug, plan, payment_processor, card_surcharge_rate')
     .eq('id', tenantId)
     .single()
 
@@ -148,6 +149,24 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Card payment surcharge — computed server-side from the tenant's configured rate
+  const subtotalCents = lineItems.reduce((sum, li) => sum + li.price_data.unit_amount * li.quantity, 0)
+  const surchargeRate = getCardSurchargeRate(tenant.card_surcharge_rate)
+  const surchargeCents = calculateCardSurcharge(subtotalCents, tenant.card_surcharge_rate)
+
+  if (surchargeCents > 0) {
+    lineItems.push({
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: `Card payment surcharge (${(surchargeRate * 100).toFixed(2).replace(/\.?0+$/, '')}%)`,
+        },
+        unit_amount: surchargeCents,
+      },
+      quantity: 1,
+    })
+  }
+
   // Calculate total for fee
   const totalCents = lineItems.reduce((sum, li) => sum + li.price_data.unit_amount * li.quantity, 0)
 
@@ -176,6 +195,7 @@ export async function POST(request: NextRequest) {
           return_time: returnTime,
           pickup_location: pickupLocation,
           extras: validatedExtras.length > 0 ? JSON.stringify(validatedExtras) : '',
+          payment_method: 'card',
         },
         success_url: `${origin}/sites/${tenant.slug}/${carId}?booked=true`,
         cancel_url: `${origin}/sites/${tenant.slug}/${carId}`,

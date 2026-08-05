@@ -43,6 +43,7 @@ export interface Tenant {
   square_merchant_id: string | null
   square_location_id: string | null
   payment_processor: string | null  // 'stripe' | 'square'
+  card_surcharge_rate: number | null  // 0.06 = 6%, NULL treated as 0.06 default
   site_theme: 'dark' | 'light'
   // Lifecycle
   status: string | null  // 'active' | 'suspended'
@@ -122,6 +123,7 @@ export interface Reservation {
   security_deposit: number | null
   surcharge: number | null
   amount_outstanding: number | null
+  payment_method: string | null  // 'card' | 'cash'
   // vehicle state
   odometer_out: number | null
   odometer_in: number | null

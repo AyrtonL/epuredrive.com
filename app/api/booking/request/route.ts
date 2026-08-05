@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
       notes: typeof data.notes === 'string' ? data.notes.trim().slice(0, 2000) : null,
       extras: Array.isArray(data.extras) ? data.extras : null,
       booking_code: bookingCode,
+      payment_method: 'cash',
     })
     .select('id, booking_code')
     .single()

@@ -158,6 +158,7 @@ export async function POST(request: Request) {
         booking_code: bookingCode,
         notes: `Paid online — ${days} day${days !== 1 ? 's' : ''} via Stripe Checkout`,
         extras,
+        payment_method: metadata.payment_method || 'card',
       })
       .select('id, booking_code')
       .single()

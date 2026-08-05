@@ -18,6 +18,7 @@ import FuelSummary from '@/components/dashboard/FuelSummary'
 import TenantCloseOut from './TenantCloseOut'
 import DatePicker from '@/components/ui/DatePicker'
 import TimePicker from '@/components/ui/TimePicker'
+import { calculateCardSurcharge } from '@/lib/pricing/cardSurcharge'
 
 interface Props {
   isOpen: boolean
@@ -26,6 +27,7 @@ interface Props {
   cars: Car[]
   rentalExtras: RentalExtra[]
   chargePerLevel: number
+  cardSurchargeRate: number | null
 }
 
 type TabKey = 'customer' | 'trip' | 'charges' | 'vehicle' | 'agreement'
@@ -59,7 +61,7 @@ function calcNights(pickup: string | null | undefined, ret: string | null | unde
   return diff >= 0 ? diff : null
 }
 
-export default function BookingModal({ isOpen, onClose, reservation, cars, rentalExtras, chargePerLevel }: Props) {
+export default function BookingModal({ isOpen, onClose, reservation, cars, rentalExtras, chargePerLevel, cardSurchargeRate }: Props) {
   const [isPending, startTransition] = useTransition()
   const [isSendingAgreement, setIsSendingAgreement] = useTransition()
   const [isOpeningAgreement, setIsOpeningAgreement] = useTransition()
@@ -208,6 +210,16 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
     })
   }
 
+  function handlePaymentMethodChange(method: 'card' | 'cash') {
+    if (method === 'card') {
+      const subtotalCents = Math.round((Number(formData.total_amount) || 0) * 100)
+      const surchargeCents = calculateCardSurcharge(subtotalCents, cardSurchargeRate)
+      setFormData({ ...formData, payment_method: method, surcharge: surchargeCents / 100 })
+      return
+    }
+    setFormData({ ...formData, payment_method: method })
+  }
+
   function handlePickCustomer(c: CustomerLookup) {
     setFormData((prev) => ({
       ...prev,
@@ -277,6 +289,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
       total_amount: Number(formData.total_amount) || null,
       security_deposit: formData.security_deposit ? Number(formData.security_deposit) : null,
       surcharge: formData.surcharge ? Number(formData.surcharge) : null,
+      payment_method: formData.payment_method || null,
       amount_outstanding: formData.amount_outstanding ? Number(formData.amount_outstanding) : null,
       odometer_out: formData.odometer_out ? Number(formData.odometer_out) : null,
       odometer_in: formData.odometer_in ? Number(formData.odometer_in) : null,
@@ -735,6 +748,26 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
 
               {/* CHARGES TAB */}
               <div className={activeTab === 'charges' ? 'space-y-5' : 'hidden'}>
+                <div className="space-y-1">
+                  <label className={LABEL_CLASS}>Payment Method</label>
+                  <div className="flex gap-2">
+                    {(['card', 'cash'] as const).map((method) => {
+                      const active = (formData.payment_method ?? '') === method
+                      return (
+                        <button
+                          key={method}
+                          type="button"
+                          onClick={() => handlePaymentMethodChange(method)}
+                          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border transition-colors ${
+                            active ? 'bg-white/15 border-white/30 text-white' : 'bg-white/5 border-transparent text-white/40 hover:text-white/70'
+                          }`}
+                        >
+                          {method === 'card' ? 'Card' : 'Cash'}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-1">
                     <label className={LABEL_CLASS}>Total Amount ($) *</label>
