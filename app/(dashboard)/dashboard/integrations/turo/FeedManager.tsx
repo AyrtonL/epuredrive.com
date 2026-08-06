@@ -71,6 +71,10 @@ export default function FeedManager({ sync, tenantId }: Props) {
       if (result.errors > 0 || result.errorDetails?.length) {
         throw new Error(result.errorDetails?.[0] ?? `${result.errors} sync error(s).`)
       }
+      if (result.lockSkipped && !result.totalSynced) {
+        setSyncMsg('A sync is already running in the background — check back in a moment.')
+        return
+      }
       setSyncMsg(`Sync complete — ${result.totalSynced ?? 0} booking(s) processed.`)
     } catch (err: any) {
       setSyncMsg('Sync failed: ' + err.message)

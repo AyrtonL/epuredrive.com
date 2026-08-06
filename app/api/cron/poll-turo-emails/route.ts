@@ -70,6 +70,32 @@ async function refreshAccessToken(sync: EmailSync): Promise<string> {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+// The dashboard's manual "Sync Now" button hits this same route as the 15-min pg_cron
+// job. When both land close together they each refresh the Gmail access token for the
+// same sync row concurrently, and Google's token-verification edge sometimes rejects a
+// just-minted token before it has propagated — the gmailFetch retry/backoff doesn't
+// always cover it. Claim the row before polling so only one invocation runs it at a
+// time; a stale claim (a run that crashed without releasing) expires after 2 minutes.
+const SYNC_LOCK_STALE_MS = 2 * 60 * 1000
+
+async function claimSync(syncId: string): Promise<boolean> {
+  const supabase = createAdminClient()
+  const staleBefore = new Date(Date.now() - SYNC_LOCK_STALE_MS).toISOString()
+  const { data, error } = await supabase
+    .from('turo_email_syncs')
+    .update({ sync_started_at: new Date().toISOString() })
+    .eq('id', syncId)
+    .or(`sync_started_at.is.null,sync_started_at.lt.${staleBefore}`)
+    .select('id')
+  if (error) throw new Error(`Failed to claim sync lock: ${error.message}`)
+  return !!data?.length
+}
+
+async function releaseSync(syncId: string): Promise<void> {
+  const supabase = createAdminClient()
+  await supabase.from('turo_email_syncs').update({ sync_started_at: null }).eq('id', syncId)
+}
+
 async function gmailFetch(path: string, sync: EmailSync, attempt = 0): Promise<any> {
   const res = await fetch(`${GMAIL_BASE}${path}`, {
     headers: { Authorization: `Bearer ${sync.access_token}` },
@@ -584,9 +610,15 @@ export async function GET(request: Request) {
 
   let totalSynced = 0
   let errors = 0
+  let lockSkipped = 0
   const errorDetails: string[] = []
 
   for (const sync of syncs) {
+    if (!(await claimSync(sync.id))) {
+      lockSkipped++
+      console.info(`[poll-turo-emails] Sync ${sync.id} already running elsewhere, skipping`)
+      continue
+    }
     try {
       const synced =
         sync.provider === 'icloud'
@@ -608,9 +640,16 @@ export async function GET(request: Request) {
       }
       errorDetails.push(msg.slice(0, 500))
       errors++
+    } finally {
+      await releaseSync(sync.id)
     }
   }
 
-  console.info(`[poll-turo-emails] Done: ${totalSynced} synced, ${errors} error(s)`)
-  return NextResponse.json({ totalSynced, errors, ...(errorDetails.length ? { errorDetails } : {}) })
+  console.info(`[poll-turo-emails] Done: ${totalSynced} synced, ${errors} error(s), ${lockSkipped} skipped (locked)`)
+  return NextResponse.json({
+    totalSynced,
+    errors,
+    ...(lockSkipped ? { lockSkipped } : {}),
+    ...(errorDetails.length ? { errorDetails } : {}),
+  })
 }
