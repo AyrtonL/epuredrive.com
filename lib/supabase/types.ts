@@ -138,6 +138,8 @@ export interface Reservation {
   extras: ReservationExtra[] | null
   // review request email tracking
   review_email_sent_at: string | null
+  // D-1 "return tomorrow" customer email tracking (dedup guard)
+  return_reminder_sent_at: string | null
   // payment IDs
   stripe_payment_id: string | null
   stripe_session_id: string | null

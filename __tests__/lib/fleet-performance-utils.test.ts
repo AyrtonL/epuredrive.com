@@ -47,6 +47,7 @@ const makeRes = (overrides: Partial<Reservation> = {}): Reservation => ({
   damage_checkout: null,
   extras: null,
   review_email_sent_at: null,
+  return_reminder_sent_at: null,
   stripe_payment_id: null,
   stripe_session_id: null,
   square_payment_id: null,

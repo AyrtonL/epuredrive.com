@@ -45,6 +45,7 @@ interface ReservationRow {
   status: string | null
   tenant_id: string | null
   booking_code: string | null
+  return_reminder_sent_at: string | null
 }
 
 interface CarRow {
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
   // ── Pull active rentals due tomorrow OR already overdue ──────────────
   const { data: reservations, error: reservationsError } = await supabase
     .from('reservations')
-    .select('id, car_id, customer_name, customer_email, customer_phone, pickup_date, return_date, return_time, return_location, status, tenant_id, booking_code')
+    .select('id, car_id, customer_name, customer_email, customer_phone, pickup_date, return_date, return_time, return_location, status, tenant_id, booking_code, return_reminder_sent_at')
     .eq('status', 'active')
     .or(`return_date.eq.${tomorrowStr},return_date.lt.${todayStr}`)
 
@@ -138,6 +139,7 @@ export async function POST(request: NextRequest) {
     const car = row.car_id != null ? carMap.get(row.car_id) ?? null : null
 
     if (row.return_date === tomorrowStr) {
+      if (row.return_reminder_sent_at) continue // already sent — avoids duplicate if this route re-runs same day
       remindersToSend.push({ row, tenant, car })
       continue
     }
@@ -172,7 +174,13 @@ export async function POST(request: NextRequest) {
           bookingCode: row.booking_code,
         }),
       })
-      if (!result.error) remindersSent += 1
+      if (!result.error) {
+        remindersSent += 1
+        await supabase
+          .from('reservations')
+          .update({ return_reminder_sent_at: new Date().toISOString() })
+          .eq('id', row.id)
+      }
     }),
   )
 
