@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { CarService, Car } from '@/lib/supabase/types'
 import { deleteService } from './actions'
 import ServiceModal from './ServiceModal'
+import { useToast } from '@/components/ui/Toast'
 
 const PAGE_SIZE = 15
 
@@ -15,6 +16,7 @@ interface Props {
 
 export default function MaintenanceTable({ services, cars }: Props) {
   const router = useRouter()
+  const toast = useToast()
   const [filter, setFilter] = useState('')
   const [isPending, startTransition] = useTransition()
   
@@ -46,7 +48,11 @@ export default function MaintenanceTable({ services, cars }: Props) {
   function handleDelete(id: number) {
     if (!confirm('Delete this maintenance record?')) return
     startTransition(async () => {
-      await deleteService(id)
+      const result = await deleteService(id)
+      if (result.error) {
+        toast.error(result.error)
+        return
+      }
       router.refresh()
     })
   }

@@ -6,6 +6,7 @@ import type { CarService, Car } from '@/lib/supabase/types'
 import { createService, updateService, updateCarMileage } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 import DatePicker from '@/components/ui/DatePicker'
+import { useToast } from '@/components/ui/Toast'
 
 interface Props {
   isOpen: boolean
@@ -19,6 +20,7 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
   const [isPending, startTransition] = useTransition()
   const [errorStr, setErrorStr] = useState<string | null>(null)
   const router = useRouter()
+  const toast = useToast()
 
   const [formData, setFormData] = useState<Partial<CarService>>({})
 
@@ -92,7 +94,10 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
         if (serviceMileage && formData.car_id) {
           const car = cars.find(c => c.id === Number(formData.car_id))
           if (!car?.mileage || serviceMileage > car.mileage) {
-            await updateCarMileage(Number(formData.car_id), serviceMileage)
+            const mileageResult = await updateCarMileage(Number(formData.car_id), serviceMileage)
+            if (mileageResult.error) {
+              toast.error(`Record saved, but odometer update failed: ${mileageResult.error}`)
+            }
           }
         }
 
