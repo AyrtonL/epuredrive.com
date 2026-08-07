@@ -367,20 +367,28 @@ async function findExistingReservation(
 ): Promise<ExistingReservation | null> {
   const supabase = createAdminClient()
   if (parsed.reservationId) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('reservations')
       .select('id, status')
       .eq('tenant_id', tenantId)
       .like('notes', `%Turo-Res #${parsed.reservationId}%`)
       .limit(1)
+    // A lookup failure must not be treated as "no existing row" — that silently sends this
+    // message down the insert path and throws a permanent duplicate-key error on every
+    // future re-scan (found 2026-08-07: message 19fd408b43226c36 / Turo-Res #60079137 kept
+    // failing this way for 8+ hours even though the row existed and the same query worked
+    // fine outside the deployed function — root cause unconfirmed, but silently swallowing
+    // the error made it un-debuggable and turned a one-off blip into a permanent loop).
+    if (error) throw new Error(`Existing-reservation lookup by Turo-Res # failed: ${error.message}`)
     if (data?.[0]) return data[0]
   }
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('reservations')
     .select('id, status')
     .eq('tenant_id', tenantId)
     .like('notes', `%Turo #${parsed.messageId}%`)
     .limit(1)
+  if (error) throw new Error(`Existing-reservation lookup by Gmail message id failed: ${error.message}`)
   return data?.[0] ?? null
 }
 
