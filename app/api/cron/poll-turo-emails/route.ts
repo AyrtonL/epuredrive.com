@@ -134,9 +134,6 @@ function getMessageBody(payload: GmailPart): string {
     return null
   }
 
-  const plain = findPlain(payload)
-  if (plain) return plain
-
   function findHtml(p: GmailPart): string | null {
     if (p.mimeType === 'text/html' && p.body?.data) {
       return Buffer.from(p.body.data, 'base64url')
@@ -154,7 +151,13 @@ function getMessageBody(payload: GmailPart): string {
     return null
   }
 
-  return findHtml(payload) || ''
+  // Some Turo templates (e.g. "has returned your <car>") ship a text/plain part whose
+  // labels ("Total paid", "Returned to") have no values next to them — the amounts only
+  // render in the HTML table cells. Append the HTML-stripped body so field-extraction
+  // regexes can fall back to it instead of silently finding nothing.
+  const plain = findPlain(payload)
+  const html = findHtml(payload)
+  return [plain, html].filter(Boolean).join('\n')
 }
 
 // ── IMAP raw email body extractor ─────────────────────────────────────────────
@@ -207,7 +210,10 @@ function extractMimeParts(raw: string): string {
           .trim()
       }
     }
-    return plainText || htmlText || ''
+    // See the matching comment in getMessageBody(): some Turo templates omit values from
+    // their plain-text part entirely, so fall back to (or supplement with) the HTML-stripped
+    // body rather than dropping it once a plain part is found.
+    return [plainText, htmlText].filter(Boolean).join('\n')
   }
 
   const bodyStart = raw.indexOf('\r\n\r\n')
@@ -234,7 +240,7 @@ function parseTuroDate(str: string): string | null {
 }
 
 interface ParsedEmail {
-  type: 'confirm' | 'modify' | 'cancel'
+  type: 'confirm' | 'modify' | 'cancel' | 'return'
   messageId: string
   reservationId: string | null
   customer_name: string | null
@@ -260,18 +266,20 @@ function parseTuroEmail(body: string, subject: string, messageId: string): Parse
   const isCancelled = /cancel/i.test(subject)
   const isModified = /changed their trip|modif|updated.*trip|trip.*updated/i.test(subject)
   const isConfirmed = /is booked|cha.?ching|trip.*booked|booked.*trip/i.test(fullText)
+  const isReturned = /has returned your/i.test(subject)
 
-  if (!isConfirmed && !isCancelled && !isModified) return null
+  if (!isConfirmed && !isCancelled && !isModified && !isReturned) return null
 
-  // The Turo Reservation ID is stable across the confirm / modify / cancel emails for the
-  // same booking - use it as the primary key so those emails all update the one row.
-  const resIdMatch = fullText.match(/Reservation ID #?(\d+)/i) || subject.match(/\((\d{6,})\)/)
+  // The Turo Reservation ID is stable across all of a booking's emails - use it as the
+  // primary key so they all update the one row. Format varies: "Reservation ID #123" on
+  // confirm/modify/upcoming emails, "Reservation ID: #123" on the return-confirmation email.
+  const resIdMatch = fullText.match(/Reservation ID:?\s*#?(\d+)/i) || subject.match(/\((\d{6,})\)/)
   const reservationId = resIdMatch?.[1] ?? null
 
   // Guest name: the subject is the most reliable source across all three email types.
   const subjGuest =
     subject.match(/^(.+?)[’']s trip with your/i) ||
-    subject.match(/^(.+?) has (?:changed|canceled|cancelled)/i)
+    subject.match(/^(.+?) has (?:changed|canceled|cancelled|returned)/i)
   const bodyGuest =
     body.match(/Cha-?ching!\s*(.+?)[’']s trip with your/i) ||
     body.match(/(.+?)[’']s trip with your/i)
@@ -279,6 +287,24 @@ function parseTuroEmail(body: string, subject: string, messageId: string): Parse
 
   if (isCancelled) {
     return { type: 'cancel', messageId, reservationId, customer_name: guestName, pickup_date: null, return_date: null }
+  }
+
+  // The return-confirmation email carries the final reconciled "Total paid" for the trip
+  // (extra miles, late fees, etc. already applied) - the one place Turo gives a settled
+  // amount instead of the booking-time estimate. No dates/vehicle needed: this only
+  // refreshes total_amount on the existing reservation, matched by reservationId.
+  if (isReturned) {
+    const totalMatch = body.match(/Total paid[^$]*\$([0-9,]+(?:\.\d{2})?)/i)
+    if (!reservationId || !totalMatch) return null
+    return {
+      type: 'return',
+      messageId,
+      reservationId,
+      customer_name: guestName,
+      pickup_date: null,
+      return_date: null,
+      total_amount: parseFloat(totalMatch[1].replace(/,/g, '')),
+    }
   }
 
   // Turo sometimes appends the delivery location ("Audi A3 at Fort Lauderdale ... Airport").
@@ -410,6 +436,16 @@ async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promise<void>
     return
   }
 
+  if (parsed.type === 'return') {
+    // Only refreshes total_amount with the settled figure - no matching reservation means
+    // the confirm email hasn't been processed yet (or was missed); nothing to attach it to.
+    const existing = await findExistingReservation(parsed, sync.tenant_id)
+    if (existing && parsed.total_amount != null) {
+      await supabase.from('reservations').update({ total_amount: parsed.total_amount }).eq('id', existing.id)
+    }
+    return
+  }
+
   const existing = await findExistingReservation(parsed, sync.tenant_id)
   const carId = await findCarId(sync.tenant_id, parsed.vehicle_name)
   const ref = `Turo #${parsed.messageId}${parsed.reservationId ? ` Turo-Res #${parsed.reservationId}` : ''}`
@@ -530,7 +566,7 @@ async function pollIcloud(sync: EmailSync): Promise<number> {
           const msg = await client.fetchOne(String(uid), { envelope: true }, { uid: true })
           if (!msg) continue
           const subject: string = msg.envelope?.subject || ''
-          if (/booked|cancel|modif|updated.*trip|trip.*updated/i.test(subject)) {
+          if (/booked|cancel|modif|updated.*trip|trip.*updated|has returned/i.test(subject)) {
             relevantUids.push(uid)
           }
         } catch { /* skip */ }
