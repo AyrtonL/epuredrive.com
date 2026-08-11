@@ -24,6 +24,7 @@ export default function QuickBooksClient({ connection, tenantId }: Props) {
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
   const justConnected = searchParams?.get('qb') === 'connected'
   const connectError = searchParams?.get('qb') === 'error'
+  const justDisconnected = searchParams?.get('qb') === 'disconnected'
 
   async function handleSync() {
     setSyncing(true)
@@ -56,6 +57,11 @@ export default function QuickBooksClient({ connection, tenantId }: Props) {
       {connectError && (
         <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
           <p className="text-red-400 text-sm font-medium">Failed to connect QuickBooks. Please try again or check your Intuit account permissions.</p>
+        </div>
+      )}
+      {justDisconnected && (
+        <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+          <p className="text-white/60 text-sm font-medium">QuickBooks has been disconnected. Your synced transactions remain in QuickBooks, but éPure Drive will no longer sync new ones until you reconnect.</p>
         </div>
       )}
       {error && (
@@ -134,6 +140,12 @@ export default function QuickBooksClient({ connection, tenantId }: Props) {
                 className="bg-white/5 border border-white/10 text-white px-6 py-3 rounded-xl text-xs font-bold hover:bg-white/10 transition-all"
               >
                 Reconnect
+              </a>
+              <a
+                href="/api/integrations/quickbooks/disconnect"
+                className="text-white/30 px-6 py-3 rounded-xl text-xs font-bold hover:text-red-400 transition-all"
+              >
+                Disconnect
               </a>
             </div>
 
