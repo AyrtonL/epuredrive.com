@@ -17,6 +17,7 @@ interface Props {
 
 export default function QuickBooksClient({ connection, tenantId }: Props) {
   const [syncing, setSyncing] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
   const [syncResult, setSyncResult] = useState<{ synced: number; remaining?: number; errors?: string[] } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -42,6 +43,23 @@ export default function QuickBooksClient({ connection, tenantId }: Props) {
       setError('An unexpected error occurred during sync.')
     } finally {
       setSyncing(false)
+    }
+  }
+
+  async function handleDisconnect() {
+    if (!window.confirm('Disconnect QuickBooks? éPure Drive will stop syncing new transactions until you reconnect.')) return
+    setDisconnecting(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/integrations/quickbooks/disconnect', { method: 'POST' })
+      if (!res.ok) {
+        setError('Could not disconnect QuickBooks. Please try again.')
+        return
+      }
+      window.location.href = '/dashboard/integrations/quickbooks?qb=disconnected'
+    } catch {
+      setError('An unexpected error occurred while disconnecting.')
+      setDisconnecting(false)
     }
   }
 
@@ -141,12 +159,13 @@ export default function QuickBooksClient({ connection, tenantId }: Props) {
               >
                 Reconnect
               </a>
-              <a
-                href="/api/integrations/quickbooks/disconnect"
-                className="text-white/30 px-6 py-3 rounded-xl text-xs font-bold hover:text-red-400 transition-all"
+              <button
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+                className="text-white/30 px-6 py-3 rounded-xl text-xs font-bold hover:text-red-400 disabled:opacity-30 transition-all"
               >
-                Disconnect
-              </a>
+                {disconnecting ? 'Disconnecting…' : 'Disconnect'}
+              </button>
             </div>
 
             {/* Sync Result */}
