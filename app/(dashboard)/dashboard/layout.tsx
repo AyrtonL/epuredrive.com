@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { getFeatureFlags } from '@/lib/supabase/feature-flags'
 import { getEffectivePlan } from '@/lib/plan/effective-plan'
+import { provisionTenantForUser } from '@/lib/tenant/provision-tenant'
 import Sidebar from '@/components/dashboard/Sidebar'
 import HelpButton from '@/components/dashboard/HelpButton'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -26,11 +27,33 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: initialProfile } = await supabase
     .from('profiles')
     .select('role, tenant_id, full_name, invited_by_user_id, invite_accepted_notified_at')
     .eq('id', user.id)
     .single()
+
+  // Self-heal: signup-time tenant provisioning can fail after the auth
+  // account is already confirmed, leaving the user with no tenant_id and no
+  // way to retry. Rather than dead-ending on "Profile Incomplete", retry
+  // provisioning here on every dashboard load until it succeeds.
+  let profile = initialProfile
+  if (!profile?.tenant_id) {
+    const provisionedTenantId = await provisionTenantForUser(
+      user.id,
+      user.email,
+      (user.user_metadata ?? {}) as Record<string, unknown>
+    )
+    if (provisionedTenantId) {
+      profile = {
+        role: profile?.role ?? null,
+        full_name: profile?.full_name ?? null,
+        invited_by_user_id: profile?.invited_by_user_id ?? null,
+        invite_accepted_notified_at: profile?.invite_accepted_notified_at ?? null,
+        tenant_id: provisionedTenantId,
+      }
+    }
+  }
 
   if (profile?.invited_by_user_id && !profile?.invite_accepted_notified_at) {
     notifyInviterOnFirstLogin({

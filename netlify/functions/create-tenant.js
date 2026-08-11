@@ -89,11 +89,15 @@ exports.handler = async (event) => {
   }
 
   // 3 — Create profile
-  await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+  const profileWriteRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
     method: 'POST',
     headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' },
     body: JSON.stringify({ id: userId, tenant_id: tenantId, role: 'admin' }),
   });
+  if (!profileWriteRes.ok) {
+    const profileErr = await profileWriteRes.json().catch(() => ({}));
+    return { statusCode: 500, body: JSON.stringify({ error: profileErr.message || 'Tenant created but profile write failed' }) };
+  }
 
   // 4 — Register tenant subdomain as Netlify domain alias
   const netlifyToken = process.env.NETLIFY_AUTH_TOKEN;
