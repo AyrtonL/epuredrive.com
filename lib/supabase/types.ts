@@ -11,6 +11,14 @@ export interface ExperiencePillar {
   body: string
 }
 
+export interface DamageMark {
+  id: string
+  x: number // 0–100, percent of diagram width
+  y: number // 0–100, percent of diagram height
+  type: 'scratch' | 'dent' | 'crack' | 'other'
+  note?: string
+}
+
 export interface HowItWorksStep {
   icon: string  // emoji or short label
   title: string
@@ -134,6 +142,8 @@ export interface Reservation {
   // damage report
   damage_checkin: string | null
   damage_checkout: string | null
+  damage_diagram_checkin: DamageMark[] | null
+  damage_diagram_checkout: DamageMark[] | null
   // rental extras / add-ons
   extras: ReservationExtra[] | null
   // review request email tracking

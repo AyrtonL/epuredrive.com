@@ -74,6 +74,8 @@ function buildSampleReservation(): AgreementReservation {
     insurance_expiration_date: null,
     damage_checkin: null,
     damage_checkout: null,
+    damage_diagram_checkin: null,
+    damage_diagram_checkout: null,
     tenant_signed_at: null,
     tenant_signature_url: null,
     tenant_signed_by: null,

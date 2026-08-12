@@ -15,6 +15,7 @@ import {
 } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 import FuelSummary from '@/components/dashboard/FuelSummary'
+import CarDamageDiagram from '@/components/dashboard/CarDamageDiagram'
 import TenantCloseOut from './TenantCloseOut'
 import DatePicker from '@/components/ui/DatePicker'
 import TimePicker from '@/components/ui/TimePicker'
@@ -306,6 +307,8 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
       insurance_expiration_date: formData.insurance_expiration_date || null,
       damage_checkin: formData.damage_checkin || null,
       damage_checkout: formData.damage_checkout || null,
+      damage_diagram_checkin: formData.damage_diagram_checkin && formData.damage_diagram_checkin.length > 0 ? formData.damage_diagram_checkin : null,
+      damage_diagram_checkout: formData.damage_diagram_checkout && formData.damage_diagram_checkout.length > 0 ? formData.damage_diagram_checkout : null,
       extras: formData.extras && formData.extras.length > 0 ? formData.extras : null,
     }
 
@@ -970,9 +973,9 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
 
                 <div className="pt-4 border-t border-white/[0.06]">
                   <p className={`${SECTION_HEADING} mb-4`}>Damage Report</p>
-                  <div className="grid grid-cols-1 gap-5">
-                    <div className="space-y-1">
-                      <label className={LABEL_CLASS}>Check-In Notes</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <label className={LABEL_CLASS}>Check-In</label>
                       <textarea
                         rows={2}
                         placeholder="Describe any pre-existing damage at pickup…"
@@ -980,15 +983,23 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                         onChange={(e) => setFormData({ ...formData, damage_checkin: e.target.value })}
                         className={`${INPUT_CLASS} resize-none`}
                       />
+                      <CarDamageDiagram
+                        marks={formData.damage_diagram_checkin || []}
+                        onChange={(marks) => setFormData({ ...formData, damage_diagram_checkin: marks })}
+                      />
                     </div>
-                    <div className="space-y-1">
-                      <label className={LABEL_CLASS}>Check-Out Notes</label>
+                    <div className="space-y-3">
+                      <label className={LABEL_CLASS}>Check-Out</label>
                       <textarea
                         rows={2}
                         placeholder="Describe any damage found at return…"
                         value={formData.damage_checkout || ''}
                         onChange={(e) => setFormData({ ...formData, damage_checkout: e.target.value })}
                         className={`${INPUT_CLASS} resize-none`}
+                      />
+                      <CarDamageDiagram
+                        marks={formData.damage_diagram_checkout || []}
+                        onChange={(marks) => setFormData({ ...formData, damage_diagram_checkout: marks })}
                       />
                     </div>
                   </div>

@@ -2,7 +2,8 @@
 
 import type React from 'react'
 import Image from 'next/image'
-import type { ReservationExtra } from '@/lib/supabase/types'
+import type { ReservationExtra, DamageMark } from '@/lib/supabase/types'
+import CarDamageDiagram from '@/components/dashboard/CarDamageDiagram'
 
 export interface AgreementCar {
   make: string
@@ -54,6 +55,8 @@ export interface AgreementReservation {
   insurance_expiration_date: string | null
   damage_checkin: string | null
   damage_checkout: string | null
+  damage_diagram_checkin: DamageMark[] | null
+  damage_diagram_checkout: DamageMark[] | null
   // tenant counter-signature
   tenant_signed_at: string | null
   tenant_signature_url: string | null
@@ -334,6 +337,22 @@ export default function AgreementDocument({
               </tr>
             </tbody>
           </table>
+          {((reservation.damage_diagram_checkin?.length ?? 0) > 0 || (reservation.damage_diagram_checkout?.length ?? 0) > 0) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              {(reservation.damage_diagram_checkin?.length ?? 0) > 0 && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Check-In Diagram</p>
+                  <CarDamageDiagram marks={reservation.damage_diagram_checkin ?? []} theme="light" />
+                </div>
+              )}
+              {(reservation.damage_diagram_checkout?.length ?? 0) > 0 && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Check-Out Diagram</p>
+                  <CarDamageDiagram marks={reservation.damage_diagram_checkout ?? []} theme="light" />
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Terms & Conditions */}
