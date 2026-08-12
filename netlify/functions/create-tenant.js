@@ -7,8 +7,56 @@
 //   SUPABASE_SERVICE_ROLE_KEY
 //   NETLIFY_SITE_ID       — auto-registers {slug}.epuredrive.com as a domain alias
 //   NETLIFY_AUTH_TOKEN    — personal access token with site:write scope
+//   RESEND_API_KEY        — sends welcome + admin-notify emails (skipped if unset)
+//   ADMIN_NOTIFY_EMAIL    — recipient for the new-signup admin alert (skipped if unset)
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
+
+async function sendResendEmail({ to, subject, html }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+  const from = process.env.RESEND_FROM_EMAIL || 'notifications@epuredrive.com';
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from, to, subject, html }),
+    });
+  } catch (err) {
+    console.error('[create-tenant] Email send failed:', err?.message || err);
+  }
+}
+
+function esc(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function brandedEmail({ headline, body }) {
+  return `<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f2f2f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f2f2f2;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;width:100%;background:#ffffff;">
+        <tr><td style="padding:40px 32px 36px;">
+          <h1 style="margin:0 0 16px;font-size:24px;font-weight:900;color:#000;line-height:1.2;letter-spacing:-0.02em;">${headline}</h1>
+          <div style="font-size:14px;color:#555;line-height:1.7;">${body}</div>
+        </td></tr>
+        <tr><td style="padding:16px 32px;border-top:1px solid #f0f0f0;">
+          <p style="margin:0;font-size:10px;color:#ccc;">© ${new Date().getFullYear()} éPure Drive &nbsp;·&nbsp; epuredrive.com</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -99,7 +147,33 @@ exports.handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: profileErr.message || 'Tenant created but profile write failed' }) };
   }
 
-  // 4 — Register tenant subdomain as Netlify domain alias
+  // 4 — Notify: welcome email to the user, alert email to the admin
+  const operatorName = company || email?.split('@')[0] || 'there';
+  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL;
+  const notifyEmails = [];
+  if (email) {
+    notifyEmails.push(sendResendEmail({
+      to: email,
+      subject: 'Welcome to éPure Drive — Your account is ready',
+      html: brandedEmail({
+        headline: `Welcome, ${esc(operatorName)}.`,
+        body: 'Your account is ready. Start building your fleet, customizing your rental site, and accepting bookings online.',
+      }),
+    }));
+  }
+  if (adminEmail) {
+    notifyEmails.push(sendResendEmail({
+      to: adminEmail,
+      subject: `New signup: ${company || email || 'unknown'}`,
+      html: brandedEmail({
+        headline: 'New tenant registered.',
+        body: `Email: ${esc(email || '—')}<br/>Company: ${esc(company || '—')}<br/>Slug: ${esc(slug)}<br/>When: ${new Date().toISOString()}`,
+      }),
+    }));
+  }
+  await Promise.allSettled(notifyEmails);
+
+  // 5 — Register tenant subdomain as Netlify domain alias
   const netlifyToken = process.env.NETLIFY_AUTH_TOKEN;
   const netlifySiteId = process.env.NETLIFY_SITE_ID;
   if (netlifyToken && netlifySiteId) {

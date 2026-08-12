@@ -1,4 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendEmail } from '@/lib/email/resend'
+import { welcomeEmail, adminNewSignupEmail } from '@/lib/email/templates/platform'
 
 // Self-heal path for the "confirmed user, no tenant" dead end: the primary
 // provisioning flow (netlify/functions/create-tenant.js, run from the auth
@@ -37,6 +39,26 @@ export async function provisionTenantForUser(
     .upsert({ id: userId, tenant_id: tenant.id, role: 'admin' }, { onConflict: 'id' })
 
   if (profileError) return null
+
+  if (email) {
+    const operatorName = (metadata.company as string) || email.split('@')[0] || 'there'
+    const adminEmail = process.env.ADMIN_NOTIFY_EMAIL
+    const emails = [sendEmail({ to: email, ...welcomeEmail({ operatorName }) })]
+    if (adminEmail) {
+      emails.push(
+        sendEmail({
+          to: adminEmail,
+          ...adminNewSignupEmail({
+            userEmail: email,
+            companyName: company,
+            tenantSlug: slug,
+            signedUpAt: new Date().toISOString(),
+          }),
+        })
+      )
+    }
+    Promise.allSettled(emails).catch(() => {}) // intentional fire-and-forget
+  }
 
   return tenant.id
 }
