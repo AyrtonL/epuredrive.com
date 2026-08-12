@@ -326,13 +326,25 @@ export default function AgreementDocument({
               <tr>
                 <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2 w-1/4 align-top">Check-In</td>
                 <td className="border border-gray-200 px-3 py-2 min-h-[60px] whitespace-pre-line">
-                  {reservation.damage_checkin || <span className="text-gray-400 italic">No damage noted at check-in</span>}
+                  {reservation.damage_checkin || (
+                    <span className="text-gray-400 italic">
+                      {(reservation.damage_diagram_checkin?.length ?? 0) > 0
+                        ? 'See diagram below'
+                        : 'No damage noted at check-in'}
+                    </span>
+                  )}
                 </td>
               </tr>
               <tr>
                 <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2 align-top">Check-Out</td>
                 <td className="border border-gray-200 px-3 py-2 min-h-[60px] whitespace-pre-line">
-                  {reservation.damage_checkout || <span className="text-gray-400 italic">To be completed at return</span>}
+                  {reservation.damage_checkout || (
+                    <span className="text-gray-400 italic">
+                      {(reservation.damage_diagram_checkout?.length ?? 0) > 0
+                        ? 'See diagram below'
+                        : 'To be completed at return'}
+                    </span>
+                  )}
                 </td>
               </tr>
             </tbody>
