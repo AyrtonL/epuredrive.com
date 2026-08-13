@@ -60,6 +60,9 @@ export interface Tenant {
   // Stripe identifiers (for accurate MRR + subscription mapping)
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
+  // Feedback email tracking
+  feedback_email_sent_at: string | null
+  feedback_reminder_sent_at: string | null
 }
 
 export interface Car {
@@ -289,6 +292,14 @@ export interface TaxSetting {
   is_active: boolean
   created_at: string
   updated_at: string
+}
+
+export interface TenantFeedback {
+  id: string
+  tenant_id: string
+  rating: number  // 1–5
+  comment: string | null
+  created_at: string
 }
 
 export interface WebhookEndpoint {
