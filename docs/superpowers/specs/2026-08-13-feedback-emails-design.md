@@ -49,11 +49,13 @@ CREATE TABLE IF NOT EXISTS tenant_feedback (
 COMMENT ON TABLE tenant_feedback IS 'Product feedback submitted by tenants via the 14-day feedback email CTA.';
 
 -- reservation_reviews: renter reviews captured from the post-return email
+-- NOTE: reservations.id is uuid (not bigint) and cars.id is integer — verified
+-- against the live schema, not the Reservation TS type (which incorrectly types id as number).
 CREATE TABLE IF NOT EXISTS reservation_reviews (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  reservation_id bigint NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
+  reservation_id uuid NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
   tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  car_id bigint REFERENCES cars(id) ON DELETE SET NULL,
+  car_id integer REFERENCES cars(id) ON DELETE SET NULL,
   rating int NOT NULL CHECK (rating BETWEEN 1 AND 5),
   comment text,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -64,7 +66,7 @@ COMMENT ON TABLE reservation_reviews IS 'Star rating + comment left by a renter 
 
 `UNIQUE (reservation_id)` on `reservation_reviews` prevents a renter from submitting twice off the same link (the submit endpoint upserts / rejects on conflict).
 
-No RLS policy changes needed for `tenant_feedback` (dashboard-authenticated write, service-role read). `reservation_reviews` writes come from an unauthenticated public page, so the insert route must go through a server action / API route using the admin client — never a direct client-side Supabase insert — to keep the table from being publicly writable.
+Every table in this project has RLS enabled with the same two-policy convention (verified against `reservations`/`tenant_notification_prefs`): a `tenant_id = current_tenant_id()` policy for tenant-scoped access and an `is_superuser()` policy for platform admin access. Both new tables get that same pair — nothing new to invent. `reservation_reviews` writes come from an unauthenticated public page, so the insert route must go through a server action / API route using the admin client (which bypasses RLS via the service role key) — never a direct client-side Supabase insert.
 
 ### 2. Tenant feedback flow
 
@@ -86,9 +88,9 @@ Two passes per run:
 1. **Initial send** — tenants where `created_at` is 14–15 days ago, `status = 'active'`, `owner_email IS NOT NULL`, `feedback_email_sent_at IS NULL`. Send email, set `feedback_email_sent_at = now()`.
 2. **Reminder** — tenants where `feedback_email_sent_at` is 7–8 days in the past, `feedback_reminder_sent_at IS NULL`, and no row exists in `tenant_feedback` for that `tenant_id`. Send reminder, set `feedback_reminder_sent_at = now()`.
 
-Both passes reuse `sendEmail()` from `lib/email/resend.ts`, `replyTo` set to `ayrtonn.lg@gmail.com` (or an `SUPPORT_EMAIL` env var if one already exists — check before hardcoding) so tenants can also just reply in Gmail as a secondary channel.
+Both passes reuse `sendEmail()` from `lib/email/resend.ts`, `replyTo` set to `info@epuredrive.com` — the same support address already used as the reply target in `lib/email/templates/support.ts` — so tenants can also just reply in Gmail as a secondary channel.
 
-**Email template:** `lib/email/templates/tenants.ts` (new or existing tenant-facing template file — check `lib/email/templates/` for the right home), `tenantFeedbackRequestEmail()`, CTA "Share Feedback" → `https://epuredrive.com/dashboard/feedback`.
+**Email template:** `lib/email/templates/platform.ts` — this is the existing home for platform-to-tenant emails (`welcomeEmail`, `onboardingEmail`, both using `compactLayout`/`heroLayout`, the éPure Drive brand, not the tenant's own brand). Add `tenantFeedbackRequestEmail()` and `tenantFeedbackReminderEmail()` there using `compactLayout`, CTA "Share Feedback" → `https://epuredrive.com/dashboard/feedback`.
 
 **Capture page:** `app/(dashboard)/dashboard/feedback/page.tsx` — authenticated (existing dashboard auth), simple form: 1–5 star picker + textarea, submits to a server action that inserts into `tenant_feedback` using the tenant_id from the authenticated session (never trust a client-supplied tenant_id).
 
