@@ -83,10 +83,12 @@ Scheduled daily (e.g. `0 16 * * *`, after the existing three daily email crons a
 
 **Route:** `app/api/cron/tenant-feedback/route.ts`, `POST`, Bearer-secret guarded like every other `/api/cron/*` route.
 
+**Recipient resolution — correction found during implementation review:** `tenants.owner_email`/`owner_name` are NOT populated at signup (verified: NULL for every tenant in production). The real operator identity lives in `profiles` + `auth.users`, already surfaced by the existing `get_tenant_owners()` Postgres RPC (`SECURITY DEFINER`, used by `app/(dashboard)/dashboard/admin/tenants/page.tsx`). Both passes below resolve the send-to address/name via that RPC, not via `tenants.owner_email`; the `tenants` table still holds the `feedback_email_sent_at`/`feedback_reminder_sent_at` tracking columns and drives the selection query, just not the recipient.
+
 Two passes per run:
 
-1. **Initial send** — tenants where `created_at` is 14–15 days ago, `status = 'active'`, `owner_email IS NOT NULL`, `feedback_email_sent_at IS NULL`. Send email, set `feedback_email_sent_at = now()`.
-2. **Reminder** — tenants where `feedback_email_sent_at` is 7–8 days in the past, `feedback_reminder_sent_at IS NULL`, and no row exists in `tenant_feedback` for that `tenant_id`. Send reminder, set `feedback_reminder_sent_at = now()`.
+1. **Initial send** — tenants where `created_at` is 14–45 days ago (widened from 14–15 for cron-run catch-up), `status = 'active'`, `feedback_email_sent_at IS NULL`, and `get_tenant_owners()` has a non-null email for that tenant. Send email, set `feedback_email_sent_at = now()`.
+2. **Reminder** — tenants where `feedback_email_sent_at` is at least 7 days in the past, `feedback_reminder_sent_at IS NULL`, and no row exists in `tenant_feedback` for that `tenant_id`. Send reminder, set `feedback_reminder_sent_at = now()`.
 
 Both passes reuse `sendEmail()` from `lib/email/resend.ts`, `replyTo` set to `info@epuredrive.com` — the same support address already used as the reply target in `lib/email/templates/support.ts` — so tenants can also just reply in Gmail as a secondary channel.
 
