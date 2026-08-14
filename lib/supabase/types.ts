@@ -126,6 +126,7 @@ export interface Reservation {
   agreement_signed_ip: string | null
   agreement_pdf_url: string | null
   agreement_signature_url: string | null
+  review_token: string | null
   // renter extras
   customer_dob: string | null
   customer_address: string | null
@@ -298,6 +299,16 @@ export interface TenantFeedback {
   id: string
   tenant_id: string
   rating: number  // 1–5
+  comment: string | null
+  created_at: string
+}
+
+export interface ReservationReview {
+  id: string
+  reservation_id: string
+  tenant_id: string
+  car_id: number | null
+  rating: number
   comment: string | null
   created_at: string
 }
