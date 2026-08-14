@@ -16,7 +16,7 @@ export async function submitTenantFeedback(params: {
   const { tenantId } = await requireTenantId()
   const supabase = createClient()
 
-  const trimmedComment = params.comment.trim()
+  const trimmedComment = params.comment.trim().slice(0, 2000)
   const { error } = await supabase.from('tenant_feedback').insert({
     tenant_id: tenantId,
     rating: params.rating,

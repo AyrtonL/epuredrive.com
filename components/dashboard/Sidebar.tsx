@@ -77,6 +77,7 @@ const NAV: NavEntry[] = [
       { label: 'Billing & Plans', href: '/dashboard/settings/billing' },
       { label: 'Team & Roles', href: '/dashboard/settings/roles' },
       { label: 'Notifications', href: '/dashboard/settings/notifications' },
+      { label: 'Feedback', href: '/dashboard/feedback' },
       { label: 'Security', href: '/dashboard/settings/security' },
       { label: 'Rental Extras', href: '/dashboard/settings/extras' },
       { label: 'Rental Agreement', href: '/dashboard/settings/agreement' },
