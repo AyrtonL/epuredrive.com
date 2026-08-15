@@ -40,7 +40,7 @@ export default function FeedbackForm() {
   return (
     <form onSubmit={handleSubmit} className="glass border border-white/10 rounded-3xl p-8 space-y-6">
       <div>
-        <label className="text-white text-sm font-medium block mb-3">How's it going overall?</label>
+        <label className="text-white text-sm font-medium block mb-3">How&apos;s it going overall?</label>
         <StarRating value={rating} onChange={setRating} disabled={isPending} />
       </div>
       <div>
