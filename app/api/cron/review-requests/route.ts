@@ -98,6 +98,9 @@ export async function POST(request: NextRequest) {
       address: tenant.company_address ?? null,
     }
 
+    const reviewToken = crypto.randomUUID()
+    const reviewUrl = `https://epuredrive.com/sites/${tenantSlug}/review/${reviewToken}`
+
     const res = await sendEmail({
       to: r.customer_email,
       fromName: brand.name,
@@ -107,13 +110,14 @@ export async function POST(request: NextRequest) {
         brand,
         carName,
         tenantSlug,
+        reviewUrl,
       }),
-    }).catch(() => null)
+    }).catch((err) => ({ error: err instanceof Error ? err.message : 'send failed', id: null }))
 
-    if (res) {
+    if (res && !res.error) {
       await supabase
         .from('reservations')
-        .update({ review_email_sent_at: new Date().toISOString() })
+        .update({ review_email_sent_at: new Date().toISOString(), review_token: reviewToken })
         .eq('id', r.id)
       sent += 1
     }
