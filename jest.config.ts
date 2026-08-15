@@ -7,7 +7,7 @@ const config: Config = {
   coverageProvider: 'v8',
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-  testPathIgnorePatterns: ['/node_modules/', '/e2e/', '/everything-claude-code/'],
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/', '/everything-claude-code/', '/.worktrees/', '/.claude/worktrees/'],
 }
 
 export default createJestConfig(config)
