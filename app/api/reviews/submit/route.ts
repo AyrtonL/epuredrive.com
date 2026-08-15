@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'This link is no longer valid.' }, { status: 404 })
     }
 
-    const trimmedComment = typeof comment === 'string' ? comment.trim() : ''
+    const trimmedComment = (typeof comment === 'string' ? comment.trim() : '').slice(0, 2000)
 
     const { error } = await supabase.from('reservation_reviews').insert({
       reservation_id: reservation.id,
