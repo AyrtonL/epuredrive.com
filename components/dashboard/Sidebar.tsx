@@ -48,6 +48,7 @@ const NAV: NavEntry[] = [
     children: [
       { label: 'Customers', href: '/dashboard/clients/customers' },
       { label: 'Consignments', href: '/dashboard/clients/consignments' },
+      { label: 'Reviews', href: '/dashboard/clients/reviews' },
     ],
   },
   {
