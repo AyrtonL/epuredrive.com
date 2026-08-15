@@ -102,6 +102,7 @@ const ADMIN_NAV: NavGroup = {
   label: 'Admin',
   children: [
     { label: 'Tenants', href: '/dashboard/admin/tenants' },
+    { label: 'Tenant Feedback', href: '/dashboard/admin/tenant-feedback' },
     { label: 'Platform Stats', href: '/dashboard/admin/stats' },
     { label: 'Plans & Billing', href: '/dashboard/admin/plans' },
     { label: 'All Users', href: '/dashboard/admin/users' },

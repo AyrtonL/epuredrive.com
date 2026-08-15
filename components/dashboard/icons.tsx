@@ -458,6 +458,7 @@ export const ICONS: Record<string, (props: { className?: string }) => React.Reac
   Customers: IconCustomers,
   Consignments: IconConsignments,
   Reviews: IconFeedback,
+  'Tenant Feedback': IconFeedback,
   Team: IconTeam,
   Turo: IconTuro,
   QuickBooks: IconQuickBooks,
