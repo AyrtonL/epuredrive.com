@@ -89,6 +89,8 @@ export async function POST(request: NextRequest) {
     if (!tenant) continue
 
     const tenantSlug = tenant.slug || ''
+    if (!tenantSlug) continue
+
     const carName = carMap.get(r.car_id ?? -1) ?? 'Vehicle'
     const brand = {
       name: tenant.brand_name || tenant.name || 'Your rental company',
@@ -96,6 +98,21 @@ export async function POST(request: NextRequest) {
       email: tenant.owner_email ?? null,
       phone: tenant.company_phone || tenant.whatsapp_phone || tenant.owner_phone || null,
       address: tenant.company_address ?? null,
+    }
+
+    const reviewToken = crypto.randomUUID()
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${tenantSlug}.epuredrive.com`
+    const reviewUrl = `${baseUrl}/sites/${tenantSlug}/review/${reviewToken}`
+
+    // Persist the token before sending — a token that's emailed but never
+    // saved would be a permanently dead link for the customer.
+    const { error: tokenError } = await supabase
+      .from('reservations')
+      .update({ review_token: reviewToken })
+      .eq('id', r.id)
+    if (tokenError) {
+      console.error('[cron/review-requests] failed to persist review_token for', r.id, tokenError.message)
+      continue
     }
 
     const res = await sendEmail({
@@ -107,15 +124,18 @@ export async function POST(request: NextRequest) {
         brand,
         carName,
         tenantSlug,
+        reviewUrl,
       }),
-    }).catch(() => null)
+    }).catch((err) => ({ error: err instanceof Error ? err.message : 'send failed', id: null }))
 
-    if (res) {
+    if (res && !res.error) {
       await supabase
         .from('reservations')
         .update({ review_email_sent_at: new Date().toISOString() })
         .eq('id', r.id)
       sent += 1
+    } else {
+      console.error('[cron/review-requests] send failed for', r.id, res?.error)
     }
   }
 

@@ -306,3 +306,33 @@ export function passwordChangedEmail(params: {
     }),
   }
 }
+
+export function tenantFeedbackRequestEmail(params: {
+  operatorName: string
+}): { subject: string; html: string } {
+  return {
+    subject: 'How is éPure Drive working for you?',
+    html: compactLayout({
+      subheadline: 'Quick question',
+      headline: `Got 60 seconds, ${params.operatorName}?`,
+      body: `You've been running your fleet on éPure Drive for a couple weeks now. We'd love to know what's working, what's confusing, and what's missing — it goes straight to the team building this.`,
+      cta: { label: 'Share Feedback', href: `${APP_URL}/dashboard/feedback` },
+      note: 'You can also just reply to this email — we read every one.',
+    }),
+  }
+}
+
+export function tenantFeedbackReminderEmail(params: {
+  operatorName: string
+}): { subject: string; html: string } {
+  return {
+    subject: 'Still want to hear from you — éPure Drive',
+    html: compactLayout({
+      subheadline: 'Friendly reminder',
+      headline: `One more ask, ${params.operatorName}.`,
+      body: `We reached out last week for feedback on éPure Drive and haven't heard back. If you have a minute, it really does shape what we build next.`,
+      cta: { label: 'Share Feedback', href: `${APP_URL}/dashboard/feedback` },
+      note: 'You can also just reply to this email — we read every one.',
+    }),
+  }
+}
