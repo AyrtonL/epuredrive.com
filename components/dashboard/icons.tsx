@@ -207,6 +207,14 @@ export function IconNotifications({ className }: IconProps) {
   )
 }
 
+export function IconFeedback({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.2 21 12 17.27 5.8 21 7 14.14l-5-4.87 7.1-1.01L12 2z" />
+    </svg>
+  )
+}
+
 export function IconDomain({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -459,6 +467,7 @@ export const ICONS: Record<string, (props: { className?: string }) => React.Reac
   'Billing & Plans': IconBilling,
   'Team & Roles': IconRoles,
   Notifications: IconNotifications,
+  Feedback: IconFeedback,
   Security: IconSecurity,
   'Rental Extras': IconRentalExtras,
   'Rental Agreement': IconAgreement,
