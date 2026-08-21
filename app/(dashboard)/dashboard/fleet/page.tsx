@@ -13,7 +13,21 @@ export default async function FleetPage() {
     .eq('tenant_id', tenantId)
     .order('id')
 
-  const rows = (cars as Car[]) ?? []
+  const { data: consignedCars } = await supabase
+    .from('consignments')
+    .select('car_id')
+    .eq('tenant_id', tenantId)
+
+  const consignedCarIds = new Set(
+    (consignedCars ?? []).map((c) => c.car_id).filter((id): id is number => id != null)
+  )
+
+  // Owned vehicles first, consignment vehicles after (stable sort keeps id order within each group)
+  const rows = [...((cars as Car[]) ?? [])].sort((a, b) => {
+    const aConsigned = consignedCarIds.has(a.id) ? 1 : 0
+    const bConsigned = consignedCarIds.has(b.id) ? 1 : 0
+    return aConsigned - bConsigned
+  })
   const active = rows.filter((c) => c.status === 'active' || c.status === 'available').length
   const maintenance = rows.filter((c) => c.status === 'maintenance').length
   const retired = rows.filter((c) => c.status === 'retired' || c.status === 'inactive').length
@@ -30,7 +44,7 @@ export default async function FleetPage() {
       </div>
 
       <div className="glass border border-white/10 rounded-3xl p-6 md:p-8">
-        <FleetManager initialCars={rows} />
+        <FleetManager initialCars={rows} consignedCarIds={Array.from(consignedCarIds)} />
       </div>
     </div>
   )

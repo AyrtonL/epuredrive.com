@@ -9,9 +9,11 @@ import { useToast } from '@/components/ui/Toast'
 
 interface Props {
   initialCars: Car[]
+  consignedCarIds?: number[]
 }
 
-export default function FleetManager({ initialCars }: Props) {
+export default function FleetManager({ initialCars, consignedCarIds = [] }: Props) {
+  const consignedIds = new Set(consignedCarIds)
   const router = useRouter()
   const toast = useToast()
   const [filter, setFilter] = useState('')
@@ -127,6 +129,14 @@ export default function FleetManager({ initialCars }: Props) {
                     {c.status || 'Active'}
                   </span>
                 </div>
+                {/* Consignment Badge */}
+                {consignedIds.has(c.id) && (
+                  <div className="absolute top-4 left-4">
+                    <span className="text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full backdrop-blur-md border bg-purple-500/20 text-purple-300 border-purple-500/30">
+                      Consignment
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Body */}
