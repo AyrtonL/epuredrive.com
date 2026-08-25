@@ -53,6 +53,10 @@ export interface AgreementReservation {
   insurance_provider: string | null
   insurance_policy_number: string | null
   insurance_expiration_date: string | null
+  second_driver_name: string | null
+  second_driver_license_number: string | null
+  second_driver_license_state: string | null
+  second_driver_license_expiration_date: string | null
   damage_checkin: string | null
   damage_checkout: string | null
   damage_diagram_checkin: DamageMark[] | null
@@ -70,6 +74,10 @@ interface Props {
   tenantName: string
   accentColor: string
   signatureSlot: React.ReactNode
+  // Signed URLs resolved server-side (license-photos is a private bucket) —
+  // null when no photo was uploaded for that driver.
+  licensePhotoUrl?: string | null
+  secondDriverLicensePhotoUrl?: string | null
 }
 
 function formatDate(dateStr: string | null): string {
@@ -110,6 +118,8 @@ export default function AgreementDocument({
   tenantName,
   accentColor,
   signatureSlot,
+  licensePhotoUrl,
+  secondDriverLicensePhotoUrl,
 }: Props) {
   const days =
     reservation.pickup_date && reservation.return_date
@@ -268,7 +278,49 @@ export default function AgreementDocument({
               )}
             </tbody>
           </table>
+          {licensePhotoUrl && (
+            <div className="mt-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">License Photo on File</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={licensePhotoUrl} alt="Renter's driver license" className="h-32 object-contain border border-gray-200 rounded-lg" />
+            </div>
+          )}
         </section>
+
+        {/* Additional Driver */}
+        {reservation.second_driver_name && (
+          <section>
+            <div className="text-[11px] font-black uppercase tracking-widest text-white px-3 py-1.5 rounded mb-3" style={{ background: '#111' }}>
+              Additional Driver
+            </div>
+            <table className="w-full border-collapse text-sm">
+              <tbody>
+                <tr>
+                  <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2 w-1/4">Full Name</td>
+                  <td className="border border-gray-200 px-3 py-2">{reservation.second_driver_name}</td>
+                  <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2 w-1/4">License Expires</td>
+                  <td className="border border-gray-200 px-3 py-2">
+                    {reservation.second_driver_license_expiration_date ? formatDate(reservation.second_driver_license_expiration_date) : '—'}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2">License #</td>
+                  <td className="border border-gray-200 px-3 py-2" colSpan={3}>
+                    {reservation.second_driver_license_number || '—'}
+                    {reservation.second_driver_license_state && ` (${reservation.second_driver_license_state})`}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            {secondDriverLicensePhotoUrl && (
+              <div className="mt-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">License Photo on File</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={secondDriverLicensePhotoUrl} alt="Additional driver's license" className="h-32 object-contain border border-gray-200 rounded-lg" />
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Charges */}
         {reservation.total_amount && (

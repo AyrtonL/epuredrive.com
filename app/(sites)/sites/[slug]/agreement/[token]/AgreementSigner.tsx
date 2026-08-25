@@ -37,6 +37,8 @@ interface Props {
   carName: string
   accentColor: string
   token: string
+  licensePhotoUrl?: string | null
+  secondDriverLicensePhotoUrl?: string | null
 }
 
 export default function AgreementSigner({
@@ -46,6 +48,8 @@ export default function AgreementSigner({
   tenantName,
   accentColor,
   token,
+  licensePhotoUrl,
+  secondDriverLicensePhotoUrl,
 }: Props) {
   const sigRef = useRef<any>(null)
   const agreementRef = useRef<HTMLDivElement>(null)
@@ -250,6 +254,8 @@ export default function AgreementSigner({
               tenantName={tenantName}
               accentColor={accentColor}
               signatureSlot={customerSignatureSlot}
+              licensePhotoUrl={licensePhotoUrl}
+              secondDriverLicensePhotoUrl={secondDriverLicensePhotoUrl}
             />
           </div>
         </div>
@@ -361,6 +367,8 @@ export default function AgreementSigner({
             tenantName={tenantName}
             accentColor={accentColor}
             signatureSlot={signatureSlot}
+            licensePhotoUrl={licensePhotoUrl}
+            secondDriverLicensePhotoUrl={secondDriverLicensePhotoUrl}
           />
         </div>
 

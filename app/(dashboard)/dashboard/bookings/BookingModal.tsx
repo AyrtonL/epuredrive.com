@@ -19,6 +19,7 @@ import CarDamageDiagram from '@/components/dashboard/CarDamageDiagram'
 import TenantCloseOut from './TenantCloseOut'
 import DatePicker from '@/components/ui/DatePicker'
 import TimePicker from '@/components/ui/TimePicker'
+import LicensePhotoUploader from './LicensePhotoUploader'
 import { calculateCardSurcharge } from '@/lib/pricing/cardSurcharge'
 
 interface Props {
@@ -80,6 +81,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
   const [activeTab, setActiveTab] = useState<TabKey>('customer')
   const [autoOdometerOut, setAutoOdometerOut] = useState(false)
   const [autoOdometerIn, setAutoOdometerIn] = useState(false)
+  const [showSecondDriver, setShowSecondDriver] = useState(false)
 
   const [customerSearch, setCustomerSearch] = useState('')
   const [customerResults, setCustomerResults] = useState<CustomerLookup[]>([])
@@ -92,6 +94,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
     setErrorStr(null)
     setAutoOdometerOut(false)
     setAutoOdometerIn(false)
+    setShowSecondDriver(!!reservation?.second_driver_name)
     setCustomerSearch('')
     setCustomerResults([])
     setShowCustomerResults(false)
@@ -302,9 +305,15 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
       license_number: formData.license_number || null,
       license_state: formData.license_state || null,
       license_expiration_date: formData.license_expiration_date || null,
+      license_photo_path: formData.license_photo_path || null,
       insurance_provider: formData.insurance_provider || null,
       insurance_policy_number: formData.insurance_policy_number || null,
       insurance_expiration_date: formData.insurance_expiration_date || null,
+      second_driver_name: showSecondDriver ? formData.second_driver_name || null : null,
+      second_driver_license_number: showSecondDriver ? formData.second_driver_license_number || null : null,
+      second_driver_license_state: showSecondDriver ? formData.second_driver_license_state || null : null,
+      second_driver_license_expiration_date: showSecondDriver ? formData.second_driver_license_expiration_date || null : null,
+      second_driver_license_photo_path: showSecondDriver ? formData.second_driver_license_photo_path || null : null,
       damage_checkin: formData.damage_checkin || null,
       damage_checkout: formData.damage_checkout || null,
       damage_diagram_checkin: formData.damage_diagram_checkin && formData.damage_diagram_checkin.length > 0 ? formData.damage_diagram_checkin : null,
@@ -637,6 +646,92 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                       />
                     </div>
                   </div>
+                  <div className="pt-4">
+                    <LicensePhotoUploader
+                      label="License Photo (optional)"
+                      path={formData.license_photo_path ?? null}
+                      onChange={(path) => setFormData({ ...formData, license_photo_path: path })}
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/[0.06]">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className={SECTION_HEADING}>Second Driver</p>
+                    {!showSecondDriver ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowSecondDriver(true)}
+                        className="text-[11px] font-bold text-white/50 hover:text-white transition-colors uppercase tracking-widest"
+                      >
+                        + Add a second driver
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowSecondDriver(false)
+                          setFormData({
+                            ...formData,
+                            second_driver_name: null,
+                            second_driver_license_number: null,
+                            second_driver_license_state: null,
+                            second_driver_license_expiration_date: null,
+                            second_driver_license_photo_path: null,
+                          })
+                        }}
+                        className="text-[11px] font-bold text-red-400/70 hover:text-red-400 transition-colors uppercase tracking-widest"
+                      >
+                        Remove second driver
+                      </button>
+                    )}
+                  </div>
+                  {showSecondDriver && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-1 md:col-span-2">
+                        <label className={LABEL_CLASS}>Full Name</label>
+                        <input
+                          type="text"
+                          value={formData.second_driver_name || ''}
+                          onChange={(e) => setFormData({ ...formData, second_driver_name: e.target.value })}
+                          className={INPUT_CLASS}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={LABEL_CLASS}>License Number</label>
+                        <input
+                          type="text"
+                          value={formData.second_driver_license_number || ''}
+                          onChange={(e) => setFormData({ ...formData, second_driver_license_number: e.target.value })}
+                          className={INPUT_CLASS}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={LABEL_CLASS}>License State / Country</label>
+                        <input
+                          type="text"
+                          value={formData.second_driver_license_state || ''}
+                          onChange={(e) => setFormData({ ...formData, second_driver_license_state: e.target.value })}
+                          className={INPUT_CLASS}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className={LABEL_CLASS}>License Expiration Date</label>
+                        <DatePicker
+                          value={formData.second_driver_license_expiration_date || ''}
+                          onChange={(v) => setFormData({ ...formData, second_driver_license_expiration_date: v })}
+                          className={INPUT_CLASS}
+                        />
+                      </div>
+                      <div>
+                        <LicensePhotoUploader
+                          label="License Photo (optional)"
+                          path={formData.second_driver_license_photo_path ?? null}
+                          onChange={(path) => setFormData({ ...formData, second_driver_license_photo_path: path })}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

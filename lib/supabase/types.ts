@@ -117,9 +117,16 @@ export interface Reservation {
   license_state: string | null
   license_country: string | null
   license_expiration_date: string | null
+  license_photo_path: string | null
   insurance_provider: string | null
   insurance_policy_number: string | null
   insurance_expiration_date: string | null
+  // optional second driver
+  second_driver_name: string | null
+  second_driver_license_number: string | null
+  second_driver_license_state: string | null
+  second_driver_license_expiration_date: string | null
+  second_driver_license_photo_path: string | null
   agreement_token: string | null
   agreement_sent_at: string | null
   agreement_signed_at: string | null

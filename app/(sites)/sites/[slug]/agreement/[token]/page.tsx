@@ -38,6 +38,25 @@ export default async function AgreementPage({ params }: Props) {
   const carName = car ? `${car.make} ${car.model_full || car.model}` : 'Vehicle'
   const accentColor = tenant.primary_color || '#00d2ff'
 
+  // license-photos is a private bucket (PII) — resolve short-lived signed
+  // URLs server-side with the admin client rather than exposing paths to the
+  // (unauthenticated) customer-facing page.
+  const SIGNED_URL_TTL = 60 * 60 // 1 hour, enough to view/print/download the agreement
+  const [licensePhotoUrl, secondDriverLicensePhotoUrl] = await Promise.all([
+    reservation.license_photo_path
+      ? supabase.storage
+          .from('license-photos')
+          .createSignedUrl(reservation.license_photo_path, SIGNED_URL_TTL)
+          .then(({ data }) => data?.signedUrl ?? null)
+      : null,
+    reservation.second_driver_license_photo_path
+      ? supabase.storage
+          .from('license-photos')
+          .createSignedUrl(reservation.second_driver_license_photo_path, SIGNED_URL_TTL)
+          .then(({ data }) => data?.signedUrl ?? null)
+      : null,
+  ])
+
   return (
     <AgreementSigner
       reservation={reservation}
@@ -47,6 +66,8 @@ export default async function AgreementPage({ params }: Props) {
       carName={carName}
       accentColor={accentColor}
       token={params.token}
+      licensePhotoUrl={licensePhotoUrl}
+      secondDriverLicensePhotoUrl={secondDriverLicensePhotoUrl}
     />
   )
 }
