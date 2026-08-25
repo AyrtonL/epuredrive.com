@@ -7,6 +7,15 @@ Backend: Supabase (PostgreSQL). Hosting: Netlify. Always push to `main` so chang
 
 The `/brainstorm` skill (`superpowers:brainstorm`) is deprecated and will be removed in the next major release. When brainstorming is needed, invoke `superpowers:brainstorming` instead.
 
+This repo also has project-local Skills under `.claude/skills/` — invoke them (or let them auto-load) for the recurring procedures below instead of re-deriving them from prose:
+- `supabase-schema-check` — before any INSERT/UPDATE
+- `notion-devlog` — after finishing any task
+- `verify-before-done` — after fixing calculation/matching/rendering bugs
+
+## Worktrees
+
+For risky or long-running changes you want isolated from the current branch (e.g. a schema migration, a multi-file refactor, or parallel work on two features), use Claude Code's native worktree support (`--worktree <name>` or the `EnterWorktree` tool) rather than working directly on `main`. Worktrees land under `.claude/worktrees/`; `node_modules` and `.next` are symlinked from the main checkout (see `.claude/settings.json`) so each worktree doesn't reinstall dependencies. Small in-flight edits (a few files, actively being iterated on) don't need this — reserve it for changes where you'd otherwise be nervous about `main` being in a half-done state.
+
 ## Database
 
 This app uses Supabase (PostgreSQL). Before writing any INSERT or UPDATE query:
@@ -89,3 +98,13 @@ After fixing bugs in calculation or matching logic:
 - For DB changes, run a SELECT after the INSERT/UPDATE to confirm the data looks right
 - For UI rendering bugs, check the browser console and the DOM element directly
 - Use the Supabase MCP (`mcp__claude_ai_Supabase__execute_sql`) to run quick verification queries
+
+### Completion report
+
+For any DB migration, Netlify env/deploy change, or Stripe operation, close it out with this instead of just "done":
+```
+STATUS: complete / partial / blocked
+CHANGED: files/tables/env vars touched
+VERIFIED: exact scenarios checked (see verify-before-done) + their results
+NOT TESTED: anything left unverified
+```
