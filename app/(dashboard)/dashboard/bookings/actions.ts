@@ -20,7 +20,7 @@ import {
   bookingCancelledCustomerEmail,
   bookingRejectedCustomerEmail,
 } from '@/lib/email/templates'
-import { createReservationCalendarEvent, deleteReservationCalendarEvent } from '@/lib/google-calendar'
+import { createReservationCalendarEvent, deleteReservationCalendarEvent, updateReservationCalendarEvent } from '@/lib/google-calendar'
 import type { TenantBrand } from '@/lib/email/templates/_layout'
 
 const TENANT_BRAND_COLUMNS =
@@ -451,6 +451,13 @@ export async function updateReservation(
   // this reservation itself).
   const changesSchedule = 'car_id' in data || 'pickup_date' in data || 'return_date' in data
   const becomingCancelled = data.status === 'cancelled' || data.status === 'rejected'
+  // Fields that appear on the synced Google Calendar event — if any of these change on a
+  // reservation that already has an event, the event needs to be patched, not just the row.
+  const changesCalendarDetails = [
+    'car_id', 'customer_name', 'customer_phone',
+    'pickup_date', 'pickup_time', 'pickup_location',
+    'return_date', 'return_time', 'return_location', 'notes',
+  ].some((field) => field in data)
   if (!options?.allowOverlap && changesSchedule && !becomingCancelled) {
     const { data: current } = await supabase
       .from('reservations')
@@ -465,9 +472,13 @@ export async function updateReservation(
     if (conflict) return { error: conflict, conflict }
   }
 
-  // Fetch current reservation before update (for status change notifications)
+  // Fetch current reservation before update (for status change notifications, and to know
+  // whether a synced calendar event already exists that needs patching)
   let prevReservation: Reservation | null = null
-  if (data.status === 'cancelled' || data.status === 'confirmed' || data.status === 'rejected') {
+  if (
+    data.status === 'cancelled' || data.status === 'confirmed' || data.status === 'rejected' ||
+    changesCalendarDetails
+  ) {
     const { data: prev } = await supabase.from('reservations').select('*').eq('id', id).eq('tenant_id', tenantId).single()
     prevReservation = prev
   }
@@ -589,6 +600,44 @@ export async function updateReservation(
     // above, but other fields (pickup time/location, etc.) may also be changing in this
     // same call, and prevReservation only holds pre-update values.
     notifyAndSyncConfirmedReservation(supabase, tenantId, { ...prevReservation, ...data, id })
+  }
+
+  // Reservation already has a synced Google Calendar event and one of its calendar-visible
+  // fields (dates, times, locations, car, customer info) just changed — patch the event in
+  // place instead of leaving it stale. Skipped when the same call is cancelling/rejecting
+  // (the delete branches below own that transition) or first-confirming (the create branch
+  // above owns that transition).
+  if (
+    !error &&
+    changesCalendarDetails &&
+    prevReservation?.google_calendar_event_id &&
+    data.status !== 'cancelled' &&
+    data.status !== 'rejected'
+  ) {
+    const reservationTenantId = prevReservation.tenant_id
+    const eventId = prevReservation.google_calendar_event_id
+    const merged = { ...prevReservation, ...data }
+    Promise.resolve().then(async () => {
+      try {
+        if (!reservationTenantId) return
+        const carName = await getCarName(supabase, merged.car_id ?? null)
+        await updateReservationCalendarEvent(reservationTenantId, eventId, {
+          customerName: merged.customer_name || 'Customer',
+          customerPhone: merged.customer_phone,
+          carName,
+          pickupDate: merged.pickup_date,
+          pickupTime: merged.pickup_time,
+          pickupLocation: merged.pickup_location,
+          returnDate: merged.return_date,
+          returnTime: merged.return_time,
+          returnLocation: merged.return_location,
+          bookingCode: merged.booking_code,
+          notes: merged.notes,
+        })
+      } catch (e) {
+        console.error('[calendar] Event update failed:', e)
+      }
+    })
   }
 
   // Rejected → clean up any Google Calendar event (unusual transition, but a reservation

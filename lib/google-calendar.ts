@@ -130,6 +130,48 @@ export async function createReservationCalendarEvent(
   return event.id as string
 }
 
+/**
+ * Patches an existing event's fields (e.g. after pickup/return date changes).
+ * Treats "already gone" (404/410) as a no-op rather than throwing, matching delete's behavior —
+ * the reservation row's google_calendar_event_id would otherwise point at a dead event forever.
+ */
+export async function updateReservationCalendarEvent(
+  tenantId: string,
+  eventId: string,
+  reservation: ReservationCalendarDetails
+): Promise<void> {
+  const conn = await getConnection(tenantId)
+  if (!conn) return
+
+  const description = [
+    `Booking ${reservation.bookingCode}`,
+    reservation.customerPhone ? `Phone: ${reservation.customerPhone}` : null,
+    reservation.returnLocation && reservation.returnLocation !== reservation.pickupLocation
+      ? `Return location: ${reservation.returnLocation}`
+      : null,
+    reservation.notes || null,
+  ].filter(Boolean).join('\n')
+
+  const res = await calendarFetch(
+    `/calendars/${encodeURIComponent(conn.calendar_id)}/events/${encodeURIComponent(eventId)}`,
+    conn,
+    {
+      method: 'PATCH',
+      body: {
+        summary: `${reservation.carName} — ${reservation.customerName}`,
+        location: reservation.pickupLocation || undefined,
+        description,
+        start: toDateTime(reservation.pickupDate, reservation.pickupTime),
+        end: toDateTime(reservation.returnDate, reservation.returnTime),
+      },
+    }
+  )
+
+  if (!res.ok && res.status !== 404 && res.status !== 410) {
+    throw new Error(`Calendar event update failed: ${res.status}`)
+  }
+}
+
 /** Deletes a previously created event. Treats "already gone" (404/410) as success. */
 export async function deleteReservationCalendarEvent(tenantId: string, eventId: string): Promise<void> {
   const conn = await getConnection(tenantId)
