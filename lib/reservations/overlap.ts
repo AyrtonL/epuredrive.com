@@ -1,7 +1,7 @@
 // lib/reservations/overlap.ts
 //
 // Overbooking prevention. Two reservations for the SAME car conflict when
-// their [pickup_date, return_date] ranges overlap. Used server-side in
+// their [pickup, return] windows overlap. Used server-side in
 // createReservation / updateReservation to block silent double-bookings.
 //
 // Operators can intentionally double-book (e.g. overlapping same-day
@@ -17,19 +17,43 @@ export interface OverlapCandidate {
   id?: number | null
   car_id: number | null
   pickup_date: string | null
+  pickup_time?: string | null
   return_date: string | null
+  return_time?: string | null
 }
 
-/** Do two inclusive [start,end] date ranges overlap? Null end = open-ended. */
+/** Normalize "HH:MM" to "HH:MM:SS" so datetime strings compare consistently. */
+function normalizeTime(time: string | null | undefined): string | null {
+  if (!time) return null
+  return time.length === 5 ? `${time}:00` : time
+}
+
+/**
+ * Build a comparable datetime string. Missing time defaults to the
+ * conservative bound (start of day for a start bound, end of day for an end
+ * bound) so date-only reservations still block the whole day, as before.
+ */
+function toDateTime(date: string, time: string | null | undefined, boundary: 'start' | 'end'): string {
+  const t = normalizeTime(time) ?? (boundary === 'start' ? '00:00:00' : '23:59:59')
+  return `${date}T${t}`
+}
+
+/** Do two [start,end] datetime windows overlap? Null end = open-ended. */
 function rangesOverlap(
   aStart: string,
+  aStartTime: string | null | undefined,
   aEnd: string | null,
+  aEndTime: string | null | undefined,
   bStart: string,
-  bEnd: string | null
+  bStartTime: string | null | undefined,
+  bEnd: string | null,
+  bEndTime: string | null | undefined
 ): boolean {
-  const aE = aEnd ?? '9999-12-31'
-  const bE = bEnd ?? '9999-12-31'
-  return aStart <= bE && bStart <= aE
+  const aS = toDateTime(aStart, aStartTime, 'start')
+  const aE = aEnd ? toDateTime(aEnd, aEndTime, 'end') : '9999-12-31T23:59:59'
+  const bS = toDateTime(bStart, bStartTime, 'start')
+  const bE = bEnd ? toDateTime(bEnd, bEndTime, 'end') : '9999-12-31T23:59:59'
+  return aS < bE && bS < aE
 }
 
 /**
@@ -49,9 +73,13 @@ export function findOverlappingReservations(
     if (!(BLOCKING_STATUSES as readonly string[]).includes(s)) return false
     return rangesOverlap(
       candidate.pickup_date!,
+      candidate.pickup_time,
       candidate.return_date ?? null,
+      candidate.return_time,
       r.pickup_date,
-      r.return_date ?? null
+      r.pickup_time,
+      r.return_date ?? null,
+      r.return_time
     )
   })
 }

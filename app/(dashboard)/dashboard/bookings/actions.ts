@@ -332,7 +332,7 @@ async function overbookingConflict(
   if (candidate.car_id == null || !candidate.pickup_date) return null
   const { data: existing } = await supabase
     .from('reservations')
-    .select('id, booking_code, car_id, customer_name, pickup_date, return_date, status')
+    .select('id, booking_code, car_id, customer_name, pickup_date, pickup_time, return_date, return_time, status')
     .eq('tenant_id', tenantId)
     .eq('car_id', candidate.car_id)
     .in('status', ['pending', 'confirmed', 'active'])
@@ -351,7 +351,9 @@ export async function createReservation(
     const conflict = await overbookingConflict(supabase, tenantId, {
       car_id: data.car_id ?? null,
       pickup_date: data.pickup_date ?? null,
+      pickup_time: data.pickup_time ?? null,
       return_date: data.return_date ?? null,
+      return_time: data.return_time ?? null,
     })
     if (conflict) return { error: conflict, conflict }
   }
@@ -461,13 +463,15 @@ export async function updateReservation(
   if (!options?.allowOverlap && changesSchedule && !becomingCancelled) {
     const { data: current } = await supabase
       .from('reservations')
-      .select('car_id, pickup_date, return_date')
+      .select('car_id, pickup_date, pickup_time, return_date, return_time')
       .eq('id', id).eq('tenant_id', tenantId).single()
     const conflict = await overbookingConflict(supabase, tenantId, {
       id,
       car_id: data.car_id ?? current?.car_id ?? null,
       pickup_date: data.pickup_date ?? current?.pickup_date ?? null,
+      pickup_time: data.pickup_time ?? current?.pickup_time ?? null,
       return_date: data.return_date ?? current?.return_date ?? null,
+      return_time: data.return_time ?? current?.return_time ?? null,
     })
     if (conflict) return { error: conflict, conflict }
   }

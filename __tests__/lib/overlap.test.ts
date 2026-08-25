@@ -47,6 +47,33 @@ describe('findOverlappingReservations', () => {
     const hits = findOverlappingReservations({ car_id: 1, pickup_date: '2026-06-13', return_date: null }, existing)
     expect(hits.map((h) => h.id).sort((a, b) => a - b)).toEqual([10, 12])
   })
+
+  it('does not flag a same-day handover when the return time is before the next pickup time', () => {
+    const sameDayExisting = [
+      res({ id: 20, car_id: 1, pickup_date: '2026-06-10', pickup_time: '10:00', return_date: '2026-06-12', return_time: '13:00', status: 'confirmed' }),
+    ]
+    const hits = findOverlappingReservations(
+      { car_id: 1, pickup_date: '2026-06-12', pickup_time: '15:00', return_date: '2026-06-14', return_time: '10:00' },
+      sameDayExisting
+    )
+    expect(hits).toHaveLength(0)
+  })
+
+  it('flags a same-day handover when the times actually overlap', () => {
+    const sameDayExisting = [
+      res({ id: 21, car_id: 1, pickup_date: '2026-06-10', pickup_time: '10:00', return_date: '2026-06-12', return_time: '16:00', status: 'confirmed' }),
+    ]
+    const hits = findOverlappingReservations(
+      { car_id: 1, pickup_date: '2026-06-12', pickup_time: '15:00', return_date: '2026-06-14', return_time: '10:00' },
+      sameDayExisting
+    )
+    expect(hits.map((h) => h.id)).toEqual([21])
+  })
+
+  it('falls back to whole-day blocking when times are missing (legacy rows)', () => {
+    const hits = findOverlappingReservations({ car_id: 1, pickup_date: '2026-06-12', return_date: '2026-06-13' }, existing)
+    expect(hits.map((h) => h.id)).toEqual([10])
+  })
 })
 
 describe('describeConflicts', () => {
