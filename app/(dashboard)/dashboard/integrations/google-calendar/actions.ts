@@ -32,6 +32,8 @@ async function getCarName(supabase: ReturnType<typeof createClient>, carId: numb
  * transition, so it never sees pre-existing rows). Only touches upcoming/current
  * bookings (return date today or later) — no point cluttering the calendar with
  * events for trips that already ended, and skips anything already synced.
+ * Turo bookings are excluded — Turo sends its own calendar invite, so syncing a
+ * second event would double up every Turo trip on the operator's calendar.
  */
 export async function syncExistingBookings(): Promise<{ synced: number; errors: number; message: string }> {
   const { tenantId } = await requireTenantId()
@@ -43,6 +45,7 @@ export async function syncExistingBookings(): Promise<{ synced: number; errors: 
     .eq('tenant_id', tenantId)
     .in('status', ['confirmed', 'active'])
     .is('google_calendar_event_id', null)
+    .neq('source', 'turo')
     .gte('return_date', todayISO())
 
   if (!reservations?.length) {
@@ -55,7 +58,7 @@ export async function syncExistingBookings(): Promise<{ synced: number; errors: 
   for (const r of reservations) {
     try {
       const carName = await getCarName(supabase, r.car_id)
-      const eventId = await createReservationCalendarEvent(tenantId, {
+      const eventId = await createReservationCalendarEvent(tenantId, r.id, {
         customerName: r.customer_name || 'Customer',
         customerPhone: r.customer_phone,
         carName,

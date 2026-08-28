@@ -229,6 +229,7 @@ interface ReservationForNotify {
   return_location: string | null
   booking_code: string
   notes: string | null
+  source: string | null
 }
 
 /**
@@ -296,8 +297,25 @@ function notifyAndSyncConfirmedReservation(
 
   Promise.resolve().then(async () => {
     try {
+      // Turo bookings already get their own calendar invite from Turo's own
+      // confirmation email — syncing a second event just clutters the calendar.
+      if (reservation.source === 'turo') return
+
+      // Re-read the row right before creating: a concurrent confirm (double-click)
+      // or the "sync existing bookings" backfill may have already created the
+      // event since prevReservation was snapshotted. The deterministic event id
+      // in createReservationCalendarEvent is the real backstop (Google returns
+      // 409), but skipping the call entirely avoids a pointless API round-trip.
+      const { data: fresh } = await supabase
+        .from('reservations')
+        .select('google_calendar_event_id')
+        .eq('id', reservation.id)
+        .eq('tenant_id', tenantId)
+        .maybeSingle()
+      if (fresh?.google_calendar_event_id) return
+
       const carName = await getCarName(supabase, reservation.car_id)
-      const eventId = await createReservationCalendarEvent(tenantId, {
+      const eventId = await createReservationCalendarEvent(tenantId, reservation.id, {
         customerName: reservation.customer_name || 'Customer',
         customerPhone: reservation.customer_phone,
         carName,

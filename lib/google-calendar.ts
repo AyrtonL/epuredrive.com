@@ -2,11 +2,27 @@
 // Syncs confirmed reservations to the tenant's connected Google Calendar.
 // Mirrors the Gmail OAuth + refresh-on-401 pattern from
 // app/api/cron/poll-turo-emails/route.ts, pointed at the Calendar API instead.
+import { createHash } from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { APP_TZ } from '@/lib/finance/revenue'
 
 const CALENDAR_BASE = 'https://www.googleapis.com/calendar/v3'
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+
+/**
+ * Deterministic Google Calendar event id for a reservation. Passing an explicit
+ * id to events.insert makes the call idempotent: a duplicate insert — e.g. two
+ * near-simultaneous confirms racing before the reservation row's
+ * google_calendar_event_id is written back, or the backfill running twice —
+ * comes back as 409 instead of silently creating a second event.
+ *
+ * Google requires the id to be base32hex (lowercase a-v and 0-9, 5–1024 chars);
+ * a hex digest is already a valid subset, and the `epr` prefix keeps it from
+ * ever colliding with a Google-generated id stored before this scheme existed.
+ */
+export function reservationEventId(reservationId: string | number): string {
+  return 'epr' + createHash('sha1').update(String(reservationId)).digest('hex')
+}
 
 interface CalendarConnection {
   id: string
@@ -92,15 +108,22 @@ function toDateTime(date: string | null, time: string | null): { dateTime: strin
 
 /**
  * Creates a single calendar event spanning pickup → return for a confirmed reservation.
- * Returns the created event id, or null if the tenant has no active Calendar connection.
+ * Returns the event id, or null if the tenant has no active Calendar connection.
  * Never throws for "not connected" — only for real API failures once connected.
+ *
+ * The event id is derived deterministically from `reservationId`, so a second
+ * call for the same reservation gets a 409 from Google (treated as success,
+ * returning the same id) rather than creating a duplicate event.
  */
 export async function createReservationCalendarEvent(
   tenantId: string,
+  reservationId: string | number,
   reservation: ReservationCalendarDetails
 ): Promise<string | null> {
   const conn = await getConnection(tenantId)
   if (!conn) return null
+
+  const eventId = reservationEventId(reservationId)
 
   const description = [
     `Booking ${reservation.bookingCode}`,
@@ -114,6 +137,7 @@ export async function createReservationCalendarEvent(
   const res = await calendarFetch(`/calendars/${encodeURIComponent(conn.calendar_id)}/events`, conn, {
     method: 'POST',
     body: {
+      id: eventId,
       summary: `${reservation.carName} — ${reservation.customerName}`,
       location: reservation.pickupLocation || undefined,
       description,
@@ -122,12 +146,17 @@ export async function createReservationCalendarEvent(
     },
   })
 
+  // 409 = an event with this deterministic id already exists → a concurrent
+  // create already won the race. Not an error; the id is the same either way.
+  if (res.status === 409) {
+    return eventId
+  }
+
   if (!res.ok) {
     throw new Error(`Calendar event creation failed: ${res.status}`)
   }
 
-  const event = await res.json()
-  return event.id as string
+  return eventId
 }
 
 /**
