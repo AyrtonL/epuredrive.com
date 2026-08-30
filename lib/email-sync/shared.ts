@@ -249,11 +249,21 @@ export async function findExistingReservation(
     if (error) throw new Error(`Existing-reservation lookup by Turo-Res # failed: ${error.message}`)
     if (data?.[0]) return data[0]
   }
+  if (parsed.source === 'upcar' && parsed.reservationId) {
+    const { data, error } = await supabase
+      .from('reservations')
+      .select('id, status')
+      .eq('tenant_id', tenantId)
+      .like('notes', `%Upcar-Res #${parsed.reservationId}%`)
+      .limit(1)
+    if (error) throw new Error(`Existing-reservation lookup by Upcar-Res # failed: ${error.message}`)
+    if (data?.[0]) return data[0]
+  }
   const { data, error } = await supabase
     .from('reservations')
     .select('id, status')
     .eq('tenant_id', tenantId)
-    .like('notes', `%Turo #${parsed.messageId}%`)
+    .like('notes', `%${parsed.source === 'upcar' ? 'Upcar' : 'Turo'} #${parsed.messageId}%`)
     .limit(1)
   if (error) throw new Error(`Existing-reservation lookup by Gmail message id failed: ${error.message}`)
   return data?.[0] ?? null
@@ -268,6 +278,7 @@ export const PROTECTED_STATUSES = new Set(['active', 'completed'])
 
 export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promise<void> {
   const supabase = createAdminClient()
+  const provider = parsed.source === 'upcar' ? 'Upcar' : 'Turo'
 
   if (parsed.type === 'cancel') {
     const existing = await findExistingReservation(parsed, sync.tenant_id)
@@ -289,31 +300,44 @@ export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promis
 
   const existing = await findExistingReservation(parsed, sync.tenant_id)
   const carId = await findCarId(sync.tenant_id, parsed.vehicle_name)
-  const ref = `Turo #${parsed.messageId}${parsed.reservationId ? ` Turo-Res #${parsed.reservationId}` : ''}`
+  const ref = `${provider} #${parsed.messageId}${parsed.reservationId ? ` ${provider}-Res #${parsed.reservationId}` : ''}`
   const notes = carId ? ref : `${ref} [vehicle: ${parsed.vehicle_name || 'unknown'}]`
 
   if (existing) {
     // Refresh trip details from the email but never regress the lifecycle: a re-scanned
     // confirm/modify email must not flip an active/completed trip back to confirmed.
     const preserveStatus = PROTECTED_STATUSES.has(existing.status ?? '')
-    await supabase
-      .from('reservations')
-      .update({
-        pickup_date: parsed.pickup_date,
-        return_date: parsed.return_date,
-        total_amount: parsed.total_amount,
-        notes,
-        ...(preserveStatus ? {} : { status: parsed.status }),
-        ...(carId ? { car_id: carId } : {}),
-      })
-      .eq('id', existing.id)
+    const update: Record<string, unknown> = { notes }
+    // Turo confirm/modify always carries full dates -> keep writing them unconditionally.
+    // Upcar modify/car-swap can be partial -> only write the fields the email actually
+    // provides, and never touch status.
+    const writeIfSet = (k: string, v: unknown) => { if (v != null) update[k] = v }
+    if (parsed.source === 'upcar') {
+      writeIfSet('pickup_date', parsed.pickup_date)
+      writeIfSet('return_date', parsed.return_date)
+      writeIfSet('pickup_time', parsed.pickup_time)
+      writeIfSet('return_time', parsed.return_time)
+      writeIfSet('total_amount', parsed.total_amount)
+      if (carId) update.car_id = carId
+    } else {
+      update.pickup_date = parsed.pickup_date
+      update.return_date = parsed.return_date
+      update.total_amount = parsed.total_amount
+      if (carId) update.car_id = carId
+      if (!preserveStatus) update.status = parsed.status
+    }
+    await supabase.from('reservations').update(update).eq('id', existing.id)
   } else {
     const { error: insertError } = await supabase.from('reservations').insert({
       tenant_id: sync.tenant_id,
       car_id: carId,
       customer_name: parsed.customer_name,
+      ...(parsed.customer_phone ? { customer_phone: parsed.customer_phone } : {}),
+      ...(parsed.customer_dob ? { customer_dob: parsed.customer_dob } : {}),
       pickup_date: parsed.pickup_date,
       return_date: parsed.return_date,
+      ...(parsed.pickup_time ? { pickup_time: parsed.pickup_time } : {}),
+      ...(parsed.return_time ? { return_time: parsed.return_time } : {}),
       total_amount: parsed.total_amount,
       status: parsed.status,
       source: parsed.source,

@@ -22,7 +22,13 @@ import {
   processEmail,
 } from '@/lib/email-sync/shared'
 import { parseTuroEmail } from '@/lib/email-sync/turo'
-import type { EmailSync } from '@/lib/email-sync/types'
+import { parseUpcarEmail } from '@/lib/email-sync/upcar'
+import type { EmailSync, PollConfig } from '@/lib/email-sync/types'
+
+// Provider search configs. Turo emails arrive from noreply@mail.turo.com; Upcar host
+// notifications from support@upcar.ai. Each poll runs one Gmail search per config.
+const TURO_CONFIG: PollConfig = { fromAddress: 'noreply@mail.turo.com', parse: parseTuroEmail }
+const UPCAR_CONFIG: PollConfig = { fromAddress: 'support@upcar.ai', parse: parseUpcarEmail }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -35,7 +41,7 @@ function verifyCronSecret(request: Request): boolean {
 
 // ── Provider pollers ──────────────────────────────────────────────────────────
 
-async function pollGmail(sync: EmailSync, msgErrors?: string[]): Promise<number> {
+async function pollGmail(sync: EmailSync, config: PollConfig, msgErrors?: string[]): Promise<number> {
   // Always force a fresh access token before searching, rather than reusing a cached one
   // until it 401s. A cached token has twice now been observed to keep authenticating (200 OK)
   // while silently returning an empty/stale messages.list result set — no error, no 401, just
@@ -47,7 +53,7 @@ async function pollGmail(sync: EmailSync, msgErrors?: string[]): Promise<number>
     ? new Date(new Date(sync.last_checked).getTime() - CURSOR_LOOKBACK_MS)
     : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
   const afterTimestamp = Math.floor(checkedAt.getTime() / 1000)
-  const query = `from:noreply@mail.turo.com after:${afterTimestamp}`
+  const query = `from:${config.fromAddress} after:${afterTimestamp}`
 
   const messages: { id: string }[] = []
   let pageToken: string | undefined
@@ -70,7 +76,7 @@ async function pollGmail(sync: EmailSync, msgErrors?: string[]): Promise<number>
       const full = await gmailFetch(`/messages/${msg.id}?format=full`, sync)
       const subject = full.payload?.headers?.find((h: { name: string }) => h.name.toLowerCase() === 'subject')?.value || ''
       const body = getMessageBody(full.payload)
-      const parsed = parseTuroEmail(body, subject, msg.id)
+      const parsed = config.parse(body, subject, msg.id)
       if (!parsed) continue
       await processEmail(parsed, sync)
       synced++
@@ -215,7 +221,8 @@ export async function GET(request: Request) {
       const synced =
         sync.provider === 'icloud'
           ? await pollIcloud(sync)
-          : await pollGmail(sync, errorDetails)
+          : (await pollGmail(sync, TURO_CONFIG, errorDetails)) +
+            (await pollGmail(sync, UPCAR_CONFIG, errorDetails))
 
       await supabase
         .from('turo_email_syncs')
