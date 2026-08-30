@@ -100,9 +100,9 @@ export default function FeedManager({ sync, tenantId }: Props) {
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="max-w-md">
-            <h3 className="text-white text-xl font-black italic tracking-tight mb-2">Turo Email Reader</h3>
+            <h3 className="text-white text-xl font-black italic tracking-tight mb-2">Turo & Upcar Email Reader</h3>
             <p className="text-white/40 text-sm leading-relaxed">
-              Automatically sync new bookings, modifications, and cancellations directly from your Turo emails.
+              Automatically sync new bookings, modifications, and cancellations directly from your Turo and Upcar emails.
             </p>
           </div>
 
@@ -183,7 +183,7 @@ export default function FeedManager({ sync, tenantId }: Props) {
                 Confirm iCloud Connection
               </button>
               <p className="text-[9px] text-white/30 text-center mt-3 italic">
-                *We only read emails from noreply@mail.turo.com. You must use an App-Specific Password.
+                *We only read emails from noreply@mail.turo.com and support@upcar.ai. You must use an App-Specific Password.
               </p>
             </div>
           </form>
