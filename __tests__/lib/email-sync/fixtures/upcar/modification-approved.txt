@@ -1,0 +1,1 @@
+| # Hi Ayrton Lohigorry, Great news! A booking modification request has been approved: * Booking ID: 17776 * Car: Audi Q3 2018 * Guest Name: Justin Taylor * Trip start 08/28/2026 12:30 PM 08/28/2026 11:30 AM * Trip end 08/30/2026 10:00 AM * Your Total Earnings: $82.50 You can review the updated booking details by clicking the button below: View Booking Details
