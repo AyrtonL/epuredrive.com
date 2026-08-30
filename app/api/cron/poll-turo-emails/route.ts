@@ -1,8 +1,9 @@
 /**
  * GET /api/cron/poll-turo-emails
  * Scheduled every 15 min via Netlify (thin wrapper calls this route).
- * Reads all active turo_email_syncs, polls Gmail / iCloud for new Turo
- * emails, and upserts reservations into the DB.
+ * Reads all active turo_email_syncs, polls Gmail / iCloud for new Turo and
+ * Upcar booking emails (from noreply@mail.turo.com and support@upcar.ai),
+ * and upserts reservations into the DB.
  *
  * Protected by Authorization: Bearer {CRON_SECRET}
  */

@@ -91,6 +91,40 @@ describe('parseUpcarEmail', () => {
   })
 
   it.each([
+    'Booking 17776 Car Swap Declined',
+    'Booking 17776 Modification Declined',
+    'Booking 17776 Change Request Declined',
+  ])('does NOT cancel a live booking on a declined sub-request: %s', (subject) => {
+    const p = parseUpcarEmail('Booking ID: 17776', subject, 'msg-declined')
+    expect(p).toBeNull()
+  })
+
+  it('parses an accented guest name without mangling it', () => {
+    const body = fx('accepted.txt').replace(/Justin Taylor/g, 'José Núñez-Díaz')
+    const p = parseUpcarEmail(
+      body,
+      'Booking 17776 Accepted - Your Car Has Been Booked',
+      'msg-accented',
+      new Date('2026-08-29T00:00:00Z'),
+    )
+    expect(p?.customer_name).toBe('José Núñez-Díaz')
+  })
+
+  it('returns null customer_name when no Guest label is present (never a prose fragment)', () => {
+    const body =
+      'Booking Accepted! Booking ID: 17776 Start Date: Fri, Aug 28 - 12:30 PM ' +
+      'End Date: Sun, Aug 30 - 10:00 AM Your Earnings: $82.50 ' +
+      'Important: Please do not hand over the keys to the guest until the booking start time.'
+    const p = parseUpcarEmail(
+      body,
+      'Booking 17776 Accepted',
+      'msg-noguest',
+      new Date('2026-08-29T00:00:00Z'),
+    )
+    expect(p?.customer_name).toBeNull()
+  })
+
+  it.each([
     ['booking-request.txt', 'Booking 17776 New Booking Request - Action Required'],
     ['check-out.txt', 'Please Check Out Your Trip 17776'],
   ])('ignores %s', (file, subject) => {

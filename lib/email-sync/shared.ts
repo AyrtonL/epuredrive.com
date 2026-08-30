@@ -233,7 +233,17 @@ export async function findExistingReservation(
   tenantId: string,
 ): Promise<ExistingReservation | null> {
   const supabase = createAdminClient()
-  if (parsed.reservationId) {
+  if (parsed.source === 'upcar' && parsed.reservationId) {
+    const { data, error } = await supabase
+      .from('reservations')
+      .select('id, status')
+      .eq('tenant_id', tenantId)
+      .like('notes', `%Upcar-Res #${parsed.reservationId}%`)
+      .limit(1)
+    if (error) throw new Error(`Existing-reservation lookup by Upcar-Res # failed: ${error.message}`)
+    if (data?.[0]) return data[0]
+  }
+  if (parsed.source !== 'upcar' && parsed.reservationId) {
     const { data, error } = await supabase
       .from('reservations')
       .select('id, status')
@@ -247,16 +257,6 @@ export async function findExistingReservation(
     // fine outside the deployed function — root cause unconfirmed, but silently swallowing
     // the error made it un-debuggable and turned a one-off blip into a permanent loop).
     if (error) throw new Error(`Existing-reservation lookup by Turo-Res # failed: ${error.message}`)
-    if (data?.[0]) return data[0]
-  }
-  if (parsed.source === 'upcar' && parsed.reservationId) {
-    const { data, error } = await supabase
-      .from('reservations')
-      .select('id, status')
-      .eq('tenant_id', tenantId)
-      .like('notes', `%Upcar-Res #${parsed.reservationId}%`)
-      .limit(1)
-    if (error) throw new Error(`Existing-reservation lookup by Upcar-Res # failed: ${error.message}`)
     if (data?.[0]) return data[0]
   }
   const { data, error } = await supabase
@@ -299,6 +299,17 @@ export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promis
   }
 
   const existing = await findExistingReservation(parsed, sync.tenant_id)
+
+  // An Upcar car-swap/modification email carries partial data (no dates, sometimes no
+  // guest name). With no existing row to patch, inserting would throw on a NOT NULL column
+  // and the per-message catch would retry it every poll for the full 3-day cursor window.
+  // Gated to Upcar so the Turo path is byte-unchanged.
+  if (!existing && parsed.source === 'upcar' &&
+      (!parsed.pickup_date || !parsed.return_date || !parsed.customer_name)) {
+    console.info(`[poll] Upcar ${parsed.type} ${parsed.reservationId ?? ''} has no existing reservation and incomplete data — skipping insert`)
+    return
+  }
+
   const carId = await findCarId(sync.tenant_id, parsed.vehicle_name)
   const ref = `${provider} #${parsed.messageId}${parsed.reservationId ? ` ${provider}-Res #${parsed.reservationId}` : ''}`
   const notes = carId ? ref : `${ref} [vehicle: ${parsed.vehicle_name || 'unknown'}]`
@@ -313,6 +324,7 @@ export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promis
     // provides, and never touch status.
     const writeIfSet = (k: string, v: unknown) => { if (v != null) update[k] = v }
     if (parsed.source === 'upcar') {
+      // Upcar modify/car-swap never writes status, so PROTECTED_STATUSES is honored trivially — no preserveStatus check needed here.
       writeIfSet('pickup_date', parsed.pickup_date)
       writeIfSet('return_date', parsed.return_date)
       writeIfSet('pickup_time', parsed.pickup_time)

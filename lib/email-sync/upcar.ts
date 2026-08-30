@@ -64,16 +64,16 @@ function bookingId(subject: string, body: string): string | null {
 
 function guestName(body: string): string | null {
   const m =
-    body.match(/Guest DL Name:?\s*([A-Za-z][A-Za-z .'’-]+?)(?=\s+\*|\s+(?:Guest|Booking|Start|Trip|Pickup|Car|DOB|License|Your)\b|\s*$)/i) ||
-    body.match(/Guest Name:?\s*([A-Za-z][A-Za-z .'’-]+?)(?=\s+\*|\s+(?:Guest|Booking|Start|Trip|Pickup|Car|DOB|License|Message|Your)\b|\s*$)/i) ||
-    body.match(/Guest:?\s*([A-Za-z][A-Za-z .'’-]+?)(?=\s+\*|\s+(?:Guest|Booking|Start|Trip|Pickup|Car|DOB|License|Your)\b|\s*$)/i)
+    body.match(/Guest DL Name:?\s*(\p{L}[\p{L} .'’-]+?)(?=\s+\*|\s+(?:Guest|Booking|Start|Trip|Pickup|Car|DOB|License|Your)\b|\s*$)/iu) ||
+    body.match(/Guest Name:?\s*(\p{L}[\p{L} .'’-]+?)(?=\s+\*|\s+(?:Guest|Booking|Start|Trip|Pickup|Car|DOB|License|Message|Your)\b|\s*$)/iu) ||
+    body.match(/\bGuest:\s+(\p{L}[\p{L} .'’-]+?)(?=\s+\*|\s+(?:Guest|Booking|Start|Trip|Pickup|Car|DOB|License|Your)\b|\s*$)/iu)
   return m ? m[1].trim() : null
 }
 
 function vehicleName(body: string): string | undefined {
   const m =
     body.match(/New Car:?\s*(.+?)(?=\s*(?:You can|$|\n))/i) ||
-    body.match(/\bCar:?\s*(.+?)(?=\s*(?:\*|Guest|License|You can|$|\n))/i) ||
+    body.match(/(?<!Old )\bCar:?\s*(.+?)(?=\s*(?:\*|Guest|License|You can|$|\n))/i) ||
     body.match(/booking request for (.+?) from /i)
   if (!m) return undefined
   return m[1].replace(/\s+at\s+.+$/i, '').trim()
@@ -111,7 +111,12 @@ export function parseUpcarEmail(
   const isAccepted = /\bAccepted\b|Car Has Been Booked/i.test(s)
   const isModification = /Modification (?:Approved|Auto-Approved)/i.test(s)
   const isCarSwap = /Car Swap Accepted/i.test(s)
-  const isCancel = /\b(cancell?ed|cancel|declined)\b/i.test(s)
+  // Only a cancellation of the booking itself — not a declined sub-request like a
+  // car swap, modification, or change request (each of which leaves the booking live).
+  const isCancel =
+    !isCarSwap && !isModification &&
+    /\b(cancell?ed|cancellation|declined)\b/i.test(s) &&
+    !/\b(swap|change|request|modification)\b/i.test(s)
 
   // Explicitly ignored booking-adjacent emails
   if (
@@ -124,6 +129,8 @@ export function parseUpcarEmail(
   const reservationId = bookingId(s, body)
 
   if (isCancel) {
+    // TODO(upcar): the real booking-cancellation subject format is still unverified;
+    // this matches "... Cancelled" / "... Cancellation" while excluding declined sub-requests.
     return {
       type: 'cancel', source: 'upcar', messageId, reservationId,
       customer_name: guestName(body), pickup_date: null, return_date: null,
@@ -155,7 +162,7 @@ export function parseUpcarEmail(
     ret = lastDT(endBlock)
   } else {
     const startStr = body.match(/Start (?:Date|Time):?\s*(.+?)(?=\s+End (?:Date|Time):)/i)?.[1] ?? ''
-    const endStr = body.match(/End (?:Date|Time):?\s*(.+?)(?=\s+(?:Pickup|Return|Your|Miles|Important|$))/i)?.[1] ?? ''
+    const endStr = body.match(/End (?:Date|Time):?\s*(.+?)(?=\s+(?:Pickup|Return|Your|Miles|Important)|\s*$)/i)?.[1] ?? ''
     pickup = parseNamedDateTime(startStr, reference)
     ret = parseNamedDateTime(endStr, reference)
   }

@@ -56,15 +56,34 @@ it('car-swap modify updates only car/vehicle, not dates', async () => {
   expect(upd).not.toHaveProperty('status')
 })
 
-it('does not regress a protected (completed) status on modify', async () => {
-  state.existing = { id: 'r1', status: 'completed' }
+it('never writes status on an Upcar modify (also when the existing row is confirmed)', async () => {
   const mod: ParsedEmail = {
     type: 'modify', source: 'upcar', messageId: 'm3', reservationId: '17776',
     customer_name: 'Justin Taylor', pickup_date: '2026-08-28', pickup_time: '11:30',
     return_date: '2026-08-30', return_time: '10:00', total_amount: 82.5,
   }
+
+  state.existing = { id: 'r1', status: 'completed' }
   await processEmail(mod, sync)
-  const upd = rows.find((r) => r.__update)?.__update
+  let upd = rows.find((r) => r.__update)?.__update
   expect(upd).not.toHaveProperty('status')
   expect(upd.pickup_time).toBe('11:30')
+
+  rows.length = 0
+  state.existing = { id: 'r1', status: 'confirmed' }
+  await processEmail(mod, sync)
+  upd = rows.find((r) => r.__update)?.__update
+  expect(upd).not.toHaveProperty('status')
+  expect(upd.pickup_time).toBe('11:30')
+})
+
+it('skips insert AND update for an orphan Upcar car-swap with no existing reservation', async () => {
+  state.existing = null
+  const swap: ParsedEmail = {
+    type: 'modify', source: 'upcar', messageId: 'm4', reservationId: '17776',
+    customer_name: 'Justin Taylor', vehicle_name: 'Audi Q3 2018',
+    pickup_date: null, return_date: null,
+  }
+  await processEmail(swap, sync)
+  expect(rows).toHaveLength(0)
 })
