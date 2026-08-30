@@ -84,6 +84,16 @@ function earnings(body: string): number | null {
   return m ? parseFloat(m[1].replace(/,/g, '')) : null
 }
 
+function pickupLocation(body: string): string | null {
+  const m = body.match(/Pickup Location:?\s*(.+?)(?=\s+(?:Return Location|Your |Miles |Important|End |$))/i)
+  return m ? m[1].trim().replace(/,\s*$/, '') : null
+}
+
+function returnLocation(body: string): string | null {
+  const m = body.match(/Return Location:?\s*(.+?)(?=\s+(?:The guest|Your |Note:|$))/i)
+  return m ? m[1].trim().replace(/,\s*(?:USA|US)\s*$/i, '').replace(/,\s*$/, '') : null
+}
+
 function phone(body: string): string | null {
   const m = body.match(/Guest Phone:?\s*(\+?[\d][\d\s()-]{6,}\d)/i)
   return m ? m[1].replace(/[^\d+]/g, '') : null
@@ -182,6 +192,8 @@ export function parseUpcarEmail(
     pickup_time: pickup.time,
     return_date: ret.date,
     return_time: ret.time,
+    pickup_location: pickupLocation(body),
+    return_location: returnLocation(body),
     total_amount: earnings(body),
     ...(isModification ? {} : { status: 'confirmed' }),
   }

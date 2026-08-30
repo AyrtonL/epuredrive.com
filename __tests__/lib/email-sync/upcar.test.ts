@@ -27,9 +27,11 @@ describe('parseUpcarEmail', () => {
       return_date: '2026-08-30',
       pickup_time: '12:30',
       return_time: '10:00',
+      pickup_location: '19707 Turnberry Way, Aventura, FL 33180',
       total_amount: 82.5,
       messageId: 'msg-accepted',
     })
+    expect(p?.return_location).toBeNull()
   })
 
   it('infers the year for the year-less Accepted date from the email received date', () => {

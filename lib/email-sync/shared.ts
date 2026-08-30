@@ -1,5 +1,10 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateBookingCode } from '@/lib/booking-code'
+import {
+  createReservationCalendarEvent,
+  updateReservationCalendarEvent,
+  deleteReservationCalendarEvent,
+} from '@/lib/google-calendar'
 import type { EmailSync, ParsedEmail, ExistingReservation } from './types'
 
 export const GMAIL_BASE = 'https://gmail.googleapis.com/gmail/v1/users/me'
@@ -276,6 +281,79 @@ export async function findExistingReservation(
 // finished 7/20 trip kept flipping back to confirmed before this guard.)
 export const PROTECTED_STATUSES = new Set(['active', 'completed'])
 
+// Best-effort Google Calendar sync for a cron-synced Upcar booking. Turo is not
+// routed here (Turo sends its own calendar invite). Never throws — a calendar
+// failure must not break or halt the email poll; it is logged and swallowed.
+export async function syncUpcarCalendarEvent(
+  action: 'upsert' | 'cancel',
+  reservationId: string,
+  tenantId: string,
+): Promise<void> {
+  try {
+    const supabase = createAdminClient()
+    const { data: r } = await supabase
+      .from('reservations')
+      .select(
+        'id, car_id, customer_name, customer_phone, pickup_date, pickup_time, pickup_location, return_date, return_time, return_location, booking_code, notes, google_calendar_event_id, status',
+      )
+      .eq('id', reservationId)
+      .maybeSingle()
+    if (!r) return
+
+    if (action === 'cancel') {
+      if (r.google_calendar_event_id) {
+        await deleteReservationCalendarEvent(tenantId, r.google_calendar_event_id)
+      }
+      return
+    }
+
+    // upsert: only for live bookings
+    if (r.status !== 'confirmed' && r.status !== 'active') return
+
+    let carName = 'Vehicle'
+    if (r.car_id) {
+      const { data: c } = await supabase
+        .from('cars')
+        .select('make, model, model_full')
+        .eq('id', r.car_id)
+        .maybeSingle()
+      if (c) carName = `${c.make} ${c.model_full || c.model}`
+    }
+
+    const details = {
+      customerName: r.customer_name || 'Customer',
+      customerPhone: r.customer_phone,
+      carName,
+      pickupDate: r.pickup_date,
+      pickupTime: r.pickup_time,
+      pickupLocation: r.pickup_location,
+      returnDate: r.return_date,
+      returnTime: r.return_time,
+      returnLocation: r.return_location,
+      bookingCode: r.booking_code,
+      notes: r.notes,
+    }
+
+    if (r.google_calendar_event_id) {
+      await updateReservationCalendarEvent(tenantId, r.google_calendar_event_id, details)
+    } else {
+      const eventId = await createReservationCalendarEvent(tenantId, r.id, details)
+      if (eventId) {
+        await supabase
+          .from('reservations')
+          .update({ google_calendar_event_id: eventId })
+          .eq('id', r.id)
+      }
+    }
+  } catch (e) {
+    console.error(
+      '[poll] Upcar calendar sync failed for reservation',
+      reservationId,
+      e instanceof Error ? e.message : e,
+    )
+  }
+}
+
 export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promise<void> {
   const supabase = createAdminClient()
   const provider = parsed.source === 'upcar' ? 'Upcar' : 'Turo'
@@ -284,6 +362,9 @@ export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promis
     const existing = await findExistingReservation(parsed, sync.tenant_id)
     if (existing) {
       await supabase.from('reservations').update({ status: 'cancelled' }).eq('id', existing.id)
+      if (parsed.source === 'upcar') {
+        await syncUpcarCalendarEvent('cancel', existing.id, sync.tenant_id)
+      }
     }
     return
   }
@@ -329,6 +410,8 @@ export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promis
       writeIfSet('return_date', parsed.return_date)
       writeIfSet('pickup_time', parsed.pickup_time)
       writeIfSet('return_time', parsed.return_time)
+      writeIfSet('pickup_location', parsed.pickup_location)
+      writeIfSet('return_location', parsed.return_location)
       writeIfSet('total_amount', parsed.total_amount)
       if (carId) update.car_id = carId
     } else {
@@ -339,8 +422,11 @@ export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promis
       if (!preserveStatus) update.status = parsed.status
     }
     await supabase.from('reservations').update(update).eq('id', existing.id)
+    if (parsed.source === 'upcar') {
+      await syncUpcarCalendarEvent('upsert', existing.id, sync.tenant_id)
+    }
   } else {
-    const { error: insertError } = await supabase.from('reservations').insert({
+    const { data: inserted, error: insertError } = await supabase.from('reservations').insert({
       tenant_id: sync.tenant_id,
       car_id: carId,
       customer_name: parsed.customer_name,
@@ -350,14 +436,19 @@ export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promis
       return_date: parsed.return_date,
       ...(parsed.pickup_time ? { pickup_time: parsed.pickup_time } : {}),
       ...(parsed.return_time ? { return_time: parsed.return_time } : {}),
+      ...(parsed.pickup_location ? { pickup_location: parsed.pickup_location } : {}),
+      ...(parsed.return_location ? { return_location: parsed.return_location } : {}),
       total_amount: parsed.total_amount,
       status: parsed.status,
       source: parsed.source,
       notes,
       booking_code: generateBookingCode(),
-    })
+    }).select('id').single()
     if (insertError) {
       throw new Error(`Insert failed for ${parsed.messageId}: ${insertError.message}`)
+    }
+    if (parsed.source === 'upcar' && inserted?.id) {
+      await syncUpcarCalendarEvent('upsert', inserted.id, sync.tenant_id)
     }
   }
 }

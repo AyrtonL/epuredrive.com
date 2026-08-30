@@ -21,6 +21,8 @@ export interface ParsedEmail {
   return_time?: string | null // NEW
   customer_phone?: string | null // NEW
   customer_dob?: string | null // NEW — "YYYY-MM-01"
+  pickup_location?: string | null // NEW — Upcar only
+  return_location?: string | null // NEW — Upcar only
   total_amount?: number | null
   source?: 'turo' | 'upcar'
   status?: string
