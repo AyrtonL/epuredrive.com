@@ -64,9 +64,9 @@ function bookingId(subject: string, body: string): string | null {
 
 function guestName(body: string): string | null {
   const m =
-    body.match(/Guest DL Name:?\s*([A-Za-z][A-Za-z .'’-]+?)(?=\s+(?:Guest|Booking|Start|Trip|Pickup|Car|DOB|License|Your)\b|\s*$)/i) ||
-    body.match(/Guest Name:?\s*([A-Za-z][A-Za-z .'’-]+?)(?=\s+(?:Guest|Booking|Start|Trip|Pickup|Car|DOB|License|Message|Your)\b|\s*$)/i) ||
-    body.match(/Guest:?\s*([A-Za-z][A-Za-z .'’-]+?)(?=\s+(?:Guest|Booking|Start|Trip|Pickup|Car|DOB|License|Your)\b|\s*$)/i)
+    body.match(/Guest DL Name:?\s*([A-Za-z][A-Za-z .'’-]+?)(?=\s+\*|\s+(?:Guest|Booking|Start|Trip|Pickup|Car|DOB|License|Your)\b|\s*$)/i) ||
+    body.match(/Guest Name:?\s*([A-Za-z][A-Za-z .'’-]+?)(?=\s+\*|\s+(?:Guest|Booking|Start|Trip|Pickup|Car|DOB|License|Message|Your)\b|\s*$)/i) ||
+    body.match(/Guest:?\s*([A-Za-z][A-Za-z .'’-]+?)(?=\s+\*|\s+(?:Guest|Booking|Start|Trip|Pickup|Car|DOB|License|Your)\b|\s*$)/i)
   return m ? m[1].trim() : null
 }
 

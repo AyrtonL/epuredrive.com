@@ -12,6 +12,7 @@ describe('parseUpcarEmail', () => {
       fx('accepted.txt'),
       'Booking 17776 Accepted - Your Car Has Been Booked',
       'msg-accepted',
+      new Date('2026-08-29T00:00:00Z'),
     )
     expect(p).toMatchObject({
       type: 'confirm',
@@ -51,6 +52,7 @@ describe('parseUpcarEmail', () => {
       type: 'modify',
       source: 'upcar',
       reservationId: '17776',
+      customer_name: 'Justin Taylor',
       vehicle_name: 'Audi Q3 2018',
       pickup_date: '2026-08-28',
       pickup_time: '11:30',        // the SECOND time on the "Trip start" line
@@ -75,6 +77,8 @@ describe('parseUpcarEmail', () => {
       pickup_date: null,
       return_date: null,
     })
+    // swap emails legitimately carry no guest name
+    expect(p?.customer_name).toBeNull()
   })
 
   it('treats a cancellation subject as a cancel', () => {
