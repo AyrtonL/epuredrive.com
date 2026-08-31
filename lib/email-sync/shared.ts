@@ -110,6 +110,7 @@ export function getMessageBody(payload: GmailPart): string {
     if (p.mimeType === 'text/html' && p.body?.data) {
       return Buffer.from(p.body.data, 'base64url')
         .toString('utf-8')
+        .replace(/<(?:style|script|head)\b[^>]*>[\s\S]*?<\/(?:style|script|head)>/gi, ' ')
         .replace(/<[^>]+>/g, ' ')
         .replace(/&nbsp;/g, ' ')
         .replace(/\s+/g, ' ')
@@ -176,6 +177,7 @@ function extractMimeParts(raw: string): string {
         plainText = decoded.trim()
       } else if (/Content-Type:\s*text\/html/i.test(headers) && !htmlText) {
         htmlText = decoded
+          .replace(/<(?:style|script|head)\b[^>]*>[\s\S]*?<\/(?:style|script|head)>/gi, ' ')
           .replace(/<[^>]+>/g, ' ')
           .replace(/&nbsp;/g, ' ')
           .replace(/\s+/g, ' ')
@@ -413,6 +415,10 @@ export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promis
       writeIfSet('pickup_location', parsed.pickup_location)
       writeIfSet('return_location', parsed.return_location)
       writeIfSet('total_amount', parsed.total_amount)
+      // A row first created by an early modification email (no phone/dob in that
+      // template) must get these backfilled when a later Accepted email carries them.
+      writeIfSet('customer_phone', parsed.customer_phone)
+      writeIfSet('customer_dob', parsed.customer_dob)
       if (carId) update.car_id = carId
     } else {
       update.pickup_date = parsed.pickup_date

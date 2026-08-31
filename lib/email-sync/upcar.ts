@@ -72,8 +72,8 @@ function guestName(body: string): string | null {
 
 function vehicleName(body: string): string | undefined {
   const m =
-    body.match(/New Car:?\s*(.+?)(?=\s*(?:You can|$|\n))/i) ||
-    body.match(/(?<!Old )\bCar:?\s*(.+?)(?=\s*(?:\*|Guest|License|You can|$|\n))/i) ||
+    body.match(/New Car:\s*(.+?)(?=\s*(?:You can|$|\n))/i) ||
+    body.match(/(?<!Old )\bCar:\s+(.+?)(?=\s*(?:\*|Guest|License|You can|$|\n))/i) ||
     body.match(/booking request for (.+?) from /i)
   if (!m) return undefined
   return m[1].replace(/\s+at\s+.+$/i, '').trim()

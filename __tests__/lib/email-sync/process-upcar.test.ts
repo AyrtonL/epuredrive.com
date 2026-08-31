@@ -134,6 +134,23 @@ it('never writes status on an Upcar modify (also when the existing row is confir
   expect(upd.pickup_time).toBe('11:30')
 })
 
+it('backfills customer_phone / customer_dob onto a pre-existing Upcar row (BUG 2)', async () => {
+  state.existing = { id: 'r1', status: 'confirmed' }
+  state.syncRow = { ...liveSyncRow, id: 'r1' }
+  const mod: ParsedEmail = {
+    type: 'modify', source: 'upcar', messageId: 'm5', reservationId: '17776',
+    customer_name: 'Justin Taylor', pickup_date: '2026-08-28', pickup_time: '11:30',
+    return_date: '2026-08-30', return_time: '10:00', total_amount: 82.5,
+    customer_phone: '+1555', customer_dob: '1990-01-01',
+  }
+  await processEmail(mod, sync)
+  const upd = rows.find((r) => r.__update)?.__update
+  expect(upd).toBeDefined()
+  expect(upd.customer_phone).toBe('+1555')
+  expect(upd.customer_dob).toBe('1990-01-01')
+  expect(upd).not.toHaveProperty('status')
+})
+
 it('skips insert AND update for an orphan Upcar car-swap with no existing reservation', async () => {
   state.existing = null
   const swap: ParsedEmail = {

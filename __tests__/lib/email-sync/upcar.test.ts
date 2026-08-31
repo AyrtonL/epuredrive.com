@@ -65,6 +65,17 @@ describe('parseUpcarEmail', () => {
     expect(p?.status).toBeUndefined()
   })
 
+  it('does not leak leftover <style> CSS into vehicle_name / times / earnings (BUG 1)', () => {
+    const p = parseUpcarEmail(
+      fx('modification-with-style.txt'),
+      'Booking 17776 Modification Approved',
+      'm',
+    )
+    expect(p?.vehicle_name).toBe('Audi Q3 2018')
+    expect(p?.pickup_time).toBe('11:30')
+    expect(p?.total_amount).toBe(82.5)
+  })
+
   it('parses a Car Swap Accepted email as a modify carrying only the new car', () => {
     const p = parseUpcarEmail(
       fx('car-swap-accepted.txt'),
