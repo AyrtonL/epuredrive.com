@@ -141,6 +141,7 @@ export interface Reservation {
   // charges
   security_deposit: number | null
   surcharge: number | null
+  delivery_fee: number | null
   amount_outstanding: number | null
   payment_method: string | null  // 'card' | 'cash'
   // vehicle state

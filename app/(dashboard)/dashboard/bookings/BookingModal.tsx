@@ -293,6 +293,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
       total_amount: Number(formData.total_amount) || null,
       security_deposit: formData.security_deposit ? Number(formData.security_deposit) : null,
       surcharge: formData.surcharge ? Number(formData.surcharge) : null,
+      delivery_fee: formData.delivery_fee ? Number(formData.delivery_fee) : null,
       payment_method: formData.payment_method || null,
       amount_outstanding: formData.amount_outstanding ? Number(formData.amount_outstanding) : null,
       odometer_out: formData.odometer_out ? Number(formData.odometer_out) : null,
@@ -908,6 +909,22 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                         setFormData({
                           ...formData,
                           surcharge: e.target.value ? Number(e.target.value) : null,
+                        })
+                      }
+                      className={INPUT_CLASS}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className={LABEL_CLASS}>Delivery Fee ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.delivery_fee ?? ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          delivery_fee: e.target.value ? Number(e.target.value) : null,
                         })
                       }
                       className={INPUT_CLASS}
