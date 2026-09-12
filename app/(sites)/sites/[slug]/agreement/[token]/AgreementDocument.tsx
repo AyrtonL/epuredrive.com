@@ -357,7 +357,7 @@ export default function AgreementDocument({
               )}
               <div className="flex justify-between py-2 font-black text-base border-t-2 border-gray-800 mt-1">
                 <span>TOTAL</span>
-                <span style={{ color: accentColor }}>
+                <span className="text-gray-900">
                   ${(reservation.total_amount + (reservation.surcharge ?? 0) + (reservation.delivery_fee ?? 0)).toLocaleString()}
                 </span>
               </div>
