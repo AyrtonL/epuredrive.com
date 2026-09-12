@@ -404,7 +404,11 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                 <div className="text-right">
                   <div className="text-[9px] font-bold uppercase tracking-widest text-white/40">Total</div>
                   <div className="text-white font-black text-lg tracking-tight leading-none">
-                    ${Number(formData.total_amount).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ${(
+                      Number(formData.total_amount) +
+                      Number(formData.surcharge || 0) +
+                      Number(formData.delivery_fee || 0)
+                    ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </div>
                 </div>
               )}
