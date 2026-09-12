@@ -42,6 +42,7 @@ export interface AgreementReservation {
   total_amount: number | null
   security_deposit: number | null
   surcharge: number | null
+  delivery_fee: number | null
   amount_outstanding: number | null
   odometer_out: number | null
   odometer_in: number | null
@@ -348,22 +349,30 @@ export default function AgreementDocument({
                   <span className="font-medium">${reservation.surcharge.toLocaleString()}</span>
                 </div>
               )}
-              {reservation.security_deposit != null && (
+              {reservation.delivery_fee != null && (
                 <div className="flex justify-between py-1.5 border-b border-gray-200">
-                  <span className="text-gray-600">Security Deposit</span>
-                  <span className="font-medium">${reservation.security_deposit.toLocaleString()}</span>
-                </div>
-              )}
-              {reservation.amount_outstanding != null && (
-                <div className="flex justify-between py-1.5 border-b border-gray-200">
-                  <span className="text-gray-600">Amount Outstanding</span>
-                  <span className="font-medium">${reservation.amount_outstanding.toLocaleString()}</span>
+                  <span className="text-gray-600">Delivery Fee</span>
+                  <span className="font-medium">${reservation.delivery_fee.toLocaleString()}</span>
                 </div>
               )}
               <div className="flex justify-between py-2 font-black text-base border-t-2 border-gray-800 mt-1">
                 <span>TOTAL</span>
-                <span style={{ color: accentColor }}>${reservation.total_amount.toLocaleString()}</span>
+                <span style={{ color: accentColor }}>
+                  ${(reservation.total_amount + (reservation.surcharge ?? 0) + (reservation.delivery_fee ?? 0)).toLocaleString()}
+                </span>
               </div>
+              {reservation.security_deposit != null && (
+                <div className="flex justify-between py-1.5 pt-3 text-gray-500 italic">
+                  <span>Security Deposit (refundable, held separately)</span>
+                  <span>${reservation.security_deposit.toLocaleString()}</span>
+                </div>
+              )}
+              {reservation.amount_outstanding != null && (
+                <div className="flex justify-between py-1.5 text-gray-500 italic">
+                  <span>Amount Outstanding</span>
+                  <span>${reservation.amount_outstanding.toLocaleString()}</span>
+                </div>
+              )}
             </div>
           </section>
         )}

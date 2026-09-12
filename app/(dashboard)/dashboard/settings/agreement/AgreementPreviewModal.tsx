@@ -61,6 +61,7 @@ function buildSampleReservation(): AgreementReservation {
     ],
     security_deposit: 250,
     surcharge: null,
+    delivery_fee: 75,
     amount_outstanding: null,
     odometer_out: 12450,
     odometer_in: null,
