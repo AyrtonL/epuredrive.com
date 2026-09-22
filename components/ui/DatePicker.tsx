@@ -108,6 +108,16 @@ export default function DatePicker({
   if (min) disabledMatchers.push({ before: toDate(min) })
   if (max) disabledMatchers.push({ after: toDate(max) })
 
+  // react-day-picker's dropdown caption defaults to ending at the current
+  // year, which hides future years entirely — no good for expiration dates.
+  // Extend it forward unless an explicit `max` already bounds it.
+  const endMonth =
+    captionLayout === 'dropdown'
+      ? max
+        ? toDate(max)
+        : new Date(new Date().getFullYear() + 15, 11, 31)
+      : undefined
+
   return (
     <div className="relative">
       <button
@@ -141,6 +151,7 @@ export default function DatePicker({
             defaultMonth={value ? toDate(value) : (min ? toDate(min) : new Date())}
             showOutsideDays={false}
             captionLayout={captionLayout}
+            endMonth={endMonth}
           />
           {clearable && value && (
             <div className="border-t border-white/5 mt-1 pt-3 flex justify-end">

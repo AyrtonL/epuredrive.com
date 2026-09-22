@@ -616,6 +616,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                         value={formData.license_expiration_date || ''}
                         onChange={(v) => setFormData({ ...formData, license_expiration_date: v })}
                         className={INPUT_CLASS}
+                        captionLayout="dropdown"
                       />
                     </div>
                     <div className="space-y-1">
@@ -648,6 +649,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                         value={formData.insurance_expiration_date || ''}
                         onChange={(v) => setFormData({ ...formData, insurance_expiration_date: v })}
                         className={INPUT_CLASS}
+                        captionLayout="dropdown"
                       />
                     </div>
                   </div>
@@ -726,6 +728,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                           value={formData.second_driver_license_expiration_date || ''}
                           onChange={(v) => setFormData({ ...formData, second_driver_license_expiration_date: v })}
                           className={INPUT_CLASS}
+                          captionLayout="dropdown"
                         />
                       </div>
                       <div>
