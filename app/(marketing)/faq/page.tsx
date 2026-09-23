@@ -33,7 +33,7 @@ const faqs = [
       },
       {
         q: 'Can I use my own domain?',
-        a: 'Custom domain support (e.g., fleet.yourbrand.com) is available on the Enterprise plan.',
+        a: 'Yes, on the Pro plan and above. Custom domain support (e.g., fleet.yourbrand.com) is self-service from Settings > Custom Domain: enter your domain, we register it automatically, and you point one DNS record at your registrar.',
       },
     ],
   },

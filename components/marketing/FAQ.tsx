@@ -44,7 +44,7 @@ const FAQS: Record<Lang, { q: string; a: string }[]> = {
     },
     {
       q: 'Can I use my own domain?',
-      a: 'Custom domains are available on the Enterprise plan. Every other plan runs on a branded subdomain — e.g. yourrental.epuredrive.com — with SSL included out of the box. If you need to connect your own domain (bookings.yourrental.com), contact us and we\'ll set it up.',
+      a: 'Yes, on the Pro plan and above. It\'s self-service: enter your domain in your dashboard, we register it automatically on our end, and you point one DNS record at your registrar — SSL is issued automatically once it verifies. The Starter plan runs on a branded subdomain — e.g. yourrental.epuredrive.com — with SSL included out of the box.',
     },
     {
       q: 'What payment processors do you support?',
@@ -90,7 +90,7 @@ const FAQS: Record<Lang, { q: string; a: string }[]> = {
     },
     {
       q: '¿Puedo usar mi propio dominio?',
-      a: 'Los dominios personalizados están disponibles en el plan Enterprise. El resto de los planes corren en un subdominio con tu marca — ej. tualquiler.epuredrive.com — con SSL incluido. Si necesitás conectar tu dominio (reservas.tualquiler.com), escribinos y lo dejamos andando.',
+      a: 'Sí, desde el plan Pro en adelante. Es self-service: cargás tu dominio en el dashboard, lo registramos automáticamente de nuestro lado, y vos apuntás un registro DNS desde tu proveedor — el SSL se emite solo una vez que verifica. El plan Starter corre en un subdominio con tu marca — ej. tualquiler.epuredrive.com — con SSL incluido.',
     },
     {
       q: '¿Qué procesadores de pago soportan?',

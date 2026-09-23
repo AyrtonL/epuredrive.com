@@ -27,14 +27,14 @@ const PLAN_DEFINITIONS = [
     slug: 'pro',
     price: 19,
     color: 'border-blue-500/20 text-blue-400',
-    limits: { vehicles: 25, members: 5, integrations: true, api: false, customDomain: false },
+    limits: { vehicles: 25, members: 5, integrations: true, api: false, customDomain: true },
   },
   {
     name: 'Max',
     slug: 'max',
     price: 39,
     color: 'border-amber-500/20 text-amber-400',
-    limits: { vehicles: 60, members: -1, integrations: true, api: true, customDomain: false },
+    limits: { vehicles: 60, members: -1, integrations: true, api: true, customDomain: true },
   },
 ]
 
