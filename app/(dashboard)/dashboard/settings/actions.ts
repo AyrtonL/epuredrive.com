@@ -4,7 +4,12 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
+import { getEffectivePlan, isPlanAtLeast } from '@/lib/plan/effective-plan'
 import type { ExperiencePillar, HowItWorksStep } from '@/lib/supabase/types'
+
+/** Minimum plan required for a tenant to configure a custom domain. Keep in sync with
+ *  app/(dashboard)/dashboard/settings/domain/page.tsx's CUSTOM_DOMAIN_MIN_PLAN. */
+const CUSTOM_DOMAIN_MIN_PLAN = 'pro'
 
 async function getTenantId(): Promise<string> {
   const { tenantId } = await requireTenantId()
@@ -280,9 +285,14 @@ export async function saveCustomDomain(
   const tenantId = await getTenantId()
 
   if (data.domain !== null) {
-    const allowed = await isFeatureEnabled(tenantId, 'custom_domains')
+    const [flagEnabled, { data: tenant }] = await Promise.all([
+      isFeatureEnabled(tenantId, 'custom_domains'),
+      supabase.from('tenants').select('plan').eq('id', tenantId).single(),
+    ])
+    const effectivePlan = getEffectivePlan(tenant?.plan)
+    const allowed = flagEnabled && isPlanAtLeast(effectivePlan, CUSTOM_DOMAIN_MIN_PLAN)
     if (!allowed) {
-      return { error: 'Custom domains require an Enterprise plan. Contact support to upgrade.' }
+      return { error: 'Custom domains require a Pro plan or higher. Contact support to upgrade.' }
     }
   }
 

@@ -114,9 +114,9 @@ export default function DomainSettings({ tenant, customDomainsEnabled = false }:
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
             <div className="text-center">
               <div className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest inline-block mb-3">
-                Enterprise Only
+                Pro Feature
               </div>
-              <p className="text-white/40 text-sm">Custom domains are not enabled for your organization. Contact your administrator.</p>
+              <p className="text-white/40 text-sm">Custom domains require a Pro plan or higher. Upgrade your plan to enable this.</p>
             </div>
           </div>
         )}

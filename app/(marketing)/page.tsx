@@ -27,8 +27,8 @@ const PRICING_PLANS = [
     price: 0,
     billingPeriod: 'month' as const,
     description:
-      'Free forever plan — up to 5 vehicles, branded booking site on a {slug}.epuredrive.com subdomain, live availability calendar, and full booking management.',
-    features: ['Up to 5 vehicles', 'Branded fleet page', 'Booking management'],
+      'Free forever plan — up to 5 vehicles, branded booking site on a {slug}.epuredrive.com subdomain, live availability calendar, online payments via Stripe and Square, QuickBooks sync, and full booking management.',
+    features: ['Up to 5 vehicles', 'Branded fleet page', 'Online payments', 'QuickBooks sync', 'Booking management'],
     url: 'https://epuredrive.com/sign-up',
   },
   {
@@ -36,8 +36,8 @@ const PRICING_PLANS = [
     price: 19,
     billingPeriod: 'month' as const,
     description:
-      'Up to 25 vehicles, full brand customization, online payments via Stripe and Square, tax management, and unlimited team members.',
-    features: ['Up to 25 vehicles', 'Online payments', 'Tax reports'],
+      'Up to 25 vehicles, full brand customization, a custom domain, tax management, and unlimited team members.',
+    features: ['Up to 25 vehicles', 'Custom domain', 'Tax reports'],
     url: 'https://epuredrive.com/sign-up?plan=pro',
   },
   {
@@ -45,8 +45,8 @@ const PRICING_PLANS = [
     price: 39,
     billingPeriod: 'month' as const,
     description:
-      'Up to 60 vehicles, 0% platform fee on online payments, QuickBooks sync, API access, and priority support.',
-    features: ['Up to 60 vehicles', 'QuickBooks sync', 'API access'],
+      'Up to 60 vehicles, 0% platform fee on online payments, API access, and priority support.',
+    features: ['Up to 60 vehicles', 'API access', 'Priority support'],
     url: 'https://epuredrive.com/sign-up?plan=max',
   },
 ]
@@ -369,6 +369,16 @@ export default function HomePage() {
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Booking management
                 </li>
+                <li className="flex items-center gap-3">
+                  <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  </span> Online payments (Stripe + Square)
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  </span> QuickBooks sync
+                </li>
               </ul>
 
               <TrackedCTA
@@ -415,7 +425,7 @@ export default function HomePage() {
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Online payments (Stripe + Square)
+                  </span> Custom domain
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
@@ -466,11 +476,6 @@ export default function HomePage() {
                   <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Unlimited team members
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> QuickBooks sync
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">

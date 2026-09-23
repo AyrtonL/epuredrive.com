@@ -26,8 +26,8 @@ const PRICING_PLANS_ES = [
     price: 0,
     billingPeriod: 'month' as const,
     description:
-      'Plan gratis para siempre — hasta 5 vehículos, sitio de reservas con tu marca en subdominio {slug}.epuredrive.com, calendario de disponibilidad en vivo y gestión completa de reservas.',
-    features: ['Hasta 5 vehículos', 'Página de flota con tu marca', 'Gestión de reservas'],
+      'Plan gratis para siempre — hasta 5 vehículos, sitio de reservas con tu marca en subdominio {slug}.epuredrive.com, calendario de disponibilidad en vivo, pagos online con Stripe y Square, sincronización con QuickBooks y gestión completa de reservas.',
+    features: ['Hasta 5 vehículos', 'Página de flota con tu marca', 'Pagos online', 'Sincronización con QuickBooks', 'Gestión de reservas'],
     url: 'https://epuredrive.com/sign-up',
   },
   {
@@ -35,8 +35,8 @@ const PRICING_PLANS_ES = [
     price: 19,
     billingPeriod: 'month' as const,
     description:
-      'Hasta 25 vehículos, personalización completa de marca, pagos online con Stripe y Square, gestión de impuestos y miembros de equipo ilimitados.',
-    features: ['Hasta 25 vehículos', 'Pagos online', 'Reportes fiscales'],
+      'Hasta 25 vehículos, personalización completa de marca, dominio propio, gestión de impuestos y miembros de equipo ilimitados.',
+    features: ['Hasta 25 vehículos', 'Dominio propio', 'Reportes fiscales'],
     url: 'https://epuredrive.com/sign-up?plan=pro',
   },
   {
@@ -44,8 +44,8 @@ const PRICING_PLANS_ES = [
     price: 39,
     billingPeriod: 'month' as const,
     description:
-      'Hasta 60 vehículos, 0% de comisión en pagos online, sincronización con QuickBooks, acceso a API y soporte prioritario.',
-    features: ['Hasta 60 vehículos', 'Sincronización con QuickBooks', 'Acceso a API'],
+      'Hasta 60 vehículos, 0% de comisión en pagos online, acceso a API y soporte prioritario.',
+    features: ['Hasta 60 vehículos', 'Acceso a API', 'Soporte prioritario'],
     url: 'https://epuredrive.com/sign-up?plan=max',
   },
 ]
@@ -363,6 +363,16 @@ export default function HomePageEs() {
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Gestión de reservas
                 </li>
+                <li className="flex items-center gap-3">
+                  <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  </span> Pagos online (Stripe + Square)
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  </span> Sincronización con QuickBooks
+                </li>
               </ul>
 
               <TrackedCTA
@@ -409,7 +419,7 @@ export default function HomePageEs() {
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-silver" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Pagos online (Stripe + Square)
+                  </span> Dominio propio
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-white/[0.07] border border-white/[0.12] flex items-center justify-center flex-shrink-0">
@@ -460,11 +470,6 @@ export default function HomePageEs() {
                   <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">
                     <svg className="w-2.5 h-2.5 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </span> Miembros de equipo ilimitados
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-2.5 h-2.5 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </span> Sincronización con QuickBooks
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-4 h-4 rounded-full bg-amber-500/[0.10] border border-amber-500/20 flex items-center justify-center flex-shrink-0">

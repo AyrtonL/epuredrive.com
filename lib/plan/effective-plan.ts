@@ -23,7 +23,17 @@ export const PLAN_GATED_FLAGS = [
 /** Flat platform fee applied to every online payment during free launch. */
 export const FREE_LAUNCH_FEE_RATE = 0.01
 
-/** Default per-plan fee table (used when free launch is off). */
+/**
+ * Default per-plan fee table (used when free launch is off).
+ *
+ * `free` is the plan every tenant gets by default (see provision-tenant.ts)
+ * and is what the marketing/terms pages display as "Starter" ($0/mo, 2%).
+ * `starter` is a reserved key for a possible future *paid* mid-tier — not
+ * currently sold, not assigned to any tenant, and intentionally not shown
+ * on the public pricing/terms pages to avoid colliding with the "Starter"
+ * name already used for the free plan. Rename one of the two before selling
+ * an actual paid Starter tier.
+ */
 const FEE_BY_PLAN: Record<string, number> = {
   max: 0,
   enterprise: 0,
@@ -58,4 +68,23 @@ export function getPlatformFeeRate(actualPlan: string | null | undefined): numbe
 
 export function isPlanGatedFlag(flagKey: string): boolean {
   return (PLAN_GATED_FLAGS as readonly string[]).includes(flagKey)
+}
+
+/** Plan hierarchy, lowest to highest. Unknown plan strings sort as free (index 0). */
+const PLAN_ORDER = ['free', 'starter', 'pro', 'max', 'enterprise'] as const
+
+/**
+ * Returns true if `actualPlan` is at or above `minPlan` in the plan hierarchy.
+ * Used for features where the `feature_flags` global on/off switch isn't
+ * enough on its own (e.g. custom_domains, which has no per-plan gating in
+ * `isFeatureEnabled` — it's a single global flag shared by every tenant).
+ * During free launch every tenant is treated as 'max' via getEffectivePlan,
+ * so callers should pass `getEffectivePlan(actualPlan)` if the feature should
+ * also be unlocked during free launch.
+ */
+export function isPlanAtLeast(actualPlan: string | null | undefined, minPlan: string): boolean {
+  const planIdx = PLAN_ORDER.indexOf((actualPlan ?? 'free') as (typeof PLAN_ORDER)[number])
+  const minIdx = PLAN_ORDER.indexOf(minPlan as (typeof PLAN_ORDER)[number])
+  if (planIdx === -1 || minIdx === -1) return false
+  return planIdx >= minIdx
 }
