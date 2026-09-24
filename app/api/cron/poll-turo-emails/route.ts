@@ -31,6 +31,12 @@ import type { EmailSync, PollConfig } from '@/lib/email-sync/types'
 const TURO_CONFIG: PollConfig = { fromAddress: 'noreply@mail.turo.com', parse: parseTuroEmail }
 const UPCAR_CONFIG: PollConfig = { fromAddress: 'support@upcar.ai', parse: parseUpcarEmail }
 
+// Number of consecutive auth-failure ticks (each 15 min apart, each already retried
+// internally with backoff) before a sync gets auto-disabled. Avoids killing the sync
+// over a single transient Google-side blip; a genuinely dead/revoked refresh token
+// will fail every tick regardless, so this only delays disabling it by ~30-45 min.
+const AUTH_FAILURE_DISABLE_THRESHOLD = 3
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 function verifyCronSecret(request: Request): boolean {
@@ -227,7 +233,7 @@ export async function GET(request: Request) {
 
       await supabase
         .from('turo_email_syncs')
-        .update({ last_checked: new Date().toISOString() })
+        .update({ last_checked: new Date().toISOString(), consecutive_auth_failures: 0 })
         .eq('id', sync.id)
 
       totalSynced += synced
@@ -236,7 +242,14 @@ export async function GET(request: Request) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error(`[poll-turo-emails] Sync ${sync.id} failed:`, msg)
       if (/token refresh failed|403|access.?denied|insufficient.?permission|authenticationfailed/i.test(msg)) {
-        await supabase.from('turo_email_syncs').update({ active: false }).eq('id', sync.id)
+        const failureCount = (sync.consecutive_auth_failures ?? 0) + 1
+        await supabase
+          .from('turo_email_syncs')
+          .update({
+            consecutive_auth_failures: failureCount,
+            ...(failureCount >= AUTH_FAILURE_DISABLE_THRESHOLD ? { active: false } : {}),
+          })
+          .eq('id', sync.id)
       }
       errorDetails.push(msg.slice(0, 500))
       errors++

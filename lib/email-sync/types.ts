@@ -7,6 +7,7 @@ export interface EmailSync {
   app_specific_password?: string
   provider?: string
   last_checked?: string
+  consecutive_auth_failures?: number
 }
 
 export interface ParsedEmail {
