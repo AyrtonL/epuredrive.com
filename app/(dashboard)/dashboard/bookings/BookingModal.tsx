@@ -135,7 +135,10 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
           next.odometer_out = latest
           filledOut = true
         }
-        if (prev.odometer_in == null || prev.odometer_in === 0) {
+        // Only auto-fill Odometer In once the car has actually been returned —
+        // otherwise this overwrites it with the live reading mid-rental, making
+        // the agreement show 0 miles driven for an active booking.
+        if (prev.status === 'completed' && (prev.odometer_in == null || prev.odometer_in === 0)) {
           next.odometer_in = latest
           filledIn = true
         }
