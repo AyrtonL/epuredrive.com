@@ -1,11 +1,12 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
+import { getAuthUser } from '@/lib/supabase/server'
 import PageHeader from '@/components/dashboard/PageHeader'
 import TeamManager from './TeamManager'
 import type { Profile } from '@/lib/supabase/types'
 
 export default async function TeamPage() {
   const { supabase, tenantId } = await requireTenantId()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   const { data: members } = await supabase
     .from('profiles').select('id, full_name, role, created_at').eq('tenant_id', tenantId).order('created_at')

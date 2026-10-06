@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { headers } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { getFeatureFlags } from '@/lib/supabase/feature-flags'
 import { getEffectivePlan } from '@/lib/plan/effective-plan'
 import { provisionTenantForUser } from '@/lib/tenant/provision-tenant'
@@ -23,7 +23,7 @@ function isTelematicsGatedPath(pathname: string): boolean {
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) redirect('/login')
 

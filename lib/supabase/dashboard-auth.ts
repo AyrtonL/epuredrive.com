@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from './server'
+import { createClient, getAuthUser } from './server'
 
 /**
  * Fetches the authenticated user's tenant_id for dashboard pages.
@@ -10,7 +10,7 @@ import { createClient } from './server'
  */
 export async function requireTenantId(): Promise<{ supabase: ReturnType<typeof createClient>; tenantId: string }> {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) redirect('/login')
 

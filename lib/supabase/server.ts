@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { cache } from 'react'
 
 export function createClient() {
   const cookieStore = cookies()
@@ -22,3 +23,15 @@ export function createClient() {
     }
   )
 }
+
+/**
+ * Per-request memoized auth lookup for Server Components. The layout, page and
+ * requireTenantId() all need the user; sharing one call avoids repeated
+ * /auth/v1 round-trips (and repeated token refreshes) on every page load.
+ * Outside a React render (actions, route handlers) cache() is a passthrough.
+ */
+export const getAuthUser = cache(async () => {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
+})
