@@ -1,4 +1,5 @@
 // app/dashboard/layout.tsx
+import type { Metadata, Viewport } from 'next'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { headers } from 'next/headers'
@@ -11,6 +12,25 @@ import HelpButton from '@/components/dashboard/HelpButton'
 import { ToastProvider } from '@/components/ui/Toast'
 import SignUpCompleteTracker from '@/components/analytics/SignUpCompleteTracker'
 import { notifyInviterOnFirstLogin } from '@/lib/team/invite-notifier'
+import ServiceWorkerRegister from '@/components/dashboard/ServiceWorkerRegister'
+
+// Installable app (PWA): lets operators add the dashboard to their phone's
+// home screen and open it full-screen, without browser chrome.
+export const metadata: Metadata = {
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'éPure Drive',
+    statusBarStyle: 'black',
+  },
+  robots: { index: false, follow: false },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#000000',
+  width: 'device-width',
+  initialScale: 1,
+}
 
 // Routes gated by the `bouncie_telematics` feature flag. When the flag is off
 // for the tenant, access is redirected to billing with an upgrade banner.
@@ -104,7 +124,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </Suspense>
       <div className="flex h-screen overflow-hidden bg-background">
         <Sidebar email={user.email ?? ''} role={profile?.role ?? null} name={profile?.full_name ?? null} tenantName={tenantName} tenantLogoUrl={tenantLogoUrl} featureFlags={featureFlags} />
-        <main className="flex-1 overflow-y-auto pt-20 px-6 pb-6 md:pt-10 md:px-10 md:pb-10 lg:px-12 lg:pb-12 relative z-0 bg-dot-pattern">
+        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden pt-20 px-4 pb-6 sm:px-6 md:pt-10 md:px-10 md:pb-10 lg:px-12 lg:pb-12 relative z-0 bg-dot-pattern">
           <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-hero-glow opacity-35 -z-10 pointer-events-none" />
           <div className="absolute bottom-0 left-1/3 w-[500px] h-[500px] bg-hero-glow opacity-10 -z-10 pointer-events-none" />
           <Suspense fallback={<DashboardPageSkeleton />}>
@@ -115,6 +135,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </main>
       </div>
       <HelpButton plan={getEffectivePlan(plan)} />
+      <ServiceWorkerRegister />
     </div>
     </ToastProvider>
   )

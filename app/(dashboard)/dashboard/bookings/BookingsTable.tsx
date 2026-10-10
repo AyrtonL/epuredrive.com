@@ -25,6 +25,15 @@ function expiringDocs(r: Reservation): string[] {
   return issues
 }
 
+// 'YYYY-MM-DD' → 'Dec 12, 2025' for the compact mobile cards.
+function shortDate(d: string | null | undefined): string {
+  if (!d) return '—'
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d)
+  if (!m) return d
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 interface Props {
   reservations: Reservation[]
   cars: Car[]
@@ -139,8 +148,8 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row gap-3 mb-6 justify-between items-start md:items-center flex-wrap">
-        <div className="flex flex-wrap gap-3 flex-1">
+      <div className="flex flex-col md:flex-row gap-3 mb-4 md:mb-6 justify-between items-stretch md:items-center flex-wrap">
+        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2 md:gap-3 flex-1">
           <input
             type="text"
             placeholder="Search by name, email, or car…"
@@ -150,12 +159,12 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
               setPage(1)
               setSelectedIds(new Set())
             }}
-            className="w-full max-w-xs dash-input px-4 py-2.5"
+            className="col-span-2 w-full md:max-w-xs dash-input px-4 py-2.5"
           />
           <select
             value={statusFilter}
             onChange={e => { setStatusFilter(e.target.value); setPage(1); setSelectedIds(new Set()) }}
-            className="dash-input px-4 py-2.5 text-white/75"
+            className="min-w-0 dash-input px-3 md:px-4 py-2.5 text-white/75"
           >
             <option value="" className="bg-[#0d0d0d]">All Statuses</option>
             <option value="pending" className="bg-[#0d0d0d]">Pending</option>
@@ -167,7 +176,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
           <select
             value={carFilter}
             onChange={e => { setCarFilter(e.target.value); setPage(1); setSelectedIds(new Set()) }}
-            className="dash-input px-4 py-2.5 text-white/75"
+            className="min-w-0 dash-input px-3 md:px-4 py-2.5 text-white/75"
           >
             <option value="" className="bg-[#0d0d0d]">All Vehicles</option>
             {cars.map(c => (
@@ -176,21 +185,25 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
               </option>
             ))}
           </select>
-          <div className="flex items-center gap-2">
-            <DatePicker
-              value={dateFrom}
-              onChange={v => { setDateFrom(v); setPage(1); setSelectedIds(new Set()) }}
-              placeholder="From"
-              className="dash-input px-3 py-2.5"
-            />
+          <div className="col-span-2 flex items-center gap-2">
+            <div className="flex-1 min-w-0 md:flex-none">
+              <DatePicker
+                value={dateFrom}
+                onChange={v => { setDateFrom(v); setPage(1); setSelectedIds(new Set()) }}
+                placeholder="From"
+                className="w-full md:w-auto dash-input px-3 py-2.5"
+              />
+            </div>
             <span className="text-white/30 text-xs">to</span>
-            <DatePicker
-              value={dateTo}
-              onChange={v => { setDateTo(v); setPage(1); setSelectedIds(new Set()) }}
-              placeholder="To"
-              min={dateFrom || undefined}
-              className="dash-input px-3 py-2.5"
-            />
+            <div className="flex-1 min-w-0 md:flex-none">
+              <DatePicker
+                value={dateTo}
+                onChange={v => { setDateTo(v); setPage(1); setSelectedIds(new Set()) }}
+                placeholder="To"
+                min={dateFrom || undefined}
+                className="w-full md:w-auto dash-input px-3 py-2.5"
+              />
+            </div>
             {(dateFrom || dateTo) && (
               <button
                 onClick={() => { setDateFrom(''); setDateTo(''); setPage(1) }}
@@ -204,7 +217,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
         </div>
         <button
           onClick={openNew}
-          className="bg-white text-black hover:bg-white/90 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-white/10 flex-shrink-0"
+          className="w-full md:w-auto bg-white text-black hover:bg-white/90 px-6 py-3 md:py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-white/10 flex-shrink-0"
         >
           + Add Booking
         </button>
@@ -212,7 +225,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
 
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="bg-primary/20 border border-primary/30 rounded-xl p-3 mb-4 flex items-center justify-between text-sm animate-fade-in-up">
+        <div className="bg-primary/20 border border-primary/30 rounded-xl p-3 mb-4 flex flex-wrap gap-2 items-center justify-between text-sm animate-fade-in-up">
           <span className="font-semibold text-white ml-2">
             {selectedIds.size} booking{selectedIds.size > 1 ? 's' : ''} selected
           </span>
@@ -240,7 +253,90 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
         </p>
       ) : (
         <>
-          <div className="data-table">
+          {/* Mobile: card list */}
+          <ul className="md:hidden space-y-2.5">
+            {paginated.map((r) => {
+              const docs = expiringDocs(r)
+              return (
+                <li
+                  key={r.id}
+                  className={`rounded-2xl border p-4 transition-colors ${selectedIds.has(r.id) ? 'border-white/30 bg-white/[0.08]' : 'border-white/[0.10] bg-white/[0.04]'}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${r.booking_code}`}
+                      className="mt-1 w-4 h-4 rounded border-white/20 bg-black/50 text-white focus:ring-1 focus:ring-white shadow-none cursor-pointer shrink-0"
+                      checked={selectedIds.has(r.id)}
+                      onChange={() => toggleOne(r.id)}
+                    />
+                    <button type="button" onClick={() => openEdit(r)} className="flex-1 min-w-0 text-left">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-white truncate">{r.customer_name || '—'}</span>
+                            {docs.length > 0 && (
+                              <span
+                                title={`${docs.join(' & ')} expires before the return date`}
+                                className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500/20 text-amber-400 shrink-0"
+                              >
+                                <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-white/55 text-xs truncate mt-0.5">
+                            {r.car_id ? carMap[r.car_id] ?? `Car #${r.car_id}` : '—'}
+                          </div>
+                        </div>
+                        <span className={`shrink-0 text-[10px] font-bold uppercase tracking-widest rounded-full px-2.5 py-1 ${STATUS_COLORS[r.status ?? ''] ?? 'bg-white/10 text-white/40'}`}>
+                          {r.status || 'unknown'}
+                        </span>
+                      </div>
+                      <div className="mt-3 flex items-center gap-2 text-xs text-white/75">
+                        <span>{shortDate(r.pickup_date)}</span>
+                        <span className="text-white/30">→</span>
+                        <span>{shortDate(r.return_date)}</span>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <span className="font-mono text-[11px] text-white/60 bg-white/5 px-2 py-0.5 rounded">{r.booking_code}</span>
+                        <span className="text-white font-semibold">
+                          {r.total_amount != null ? `$${Number(r.total_amount).toLocaleString()}` : '—'}
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-white/[0.07] flex items-center justify-between gap-2">
+                    <span className="text-white/45 text-[11px] truncate">{r.customer_phone || r.customer_email || ''}</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {r.customer_phone && (
+                        <a
+                          href={`tel:${r.customer_phone}`}
+                          className="px-3 py-1.5 rounded-lg bg-white/5 text-white/75 text-xs font-semibold"
+                        >
+                          Call
+                        </a>
+                      )}
+                      <button
+                        onClick={() => openEdit(r)}
+                        className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-xs font-semibold"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(r.id)}
+                        className="px-3 py-1.5 rounded-lg text-white/45 hover:text-red-400 text-xs font-semibold"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+
+          {/* Desktop: table */}
+          <div className="data-table hidden md:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/55 border-b border-white/[0.10] bg-white/[0.04]">
@@ -326,7 +422,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between px-2 text-sm text-white/60">
+            <div className="mt-4 flex flex-col sm:flex-row gap-3 items-center justify-between px-2 text-sm text-white/60">
               <div>
                 Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
               </div>

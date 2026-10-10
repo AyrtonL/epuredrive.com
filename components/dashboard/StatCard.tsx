@@ -15,14 +15,14 @@ export default function StatCard({ label, value, sub, trend, trendLabel, accentC
   const trendBg = trendPositive ? 'bg-emerald-500/10' : 'bg-red-500/10'
 
   return (
-    <div className={`glass rounded-2xl p-6 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300 border ${isPrimary ? 'border-white/[0.16]' : 'border-white/[0.10]'}`}>
+    <div className={`glass rounded-2xl p-4 md:p-6 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300 border ${isPrimary ? 'border-white/[0.16]' : 'border-white/[0.10]'}`}>
       {accentColor && (
         <div className={`absolute top-0 left-0 right-0 h-[2px] ${accentColor}`} />
       )}
       <div className="relative z-10">
-        <div className="text-[10px] font-bold text-white/50 uppercase tracking-[0.18em] mb-4">{label}</div>
+        <div className="text-[10px] font-bold text-white/50 uppercase tracking-[0.18em] mb-2 md:mb-4">{label}</div>
         <div className="flex items-baseline gap-2.5">
-          <div className={`text-3xl font-black tracking-tight truncate ${isPrimary ? 'text-white' : 'text-white/90'}`}>{value}</div>
+          <div className={`text-2xl md:text-3xl font-black tracking-tight truncate ${isPrimary ? 'text-white' : 'text-white/90'}`}>{value}</div>
           {trend != null && (
             <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${trendColor} ${trendBg}`}>
               {trendPositive ? '+' : ''}{trend}{trendLabel || '%'}
