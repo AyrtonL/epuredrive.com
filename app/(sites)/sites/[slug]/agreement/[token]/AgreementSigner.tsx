@@ -65,7 +65,9 @@ export default function AgreementSigner({
     if (step !== 'sign') return
     const el = sigContainerRef.current
     if (!el) return
-    setCanvasSize({ w: Math.max(el.clientWidth, 300), h: 160 })
+    // Match the box exactly — a fixed 300px minimum overflowed (and clipped)
+    // the signature area on 320px-wide phones. 300 only if not measured yet.
+    setCanvasSize({ w: el.clientWidth || 300, h: 160 })
   }, [step])
 
   const alreadySigned = !!reservation.agreement_signed_at

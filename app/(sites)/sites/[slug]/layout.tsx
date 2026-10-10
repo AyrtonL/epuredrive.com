@@ -79,15 +79,15 @@ export default async function TenantLayout({ children, params }: Props) {
       {/* Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-[3px] bg-primary z-[110] origin-left scale-x-0 transition-transform duration-300" id="scroll-progress" />
 
-      <nav className="fixed top-0 inset-x-0 z-[100] h-20 transition-all duration-500 hover:h-24 group">
+      <nav className="fixed top-0 inset-x-0 z-[100] h-20 transition-all duration-500 md:hover:h-24 group">
           <div className={`absolute inset-0 backdrop-blur-3xl border-b ${
             isLight
               ? 'bg-white/80 border-gray-200/60'
               : 'bg-[#040404]/40 border-white/5'
           }`} />
-          <div className="relative max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
-            <div className="flex items-center gap-4 group/logo cursor-pointer">
-              <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center group-hover/logo:border-primary/50 transition-all duration-500 ${
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 group/logo cursor-pointer">
+              <div className={`w-10 h-10 shrink-0 rounded-2xl border flex items-center justify-center group-hover/logo:border-primary/50 transition-all duration-500 ${
                 isLight
                   ? 'bg-gray-100 border-gray-200'
                   : 'bg-white/5 border-white/10'
@@ -98,13 +98,13 @@ export default async function TenantLayout({ children, params }: Props) {
                   <span className="font-outfit font-black text-xl text-primary tracking-tighter">É</span>
                 )}
               </div>
-              <a href={`/sites/${typedTenant.slug}`} className="flex flex-col -space-y-1">
-                <span className="font-outfit font-black text-lg tracking-tight group-hover/logo:text-glow transition-all duration-500">{displayName}</span>
-                <span className={`text-[10px] font-black uppercase tracking-[.3em] ${isLight ? 'text-gray-400' : 'text-white/20'}`}>{tagline}</span>
+              <a href={`/sites/${typedTenant.slug}`} className="flex flex-col -space-y-1 min-w-0">
+                <span className="font-outfit font-black text-base sm:text-lg tracking-tight truncate group-hover/logo:text-glow transition-all duration-500">{displayName}</span>
+                <span className={`text-[10px] font-black uppercase tracking-[.3em] truncate ${isLight ? 'text-gray-400' : 'text-white/20'}`}>{tagline}</span>
               </a>
             </div>
 
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-2 md:gap-8 shrink-0">
               <div className="hidden md:flex items-center gap-6">
                 <a href={`/sites/${typedTenant.slug}#fleet`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>Fleet</a>
                 <a href={`/sites/${typedTenant.slug}#experience`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>Experience</a>
@@ -113,7 +113,7 @@ export default async function TenantLayout({ children, params }: Props) {
               </div>
               <a
                 href={`/sites/${typedTenant.slug}`}
-                className={`font-black uppercase tracking-widest text-[10px] px-8 py-3.5 rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl ${
+                className={`font-black uppercase tracking-widest text-[10px] px-5 md:px-8 py-3 md:py-3.5 rounded-full whitespace-nowrap hover:scale-105 active:scale-95 transition-all shadow-xl ${
                   isLight
                     ? 'bg-gray-900 text-white hover:bg-gray-700 shadow-gray-900/10'
                     : 'bg-white text-black hover:bg-black hover:text-white hover:border hover:border-white/20 shadow-white/5'
@@ -121,6 +121,25 @@ export default async function TenantLayout({ children, params }: Props) {
               >
                 Reserve Now
               </a>
+              {/* Phone menu — the inline links above are desktop-only */}
+              <details data-site-menu className="md:hidden relative">
+                <summary
+                  aria-label="Menu"
+                  className={`list-none [&::-webkit-details-marker]:hidden cursor-pointer w-10 h-10 rounded-full border flex items-center justify-center ${
+                    isLight ? 'border-gray-200 text-gray-900' : 'border-white/10 text-white'
+                  }`}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>
+                </summary>
+                <div className={`absolute right-0 top-12 w-56 p-2 rounded-2xl border shadow-2xl ${
+                  isLight ? 'bg-white border-gray-200' : 'bg-[#0b0b0b] border-white/10'
+                }`}>
+                  <a href={`/sites/${typedTenant.slug}#fleet`} className={`block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-[.2em] ${isLight ? 'text-gray-700 hover:bg-gray-100' : 'text-white/80 hover:bg-white/5'}`}>Fleet</a>
+                  <a href={`/sites/${typedTenant.slug}#experience`} className={`block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-[.2em] ${isLight ? 'text-gray-700 hover:bg-gray-100' : 'text-white/80 hover:bg-white/5'}`}>Experience</a>
+                  <a href={`/sites/${typedTenant.slug}#concierge`} className={`block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-[.2em] ${isLight ? 'text-gray-700 hover:bg-gray-100' : 'text-white/80 hover:bg-white/5'}`}>Concierge</a>
+                  <a href={`/sites/${typedTenant.slug}/my-booking`} className={`block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-[.2em] ${isLight ? 'text-gray-700 hover:bg-gray-100' : 'text-white/80 hover:bg-white/5'}`}>My Booking</a>
+                </div>
+              </details>
             </div>
           </div>
         </nav>
@@ -135,6 +154,11 @@ export default async function TenantLayout({ children, params }: Props) {
             var scrolled = (winScroll / height);
             var el = document.getElementById('scroll-progress');
             if (el) el.style.transform = 'scaleX(' + scrolled + ')';
+          });
+          document.addEventListener('click', function (e) {
+            var menu = document.querySelector('[data-site-menu]');
+            if (!menu || !menu.open) return;
+            if (!menu.contains(e.target) || e.target.closest('a')) menu.removeAttribute('open');
           });
         `}} />
 

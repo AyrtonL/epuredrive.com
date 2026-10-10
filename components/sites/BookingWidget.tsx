@@ -287,7 +287,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   const priceNum = Number(car.daily_rate) || 0
 
   return (
-    <div className="glass border border-white/10 rounded-[2rem] p-8 lg:p-10 shadow-2xl relative overflow-hidden group/widget">
+    <div className="glass border border-white/10 rounded-[2rem] p-5 sm:p-8 lg:p-10 shadow-2xl relative overflow-hidden group/widget">
       {/* Background Accent */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 transition-all duration-700 group-hover/widget:bg-primary/10" />
 
@@ -440,7 +440,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
             </div>
           )}
           <div className="flex items-center justify-between px-2">
-            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Est. Investment</span>
+            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Estimated total</span>
             <div className="text-right">
               <div className="text-2xl font-black text-white italic tracking-tighter">
                 {days > 0 ? `$${total.toLocaleString()}` : 'Select Configuration'}
@@ -479,6 +479,10 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
               <div className="text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Your Details</div>
               <input
                 type="text"
+                name="name"
+                autoComplete="name"
+                autoCapitalize="words"
+                enterKeyHint="next"
                 placeholder="Full Name *"
                 value={custName}
                 onChange={e => setCustName(e.target.value)}
@@ -486,6 +490,11 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
               />
               <input
                 type="email"
+                name="email"
+                autoComplete="email"
+                inputMode="email"
+                autoCapitalize="off"
+                enterKeyHint="next"
                 placeholder="Email *"
                 value={custEmail}
                 onChange={e => setCustEmail(e.target.value)}
@@ -493,6 +502,10 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
               />
               <input
                 type="tel"
+                name="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                enterKeyHint="done"
                 placeholder="Phone (optional)"
                 value={custPhone}
                 onChange={e => setCustPhone(e.target.value)}

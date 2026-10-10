@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 interface ReservationResult {
   id: number
+  bookingCode: string | null
   vehicleName: string
   customerName: string | null
   pickupDate: string | null
@@ -44,7 +45,7 @@ export default function BookingLookup({ tenantId, slug }: Props) {
     setLoading(true)
     try {
       const res = await fetch(
-        `/api/booking/lookup?id=${encodeURIComponent(refId.trim())}&email=${encodeURIComponent(email.trim())}&tenantId=${tenantId}`
+        `/api/booking/lookup?ref=${encodeURIComponent(refId.trim())}&email=${encodeURIComponent(email.trim())}&tenantId=${tenantId}`
       )
       const data = await res.json() as { reservation?: ReservationResult; error?: string }
       if (!res.ok || !data.reservation) {
@@ -64,7 +65,7 @@ export default function BookingLookup({ tenantId, slug }: Props) {
     return (
       <div className="space-y-6">
         <div className="bg-white/5 border border-white/5 rounded-2xl p-6 space-y-3">
-          <Row label="Ref #" value={`#${result.id}`} />
+          <Row label="Ref #" value={result.bookingCode ?? `#${result.id}`} />
           <Row label="Vehicle" value={result.vehicleName} />
           {result.customerName && <Row label="Name" value={result.customerName} />}
           {result.pickupDate && (
@@ -110,8 +111,12 @@ export default function BookingLookup({ tenantId, slug }: Props) {
           Reservation Ref #
         </label>
         <input
-          type="number"
-          placeholder="e.g. 42"
+          type="text"
+          autoCapitalize="characters"
+          autoComplete="off"
+          spellCheck={false}
+          enterKeyHint="next"
+          placeholder="e.g. E-W2X37"
           value={refId}
           onChange={e => setRefId(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleLookup()}
@@ -125,6 +130,10 @@ export default function BookingLookup({ tenantId, slug }: Props) {
         </label>
         <input
           type="email"
+          autoComplete="email"
+          inputMode="email"
+          autoCapitalize="off"
+          enterKeyHint="search"
           placeholder="you@example.com"
           value={email}
           onChange={e => setEmail(e.target.value)}

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import type { Car, PickupLocation, RentalExtra } from '@/lib/supabase/types'
 import BookingWidget from './BookingWidget'
@@ -22,6 +22,14 @@ function resolveImageUrl(url: string | null): string {
   return `/${url}`
 }
 
+const ICONS = {
+  calendar: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+  seats: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
+  gear: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z',
+  bolt: 'M13 10V3L4 14h7v7l9-11h-7z',
+  palette: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01',
+}
+
 export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, paymentProcessor, cardSurchargeRate, whatsappPhone, pickupLocations = [], rentalExtras = [] }: Props) {
   const gallery: string[] = Array.isArray(car.gallery) && car.gallery.length > 0
     ? car.gallery
@@ -31,11 +39,34 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
 
   const [activeIndex, setActiveIndex] = useState(0)
 
+  // Phone reserve bar: hide it while the booking widget itself is on screen.
+  const bookRef = useRef<HTMLDivElement>(null)
+  const [widgetVisible, setWidgetVisible] = useState(false)
+  useEffect(() => {
+    const el = bookRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(([entry]) => setWidgetVisible(entry.isIntersecting), { threshold: 0.15 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  const features: string[] = Array.isArray(car.features)
+    ? car.features.filter((f): f is string => typeof f === 'string' && f.trim() !== '')
+    : []
+
+  const specs = [
+    car.year && { label: 'Year', value: String(car.year), icon: ICONS.calendar },
+    car.seats && { label: 'Seats', value: `${car.seats} passengers`, icon: ICONS.seats },
+    car.transmission && { label: 'Transmission', value: car.transmission, icon: ICONS.gear },
+    car.hp && { label: 'Power', value: /hp/i.test(car.hp) ? car.hp : `${car.hp} hp`, icon: ICONS.bolt },
+    car.color && { label: 'Color', value: car.color, icon: ICONS.palette },
+  ].filter(Boolean).slice(0, 4) as { label: string; value: string; icon: string }[]
+
   return (
     <div className="space-y-16">
       {/* Visual Showcase */}
       <div className="space-y-8 relative">
-        <div className="relative aspect-[16/10] sm:aspect-[16/9] rounded-[3rem] overflow-hidden bg-white/5 border border-white/5 shadow-2xl group/car">
+        <div className="relative aspect-[16/10] sm:aspect-[16/9] rounded-3xl sm:rounded-[3rem] overflow-hidden bg-white/5 border border-white/5 shadow-2xl group/car">
            {/* Overlays */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/car:opacity-100 transition-opacity duration-1000 pointer-events-none" />
           
@@ -69,7 +100,7 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
           })()}
           
           {/* Floating Luxury Badge */}
-          <div className="absolute top-8 left-8 px-6 py-2 bg-white text-black text-[9px] font-outfit font-black uppercase tracking-[0.3em] rounded-full shadow-2xl">
+          <div className="absolute top-4 left-4 sm:top-8 sm:left-8 px-4 sm:px-6 py-2 bg-white text-black text-[9px] font-outfit font-black uppercase tracking-[0.3em] rounded-full shadow-2xl">
             {car.badge || car.category || 'Premium Selection'}
           </div>
         </div>
@@ -93,41 +124,41 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
       </div>
 
       {/* Narrative & Booking */}
-      <div className={`grid ${tenantId ? 'md:grid-cols-5' : 'md:grid-cols-2'} gap-16 items-start px-4`}>
+      <div className={`grid ${tenantId ? 'md:grid-cols-5' : 'md:grid-cols-2'} gap-10 md:gap-16 items-start px-4`}>
         <div className={tenantId ? 'md:col-span-3 space-y-8' : 'space-y-8'}>
           <div className="space-y-2">
              <div className="text-[11px] uppercase font-black tracking-[0.4em] text-primary/60 mb-2 font-outfit animate-fade-in">{car.make}</div>
-             <h1 className="text-5xl lg:text-7xl font-outfit font-black text-white tracking-tighter italic leading-[0.9]">
+             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-outfit font-black text-white tracking-tighter italic leading-[0.9]">
               {car.model_full || car.model}
             </h1>
           </div>
 
-          <div className="flex gap-5 items-center text-[10px] font-black uppercase tracking-[0.3em] text-white/20 font-outfit">
-            {car.year && <span className="text-white/60">Année {car.year}</span>}
-            <div className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
-            <span>Chassis {car.category || 'GT'}</span>
+          <div className="flex flex-wrap gap-x-5 gap-y-2 items-center text-[10px] font-black uppercase tracking-[0.3em] text-white/20 font-outfit">
+            {car.year && <span className="text-white/60">{car.year}</span>}
+            {car.year && car.category && <div className="w-1.5 h-1.5 bg-primary/40 rounded-full" />}
+            {car.category && <span>{car.category}</span>}
           </div>
 
-          <p className="text-white/40 text-lg leading-relaxed font-bold font-inter max-w-xl">
-            {car.description || `An icon of engineering and design. This ${car.make} ${car.model} combines raw performance with unparalleled luxury, offering an experience reserved for those who demand the finest drive.`}
+          <p className="text-white/40 text-base sm:text-lg leading-relaxed font-bold font-inter max-w-xl">
+            {car.description || `Reserve the ${car.make} ${car.model_full || car.model} online — pick your dates, choose pickup or delivery, and you're set.`}
           </p>
 
-          {/* Transmission/Seats Pills */}
-          <div className="flex gap-4">
-             <div className="glass border border-white/5 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-white/50">{car.transmission || 'Automatic'}</div>
-             <div className="glass border border-white/5 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-white/50">{car.seats || '4'} Passengers</div>
-          </div>
+          {/* Features (only what the operator entered) */}
+          {features.length > 0 && (
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              {features.map((f) => (
+                <div key={f} className="glass border border-white/5 px-4 sm:px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-white/50">{f}</div>
+              ))}
+            </div>
+          )}
 
-          {/* Spec Cards */}
-          <div className="grid grid-cols-2 gap-6">
-            {[
-              { label: 'Dynamics', value: 'Active Aero', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-              { label: 'Exhaust', value: 'Sport Mode', icon: 'M11 4a2 2 0 114 0v1a2 2 0 01-2 2 2 2 0 01-2-2V4zm-5 6a2 2 0 114 0v1a2 2 0 01-2 2 2 2 0 01-2-2v-1zm10 0a2 2 0 114 0v1a2 2 0 01-2 2 2 2 0 01-2-2v-1z' },
-              { label: 'Intelligence', value: 'Driver Assist', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
-              { label: 'Finish', value: 'Carbon Pack', icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-3.086A2.25 2.25 0 0112 12.086V10M7 21v-4a2 2 0 012-2h4a2 2 0 012 2v4' }
-            ].map((spec) => (
-              <div key={spec.label} className="glass border border-white/5 rounded-[2.5rem] p-8 group/spec transition-all duration-700 hover:bg-white/5 hover:border-white/10 hover:scale-[1.05]">
-                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/30 group-hover/spec:text-primary transition-all duration-700 mb-6">
+          {/* Spec Cards — real car data only; hidden when nothing is filled in.
+              (Previously four hardcoded specs like "Carbon Pack" showed on every car.) */}
+          {specs.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 sm:gap-6">
+            {specs.map((spec) => (
+              <div key={spec.label} className="glass border border-white/5 rounded-3xl sm:rounded-[2.5rem] p-5 sm:p-8 group/spec transition-all duration-700 hover:bg-white/5 hover:border-white/10 md:hover:scale-[1.05]">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/30 group-hover/spec:text-primary transition-all duration-700 mb-4 sm:mb-6">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={spec.icon} />
                   </svg>
@@ -137,11 +168,12 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {/* Booking Sidebar (only on detail page) */}
         {tenantId && slug && (
-          <div className="md:col-span-2 md:sticky md:top-8">
+          <div id="book" ref={bookRef} className="md:col-span-2 md:sticky md:top-28 scroll-mt-24">
             <BookingWidget
               car={car}
               tenantId={tenantId}
@@ -155,7 +187,26 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
           </div>
         )}
       </div>
+
+      {/* Phone: the booking widget sits below the specs, so keep price + a
+          shortcut to it pinned to the bottom of the screen. */}
+      {tenantId && slug && (
+        <div aria-hidden={widgetVisible} className={`md:hidden fixed bottom-0 inset-x-0 z-[60] transition-transform duration-300 ${widgetVisible ? 'translate-y-full' : 'translate-y-0'} px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-[#040404]/90 backdrop-blur-xl border-t border-white/10 flex items-center justify-between gap-4`}>
+          <div className="min-w-0">
+            <div className="text-xl font-black text-white tracking-tighter italic leading-none">
+              ${Number(car.daily_rate) || 0}
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/40 not-italic ml-1">/ day</span>
+            </div>
+            <div className="text-[10px] text-white/40 mt-1 truncate">{car.make} {car.model_full || car.model}</div>
+          </div>
+          <a
+            href="#book"
+            className="shrink-0 bg-white text-black font-black uppercase tracking-[0.15em] text-[11px] px-6 py-3.5 rounded-2xl active:scale-[0.98] transition-transform"
+          >
+            Reserve
+          </a>
+        </div>
+      )}
     </div>
   )
 }
-

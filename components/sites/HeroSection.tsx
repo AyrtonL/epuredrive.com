@@ -18,7 +18,7 @@ export default function HeroSection({ tenant, carCount, slug, locations }: Props
   const isLight = tenant.site_theme === 'light'
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center">
+    <section className="relative min-h-[calc(100svh-5rem)] flex items-center justify-center py-12">
       {/* Background image + overlays — clipped independently so the calendar popup can escape */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <Image
@@ -66,7 +66,7 @@ export default function HeroSection({ tenant, carCount, slug, locations }: Props
         </p>
 
         {/* Quick stats */}
-        <div className="mb-12 flex justify-center gap-12 animate-fade-in animation-delay-300">
+        <div className="mb-10 sm:mb-12 flex justify-center gap-8 sm:gap-12 animate-fade-in animation-delay-300">
           {[
             { value: String(carCount), label: 'Vehicles' },
             { value: '24/7', label: 'Support' },
