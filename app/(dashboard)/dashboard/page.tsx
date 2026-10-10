@@ -69,7 +69,7 @@ export default async function DashboardPage() {
     supabase.from('car_services').select('cost, next_service_date').eq('tenant_id', tenantId),
     supabase.from('transactions').select('amount').eq('tenant_id', tenantId),
     supabase.from('reservations').select('car_id').eq('tenant_id', tenantId).not('status', 'in', '(completed,cancelled)').lte('pickup_date', today).gte('return_date', today),
-    supabase.from('reservations').select('id, customer_name, car_id, pickup_date, return_date, status, total_amount').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(7),
+    supabase.from('reservations').select('id, booking_code, customer_name, car_id, pickup_date, return_date, status, total_amount').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(7),
     supabase.from('reservations').select('customer_name').eq('tenant_id', tenantId).gte('created_at', firstOfMonth),
     supabase.from('reservations').select('id').eq('tenant_id', tenantId).eq('status', 'pending'),
     // Trailing 30-day reservations with dates → real per-car utilization
@@ -135,8 +135,8 @@ export default async function DashboardPage() {
           <div className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mb-1">Dashboard</div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">Overview</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          <div className="relative hidden md:block">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <circle cx="11" cy="11" r="8" />
               <path strokeLinecap="round" d="m21 21-4.35-4.35" />
@@ -153,7 +153,7 @@ export default async function DashboardPage() {
             <Link
               href={`/sites/${tenant.slug}`}
               target="_blank"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/[0.12] text-white/80 hover:text-white hover:bg-white/[0.06] transition-all shrink-0"
+              className="flex-1 md:flex-none justify-center flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-white/[0.12] text-white/80 hover:text-white hover:bg-white/[0.06] transition-all shrink-0"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
@@ -165,7 +165,7 @@ export default async function DashboardPage() {
           )}
           <Link
             href="/dashboard/bookings"
-            className="bg-white text-black px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-white/90 transition-all shrink-0"
+            className="flex-1 md:flex-none text-center bg-white text-black px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-white/90 transition-all shrink-0"
           >
             + New booking
           </Link>
@@ -173,7 +173,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <StatCard
           label="Revenue · This Month"
           value={`$${thisMonthRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
@@ -216,24 +216,22 @@ export default async function DashboardPage() {
         {/* Bookings Table */}
         <div className="lg:col-span-2">
           <div className="glass rounded-2xl border border-white/[0.10] overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-4 border-b border-white/[0.06]">
               <div>
                 <div className="text-[10px] font-bold text-white/40 uppercase tracking-[0.18em] mb-0.5">Recent Bookings</div>
                 <h3 className="text-white font-bold text-sm">All bookings</h3>
               </div>
-              <div className="flex items-center gap-2">
-                <button className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.08] text-[11px] text-white/60 font-medium hover:bg-white/[0.10] transition-colors">
-                  Filter
-                </button>
-                <button className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.08] text-[11px] text-white/60 font-medium hover:bg-white/[0.10] transition-colors">
-                  Export
-                </button>
-              </div>
+              <Link
+                href="/dashboard/bookings"
+                className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.08] text-[11px] text-white/60 font-medium hover:bg-white/[0.10] transition-colors"
+              >
+                Filter &amp; export
+              </Link>
             </div>
 
             {/* Table Header */}
             <div className="hidden md:grid grid-cols-[70px_1.2fr_1fr_110px_80px_90px] gap-2 px-6 py-2.5 text-[10px] font-bold text-white/35 uppercase tracking-[0.15em] border-b border-white/[0.04]">
-              <div>ID</div>
+              <div>Ref</div>
               <div>Customer</div>
               <div>Vehicle</div>
               <div>Dates</div>
@@ -256,23 +254,25 @@ export default async function DashboardPage() {
                   return (
                     <div
                       key={r.id}
-                      className="grid grid-cols-1 md:grid-cols-[70px_1.2fr_1fr_110px_80px_90px] gap-2 items-center px-6 py-3 hover:bg-white/[0.02] transition-colors"
+                      className="grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[70px_1.2fr_1fr_110px_80px_90px] gap-x-3 gap-y-1 md:gap-2 items-center px-4 md:px-6 py-3 hover:bg-white/[0.02] transition-colors"
                     >
                       <div className="text-[11px] text-white/30 font-mono hidden md:block">
-                        EPR-{String(r.id).slice(-4)}
+                        {r.booking_code ?? `#${r.id}`}
                       </div>
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0 max-md:row-start-1 max-md:col-start-1">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${color}`}>
                           {initials}
                         </div>
                         <span className="text-sm text-white font-medium truncate">{name}</span>
                       </div>
-                      <div className="text-[13px] text-white/60 truncate">{carName}</div>
+                      <div className="text-[13px] text-white/60 truncate max-md:row-start-2 max-md:col-start-1 max-md:pl-11 max-md:text-xs">
+                        {carName}<span className="md:hidden text-white/40"> · {dates}</span>
+                      </div>
                       <div className="text-[12px] text-white/50 hidden md:block">{dates}</div>
-                      <div className="text-sm text-white/70 font-medium text-right tabular-nums">
+                      <div className="text-sm text-white/70 font-medium text-right tabular-nums max-md:row-start-1 max-md:col-start-2">
                         {r.total_amount != null ? `$${Number(r.total_amount).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—'}
                       </div>
-                      <div className="text-right">
+                      <div className="text-right max-md:row-start-2 max-md:col-start-2">
                         <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider inline-block ${STATUS_COLORS[r.status ?? ''] ?? 'text-white/40 bg-white/[0.06]'}`}>
                           {r.status ?? '—'}
                         </span>

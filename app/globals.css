@@ -155,3 +155,142 @@
     animation-delay: 400ms;
   }
 }
+
+/* ── Dashboard tables ───────────────────────────────────────────────
+   Desktop: aligned numbers. Mobile (<768px): any <table class="m-cards">
+   turns into a stack of cards. Mark cells with:
+     data-primary   → card title (top-left, no label)
+     data-badge     → top-right (status pill)
+     data-label="X" → "X ........ value" row
+     data-actions   → footer row with buttons (always visible on touch)
+     data-select    → row checkbox, pinned top-left
+     data-hide-mobile → hidden on mobile
+   ──────────────────────────────────────────────────────────────── */
+.data-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 767.98px) {
+  /* The table's own wrapper (data-table / glass box) gets out of the way
+     so each card stands on its own. */
+  :has(> table.m-cards) {
+    background: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    backdrop-filter: none !important;
+    overflow: visible !important;
+  }
+  table.m-cards,
+  table.m-cards tbody,
+  table.m-cards tfoot {
+    display: block;
+    width: 100%;
+  }
+  table.m-cards thead {
+    display: none;
+  }
+  table.m-cards tbody,
+  table.m-cards tfoot {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  table.m-cards tfoot {
+    margin-top: 10px;
+  }
+  table.m-cards tr {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    row-gap: 8px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.025) 100%);
+  }
+  table.m-cards tr:has(> td[data-select]) {
+    padding-left: 46px;
+  }
+  table.m-cards td {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+    padding: 0 !important;
+    text-align: right;
+    width: auto !important;
+  }
+  table.m-cards td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+  }
+  table.m-cards td:not([data-label]) {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  table.m-cards td[data-primary] {
+    grid-column: 1;
+    grid-row: 1;
+    display: block;
+    font-size: 15px;
+  }
+  table.m-cards td[data-badge] {
+    grid-column: 2;
+    grid-row: 1;
+    justify-content: flex-end;
+    align-self: start;
+  }
+  table.m-cards td[data-badge]::before,
+  table.m-cards td[data-primary]::before,
+  table.m-cards td[data-actions]::before {
+    content: none !important;
+  }
+  table.m-cards td[data-actions] {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    margin-top: 2px;
+    padding-top: 10px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  table.m-cards td[data-actions] > *,
+  table.m-cards td[data-actions] .opacity-0 {
+    opacity: 1 !important;
+  }
+  table.m-cards td[data-actions] button,
+  table.m-cards td[data-actions] a {
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+  table.m-cards td[data-select] {
+    /* grid-column:auto so the containing block is the card, not the grid area */
+    grid-column: auto;
+    position: absolute;
+    left: 16px;
+    top: 16px;
+  }
+  table.m-cards td[data-hide-mobile],
+  table.m-cards td[data-empty-mobile]:empty {
+    display: none;
+  }
+}
+
+/* iOS Safari zooms the page when focusing a field under 16px — keep form
+   controls at 16px on phones. */
+@media (max-width: 767.98px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

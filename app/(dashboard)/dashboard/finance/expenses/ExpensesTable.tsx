@@ -131,7 +131,7 @@ export default function ExpensesTable({ expenses, cars }: Props) {
   return (
     <div>
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start md:items-center">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-6 justify-between items-stretch md:items-center">
         <input
           type="text"
           placeholder="Search expenses…"
@@ -140,7 +140,7 @@ export default function ExpensesTable({ expenses, cars }: Props) {
             setFilter(e.target.value)
             setPage(1)
           }}
-          className="w-full max-w-sm dash-input px-4 py-3"
+          className="w-full md:max-w-sm dash-input px-4 py-3"
         />
         <div className="flex gap-3 w-full md:w-auto">
           <input
@@ -173,7 +173,7 @@ export default function ExpensesTable({ expenses, cars }: Props) {
       ) : (
         <>
           <div className="data-table">
-            <table className="w-full text-sm">
+            <table className="m-cards w-full text-sm">
               <thead>
                 <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/55 border-b border-white/[0.10] bg-white/[0.04]">
                   <th className="py-4 pl-6 pr-4">Date</th>
@@ -187,24 +187,24 @@ export default function ExpensesTable({ expenses, cars }: Props) {
               <tbody className="divide-y divide-white/[0.07]">
                 {paginated.map((e) => (
                   <tr key={e.id} className="hover:bg-white/5 transition-colors">
-                    <td className="py-4 pl-6 pr-4 text-white/80 font-medium whitespace-nowrap">
+                    <td data-label="Date" className="py-4 pl-6 pr-4 text-white/80 font-medium whitespace-nowrap">
                       {e.transaction_date || '—'}
                     </td>
-                    <td className="py-4 pr-4">
+                    <td data-label="Category" className="py-4 pr-4">
                       <span className="text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-lg bg-white/[0.08] border border-white/[0.10] text-white/70">
                         {e.category || 'General'}
                       </span>
                     </td>
-                    <td className="py-4 pr-4 text-white/80">
+                    <td data-primary className="py-4 pr-4 text-white/80">
                       {e.description || '—'}
                     </td>
-                    <td className="py-4 pr-4 text-white/60 text-xs">
+                    <td data-label="Car" className="py-4 pr-4 text-white/60 text-xs">
                       {e.car_id ? carMap[e.car_id] ?? `Car #${e.car_id}` : '—'}
                     </td>
-                    <td className="py-4 pr-4 text-white font-medium">
+                    <td data-badge className="py-4 pr-4 text-white font-medium">
                       {e.amount != null ? `$${Number(e.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
                     </td>
-                    <td className="py-4 pr-6 text-right space-x-3">
+                    <td data-actions className="py-4 pr-6 text-right space-x-3">
                       <button
                         onClick={() => openEdit(e)}
                         className="text-white/65 hover:text-white transition-colors text-xs font-semibold"
@@ -227,7 +227,7 @@ export default function ExpensesTable({ expenses, cars }: Props) {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between px-2 text-sm text-white/50">
+            <div className="mt-4 flex flex-col sm:flex-row gap-3 items-center justify-between px-2 text-sm text-white/50">
               <div>
                 Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
               </div>

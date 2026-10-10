@@ -93,8 +93,8 @@ export default function SupportTicketsManager({ tickets }: Props) {
         ))}
       </div>
 
-      <div className="glass border border-white/10 rounded-3xl overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="glass border border-white/10 rounded-3xl overflow-x-auto">
+        <table className="m-cards w-full text-sm">
           <thead>
             <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/30 border-b border-white/10 bg-black/20">
               <th className="px-6 py-4">Ticket</th>
@@ -115,21 +115,21 @@ export default function SupportTicketsManager({ tickets }: Props) {
                     className="hover:bg-white/[0.03] transition-colors cursor-pointer"
                     onClick={() => setExpanded(isOpen ? null : t.id)}
                   >
-                    <td className="px-6 py-4">
+                    <td data-label="Ticket" className="px-6 py-4">
                       <span className="text-white font-mono text-xs font-bold">{t.ticketNumber}</span>
                     </td>
-                    <td className="px-6 py-4 max-w-xs">
+                    <td data-primary className="px-6 py-4 max-w-xs max-md:max-w-none">
                       <div className="text-white truncate">{t.subject}</div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td data-label="From" className="px-6 py-4">
                       <div className="text-white/70 text-xs">{t.operatorName}</div>
                       <div className="text-white/40 text-[11px]">{t.operatorEmail}</div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td data-label="Tenant" className="px-6 py-4">
                       <div className="text-white/70 text-xs">{t.tenantName}</div>
                       <div className="text-white/40 text-[10px] uppercase tracking-widest">{t.tenantPlan}</div>
                     </td>
-                    <td className="px-6 py-4 text-white/50 text-xs">
+                    <td data-label="Created" className="px-6 py-4 text-white/50 text-xs">
                       {new Date(t.createdAt).toLocaleString(undefined, {
                         month: 'short',
                         day: 'numeric',
@@ -137,7 +137,7 @@ export default function SupportTicketsManager({ tickets }: Props) {
                         minute: '2-digit',
                       })}
                     </td>
-                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                    <td data-badge className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <select
                         value={t.status}
                         disabled={isPending}
@@ -151,7 +151,7 @@ export default function SupportTicketsManager({ tickets }: Props) {
                         <option value="closed">Closed</option>
                       </select>
                     </td>
-                    <td className="px-6 py-4 text-white/30 text-xs">
+                    <td data-hide-mobile className="px-6 py-4 text-white/30 text-xs">
                       {isOpen ? '▾' : '▸'}
                     </td>
                   </tr>

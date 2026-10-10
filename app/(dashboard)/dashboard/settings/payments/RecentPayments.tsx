@@ -29,7 +29,7 @@ const STATUS_STYLES: Record<string, { dot: string; text: string; label: string }
 export default function RecentPayments({ payments, chargesEnabled }: RecentPaymentsProps) {
   if (!chargesEnabled) {
     return (
-      <div className="glass border border-white/[0.06] rounded-3xl p-8">
+      <div className="glass border border-white/[0.06] rounded-2xl md:rounded-3xl p-5 md:p-8">
         <h3 className="text-white font-bold mb-4">Recent Payments</h3>
         <p className="text-white/30 text-sm">
           Connect your Stripe account to start accepting payments.
@@ -40,7 +40,7 @@ export default function RecentPayments({ payments, chargesEnabled }: RecentPayme
 
   if (payments.length === 0) {
     return (
-      <div className="glass border border-white/[0.06] rounded-3xl p-8">
+      <div className="glass border border-white/[0.06] rounded-2xl md:rounded-3xl p-5 md:p-8">
         <h3 className="text-white font-bold mb-4">Recent Payments</h3>
         <p className="text-white/30 text-sm">
           No payments yet. Payments will appear here once customers complete rentals.
@@ -56,7 +56,7 @@ export default function RecentPayments({ payments, chargesEnabled }: RecentPayme
   const totalPayments = payments.filter(p => p.status === 'succeeded').length
 
   return (
-    <div className="glass border border-white/[0.06] rounded-3xl p-8 lg:p-10 relative overflow-hidden group">
+    <div className="glass border border-white/[0.06] rounded-2xl md:rounded-3xl p-5 md:p-8 lg:p-10 relative overflow-hidden group">
       <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-emerald-500/10 transition-all duration-700" />
 
       <div className="relative z-10">
@@ -86,8 +86,8 @@ export default function RecentPayments({ payments, chargesEnabled }: RecentPayme
         </div>
 
         {/* Payments table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto max-md:overflow-visible">
+          <table className="m-cards w-full">
             <thead>
               <tr className="text-[10px] text-white/30 uppercase tracking-widest font-bold border-b border-white/5">
                 <th className="text-left pb-3 pr-4">Date</th>
@@ -103,25 +103,25 @@ export default function RecentPayments({ payments, chargesEnabled }: RecentPayme
                 const style = STATUS_STYLES[payment.status] || STATUS_STYLES.pending
                 return (
                   <tr key={payment.id} className="border-b border-white/[0.03] last:border-0">
-                    <td className="py-3 pr-4 text-xs text-white/50 whitespace-nowrap">
+                    <td data-label="Date" className="py-3 pr-4 text-xs text-white/50 whitespace-nowrap">
                       {formatDate(payment.created)}
                     </td>
-                    <td className="py-3 pr-4 text-xs text-white/70 max-w-[200px] truncate">
+                    <td data-primary className="py-3 pr-4 text-xs text-white/70 max-w-[200px] max-md:max-w-none truncate">
                       {payment.description || 'Rental payment'}
                     </td>
-                    <td className="py-3 pr-4 text-xs text-white/50 max-w-[160px] truncate">
+                    <td data-label="Customer" className="py-3 pr-4 text-xs text-white/50 max-w-[160px] max-md:max-w-none truncate">
                       {payment.customerEmail || '—'}
                     </td>
-                    <td className="py-3 pr-4">
+                    <td data-badge className="py-3 pr-4">
                       <span className="flex items-center gap-1.5">
                         <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
                         <span className={`text-xs font-medium ${style.text}`}>{style.label}</span>
                       </span>
                     </td>
-                    <td className="py-3 pr-4 text-xs text-white/30 text-right whitespace-nowrap">
+                    <td data-label="Fee" className="py-3 pr-4 text-xs text-white/30 text-right whitespace-nowrap">
                       {formatCurrency(payment.fee, payment.currency)}
                     </td>
-                    <td className="py-3 text-xs font-bold text-white text-right whitespace-nowrap">
+                    <td data-label="Amount" className="py-3 text-xs font-bold text-white text-right whitespace-nowrap">
                       {formatCurrency(payment.amount, payment.currency)}
                     </td>
                   </tr>

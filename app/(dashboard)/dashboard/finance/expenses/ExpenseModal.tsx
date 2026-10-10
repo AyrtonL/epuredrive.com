@@ -77,8 +77,8 @@ export default function ExpenseModal({ isOpen, onClose, expense, cars }: Props) 
 
   return (
     <ModalPortal>
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="glass w-full max-w-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up my-auto">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+      <div className="glass w-full max-w-xl rounded-t-3xl sm:rounded-3xl max-sm:bg-none max-sm:bg-[#0d0d0d] border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up mt-auto sm:my-auto">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">

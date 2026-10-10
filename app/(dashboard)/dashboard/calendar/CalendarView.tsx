@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import listPlugin from '@fullcalendar/list'
@@ -11,6 +12,16 @@ interface CalendarViewProps {
 }
 
 export default function CalendarView({ events, onEventClick }: CalendarViewProps) {
+  const calendarRef = useRef<FullCalendar>(null)
+
+  // A 7-column month grid is unreadable on a phone — open the agenda list
+  // there instead (the month grid stays one tap away in the toolbar).
+  useEffect(() => {
+    if (window.matchMedia('(max-width: 767.98px)').matches) {
+      calendarRef.current?.getApi().changeView('listMonth')
+    }
+  }, [])
+
   return (
     <>
       <style jsx global>{`
@@ -255,12 +266,34 @@ export default function CalendarView({ events, onEventClick }: CalendarViewProps
         .fc .fc-popover-body {
           padding: 0.5rem !important;
         }
+
+        /* ── Phone: title on its own row, controls below ── */
+        @media (max-width: 767.98px) {
+          .fc .fc-toolbar.fc-header-toolbar {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            margin-bottom: 1rem;
+          }
+          .fc .fc-toolbar.fc-header-toolbar > .fc-toolbar-chunk:nth-child(2) {
+            grid-column: 1 / -1;
+            order: -1;
+          }
+          .fc .fc-toolbar-title {
+            font-size: 1.15rem !important;
+          }
+          .fc .fc-button {
+            padding: 0.4rem 0.6rem !important;
+            font-size: 0.75rem !important;
+          }
+        }
       `}</style>
 
       <FullCalendar
+        ref={calendarRef}
         plugins={[dayGridPlugin, listPlugin, interactionPlugin]}
         initialView="dayGridMonth"
         headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' }}
+        buttonText={{ dayGridMonth: 'Month', listMonth: 'Agenda', today: 'Today' }}
         events={events as never}
         height="auto"
         eventClick={onEventClick as never}

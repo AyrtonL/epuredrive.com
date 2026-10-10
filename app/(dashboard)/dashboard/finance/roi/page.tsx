@@ -105,7 +105,7 @@ export default async function ROIPage() {
         </div>
       ) : (
         <div className="data-table rounded-2xl">
-          <table className="w-full text-sm">
+          <table className="m-cards w-full text-sm">
             <thead>
               <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/55 border-b border-white/[0.10] bg-white/[0.04]">
                 <th className="px-6 py-4">Vehicle</th>
@@ -134,7 +134,7 @@ export default async function ROIPage() {
 
                 return (
                   <tr key={c.id} className="hover:bg-white/5 transition-colors group">
-                    <td className="px-6 py-4 text-white font-medium">
+                    <td data-primary className="px-6 py-4 text-white font-medium">
                       {c.make} {c.model_full || c.model}
                       {consignment && (
                         <div className="text-[10px] text-primary/80 uppercase tracking-widest mt-1">
@@ -142,15 +142,15 @@ export default async function ROIPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-white/65">{bookings} bookings</td>
-                    <td className="px-6 py-4 text-white font-medium">{fmt(gross)}</td>
-                    <td className="px-6 py-4 text-red-400/80">
+                    <td data-label="Bookings" className="px-6 py-4 text-white/65">{bookings} bookings</td>
+                    <td data-label="Gross revenue" className="px-6 py-4 text-white font-medium">{fmt(gross)}</td>
+                    <td data-label="Maintenance" className="px-6 py-4 text-red-400/80">
                       {maint > 0 ? `-${fmt(maint)}` : '—'}
                     </td>
-                    <td className="px-6 py-4 text-orange-400/80">
+                    <td data-label="Owner split" className="px-6 py-4 text-orange-400/80">
                       {ownerPayout > 0 ? `-${fmt(ownerPayout)} (${consignment?.owner_percentage}%)` : '—'}
                     </td>
-                    <td className={`px-6 py-4 font-bold bg-white/[0.02] group-hover:bg-transparent transition-colors ${netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <td data-label="Net profit" className={`px-6 py-4 font-bold bg-white/[0.02] max-md:bg-transparent max-md:text-base group-hover:bg-transparent transition-colors ${netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                       {fmt(netProfit)}
                     </td>
                   </tr>
@@ -161,7 +161,7 @@ export default async function ROIPage() {
 
           {/* General expenses footer note */}
           {generalExpenses > 0 && (
-            <div className="px-6 py-4 border-t border-white/[0.10] bg-white/[0.03] flex items-center justify-between">
+            <div className="px-4 md:px-6 py-4 border-t border-white/[0.10] bg-white/[0.03] flex items-center justify-between gap-4 max-md:mt-3 max-md:rounded-2xl max-md:border">
               <span className="text-[11px] text-white/55 uppercase tracking-widest font-bold">
                 General Business Expenses (not per-vehicle — deducted from fleet net)
               </span>

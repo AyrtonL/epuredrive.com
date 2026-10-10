@@ -151,7 +151,7 @@ export default function DomainSettings({ tenant, customDomainsEnabled = false }:
           </div>
           <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
             <div className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">DNS Configuration</div>
-            <div className="grid grid-cols-3 gap-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs break-all">
               <div><span className="text-white/30">Type:</span> <span className="text-white/60">CNAME</span></div>
               <div><span className="text-white/30">Host:</span> <span className="text-white/60">fleet</span></div>
               <div><span className="text-white/30">Value:</span> <span className="text-white/60">cname.epuredrive.com</span></div>

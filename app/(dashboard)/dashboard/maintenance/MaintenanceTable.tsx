@@ -70,7 +70,7 @@ export default function MaintenanceTable({ services, cars }: Props) {
   return (
     <div>
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start md:items-center">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-6 justify-between items-stretch md:items-center">
         <input
           type="text"
           placeholder="Search logs by car, date, description…"
@@ -79,7 +79,7 @@ export default function MaintenanceTable({ services, cars }: Props) {
             setFilter(e.target.value)
             setPage(1)
           }}
-          className="w-full max-w-sm dash-input px-4 py-3"
+          className="w-full md:max-w-sm dash-input px-4 py-3"
         />
         <button
           onClick={openNew}
@@ -96,7 +96,7 @@ export default function MaintenanceTable({ services, cars }: Props) {
       ) : (
         <>
           <div className="data-table">
-            <table className="w-full text-sm">
+            <table className="m-cards w-full text-sm">
               <thead>
                 <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/55 border-b border-white/[0.10] bg-white/[0.04]">
                   <th className="py-4 pl-6 pr-4">Vehicle</th>
@@ -111,24 +111,24 @@ export default function MaintenanceTable({ services, cars }: Props) {
               <tbody className="divide-y divide-white/[0.07]">
                 {paginated.map((s) => (
                   <tr key={s.id} className="hover:bg-white/5 transition-colors">
-                    <td className="py-4 pl-6 pr-4 font-semibold text-white tracking-wide">
+                    <td data-primary className="py-4 pl-6 pr-4 font-semibold text-white tracking-wide">
                       {s.car_id ? carMap[s.car_id] ?? `Car #${s.car_id}` : '—'}
                     </td>
-                    <td className="py-4 pr-4">
+                    <td data-badge className="py-4 pr-4">
                       <span className="px-2.5 py-1 bg-white/10 text-white/80 rounded-full text-[10px] font-bold uppercase border border-white/5 whitespace-nowrap">
                         {(s.service_type || 'General').replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="py-4 pr-4 text-white/80 font-medium whitespace-nowrap">
+                    <td data-label="Date" className="py-4 pr-4 text-white/80 font-medium whitespace-nowrap">
                       {s.service_date || '—'}
                     </td>
-                    <td className="py-4 pr-4 text-white/70">
+                    <td data-label="Details" className="py-4 pr-4 text-white/70">
                       <div className="line-clamp-2 max-w-xs">
                         {s.description || '—'}
                         {s.provider && <div className="text-[10px] text-white/50 italic mt-0.5">at {s.provider}</div>}
                       </div>
                     </td>
-                    <td className="py-4 pr-4">
+                    <td data-label="Next service" className="py-4 pr-4">
                       {s.next_service_date || s.next_service_mileage ? (
                         <div className="space-y-0.5">
                           {s.next_service_date && <div className="text-xs text-primary font-medium">{s.next_service_date}</div>}
@@ -136,10 +136,10 @@ export default function MaintenanceTable({ services, cars }: Props) {
                         </div>
                       ) : '—'}
                     </td>
-                    <td className="py-4 pr-4 text-white font-medium">
+                    <td data-label="Cost" className="py-4 pr-4 text-white font-medium">
                       {s.cost != null ? `$${Number(s.cost).toLocaleString()}` : '—'}
                     </td>
-                    <td className="py-4 pr-6 text-right space-x-3">
+                    <td data-actions className="py-4 pr-6 text-right space-x-3">
                       <button
                         onClick={() => openEdit(s)}
                         className="text-white/65 hover:text-white transition-colors text-xs font-semibold"
@@ -162,7 +162,7 @@ export default function MaintenanceTable({ services, cars }: Props) {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between px-2 text-sm text-white/50">
+            <div className="mt-4 flex flex-col sm:flex-row gap-3 items-center justify-between px-2 text-sm text-white/50">
               <div>
                 Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
               </div>

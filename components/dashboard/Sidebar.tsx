@@ -366,18 +366,21 @@ export default function Sidebar({ email, role, name, tenantName, tenantLogoUrl, 
 
   return (
     <>
-      {/* Mobile hamburger button */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="fixed top-5 left-4 z-50 md:hidden w-10 h-10 rounded-xl bg-white/10 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-        aria-label="Open menu"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </button>
+      {/* Mobile top app bar */}
+      <header className="fixed top-0 inset-x-0 z-30 md:hidden h-14 flex items-center gap-3 px-4 bg-black/70 backdrop-blur-xl border-b border-white/[0.08]">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="w-10 h-10 -ml-1 rounded-xl flex items-center justify-center text-white hover:bg-white/10 active:bg-white/15 transition-colors"
+          aria-label="Open menu"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <span className="text-sm font-bold text-white tracking-wide truncate">{displayBrand}</span>
+      </header>
 
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 glass z-20 flex-col shrink-0 h-full shadow-[4px_0_24px_rgba(0,0,0,0.5)] relative">

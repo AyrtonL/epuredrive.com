@@ -241,7 +241,7 @@ export default async function UtilizationPage({
         <div className="empty-state">No vehicles in your fleet yet.</div>
       ) : (
         <div className="data-table rounded-2xl">
-          <table className="w-full text-sm">
+          <table className="m-cards w-full text-sm">
             <thead>
               <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/55 border-b border-white/[0.10] bg-white/[0.04]">
                 <th className="px-6 py-4">Vehicle</th>
@@ -257,7 +257,7 @@ export default async function UtilizationPage({
                 const carLabel = `${row.car.make ?? ''} ${row.car.model_full || row.car.model || ''}`.trim()
                 return (
                   <tr key={row.car.id} className="hover:bg-white/5 transition-colors group">
-                    <td className="px-6 py-4 text-white font-medium">
+                    <td data-primary className="px-6 py-4 text-white font-medium">
                       <Link
                         href={`/dashboard/fleet/${row.car.id}`}
                         className="hover:underline underline-offset-2"
@@ -270,15 +270,15 @@ export default async function UtilizationPage({
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-white/65 tabular-nums">
+                    <td data-label="Daily rate" className="px-6 py-4 text-white/65 tabular-nums">
                       {row.car.daily_rate != null ? fmtCurrency(Number(row.car.daily_rate)) : '—'}
                     </td>
-                    <td className="px-6 py-4 text-white/65 tabular-nums">{row.bookings}</td>
-                    <td className="px-6 py-4 text-white/85 tabular-nums">
+                    <td data-label="Bookings" className="px-6 py-4 text-white/65 tabular-nums">{row.bookings}</td>
+                    <td data-label="Days rented" className="px-6 py-4 text-white/85 tabular-nums">
                       {row.daysRented} / {periodDays}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                    <td data-label="Utilization" className="px-6 py-4">
+                      <div className="flex items-center gap-3 max-md:flex-1 max-md:max-w-[65%]">
                         <div className="flex-1 h-2 bg-white/[0.06] rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-700 ${utilizationColor(row.utilization)}`}
@@ -290,7 +290,7 @@ export default async function UtilizationPage({
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-bold text-emerald-400 bg-white/[0.02] group-hover:bg-transparent transition-colors tabular-nums">
+                    <td data-badge className="px-6 py-4 font-bold text-emerald-400 bg-white/[0.02] max-md:bg-transparent group-hover:bg-transparent transition-colors tabular-nums">
                       {fmtCurrency(row.revenue)}
                     </td>
                   </tr>

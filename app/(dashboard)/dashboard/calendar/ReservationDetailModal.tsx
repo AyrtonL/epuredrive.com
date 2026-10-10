@@ -59,8 +59,8 @@ export default function ReservationDetailModal({ reservation: r, cars, dailyRate
 
   return (
     <ModalPortal>
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
-      <div className="glass w-full max-w-lg rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up my-auto"
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
+      <div className="glass w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-sm:bg-none max-sm:bg-[#0d0d0d] border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up mt-auto sm:my-auto"
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}

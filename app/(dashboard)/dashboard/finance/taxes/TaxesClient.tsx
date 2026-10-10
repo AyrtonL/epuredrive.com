@@ -325,7 +325,7 @@ export default function TaxesClient({ transactions, reservations, taxSettings: i
 
       {/* Tax Rates Breakdown */}
       {taxBreakdown.length > 0 && (
-        <div className="glass border border-white/10 rounded-3xl p-6 md:p-8">
+        <div className="glass border border-white/10 rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8">
           <h3 className="text-white font-bold mb-6">Tax Rate Breakdown</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {taxBreakdown.map((tax) => (
@@ -347,8 +347,8 @@ export default function TaxesClient({ transactions, reservations, taxSettings: i
 
       {/* Quarterly Summary */}
       {quarters.length > 0 && (
-        <div className="glass border border-white/10 rounded-3xl p-6 md:p-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="glass border border-white/10 rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <h3 className="text-white font-bold">Quarterly Summary</h3>
             <button onClick={exportTaxCSV} disabled={months.length === 0}
               className="flex items-center gap-2 bg-white text-black hover:bg-white/90 disabled:opacity-30 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
@@ -359,7 +359,7 @@ export default function TaxesClient({ transactions, reservations, taxSettings: i
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="m-cards w-full text-sm">
               <thead>
                 <tr className="text-[10px] font-black uppercase tracking-widest text-white/30 border-b border-white/5">
                   <th className="text-left py-3 px-3">Quarter</th>
@@ -375,12 +375,12 @@ export default function TaxesClient({ transactions, reservations, taxSettings: i
                   const diff = data.taxPaid - data.estimated
                   return (
                     <tr key={key} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3 px-3 text-white/70 font-bold">{key.replaceAll('-', ' ')}</td>
-                      <td className="py-3 px-3 text-right text-emerald-400">{fmt(data.revenue)}</td>
-                      <td className="py-3 px-3 text-right text-red-400">{fmt(data.expenses)}</td>
-                      <td className="py-3 px-3 text-right text-amber-400">{fmt(data.taxPaid)}</td>
-                      <td className="py-3 px-3 text-right text-violet-400">{fmt(data.estimated)}</td>
-                      <td className={`py-3 px-3 text-right font-bold ${diff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <td data-primary className="py-3 px-3 text-white/70 font-bold">{key.replaceAll('-', ' ')}</td>
+                      <td data-label="Revenue" className="py-3 px-3 text-right text-emerald-400">{fmt(data.revenue)}</td>
+                      <td data-label="Expenses" className="py-3 px-3 text-right text-red-400">{fmt(data.expenses)}</td>
+                      <td data-label="Tax paid" className="py-3 px-3 text-right text-amber-400">{fmt(data.taxPaid)}</td>
+                      <td data-label="Estimated due" className="py-3 px-3 text-right text-violet-400">{fmt(data.estimated)}</td>
+                      <td data-badge className={`py-3 px-3 text-right font-bold ${diff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                         {diff >= 0 ? '+' : ''}{fmt(diff)}
                       </td>
                     </tr>
@@ -393,13 +393,13 @@ export default function TaxesClient({ transactions, reservations, taxSettings: i
       )}
 
       {/* Monthly Breakdown */}
-      <div className="glass border border-white/10 rounded-3xl p-6 md:p-8">
+      <div className="glass border border-white/10 rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8">
         <h3 className="text-white font-bold mb-6">Monthly Breakdown</h3>
         {months.length === 0 ? (
           <p className="text-white/30 text-sm">No transaction data in this date range.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="m-cards w-full text-sm">
               <thead>
                 <tr className="text-[10px] font-black uppercase tracking-widest text-white/30 border-b border-white/5">
                   <th className="text-left py-3 px-2">Month</th>
@@ -412,14 +412,17 @@ export default function TaxesClient({ transactions, reservations, taxSettings: i
               <tbody>
                 {months.map(([month, data]) => {
                   const net = data.income - data.expenses
-                  const label = new Date(month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
+                  // Build in local time: new Date('YYYY-MM-01') parses as UTC and shows the
+                  // previous month in US timezones.
+                  const [y, m] = month.split('-').map(Number)
+                  const label = new Date(y, m - 1, 1).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
                   return (
                     <tr key={month} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3 px-2 text-white/70 font-medium">{label}</td>
-                      <td className="py-3 px-2 text-right text-emerald-400">{fmt(data.income)}</td>
-                      <td className="py-3 px-2 text-right text-red-400">{fmt(data.expenses)}</td>
-                      <td className="py-3 px-2 text-right text-amber-400">{fmt(data.tax)}</td>
-                      <td className={`py-3 px-2 text-right font-bold ${net >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <td data-primary className="py-3 px-2 text-white/70 font-medium">{label}</td>
+                      <td data-label="Revenue" className="py-3 px-2 text-right text-emerald-400">{fmt(data.income)}</td>
+                      <td data-label="Expenses" className="py-3 px-2 text-right text-red-400">{fmt(data.expenses)}</td>
+                      <td data-label="Tax paid" className="py-3 px-2 text-right text-amber-400">{fmt(data.tax)}</td>
+                      <td data-badge className={`py-3 px-2 text-right font-bold ${net >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                         {fmt(net)}
                       </td>
                     </tr>
@@ -432,7 +435,7 @@ export default function TaxesClient({ transactions, reservations, taxSettings: i
       </div>
 
       {/* Tax Settings Panel */}
-      <div className="glass border border-white/10 rounded-3xl p-6 md:p-8">
+      <div className="glass border border-white/10 rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-violet-500/10 text-violet-400">
@@ -580,7 +583,7 @@ export default function TaxesClient({ transactions, reservations, taxSettings: i
       </div>
 
       {/* Tax Tips */}
-      <div className="glass border border-amber-500/10 rounded-3xl p-6 md:p-8">
+      <div className="glass border border-amber-500/10 rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8">
         <div className="flex items-start gap-4">
           <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 shrink-0">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

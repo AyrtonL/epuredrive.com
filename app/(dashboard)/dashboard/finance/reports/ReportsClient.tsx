@@ -327,9 +327,9 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
       </div>
 
       {/* Parity Ledger: Audit Trail */}
-      <div className="glass border border-white/10 rounded-[2.5rem] p-10 overflow-hidden relative">
+      <div className="glass border border-white/10 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] -mr-32 -mt-32" />
-        <div className="flex items-center justify-between mb-10 relative z-10">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 md:mb-10 relative z-10">
           <div>
             <h3 className="text-white font-black italic tracking-tight text-xl uppercase">Daily Ledger Audit</h3>
             <p className="text-[10px] text-white/20 uppercase tracking-[.3em] font-black mt-1">100% Legacy Parity Mode</p>
@@ -343,7 +343,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
         </div>
 
         <div className="overflow-x-auto relative z-10">
-          <table className="w-full text-left">
+          <table className="m-cards w-full text-left">
             <thead>
               <tr className="text-[10px] font-black uppercase tracking-widest text-white/20 border-b border-white/5">
                 <th className="pb-4 px-4">Registry Date</th>
@@ -355,21 +355,21 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
             <tbody className="divide-y divide-white/5 font-outfit">
               {recentLedger.map((item, idx) => (
                 <tr key={idx} className="group hover:bg-white/5 transition-all duration-300">
-                  <td className="py-5 px-4">
+                  <td data-label="Date" className="py-5 px-4">
                     <span className="text-[11px] font-black text-white/40 group-hover:text-white/60 transition-colors">{item.date}</span>
                   </td>
-                  <td className="py-5 px-4">
+                  <td data-primary className="py-5 px-4">
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black uppercase tracking-widest text-primary/50 mb-0.5">{item.type}</span>
                       <span className="text-xs font-black text-white/80 group-hover:text-white transition-colors uppercase tracking-tight">{item.label}</span>
                     </div>
                   </td>
-                  <td className="py-5 px-4">
+                  <td data-label="Status" className="py-5 px-4">
                      <span className="px-3 py-1 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black uppercase tracking-widest text-white/40">
                        {item.status}
                      </span>
                   </td>
-                  <td className={`py-5 px-4 text-right font-black italic text-sm ${item.color}`}>
+                  <td data-badge className={`py-5 px-4 text-right font-black italic text-sm whitespace-nowrap ${item.color}`}>
                      {item.amount >= 0 ? '+' : ''}{fmt(item.amount)}
                   </td>
                 </tr>
@@ -386,7 +386,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Source Mix */}
-        <div className="glass border border-white/10 rounded-[2.5rem] p-10 lg:col-span-1">
+        <div className="glass border border-white/10 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10 lg:col-span-1">
           <h3 className="text-white font-black italic tracking-tight text-lg mb-8 uppercase">Booking Sources</h3>
           <div className="space-y-8">
             {Object.entries(sources).map(([src, count]) => {
@@ -409,8 +409,8 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
         </div>
 
         {/* Revenue by Car */}
-        <div className="glass border border-white/10 rounded-[2.5rem] p-10 lg:col-span-2">
-          <div className="flex items-center justify-between mb-8">
+        <div className="glass border border-white/10 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10 lg:col-span-2">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <h3 className="text-white font-black italic tracking-tight text-lg uppercase">Revenue per Vehicle</h3>
             <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">Performance Ranking</span>
           </div>
@@ -434,8 +434,8 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
       </div>
 
       {/* Revenue by Month */}
-      <div className="glass border border-white/10 rounded-[2.5rem] p-10">
-        <div className="flex items-center justify-between mb-8">
+      <div className="glass border border-white/10 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <h3 className="text-white font-black italic tracking-tight text-lg uppercase text-white/60">Revenue History</h3>
           <button onClick={exportCSV} disabled={filteredRes.length === 0}
             className="flex items-center gap-2 bg-white text-black hover:bg-white/90 disabled:opacity-30 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
@@ -452,7 +452,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
                 <div key={month} className="space-y-2">
                   <div className="flex justify-between items-end mb-1">
                     <span className="text-[11px] font-black text-white/50 uppercase tracking-tight">
-                      {new Date(month + '-01').toLocaleDateString('en', { month: 'short', year: 'numeric' })}
+                      {new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)) - 1, 1).toLocaleDateString('en', { month: 'short', year: 'numeric' })}
                     </span>
                     <span className="text-white font-black italic">{fmt(amount)}</span>
                   </div>
@@ -467,8 +467,8 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
       </div>
 
       {/* Expenses Breakdown */}
-      <div className="glass border border-white/10 rounded-[2.5rem] p-10">
-        <div className="flex items-center justify-between mb-8">
+      <div className="glass border border-white/10 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <h3 className="text-white font-black italic tracking-tight text-lg uppercase text-white/60">Expense Audit Log</h3>
           <button onClick={exportExpensesCSV} disabled={filteredExp.length === 0}
             className="flex items-center gap-2 bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/10">
@@ -479,7 +479,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
           <p className="text-white/30 text-sm py-12 text-center italic">No outgoing transactions found.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="m-cards w-full text-sm">
               <thead>
                 <tr className="text-left text-[10px] font-black uppercase tracking-widest text-white/30 border-b border-white/5 bg-black/10">
                   <th className="py-4 px-4">Date</th>
@@ -491,14 +491,14 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
               <tbody className="divide-y divide-white/5">
                 {filteredExp.map((e) => (
                   <tr key={e.id} className="hover:bg-white/5 transition-colors group">
-                    <td className="py-4 px-4 text-white/40 font-bold uppercase tracking-tighter text-[11px]">{e.transaction_date || '—'}</td>
-                    <td className="py-4 px-4">
+                    <td data-label="Date" className="py-4 px-4 text-white/40 font-bold uppercase tracking-tighter text-[11px]">{e.transaction_date || '—'}</td>
+                    <td data-label="Category" className="py-4 px-4">
                       <span className="text-[9px] uppercase tracking-widest font-black px-3 py-1 rounded-lg bg-white/5 text-white/50 border border-white/5">
                         {e.category || 'General'}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-white/60 font-medium">{e.description || '—'}</td>
-                    <td className="py-4 px-4 text-right text-red-500 font-bold italic">{fmt(Number(e.amount) || 0)}</td>
+                    <td data-primary className="py-4 px-4 text-white/60 font-medium">{e.description || '—'}</td>
+                    <td data-badge className="py-4 px-4 text-right text-red-500 font-bold italic whitespace-nowrap">{fmt(Number(e.amount) || 0)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -128,7 +128,7 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
     <div className="space-y-6">
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="bg-primary/20 border border-primary/30 rounded-2xl p-4 flex items-center justify-between text-sm animate-fade-in-up">
+        <div className="bg-primary/20 border border-primary/30 rounded-2xl p-4 flex flex-wrap gap-3 items-center justify-between text-sm animate-fade-in-up">
           <span className="font-bold text-white px-2">
             {selectedIds.size} customer{selectedIds.size > 1 ? 's' : ''} selected
           </span>
@@ -146,11 +146,11 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
       )}
 
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center justify-between">
         <input type="text" placeholder="Search customers…" value={filter} onChange={e => { setFilter(e.target.value); setPage(1); setSelectedIds(new Set()); }}
-          className="w-full max-w-sm dash-input px-4 py-3" />
+          className="w-full md:max-w-sm dash-input px-4 py-3" />
         <button onClick={handleSync} disabled={isPending}
-          className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 flex-shrink-0">
+          className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 flex-shrink-0">
           🔄 {isPending ? 'Syncing...' : 'Sync from Bookings'}
         </button>
       </div>
@@ -162,7 +162,7 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
         </p>
       ) : (
         <div className="data-table">
-          <table className="w-full text-sm">
+          <table className="m-cards w-full text-sm">
             <thead>
               <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/55 border-b border-white/[0.10] bg-white/[0.04]">
                 <th className="py-4 pl-4 pr-2 w-10">
@@ -179,31 +179,31 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
             <tbody className="divide-y divide-white/[0.07]">
               {paginated.map(c => (
                 <tr key={c.id} className={`hover:bg-white/5 transition-colors group ${selectedIds.has(c.id) ? 'bg-white/5' : ''}`}>
-                  <td className="py-4 pl-4 pr-2">
+                  <td data-select className="py-4 pl-4 pr-2">
                     <input type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggleOne(c.id)}
                       className="rounded border-white/20 bg-black/50 text-white focus:ring-1 focus:ring-white cursor-pointer" />
                   </td>
-                  <td className="py-4 pr-4">
+                  <td data-primary className="py-4 pr-4">
                     <div className="text-white font-bold tracking-tight">{c.name}</div>
-                    <div className="flex gap-2 mt-1">
+                    <div className="flex flex-wrap gap-x-2 mt-1">
                       {c.email && <span className="text-white/55 text-[10px] font-medium">{c.email}</span>}
                       {c.phone && <span className="text-white/45 text-[10px] font-medium">· {c.phone}</span>}
                     </div>
                   </td>
-                  <td className="py-4 pr-4">
+                  <td data-label="Lifetime value" className="py-4 pr-4">
                     <div className="text-emerald-400 font-black tracking-tighter text-base">${(c.ltv || 0).toLocaleString()}</div>
                   </td>
-                  <td className="py-4 pr-4">
+                  <td data-label="Trips" className="py-4 pr-4">
                     <span className="bg-white/[0.08] border border-white/[0.10] text-white/70 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide">
                       {c.count || 0} trip{c.count !== 1 ? 's' : ''}
                     </span>
                   </td>
-                  <td className="py-4 pr-4 text-white/50 text-[11px] font-medium">
+                  <td data-label="Since" className="py-4 pr-4 text-white/50 text-[11px] font-medium">
                     {c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}
                   </td>
-                  <td className="py-4 text-right pr-4">
+                  <td data-actions className="py-4 text-right pr-4">
                     <button onClick={() => handleDelete(c.id)} disabled={isPending}
-                      className="text-white/20 hover:text-red-400 transition-colors text-xs opacity-0 group-hover:opacity-100 disabled:opacity-20">
+                      className="text-white/40 md:text-white/20 hover:text-red-400 focus-visible:opacity-100 transition-colors text-xs md:opacity-0 group-hover:opacity-100 disabled:opacity-20">
                       Delete
                     </button>
                   </td>
@@ -216,7 +216,7 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-xs text-white/40 font-bold uppercase tracking-widest pt-4">
+        <div className="flex items-center justify-between gap-3 text-xs text-white/40 font-bold uppercase tracking-widest pt-4">
           <div>Page {page} of {totalPages}</div>
           <div className="flex gap-2">
             <button onClick={() => { setPage(p => Math.max(1, p - 1)); setSelectedIds(new Set()); }} disabled={page === 1}

@@ -110,8 +110,8 @@ export default async function TelematicsDevicesPage({ searchParams }: Props) {
       {totalCount === 0 ? (
         <EmptyState />
       ) : (
-        <div className="glass border border-white/[0.06] rounded-3xl overflow-hidden">
-          <table className="w-full">
+        <div className="glass border border-white/[0.06] rounded-3xl overflow-x-auto max-md:overflow-visible max-md:bg-none max-md:border-0 max-md:shadow-none max-md:backdrop-blur-none">
+          <table className="m-cards w-full">
             <thead className="bg-white/[0.03] text-[10px] font-bold uppercase tracking-widest text-white/40">
               <tr>
                 <th className="text-left py-3 px-4 font-bold">Device</th>

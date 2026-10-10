@@ -158,18 +158,18 @@ export default function TripsTable({ trips, cars, initialFilters }: Props) {
               placeholder="0"
             />
           </label>
-          <div className="flex items-end gap-2">
+          <div className="col-span-2 md:col-span-1 flex items-end gap-2">
             <button
               type="button"
               onClick={applyFilters}
               disabled={pending}
-              className="bg-white text-black hover:bg-white/90 text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-lg disabled:opacity-50 transition-colors"
+              className="flex-1 md:flex-none bg-white text-black hover:bg-white/90 text-xs font-bold uppercase tracking-wider px-4 py-2.5 md:py-2 rounded-lg disabled:opacity-50 transition-colors"
             >
               {pending ? 'Loading...' : 'Apply'}
             </button>
             <a
               href={exportHref}
-              className="bg-white/[0.04] border border-white/10 text-white/70 hover:bg-white/[0.08] hover:text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-lg transition-colors"
+              className="flex-1 md:flex-none text-center bg-white/[0.04] border border-white/10 text-white/70 hover:bg-white/[0.08] hover:text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 md:py-2 rounded-lg transition-colors"
             >
               Export CSV
             </a>
@@ -204,8 +204,8 @@ export default function TripsTable({ trips, cars, initialFilters }: Props) {
         )}
       </div>
 
-      <div className="glass border border-white/[0.08] rounded-2xl overflow-hidden">
-        <table className="w-full">
+      <div className="glass border border-white/[0.08] rounded-2xl overflow-x-auto max-md:overflow-visible max-md:bg-none max-md:border-0 max-md:shadow-none max-md:backdrop-blur-none">
+        <table className="m-cards w-full">
           <thead className="bg-white/[0.03] text-[10px] font-bold uppercase tracking-widest text-white/40">
             <tr>
               <th className="text-left py-3 px-4 font-bold">Date / time</th>
@@ -231,22 +231,22 @@ export default function TripsTable({ trips, cars, initialFilters }: Props) {
                   onClick={() => openTripRow(t)}
                   className="border-t border-white/[0.04] hover:bg-white/[0.03] cursor-pointer"
                 >
-                  <td className="py-3 px-4 text-white/80 text-sm">
+                  <td data-label="Started" className="py-3 px-4 text-white/80 text-sm whitespace-nowrap">
                     {formatDateTime(t.started_at)}
                   </td>
-                  <td className="py-3 px-4 text-white/80 text-sm">
+                  <td data-primary className="py-3 px-4 text-white/80 text-sm max-md:font-semibold max-md:text-white">
                     {t.car_label}
                   </td>
-                  <td className="py-3 px-4 text-white/80 text-sm">
+                  <td data-badge className="py-3 px-4 text-white/80 text-sm whitespace-nowrap">
                     {formatDistance(t.distance_mi)}
                   </td>
-                  <td className="py-3 px-4 text-white/80 text-sm">
+                  <td data-label="Duration" className="py-3 px-4 text-white/80 text-sm">
                     {formatDuration(t.duration_s)}
                   </td>
-                  <td className="py-3 px-4 text-white/80 text-sm">
+                  <td data-label="Max speed" className="py-3 px-4 text-white/80 text-sm">
                     {t.max_speed_mph === null ? '—' : `${t.max_speed_mph} mph`}
                   </td>
-                  <td className="py-3 px-4 text-white/60 text-xs">
+                  <td data-label="Events" className="py-3 px-4 text-white/60 text-xs">
                     {(t.hard_braking_count ?? 0) + (t.hard_accel_count ?? 0) === 0 ? (
                       <span className="text-white/30">—</span>
                     ) : (
@@ -255,7 +255,7 @@ export default function TripsTable({ trips, cars, initialFilters }: Props) {
                       </span>
                     )}
                   </td>
-                  <td className="py-3 px-4 text-white/70 text-sm">
+                  <td data-label="Booking" className="py-3 px-4 text-white/70 text-sm">
                     {t.booking_code ?? <span className="text-white/30">—</span>}
                   </td>
                 </tr>

@@ -166,8 +166,8 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
       )}
 
       {/* Tenant Table */}
-      <div className="glass border border-white/10 rounded-3xl overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="glass border border-white/10 rounded-3xl overflow-x-auto">
+        <table className="m-cards w-full text-sm">
           <thead>
             <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/30 border-b border-white/10 bg-black/20">
               <th className="px-6 py-4">Organization</th>
@@ -182,7 +182,7 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
           <tbody className="divide-y divide-white/5">
             {tenants.map((t) => (
               <tr key={t.id} className="hover:bg-white/[0.03] transition-colors">
-                <td className="px-6 py-4">
+                <td data-primary className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/30 text-xs font-bold">
                       {(t.brand_name || t.name || '?')[0].toUpperCase()}
@@ -200,7 +200,7 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                <td data-label="Owner" className="px-6 py-4">
                   {owners[t.id] ? (
                     <div>
                       <div className="text-white/70 text-xs font-medium">{owners[t.id].name}</div>
@@ -210,7 +210,7 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
                     <span className="text-white/20 text-xs italic">No owner</span>
                   )}
                 </td>
-                <td className="px-6 py-4">
+                <td data-badge className="px-6 py-4">
                   {editingPlan === t.id ? (
                     <select
                       defaultValue={t.plan || 'free'}
@@ -231,10 +231,10 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
                     </button>
                   )}
                 </td>
-                <td className="px-6 py-4 text-white/50">{memberCounts[t.id] ?? 0}</td>
-                <td className="px-6 py-4 text-white/50">{carCounts[t.id] ?? 0}</td>
-                <td className="px-6 py-4 text-white/50">{bookingCounts[t.id] ?? 0}</td>
-                <td className="px-6 py-4">
+                <td data-label="Members" className="px-6 py-4 text-white/50">{memberCounts[t.id] ?? 0}</td>
+                <td data-label="Cars" className="px-6 py-4 text-white/50">{carCounts[t.id] ?? 0}</td>
+                <td data-label="Bookings" className="px-6 py-4 text-white/50">{bookingCounts[t.id] ?? 0}</td>
+                <td data-actions className="px-6 py-4">
                   {confirmDelete === t.id ? (
                     <div className="flex items-center gap-2">
                       <button

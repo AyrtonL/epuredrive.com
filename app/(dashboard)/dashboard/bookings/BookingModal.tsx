@@ -351,8 +351,8 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
 
   return (
     <ModalPortal>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-        <div className="glass w-full max-w-3xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up my-auto flex flex-col max-h-[92vh]">
+      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+        <div className="glass w-full max-w-3xl rounded-t-3xl sm:rounded-3xl max-sm:bg-none max-sm:bg-[#0d0d0d] border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up mt-auto sm:my-auto flex flex-col max-h-[92dvh]">
 
           {/* ── Sticky Summary Header ── */}
           <div className="border-b border-white/10 bg-white/[0.04] flex-shrink-0">

@@ -41,17 +41,17 @@ export default function DeviceRow({ device, cars }: Props) {
 
   return (
     <tr className="border-t border-white/[0.06] hover:bg-white/[0.02] transition-colors">
-      <td className="py-3 px-4">
+      <td data-primary className="py-3 px-4">
         <div className="text-white/90 font-semibold text-sm">{nickname}</div>
         <div className="text-white/40 text-[11px] font-mono mt-0.5">IMEI {device.imei}</div>
         <div className="text-white/30 text-[10px] mt-0.5">
           Last seen {formatRelative(device.last_seen_at)}
         </div>
       </td>
-      <td className="py-3 px-4">
+      <td data-badge className="py-3 px-4">
         <StatusPill online={device.online} battery={device.battery_voltage} />
       </td>
-      <td className="py-3 px-4">
+      <td data-label="Car" className="py-3 px-4">
         <LinkCarDropdown
           deviceId={device.id}
           currentCarId={device.car_id}
@@ -60,7 +60,7 @@ export default function DeviceRow({ device, cars }: Props) {
         />
         {error && <div className="text-red-300 text-[11px] mt-1">{error}</div>}
       </td>
-      <td className="py-3 px-4 text-white/70 text-sm font-mono">{device.vin ?? '—'}</td>
+      <td data-label="VIN" className="py-3 px-4 text-white/70 text-sm font-mono break-all">{device.vin ?? '—'}</td>
     </tr>
   )
 }

@@ -69,8 +69,8 @@ export default function FleetMileagePanel({ cars, services }: Props) {
   }
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-3xl p-6 glass">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white/5 border border-white/10 rounded-2xl md:rounded-3xl p-4 md:p-6 glass">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h3 className="text-sm font-bold text-white tracking-wide">Fleet Mileage</h3>
           <p className="text-[11px] text-white/40 mt-0.5">Current mileage and next service per vehicle — click mileage to update</p>
@@ -83,8 +83,8 @@ export default function FleetMileagePanel({ cars, services }: Props) {
         </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto max-md:overflow-visible">
+        <table className="m-cards w-full text-sm">
           <thead>
             <tr className="text-left text-[10px] font-bold uppercase tracking-widest text-white/40 border-b border-white/10">
               <th className="pb-3 pr-4">Vehicle</th>
@@ -107,11 +107,11 @@ export default function FleetMileagePanel({ cars, services }: Props) {
 
               return (
                 <tr key={car.id} className="hover:bg-white/5 transition-colors">
-                  <td className="py-4 pr-4 font-semibold text-white">
+                  <td data-primary className="py-4 pr-4 font-semibold text-white">
                     {car.make} {car.model_full || car.model}
                   </td>
 
-                  <td className="py-4 pr-4">
+                  <td data-label="Mileage" className="py-4 pr-4">
                     {isEditingThis ? (
                       <div className="flex items-center gap-2">
                         <input
@@ -167,17 +167,17 @@ export default function FleetMileagePanel({ cars, services }: Props) {
                     )}
                   </td>
 
-                  <td className="py-4 pr-4 text-white/70 font-medium">
+                  <td data-label="Next service" className="py-4 pr-4 text-white/70 font-medium">
                     {nextMileage != null
                       ? `${nextMileage.toLocaleString()} mi`
                       : <span className="text-white/25">—</span>}
                   </td>
 
-                  <td className="py-4 pr-4 text-white/70">
+                  <td data-label="Next date" className="py-4 pr-4 text-white/70">
                     {nextDate ?? <span className="text-white/25">—</span>}
                   </td>
 
-                  <td className="py-4 pr-4">
+                  <td data-label="Remaining" className="py-4 pr-4">
                     {remaining != null ? (
                       <span className={`font-medium ${
                         isOverdue ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-white/60'
@@ -189,7 +189,7 @@ export default function FleetMileagePanel({ cars, services }: Props) {
                     ) : <span className="text-white/25">—</span>}
                   </td>
 
-                  <td className="py-4 pr-4">
+                  <td data-badge className="py-4 pr-4">
                     {isOverdue && (
                       <span className="px-2 py-0.5 bg-red-500/15 text-red-400 rounded-full text-[10px] font-bold uppercase border border-red-500/25">
                         Overdue
@@ -208,7 +208,7 @@ export default function FleetMileagePanel({ cars, services }: Props) {
                     {remaining == null && <span className="text-white/20 text-xs">—</span>}
                   </td>
 
-                  <td className="py-4 text-right">
+                  <td data-actions className="py-4 text-right">
                     <button
                       onClick={() => openServiceForCar(car.id)}
                       className="text-white/50 hover:text-white text-xs font-semibold transition-colors"

@@ -88,8 +88,8 @@ export default function UsersManager({ profiles, tenants }: Props) {
       </div>
 
       {/* Users Table */}
-      <div className="glass border border-white/10 rounded-3xl overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="glass border border-white/10 rounded-3xl overflow-x-auto">
+        <table className="m-cards w-full text-sm">
           <thead>
             <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/30 border-b border-white/10 bg-black/20">
               <th className="px-6 py-4">User</th>
@@ -101,7 +101,7 @@ export default function UsersManager({ profiles, tenants }: Props) {
           <tbody className="divide-y divide-white/5">
             {profiles.map((u) => (
               <tr key={u.id} className="hover:bg-white/[0.03] transition-colors">
-                <td className="px-6 py-4">
+                <td data-primary className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/30 text-xs font-bold uppercase">
                       {(u.full_name ?? 'U')[0]}
@@ -109,7 +109,7 @@ export default function UsersManager({ profiles, tenants }: Props) {
                     <div className="text-white font-medium">{u.full_name ?? 'Unnamed'}</div>
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                <td data-badge className="px-6 py-4">
                   {editingRole === u.id ? (
                     <select
                       defaultValue={u.role ?? 'staff'}
@@ -130,7 +130,7 @@ export default function UsersManager({ profiles, tenants }: Props) {
                     </button>
                   )}
                 </td>
-                <td className="px-6 py-4">
+                <td data-label="Tenant" className="px-6 py-4">
                   {editingTenant === u.id ? (
                     <select
                       defaultValue={u.tenant_id ?? ''}
@@ -152,7 +152,7 @@ export default function UsersManager({ profiles, tenants }: Props) {
                     </button>
                   )}
                 </td>
-                <td className="px-6 py-4 text-white/30 text-xs">
+                <td data-label="Joined" className="px-6 py-4 text-white/30 text-xs">
                   {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
                 </td>
               </tr>

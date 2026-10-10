@@ -111,8 +111,8 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
 
   return (
     <ModalPortal>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-        <div className="glass w-full max-w-xl rounded-3xl border border-white/10 shadow-2xl animate-fade-in-up my-auto">
+      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+        <div className="glass w-full max-w-xl rounded-t-3xl sm:rounded-3xl max-sm:bg-none max-sm:bg-[#0d0d0d] border border-white/10 shadow-2xl animate-fade-in-up mt-auto sm:my-auto">
 
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5 rounded-t-3xl">
@@ -242,7 +242,7 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
 
               <div className="pt-4 border-t border-white/5">
                 <h4 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-4">Next Service Reminders</h4>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Interval (mi)</label>
                     <input

@@ -72,10 +72,10 @@ export default function InvoiceHistory() {
   }
 
   return (
-    <div className="glass border border-white/10 rounded-3xl p-8">
+    <div className="glass border border-white/10 rounded-2xl md:rounded-3xl p-5 md:p-8">
       <h3 className="text-white font-bold mb-6">Invoice History</h3>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto max-md:overflow-visible">
+        <table className="m-cards w-full text-sm">
           <thead>
             <tr className="text-white/30 text-[10px] font-bold uppercase tracking-[0.15em] border-b border-white/[0.06]">
               <th className="text-left pb-4 pr-4">Invoice</th>
@@ -88,17 +88,17 @@ export default function InvoiceHistory() {
           <tbody>
             {invoices.map((inv) => (
               <tr key={inv.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
-                <td className="py-4 pr-4">
+                <td data-primary className="py-4 pr-4">
                   <span className="text-white/60 font-mono text-xs">{inv.number ?? inv.id.slice(-8)}</span>
                 </td>
-                <td className="py-4 pr-4 text-white/50">{formatDate(inv.created)}</td>
-                <td className="py-4 pr-4 text-white/40 text-xs">
+                <td data-label="Date" className="py-4 pr-4 text-white/50">{formatDate(inv.created)}</td>
+                <td data-label="Period" className="py-4 pr-4 text-white/40 text-xs">
                   {formatDate(inv.period_start)} — {formatDate(inv.period_end)}
                 </td>
-                <td className="py-4 pr-4 text-right text-white font-medium">
+                <td data-badge className="py-4 pr-4 text-right text-white font-medium">
                   {formatAmount(inv.amount, inv.currency)}
                 </td>
-                <td className="py-4 text-center">
+                <td data-actions className="py-4 text-center">
                   {inv.pdf ? (
                     <a
                       href={inv.pdf}
