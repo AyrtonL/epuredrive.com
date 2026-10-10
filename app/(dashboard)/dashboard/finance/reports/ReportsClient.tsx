@@ -216,7 +216,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
     const csv = [header, ...rows]
       .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
       .join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = `revenue-report-${dateFrom}_to_${dateTo}.csv`
@@ -234,7 +234,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
     const csv = [header, ...rows]
       .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
       .join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = `expenses-report-${dateFrom}_to_${dateTo}.csv`

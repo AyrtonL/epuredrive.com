@@ -115,12 +115,12 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
     const rows = reservations.filter(r => ids.includes(r.id))
     const header = ['Ref #','Customer','Email','Phone','Vehicle','Pickup','Return','Total','Status']
     const csv = [header, ...rows.map(r => [
-      r.booking_code, r.customer_name, r.customer_email || '', r.customer_phone || '',
-      carMap[r.car_id ?? -1] || '', r.pickup_date, r.return_date,
-      r.total_amount || 0, r.status
-    ])].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\\n')
+      r.booking_code ?? '', r.customer_name ?? '', r.customer_email || '', r.customer_phone || '',
+      carMap[r.car_id ?? -1] || '', r.pickup_date ?? '', r.return_date ?? '',
+      r.total_amount || 0, r.status ?? ''
+    ])].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n')
     
-    const blob = new Blob([csv], { type: 'text/csv' })
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = `bookings-export.csv`
