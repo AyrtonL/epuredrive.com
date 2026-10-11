@@ -55,6 +55,16 @@ const MARKETING_CDN_CACHE = 'public, s-maxage=3600, stale-while-revalidate=86400
 const BOT_UA_REGEX =
   /googlebot|bingbot|yandex(bot)?|duckduckbot|baiduspider|applebot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|discordbot|whatsapp|telegrambot|redditbot|ia_archiver|ahrefsbot|semrushbot|petalbot|msnbot/i
 
+// On a tenant host (subdomain or custom domain), a path may already carry the
+// /sites/{slug} prefix (older links, shared URLs). Strip it so it isn't
+// prefixed a second time (/sites/x/sites/x/... → 404).
+function stripTenantBase(slug: string, pathname: string): string {
+  const base = `/sites/${slug}`
+  if (pathname === base) return '/'
+  if (pathname.startsWith(`${base}/`)) return pathname.slice(base.length)
+  return pathname
+}
+
 export async function middleware(request: NextRequest) {
   const host = request.headers.get('host') ?? ''
   const pathname = request.nextUrl.pathname
@@ -76,8 +86,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next({ request: { headers: requestHeaders } })
     }
     const url = request.nextUrl.clone()
-    url.pathname = (await tenantPathExists(slug, pathname))
-      ? `/sites/${slug}${pathname === '/' ? '' : pathname}`
+    const rest = stripTenantBase(slug, pathname)
+    url.pathname = (await tenantPathExists(slug, rest))
+      ? `/sites/${slug}${rest === '/' ? '' : rest}`
       : NOT_FOUND_PATH
     return NextResponse.rewrite(url, { request: { headers: requestHeaders } })
   }
@@ -151,8 +162,9 @@ export async function middleware(request: NextRequest) {
     }
 
     const url = request.nextUrl.clone()
-    url.pathname = (await tenantPathExists(data.slug, pathname))
-      ? `/sites/${data.slug}${pathname === '/' ? '' : pathname}`
+    const rest = stripTenantBase(data.slug, pathname)
+    url.pathname = (await tenantPathExists(data.slug, rest))
+      ? `/sites/${data.slug}${rest === '/' ? '' : rest}`
       : NOT_FOUND_PATH
     return NextResponse.rewrite(url, { request: { headers: requestHeaders } })
   }

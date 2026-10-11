@@ -88,7 +88,3 @@
 [[edge_functions]]
   function = "playwright-bypass"
   path = "/*"
-
-[[edge_functions]]
-  function = "subdomain-rewrite"
-  path = "/*"
