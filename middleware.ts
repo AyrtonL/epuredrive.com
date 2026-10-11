@@ -123,10 +123,10 @@ export async function middleware(request: NextRequest) {
     }
     const res = NextResponse.next({ request: { headers: requestHeaders } })
     res.headers.set('Vary', 'Accept-Language')
-    // The English landing page itself is the same for everyone, so the CDN may
-    // cache it (see MARKETING_CDN_CACHE in next.config.mjs for the other pages).
-    // This middleware runs before Netlify's cache, so Spanish visitors are still
-    // redirected above.
+    // The English landing page is the same for everyone, so the CDN may cache
+    // it (next.config.mjs sets the same header on the origin response, which is
+    // what Netlify's durable cache reads). Middleware runs before that cache, so
+    // Spanish visitors are still redirected above.
     res.headers.set('Netlify-CDN-Cache-Control', MARKETING_CDN_CACHE)
     return res
   }
