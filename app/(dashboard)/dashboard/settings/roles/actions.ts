@@ -29,6 +29,15 @@ export async function inviteTeamMember(
   const { data: { user: inviter } } = await userClient.auth.getUser()
   const invitedByUserId = inviter?.id ?? null
 
+  // Only tenant admins (or superusers) may invite — otherwise a staff/finance
+  // member could invite a second account of theirs as 'admin'.
+  const { data: inviterProfile } = inviter
+    ? await userClient.from('profiles').select('role').eq('id', inviter.id).single()
+    : { data: null }
+  if (inviterProfile?.role !== 'admin' && inviterProfile?.role !== 'superuser') {
+    return { success: false, error: 'Only admins can invite team members.' }
+  }
+
   const { data: linkData, error: inviteError } = await adminClient.auth.admin.generateLink({
     type: 'invite',
     email,

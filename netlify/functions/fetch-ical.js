@@ -1,30 +1,10 @@
-// Netlify Function — fetch-ical
-// Server-side proxy to fetch iCal URLs, bypassing browser CORS restrictions.
+// DEPRECATED — This legacy Netlify function is disabled for security (2026-10-11).
+// Open proxy: fetched any URL for anyone (no auth, no host allowlist).
+// Replaced by /api/fetch-ical.
 
-exports.handler = async (event) => {
-  const url = event.queryStringParameters?.url;
-
-  if (!url) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'url param required' }) };
-  }
-
-  try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'epuredrive-ical-sync/1.0' },
-      redirect: 'follow',
-    });
-
-    if (!res.ok) {
-      return { statusCode: 502, body: JSON.stringify({ error: `Upstream ${res.status}` }) };
-    }
-
-    const text = await res.text();
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'text/calendar; charset=utf-8' },
-      body: text,
-    };
-  } catch (err) {
-    return { statusCode: 502, body: JSON.stringify({ error: err.message }) };
-  }
+exports.handler = async () => {
+  return {
+    statusCode: 410,
+    body: JSON.stringify({ error: 'This endpoint has been retired.' }),
+  };
 };

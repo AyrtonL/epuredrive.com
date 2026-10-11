@@ -1,8 +1,16 @@
+// Security (mirrors google-calendar/callback): tenant_id comes from the
+// authenticated session, never from `state`; `state` must match the single-use
+// nonce cookie set by /start before any token exchange.
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const STATE_COOKIE = 'gmail_oauth_state'
 
 function getRedirectUri(): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '')
@@ -11,16 +19,33 @@ function getRedirectUri(): string {
 }
 
 export async function GET(request: Request) {
+  // Single-use nonce: clear the cookie before doing anything else.
+  const storedState = cookies().get(STATE_COOKIE)?.value ?? null
+  cookies().delete(STATE_COOKIE)
+
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
-  const tenantId = searchParams.get('state')
+  const state = searchParams.get('state')
   const oauthError = searchParams.get('error')
 
   const DASHBOARD_URL = '/dashboard/integrations/turo?gmail=connected'
   const ERROR_URL = '/dashboard/integrations/turo?gmail=error'
 
-  if (oauthError || !code || !tenantId || !UUID_RE.test(tenantId)) {
-    console.error('[gmail-callback] OAuth error or invalid params:', { oauthError, tenantId })
+  const sessionClient = createClient()
+  const { data: { user } } = await sessionClient.auth.getUser()
+  if (!user) return NextResponse.redirect(new URL('/login', request.url))
+  const { data: callerProfile } = await sessionClient
+    .from('profiles')
+    .select('tenant_id')
+    .eq('id', user.id)
+    .single()
+  const tenantId = callerProfile?.tenant_id
+  if (typeof tenantId !== 'string') return NextResponse.redirect(new URL(ERROR_URL, request.url))
+
+  if (oauthError || !code || !state || !storedState || state !== storedState) {
+    console.warn('[gmail-callback] state/code validation failed', {
+      tenantId, hasCode: Boolean(code), stateMatches: Boolean(state) && state === storedState,
+    })
     return NextResponse.redirect(new URL(ERROR_URL, request.url))
   }
 
@@ -50,7 +75,7 @@ export async function GET(request: Request) {
 
     const tokens = await tokenRes.json()
     if (!tokenRes.ok || !tokens.access_token || !tokens.refresh_token) {
-      console.error('[gmail-callback] Token exchange failed:', tokens)
+      console.error('[gmail-callback] Token exchange failed:', tokenRes.status, tokens?.error)
       return NextResponse.redirect(new URL(ERROR_URL, request.url))
     }
 

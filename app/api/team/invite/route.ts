@@ -36,6 +36,10 @@ export async function POST(request: NextRequest) {
   if (!profile?.tenant_id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  // Only tenant admins (or superusers) may invite new members.
+  if (profile.role !== 'admin' && profile.role !== 'superuser') {
+    return NextResponse.json({ error: 'Only admins can invite team members' }, { status: 403 })
+  }
 
   let body: unknown
   try {
