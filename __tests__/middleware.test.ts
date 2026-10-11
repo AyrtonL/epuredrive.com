@@ -172,3 +172,14 @@ describe('middleware — CDN caching of the landing page', () => {
     expect(res.headers.get('netlify-cdn-cache-control')).toBe('no-store')
   })
 })
+
+describe('middleware — language switch', () => {
+  it('does not redirect a Spanish browser that chose English', async () => {
+    const req = new NextRequest('http://epuredrive.com/?lang=en', {
+      headers: { host: 'epuredrive.com', 'accept-language': 'es-US,es;q=0.9' },
+    })
+    const res = await middleware(req)
+    expect(res.status).toBe(200)
+    expect(res.headers.get('location')).toBeNull()
+  })
+})

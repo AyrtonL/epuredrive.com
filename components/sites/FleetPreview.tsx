@@ -63,7 +63,7 @@ export default function FleetPreview({ cars, base, theme = 'dark' }: Props) {
             <div className="aspect-[16/10] overflow-hidden relative">
               <Image
                 src={resolveImageUrl(car.image_url)}
-                alt={`${car.make} ${car.model}`}
+                alt={`${car.year ? `${car.year} ` : ''}${car.make} ${car.model_full ?? car.model}`}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="object-cover transition-transform duration-1000 group-hover:scale-110"

@@ -68,7 +68,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    locale: 'es_ES',
+    locale: 'es_US',
     url: 'https://epuredrive.com/es',
     siteName: 'éPure Drive',
     title: SEO_TITLE,

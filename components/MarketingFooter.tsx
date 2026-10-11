@@ -1,15 +1,13 @@
 import Link from 'next/link'
 import Logo from './Logo'
-import { isFreeLaunchMode } from '@/lib/plan/effective-plan'
 
 export default function MarketingFooter() {
-  const showPricing = !isFreeLaunchMode()
   return (
     <footer className="bg-black border-t border-white/[0.06] pt-16 pb-10">
       <div className="max-w-6xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-12 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-12 mb-16">
           {/* Brand column */}
-          <div className="md:col-span-2">
+          <div className="col-span-2">
             <Logo href={undefined} className="mb-4" />
             <p className="text-charcoal text-sm font-light leading-relaxed max-w-sm">
               A Miami-based SaaS platform built for the modern car rental
@@ -28,13 +26,11 @@ export default function MarketingFooter() {
                   Features
                 </Link>
               </li>
-              {showPricing && (
-                <li>
-                  <a href="/#pricing" className="text-sm text-charcoal hover:text-white transition-colors">
-                    Pricing
-                  </a>
-                </li>
-              )}
+              <li>
+                <Link href="/pricing" className="text-sm text-charcoal hover:text-white transition-colors">
+                  Pricing
+                </Link>
+              </li>
               <li>
                 <Link href="/sign-up" className="text-sm text-charcoal hover:text-white transition-colors">
                   Get started
@@ -50,6 +46,27 @@ export default function MarketingFooter() {
                   FAQ
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          {/* Resources */}
+          <div>
+            <h4 className="text-[11px] font-bold text-charcoal uppercase tracking-widest mb-5">
+              Resources
+            </h4>
+            <ul className="space-y-3">
+              {[
+                { href: '/guides/start-car-rental-business-florida', label: 'Start a rental business in Florida' },
+                { href: '/guides/turo-to-direct-bookings', label: 'Turo to direct bookings' },
+                { href: '/compare/hq-rental', label: 'vs HQ Rental' },
+                { href: '/compare/rentsyst', label: 'vs RentSyst' },
+              ].map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="text-sm text-charcoal hover:text-white transition-colors">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 

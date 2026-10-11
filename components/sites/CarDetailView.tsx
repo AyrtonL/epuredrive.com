@@ -72,7 +72,7 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
           
           <Image
             src={resolveImageUrl(gallery[activeIndex] ?? null)}
-            alt={`${car.make} ${car.model}`}
+            alt={`${car.year ? `${car.year} ` : ''}${car.make} ${car.model_full ?? car.model}${gallery.length > 1 ? ` — photo ${activeIndex + 1} of ${gallery.length}` : ''}`}
             fill
             priority
             sizes="100vw"
@@ -112,6 +112,8 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
               <button
                 key={i}
                 onClick={() => setActiveIndex(i)}
+                aria-label={`Show photo ${i + 1} of ${gallery.length}`}
+                aria-pressed={activeIndex === i}
                 className={`relative flex-shrink-0 w-28 aspect-[4/3] rounded-2xl overflow-hidden bg-white/5 border transition-all duration-500 hover:scale-105 active:scale-95 ${
                   activeIndex === i ? 'border-primary shadow-lg shadow-primary/20 scale-110' : 'border-white/5 opacity-30 hover:opacity-100'
                 }`}

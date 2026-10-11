@@ -3,7 +3,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import JsonLd from '@/components/JsonLd'
 import { buildBreadcrumbSchema } from '@/lib/utils/jsonld'
-import { isFreeLaunchMode } from '@/lib/plan/effective-plan'
 
 const SEO_TITLE = 'Features — Car Rental Management Software | éPure Drive'
 
@@ -11,7 +10,14 @@ export const metadata: Metadata = {
   title: { absolute: SEO_TITLE },
   description:
     'Car rental management software: fleet, bookings, branded fleet pages, digital agreements, Stripe & Square payments, QuickBooks sync and tax reports.',
-  alternates: { canonical: 'https://epuredrive.com/features' },
+  alternates: {
+    canonical: 'https://epuredrive.com/features',
+    languages: {
+      en: 'https://epuredrive.com/features',
+      es: 'https://epuredrive.com/es/features',
+      'x-default': 'https://epuredrive.com/features',
+    },
+  },
   openGraph: {
     title: SEO_TITLE,
     description:
@@ -133,7 +139,6 @@ const DETAILED_SECTIONS = [
 ]
 
 export default function FeaturesPage() {
-  const showPricing = !isFreeLaunchMode()
   return (
     <>
       {/* ─── Hero ─── */}
@@ -161,14 +166,12 @@ export default function FeaturesPage() {
             >
               Start for free
             </Link>
-            {showPricing && (
-              <Link
-                href="/#pricing"
-                className="text-white/50 text-sm font-medium hover:text-white transition-colors"
-              >
-                View pricing →
-              </Link>
-            )}
+            <Link
+              href="/pricing"
+              className="text-white/50 text-sm font-medium hover:text-white transition-colors"
+            >
+              View pricing →
+            </Link>
           </div>
         </div>
       </section>

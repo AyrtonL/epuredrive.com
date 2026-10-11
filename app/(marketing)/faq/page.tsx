@@ -7,7 +7,14 @@ const SEO_TITLE = 'FAQ — Frequently Asked Questions | éPure Drive'
 export const metadata: Metadata = {
   title: { absolute: SEO_TITLE },
   description: 'Answers to common questions about éPure Drive, fleet management, pricing, and getting started.',
-  alternates: { canonical: 'https://epuredrive.com/faq' },
+  alternates: {
+    canonical: 'https://epuredrive.com/faq',
+    languages: {
+      en: 'https://epuredrive.com/faq',
+      es: 'https://epuredrive.com/es/faq',
+      'x-default': 'https://epuredrive.com/faq',
+    },
+  },
   openGraph: {
     title: SEO_TITLE,
     description: 'Answers to common questions about éPure Drive, fleet management, pricing, and getting started.',

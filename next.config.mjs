@@ -27,7 +27,12 @@ const nextConfig = {
     // '/' may also answer with a language redirect from middleware; that
     // response sets its own `no-store`, which wins over this header, and on
     // Netlify it is produced at the edge before the cache is consulted.
-    return ['/', '/es', '/features', '/faq', '/terms', '/privacy', '/cookies'].map((source) => ({
+    return [
+      '/', '/es', '/features', '/es/features', '/faq', '/es/faq', '/pricing',
+      '/compare/hq-rental', '/compare/rentsyst',
+      '/guides/start-car-rental-business-florida', '/guides/turo-to-direct-bookings',
+      '/terms', '/privacy', '/cookies',
+    ].map((source) => ({
       source,
       has: [{ type: 'host', value: 'epuredrive.com' }],
       headers: [cdnCache],

@@ -117,7 +117,10 @@ export async function middleware(request: NextRequest) {
     const ua = request.headers.get('user-agent') ?? ''
     const isBot = BOT_UA_REGEX.test(ua)
 
-    if (!isBot) {
+    // ?lang=en comes from the "English" switch on the Spanish site: honor it
+    // instead of bouncing a Spanish-language browser straight back to /es.
+    const explicitEnglish = request.nextUrl.searchParams.get('lang') === 'en'
+    if (!isBot && !explicitEnglish) {
       const acceptLang = request.headers.get('accept-language') ?? ''
       const primary = (acceptLang.split(',')[0] ?? '').trim().toLowerCase()
       if (primary.startsWith('es')) {
