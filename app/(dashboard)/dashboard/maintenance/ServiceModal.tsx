@@ -7,6 +7,7 @@ import { createService, updateService, updateCarMileage } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 import DatePicker from '@/components/ui/DatePicker'
 import { useToast } from '@/components/ui/Toast'
+import { todayISO } from '@/lib/finance/revenue'
 
 interface Props {
   isOpen: boolean
@@ -31,7 +32,7 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
       const carId = preselectedCarId ?? undefined
       const car = carId ? cars.find(c => c.id === carId) : null
       setFormData({
-        service_date: new Date().toISOString().split('T')[0],
+        service_date: todayISO(),
         car_id: carId,
         mileage: car?.mileage ?? undefined,
       })

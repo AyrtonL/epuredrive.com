@@ -21,6 +21,7 @@ import DatePicker from '@/components/ui/DatePicker'
 import TimePicker from '@/components/ui/TimePicker'
 import LicensePhotoUploader from './LicensePhotoUploader'
 import { calculateCardSurcharge } from '@/lib/pricing/cardSurcharge'
+import { todayISO } from '@/lib/finance/revenue'
 
 interface Props {
   isOpen: boolean
@@ -565,7 +566,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                       onChange={(v) => setFormData({ ...formData, customer_dob: v })}
                       className={INPUT_CLASS}
                       captionLayout="dropdown"
-                      max={new Date().toISOString().split('T')[0]}
+                      max={todayISO()}
                     />
                   </div>
                   <div className="space-y-1">

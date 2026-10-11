@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { Transaction, Car } from '@/lib/supabase/types'
 import { deleteTransaction, bulkCreateTransactions } from './actions'
 import ExpenseModal from './ExpenseModal'
+import { todayISO } from '@/lib/finance/revenue'
 
 const PAGE_SIZE = 15
 
@@ -97,7 +98,7 @@ export default function ExpensesTable({ expenses, cars }: Props) {
 
       // Validate date: must match YYYY-MM-DD
       const dateMatch = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
-      const date = dateMatch ? rawDate : new Date().toISOString().split('T')[0]
+      const date = dateMatch ? rawDate : todayISO()
 
       // Clamp string lengths
       const category = rawCategory.slice(0, 50)

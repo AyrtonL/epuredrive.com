@@ -6,7 +6,7 @@ import UtilizationPanel from '@/components/dashboard/UtilizationPanel'
 import NotificationBell from '@/components/dashboard/NotificationBell'
 import MaintenanceAlerts from './maintenance/MaintenanceAlerts'
 import type { Reservation, Car, CarService, Transaction } from '@/lib/supabase/types'
-import { overlapsRange, inclusiveDays, daysAgoISO } from '@/lib/finance/revenue'
+import { overlapsRange, inclusiveDays, daysAgoISO, todayISO, startOfMonthISO } from '@/lib/finance/revenue'
 
 const STATUS_COLORS: Record<string, string> = {
   confirmed: 'text-emerald-400 bg-emerald-500/10',
@@ -43,11 +43,14 @@ function avatarColor(name: string): string {
 export default async function DashboardPage() {
   const { supabase, tenantId } = await requireTenantId()
 
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
-  const now = new Date()
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
-  const firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0]
-  const lastOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0]
+  const today = todayISO()
+  // Month boundaries in the app timezone — the server runs in UTC, so
+  // new Date().getMonth() rolled over to next month at 8pm New York time.
+  const firstOfMonth = startOfMonthISO()
+  const [curY, curM] = firstOfMonth.split('-').map(Number)
+  const ymd = (d: Date) => d.toISOString().slice(0, 10)
+  const firstOfLastMonth = ymd(new Date(Date.UTC(curY, curM - 2, 1)))
+  const lastOfLastMonth = ymd(new Date(Date.UTC(curY, curM - 1, 0)))
 
   const [
     { data: tenant },
@@ -96,7 +99,7 @@ export default async function DashboardPage() {
   const pendingCount = (pendingRes ?? []).length
 
   const alertsCount = svcRows.filter(
-    (s) => s.next_service_date && new Date(s.next_service_date) < new Date()
+    (s) => s.next_service_date && s.next_service_date.slice(0, 10) < today
   ).length
 
   // --- Real per-car utilization over the trailing 30 days ---

@@ -6,6 +6,7 @@ import type { Transaction, Car } from '@/lib/supabase/types'
 import { createTransaction, updateTransaction } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 import DatePicker from '@/components/ui/DatePicker'
+import { todayISO } from '@/lib/finance/revenue'
 
 interface Props {
   isOpen: boolean
@@ -26,7 +27,7 @@ export default function ExpenseModal({ isOpen, onClose, expense, cars }: Props) 
       setFormData(expense)
     } else {
       setFormData({
-        transaction_date: new Date().toISOString().split('T')[0],
+        transaction_date: todayISO(),
         type: 'expense',
         category: 'maintenance',
         payment_method: 'cash',

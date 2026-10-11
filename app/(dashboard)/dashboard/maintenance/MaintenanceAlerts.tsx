@@ -2,6 +2,7 @@
 
 import React from 'react'
 import type { CarService, Car } from '@/lib/supabase/types'
+import { todayISO, daysAgoISO } from '@/lib/finance/revenue'
 
 interface Props {
   services: CarService[]
@@ -11,14 +12,16 @@ interface Props {
 export default function MaintenanceAlerts({ services, cars }: Props) {
   const alerts: React.ReactNode[] = []
 
-  const today = new Date()
-  const fourteenDaysFromNow = new Date()
-  fourteenDaysFromNow.setDate(today.getDate() + 14)
+  // Compare YYYY-MM-DD strings in the app timezone. new Date('YYYY-MM-DD') is
+  // UTC midnight (8pm the day before in New York), which flagged a service due
+  // today as overdue.
+  const today = todayISO()
+  const fourteenDaysFromNow = daysAgoISO(-14)
 
   // 1. Date-based alerts (check all services for pending next dates)
   services.forEach(s => {
     if (!s.next_service_date) return
-    const nextDate = new Date(s.next_service_date)
+    const nextDate = s.next_service_date.slice(0, 10)
     const car = cars.find(c => c.id === s.car_id)
     if (!car) return
 
