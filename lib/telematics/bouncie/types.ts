@@ -45,6 +45,8 @@ export interface BouncieTrip {
   distance: number
   duration: number | null
   gpsTrail?: Array<{ lat: number; lon: number; timestamp: string; speed: number | null }>
+  // Real /trips response with gps-format=geojson: [lon, lat] pairs.
+  gps?: { type: 'LineString'; coordinates: Array<[number, number]> } | null
   hardBrakingCount?: number
   hardAccelerationCount?: number
   maxSpeed?: number

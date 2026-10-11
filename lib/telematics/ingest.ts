@@ -230,26 +230,41 @@ export async function ingestTripEnd(
   }
 
   const tripRow = row as { id: string; started_at: string } | null
-  if (car_id !== null && tripRow) {
-    const startDate = tripRow.started_at.slice(0, 10) // YYYY-MM-DD
-    const { data: res } = await supabase
-      .from('reservations')
-      .select('id')
-      .eq('tenant_id', tenant_id)
-      .eq('car_id', car_id)
-      .lte('pickup_date', startDate)
-      .gte('return_date', startDate)
-      .maybeSingle()
-    const reservationId = (res as { id?: unknown } | null)?.id
-    if (typeof reservationId === 'string') {
-      await supabase
-        .from('telematics_trips')
-        .update({ reservation_id: reservationId })
-        .eq('id', tripRow.id)
-    }
+  if (tripRow) {
+    await linkTripToReservation(supabase, tenant_id, car_id, tripRow)
   }
 
   await bumpCarMileage(supabase, car_id, event.odometer_mi)
+}
+
+/**
+ * Best-effort match of a trip to the reservation whose pickup/return window
+ * (same tenant + car) contains the trip's *start* date. Shared by the
+ * tripEnd webhook path and the pull-sync trip reconciliation.
+ */
+export async function linkTripToReservation(
+  supabase: SupabaseClient,
+  tenant_id: string,
+  car_id: number | null,
+  trip: { id: string; started_at: string },
+): Promise<void> {
+  if (car_id === null) return
+  const startDate = trip.started_at.slice(0, 10) // YYYY-MM-DD
+  const { data: res } = await supabase
+    .from('reservations')
+    .select('id')
+    .eq('tenant_id', tenant_id)
+    .eq('car_id', car_id)
+    .lte('pickup_date', startDate)
+    .gte('return_date', startDate)
+    .maybeSingle()
+  const reservationId = (res as { id?: unknown } | null)?.id
+  if (typeof reservationId === 'string') {
+    await supabase
+      .from('telematics_trips')
+      .update({ reservation_id: reservationId })
+      .eq('id', trip.id)
+  }
 }
 
 // ── Generic event + classification + alert dispatch ───────────────────────

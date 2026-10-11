@@ -98,25 +98,41 @@ export class BouncieProvider implements TelematicsProvider {
     }))
   }
 
-  async listTrips(accessToken: string, imei: string, since: Date): Promise<ProviderTrip[]> {
-    const qs = `?imei=${encodeURIComponent(imei)}&starts-after=${encodeURIComponent(since.toISOString())}`
+  async listTrips(
+    accessToken: string,
+    imei: string,
+    since: Date,
+    until: Date = new Date(),
+  ): Promise<ProviderTrip[]> {
+    // Bouncie requires gps-format plus both bounds, max 7 days apart.
+    const qs =
+      `?imei=${encodeURIComponent(imei)}&gps-format=geojson` +
+      `&starts-after=${encodeURIComponent(since.toISOString())}` +
+      `&ends-before=${encodeURIComponent(until.toISOString())}`
     const raw = await bouncieApi.get<BouncieTrip[]>(`/trips${qs}`, accessToken)
-    return raw.map(t => ({
-      provider_trip_id: t.transactionId,
-      imei: t.imei,
-      started_at: t.startTime,
-      ended_at: t.endTime ?? null,
-      start_lat: t.gpsTrail?.[0]?.lat ?? null,
-      start_lon: t.gpsTrail?.[0]?.lon ?? null,
-      end_lat: t.gpsTrail?.at(-1)?.lat ?? null,
-      end_lon: t.gpsTrail?.at(-1)?.lon ?? null,
-      distance_mi: t.distance ?? 0,
-      duration_s: t.duration ?? null,
-      max_speed_mph: t.maxSpeed ?? null,
-      hard_braking_count: t.hardBrakingCount ?? 0,
-      hard_accel_count: t.hardAccelerationCount ?? 0,
-      fuel_consumed_gal: t.fuelConsumed ?? null,
-    }))
+    return raw.map(t => {
+      const coords = t.gps?.coordinates ?? [] // GeoJSON: [lon, lat]
+      const first = coords[0]
+      const last = coords.at(-1)
+      return {
+        provider_trip_id: t.transactionId,
+        imei: t.imei,
+        started_at: t.startTime,
+        ended_at: t.endTime ?? null,
+        start_lat: t.gpsTrail?.[0]?.lat ?? first?.[1] ?? null,
+        start_lon: t.gpsTrail?.[0]?.lon ?? first?.[0] ?? null,
+        end_lat: t.gpsTrail?.at(-1)?.lat ?? last?.[1] ?? null,
+        end_lon: t.gpsTrail?.at(-1)?.lon ?? last?.[0] ?? null,
+        distance_mi: t.distance ?? 0,
+        // The real /trips response has no `duration` — derive it from the
+        // start/end timestamps when it's absent.
+        duration_s: t.duration ?? durationSeconds(t.startTime, t.endTime),
+        max_speed_mph: t.maxSpeed ?? null,
+        hard_braking_count: t.hardBrakingCount ?? 0,
+        hard_accel_count: t.hardAccelerationCount ?? 0,
+        fuel_consumed_gal: t.fuelConsumed ?? null,
+      }
+    })
   }
 
   // ── Webhook ──────────────────────────────────────────────────────
@@ -135,4 +151,10 @@ export class BouncieProvider implements TelematicsProvider {
   parseWebhookPayload(rawBody: string): ProviderEvent[] {
     return parseBouncieWebhook(rawBody)
   }
+}
+
+function durationSeconds(start: string, end: string | null): number | null {
+  if (!end) return null
+  const ms = new Date(end).getTime() - new Date(start).getTime()
+  return Number.isFinite(ms) && ms >= 0 ? Math.round(ms / 1000) : null
 }

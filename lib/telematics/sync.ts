@@ -36,9 +36,13 @@ import type { TelematicsConnection } from '@/lib/supabase/types'
 import { getProvider } from './registry'
 import { ingestLocationUpdate, ingestEvent } from './ingest'
 import { seedDevice, type DeviceRow } from './devices'
+import { reconcileTrips } from './trip-reconcile'
 import type { ProviderEvent } from './types'
 
 const TOKEN_REFRESH_SKEW_MS = 60_000 // refresh when <60s remain
+// How far back each cycle re-checks trips against Bouncie's /trips API.
+// Covers a day+ of webhook outage; must stay under Bouncie's 7-day max.
+const TRIP_RECONCILE_WINDOW_MS = 48 * 60 * 60 * 1000
 const MAX_ERR_MSG_LEN = 500
 
 /**
@@ -181,6 +185,29 @@ export async function syncConnection(
         (await seedDevice(supabase, connection.tenant_id, connection.id, v))
 
       if (!devRow) continue // seeding failed — retry next cycle
+
+      // ── Trip reconciliation ───────────────────────────────────────
+      // Webhook deliveries get dropped; backfill missing/incomplete trips
+      // from the API. Isolated so a trips failure never fails the sync.
+      try {
+        await reconcileTrips(
+          supabase,
+          provider,
+          accessToken,
+          {
+            tenant_id: connection.tenant_id,
+            device_id: devRow.id,
+            car_id: devRow.car_id,
+            imei: v.imei,
+          },
+          new Date(Date.now() - TRIP_RECONCILE_WINDOW_MS),
+        )
+      } catch (err: unknown) {
+        console.warn('[telematics/sync] trip reconcile failed', {
+          connection_id: connection.id,
+          msg: safeErr(err),
+        })
+      }
 
       // ── MIL (check engine) reconciliation ─────────────────────────
       // Bouncie's 'mil' webhook isn't guaranteed for every state change

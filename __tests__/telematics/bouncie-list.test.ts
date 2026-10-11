@@ -150,4 +150,31 @@ describe('BouncieProvider.listTrips', () => {
     expect(t.hard_accel_count).toBe(2)
     expect(t.max_speed_mph).toBe(64)
   })
+
+  test('real /trips shape: derives duration from timestamps and sends both window bounds', async () => {
+    const trip = {
+      transactionId: '865-969-202610', imei: '865',
+      startTime: '2026-10-05T22:50:20.000Z', endTime: '2026-10-05T23:07:50.000Z',
+      distance: 5.7, maxSpeed: 52.8, fuelConsumed: 0.264,
+      hardBrakingCount: 0, hardAccelerationCount: 0,
+      gps: { type: 'LineString', coordinates: [[-80.14884, 25.952], [-80.15, 25.96]] },
+    }
+    const spy = jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify([trip]), {
+        status: 200, headers: { 'content-type': 'application/json' },
+      }),
+    )
+    const [t] = await provider.listTrips(
+      'token', '865', new Date('2026-10-05T00:00:00Z'), new Date('2026-10-06T00:00:00Z'),
+    )
+    expect(t.duration_s).toBe(1050)
+    expect(t.distance_mi).toBe(5.7)
+    expect(t.start_lat).toBe(25.952)
+    expect(t.start_lon).toBe(-80.14884)
+    expect(t.end_lat).toBe(25.96)
+    const url = String(spy.mock.calls[0][0])
+    expect(url).toContain('gps-format=geojson')
+    expect(url).toContain('starts-after=2026-10-05T00%3A00%3A00.000Z')
+    expect(url).toContain('ends-before=2026-10-06T00%3A00%3A00.000Z')
+  })
 })

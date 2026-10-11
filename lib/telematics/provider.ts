@@ -16,7 +16,7 @@ export interface TelematicsProvider {
 
   // ── Pull (backfill + listing) ──────────────────────────────────────
   listVehicles(accessToken: string): Promise<ProviderVehicle[]>
-  listTrips(accessToken: string, imei: string, since: Date): Promise<ProviderTrip[]>
+  listTrips(accessToken: string, imei: string, since: Date, until?: Date): Promise<ProviderTrip[]>
 
   // ── Webhook (push) ─────────────────────────────────────────────────
   // Bouncie webhooks are NOT HMAC-signed. Bouncie sends the raw authKey
