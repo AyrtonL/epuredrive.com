@@ -47,6 +47,14 @@ const EVENT_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = {
     ),
     color: 'text-orange-400 bg-orange-500/15',
   },
+  vehicle_recall: {
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+      </svg>
+    ),
+    color: 'text-red-400 bg-red-500/15',
+  },
   payment_received: {
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -212,6 +220,10 @@ export default function NotificationBell() {
         return '/dashboard/bookings'
       case 'maintenance_due':
         return '/dashboard/fleet'
+      case 'vehicle_recall': {
+        const carId = n.metadata?.car_id
+        return typeof carId === 'number' ? `/dashboard/fleet/${carId}` : '/dashboard/fleet'
+      }
       case 'payment_received':
         return '/dashboard/bookings'
       case 'team_invite_accepted':

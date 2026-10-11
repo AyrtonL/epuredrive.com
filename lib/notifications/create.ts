@@ -7,6 +7,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { PUSH_EVENTS, sendPushToTenant } from '@/lib/push/send'
+import { defaultAppEnabled } from './defaults'
 
 interface CreateNotificationParams {
   tenantId: string
@@ -42,10 +43,11 @@ export async function createInAppNotification({
     .select('app_enabled')
     .eq('tenant_id', tenantId)
     .eq('event', event)
-    .single()
+    .maybeSingle()
 
-  // Default: app_enabled = false (unless tenant explicitly enabled it)
-  if (!pref?.app_enabled) return
+  // No saved pref → per-event default (off for most events, see ./defaults)
+  const appEnabled = pref ? pref.app_enabled : defaultAppEnabled(event)
+  if (!appEnabled) return
 
   await supabase.from('notifications').insert({
     tenant_id: tenantId,
@@ -59,5 +61,6 @@ export async function createInAppNotification({
 
 function pushUrlFor(event: string): string {
   if (event === 'maintenance_due') return '/dashboard/maintenance'
+  if (event === 'vehicle_recall') return '/dashboard/fleet'
   return '/dashboard/bookings'
 }

@@ -5,12 +5,14 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { defaultAppEnabled } from '@/lib/notifications/defaults'
 
 const NOTIFICATION_EVENTS = [
   'new_booking',
   'booking_modified',
   'booking_cancelled',
   'maintenance_due',
+  'vehicle_recall',
   'rental.return.overdue',
   'document_expiring',
   'payment_received',
@@ -45,7 +47,7 @@ export async function GET() {
   // Build a full map with defaults for events not yet saved
   const prefMap: Record<string, { email_enabled: boolean; app_enabled: boolean }> = {}
   for (const event of NOTIFICATION_EVENTS) {
-    prefMap[event] = { email_enabled: true, app_enabled: false }
+    prefMap[event] = { email_enabled: true, app_enabled: defaultAppEnabled(event) }
   }
   for (const p of prefs ?? []) {
     prefMap[p.event] = { email_enabled: p.email_enabled, app_enabled: p.app_enabled }

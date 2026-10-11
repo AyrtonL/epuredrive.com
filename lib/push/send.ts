@@ -15,6 +15,7 @@ export const PUSH_EVENTS = new Set([
   'rental.return.overdue',
   'document_expiring',
   'maintenance_due',
+  'vehicle_recall',
 ])
 
 export interface PushPayload {

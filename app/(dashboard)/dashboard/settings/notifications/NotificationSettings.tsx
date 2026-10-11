@@ -14,6 +14,7 @@ const NOTIFICATION_EVENTS: EventConfig[] = [
   { key: 'booking_modified', label: 'Booking Modified', description: 'When pickup/return dates or details change.' },
   { key: 'booking_cancelled', label: 'Booking Cancelled', description: 'When a reservation is cancelled.' },
   { key: 'maintenance_due', label: 'Maintenance Due', description: 'When a vehicle service date is approaching or overdue.' },
+  { key: 'vehicle_recall', label: 'Safety Recall', description: 'When NHTSA publishes a recall that may affect one of your vehicles (checked daily).' },
   { key: 'rental.return.overdue', label: 'Late Return', description: 'When an active rental is past its return date.' },
   { key: 'document_expiring', label: 'Customer Document Expiring', description: "When a customer's license or insurance expires during their rental." },
   { key: 'payment_received', label: 'Payment Received', description: 'When a payment is processed via Stripe.' },
