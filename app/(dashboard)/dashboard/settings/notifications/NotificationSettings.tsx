@@ -14,6 +14,8 @@ const NOTIFICATION_EVENTS: EventConfig[] = [
   { key: 'booking_modified', label: 'Booking Modified', description: 'When pickup/return dates or details change.' },
   { key: 'booking_cancelled', label: 'Booking Cancelled', description: 'When a reservation is cancelled.' },
   { key: 'maintenance_due', label: 'Maintenance Due', description: 'When a vehicle service date is approaching or overdue.' },
+  { key: 'rental.return.overdue', label: 'Late Return', description: 'When an active rental is past its return date.' },
+  { key: 'document_expiring', label: 'Customer Document Expiring', description: "When a customer's license or insurance expires during their rental." },
   { key: 'payment_received', label: 'Payment Received', description: 'When a payment is processed via Stripe.' },
   { key: 'team_invite_accepted', label: 'Team Invite Accepted', description: 'When a new member joins the team.' },
   { key: 'turo_sync_complete', label: 'Turo Sync Complete', description: 'When new Turo bookings are imported.' },

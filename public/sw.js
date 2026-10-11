@@ -40,3 +40,34 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(req).catch(() => caches.match(OFFLINE_URL)))
   }
 })
+
+// ── Web Push (new bookings, late returns, expiring documents, maintenance) ──
+self.addEventListener('push', (event) => {
+  let data = {}
+  try { data = event.data ? event.data.json() : {} } catch { data = { title: event.data && event.data.text() } }
+  const title = data.title || 'éPure Drive'
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: data.tag,
+      renotify: !!data.tag,
+      data: { url: data.url || '/dashboard' },
+    })
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const target = new URL((event.notification.data && event.notification.data.url) || '/dashboard', self.location.origin)
+  // Only ever open our own dashboard pages.
+  if (target.origin !== self.location.origin) return
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+      const open = wins.find((w) => new URL(w.url).origin === self.location.origin)
+      if (open) return open.focus().then((w) => (w && 'navigate' in w ? w.navigate(target.href) : w))
+      return self.clients.openWindow(target.href)
+    })
+  )
+})

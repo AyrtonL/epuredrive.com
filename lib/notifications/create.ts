@@ -1,9 +1,12 @@
 /**
  * Server-side helper to create in-app notifications.
  * Checks the tenant's notification_preferences before inserting.
+ * Key events (PUSH_EVENTS) also go out as Web Push to every device the tenant
+ * turned notifications on for — that opt-in is per device, not per event pref.
  */
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { PUSH_EVENTS, sendPushToTenant } from '@/lib/push/send'
 
 interface CreateNotificationParams {
   tenantId: string
@@ -22,6 +25,15 @@ export async function createInAppNotification({
   metadata,
   userId,
 }: CreateNotificationParams): Promise<void> {
+  if (PUSH_EVENTS.has(event)) {
+    await sendPushToTenant(tenantId, {
+      title,
+      body,
+      url: pushUrlFor(event),
+      tag: typeof metadata?.reservation_id === 'number' ? `${event}-${metadata.reservation_id}` : undefined,
+    }).catch((err) => console.error('[notifications] push failed:', err))
+  }
+
   const supabase = createAdminClient()
 
   // Check if in-app is enabled for this event
@@ -43,4 +55,9 @@ export async function createInAppNotification({
     body: body ?? null,
     metadata: metadata ?? {},
   })
+}
+
+function pushUrlFor(event: string): string {
+  if (event === 'maintenance_due') return '/dashboard/maintenance'
+  return '/dashboard/bookings'
 }

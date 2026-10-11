@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateBookingCode } from '@/lib/booking-code'
+import { createInAppNotification } from '@/lib/notifications/create'
 import {
   createReservationCalendarEvent,
   updateReservationCalendarEvent,
@@ -452,6 +453,17 @@ export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promis
     }).select('id').single()
     if (insertError) {
       throw new Error(`Insert failed for ${parsed.messageId}: ${insertError.message}`)
+    }
+    // Only new, still-live bookings — not imports of cancelled/completed trips.
+    if (inserted?.id && parsed.status !== 'cancelled' && parsed.status !== 'completed') {
+      const platform = parsed.source === 'upcar' ? 'UpCar' : 'Turo'
+      await createInAppNotification({
+        tenantId: sync.tenant_id,
+        event: 'new_booking',
+        title: `New ${platform} Booking`,
+        body: `${parsed.customer_name || 'Guest'} · ${parsed.pickup_date} → ${parsed.return_date}`,
+        metadata: { reservation_id: inserted.id, car_id: carId, source: parsed.source ?? 'turo' },
+      }).catch((err) => console.error('[email-sync] notification failed:', err))
     }
     if (parsed.source === 'upcar' && inserted?.id) {
       await syncUpcarCalendarEvent('upsert', inserted.id, sync.tenant_id)

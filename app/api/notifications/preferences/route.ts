@@ -11,6 +11,8 @@ const NOTIFICATION_EVENTS = [
   'booking_modified',
   'booking_cancelled',
   'maintenance_due',
+  'rental.return.overdue',
+  'document_expiring',
   'payment_received',
   'team_invite_accepted',
   'turo_sync_complete',

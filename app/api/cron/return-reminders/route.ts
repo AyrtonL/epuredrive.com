@@ -18,6 +18,7 @@ import {
   type TenantBrand,
 } from '@/lib/email/templates/rentals'
 import { createInAppNotification } from '@/lib/notifications/create'
+import { notifyExpiringDocuments } from '@/lib/notifications/expiring-documents'
 
 interface TenantRow {
   id: string
@@ -89,6 +90,11 @@ export async function POST(request: NextRequest) {
   tomorrow.setDate(today.getDate() + 1)
   const tomorrowStr = isoDate(tomorrow)
 
+  // ── Customer documents expiring during a rental ──────────────────────
+  // Runs before the return-reminder query (which returns early when nothing
+  // is due). Date-matched so each booking alerts once without stored state.
+  const documentAlerts = await notifyExpiringDocuments(supabase, todayStr, tomorrowStr)
+
   // ── Pull active rentals due tomorrow OR already overdue ──────────────
   const { data: reservations, error: reservationsError } = await supabase
     .from('reservations')
@@ -103,7 +109,7 @@ export async function POST(request: NextRequest) {
 
   const rows = (reservations as ReservationRow[]) ?? []
   if (!rows.length) {
-    return NextResponse.json({ remindersSent: 0, overdueDigestsSent: 0 })
+    return NextResponse.json({ remindersSent: 0, overdueDigestsSent: 0, documentAlerts })
   }
 
   // ── Resolve cars + tenants ────────────────────────────────────────────
@@ -249,6 +255,8 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     remindersSent,
     overdueDigestsSent,
+    documentAlerts,
     overdueRentalCount: Array.from(overdueByTenant.values()).reduce((s, list) => s + list.length, 0),
   })
 }
+
