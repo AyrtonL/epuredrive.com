@@ -1,5 +1,6 @@
 // app/sites/[slug]/[carId]/page.tsx
 import { notFound } from 'next/navigation'
+import { getSiteBase } from '@/lib/utils/site-base'
 import { createClient } from '@/lib/supabase/server'
 import type { Car, Tenant, PickupLocation, RentalExtra } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
@@ -14,6 +15,11 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  // Unknown paths on a tenant host (e.g. /anything) land here. Resolve them to
+  // a real 404 in metadata, which runs before the loading.tsx shell streams —
+  // otherwise the response is already a 200 by the time the page calls notFound().
+  if (!/^\d+$/.test(params.carId)) notFound()
+
   const supabase = createClient()
 
   const { data: tenant } = await supabase
@@ -22,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq('slug', params.slug)
     .single()
 
-  if (!tenant) return { title: 'Vehicle' }
+  if (!tenant) notFound()
 
   const { data: car } = await supabase
     .from('cars')
@@ -31,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq('tenant_id', (tenant as Tenant).id)
     .single()
 
-  if (!car) return { title: 'Vehicle' }
+  if (!car) notFound()
 
   return buildCarMetadata(
     car as Pick<Car, 'id' | 'make' | 'model' | 'model_full' | 'description' | 'image_url' | 'gallery'>,
@@ -40,7 +46,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CarDetailPage({ params, searchParams }: Props) {
+  if (!/^\d+$/.test(params.carId)) notFound()
   const supabase = createClient()
+  const base = getSiteBase(params.slug)
 
   const { data: tenant } = await supabase
     .from('tenants')
@@ -92,6 +100,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
       imageUrl: typedCar.gallery?.[0] ?? typedCar.image_url,
       dailyRate: typedCar.daily_rate,
       year: typedCar.year,
+      url: `${tenantUrl}/${typedCar.id}`,
     },
     { name: displayName, slug: tenant.slug! }
   )
@@ -109,7 +118,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
         </div>
       )}
       <a
-        href={`/sites/${params.slug}/fleet`}
+        href={`${base}/fleet`}
         className="text-white/40 text-sm hover:text-white mb-8 inline-block transition-colors"
       >
         ← Back to fleet

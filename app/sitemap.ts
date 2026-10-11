@@ -1,77 +1,84 @@
 import type { MetadataRoute } from 'next'
-import { createClient } from '@supabase/supabase-js'
+import { headers } from 'next/headers'
+import { MAIN_SITE_URL, anonSupabase, resolveTenantSlugFromHost } from '@/lib/utils/tenant-host'
+import { tenantSiteUrl } from '@/lib/utils/fleet-metadata'
 
-const BASE_URL = 'https://epuredrive.com'
+/**
+ * Last real content change per marketing page. Update the date when a page's
+ * copy changes — a lastmod that always says "now" teaches Google to ignore it.
+ */
+const MARKETING_PAGES: {
+  path: string
+  lastModified: string
+  changeFrequency: 'weekly' | 'monthly' | 'yearly'
+  priority: number
+  hreflang?: boolean
+}[] = [
+  { path: '', lastModified: '2026-10-10', changeFrequency: 'weekly', priority: 1.0, hreflang: true },
+  { path: '/es', lastModified: '2026-10-10', changeFrequency: 'weekly', priority: 1.0, hreflang: true },
+  { path: '/features', lastModified: '2026-10-10', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/faq', lastModified: '2026-10-10', changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/terms', lastModified: '2026-10-10', changeFrequency: 'yearly', priority: 0.4 },
+  { path: '/privacy', lastModified: '2026-10-10', changeFrequency: 'yearly', priority: 0.4 },
+  { path: '/cookies', lastModified: '2026-10-10', changeFrequency: 'yearly', priority: 0.3 },
+]
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  // Static marketing pages
-  const staticPages: MetadataRoute.Sitemap = [
-    {
-      url: BASE_URL,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 1.0,
-      alternates: {
-        languages: {
-          en: BASE_URL,
-          es: `${BASE_URL}/es`,
-          'x-default': BASE_URL,
-        },
-      },
-    },
-    {
-      url: `${BASE_URL}/es`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 1.0,
-      alternates: {
-        languages: {
-          en: BASE_URL,
-          es: `${BASE_URL}/es`,
-          'x-default': BASE_URL,
-        },
-      },
-    },
-    { url: `${BASE_URL}/features`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE_URL}/faq`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE_URL}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.4 },
-    { url: `${BASE_URL}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.4 },
-    { url: `${BASE_URL}/cookies`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-  ]
-
-  // Dynamic tenant fleet pages
-  const { data: tenants } = await supabase
-    .from('tenants')
-    .select('slug')
-    .not('slug', 'is', null)
-
-  const tenantPages: MetadataRoute.Sitemap = (tenants ?? []).map((t) => ({
-    url: `https://${t.slug}.epuredrive.com`,
-    lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: 0.8,
+function marketingSitemap(): MetadataRoute.Sitemap {
+  return MARKETING_PAGES.map((page) => ({
+    url: `${MAIN_SITE_URL}${page.path}`,
+    lastModified: new Date(page.lastModified),
+    changeFrequency: page.changeFrequency,
+    priority: page.priority,
+    ...(page.hreflang
+      ? {
+          alternates: {
+            languages: {
+              en: MAIN_SITE_URL,
+              es: `${MAIN_SITE_URL}/es`,
+              'x-default': MAIN_SITE_URL,
+            },
+          },
+        }
+      : {}),
   }))
+}
 
-  // Dynamic car detail pages per tenant
+/**
+ * A tenant's own sitemap, served on slug.epuredrive.com/sitemap.xml. Search
+ * engines only accept sitemap URLs on the sitemap's own host, so tenant pages
+ * can't live in the main sitemap. Tenants without a bookable vehicle get an
+ * empty sitemap (their pages are also noindex — see the [slug] layout).
+ */
+async function tenantSitemap(slug: string): Promise<MetadataRoute.Sitemap> {
+  const supabase = anonSupabase()
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id, slug')
+    .eq('slug', slug)
+    .maybeSingle()
+  if (!tenant) return []
+
   const { data: cars } = await supabase
     .from('cars')
-    .select('id, tenant_id, tenants!inner(slug)')
+    .select('id')
+    .eq('tenant_id', tenant.id)
     .in('status', ['available', 'active'])
+  if (!cars || cars.length === 0) return []
 
-  const carPages: MetadataRoute.Sitemap = (cars ?? []).map((car) => {
-    const tenant = car.tenants as unknown as { slug: string }
-    return {
-      url: `https://${tenant.slug}.epuredrive.com/${car.id}`,
-      lastModified: new Date(),
+  const base = tenantSiteUrl(slug)
+  return [
+    { url: base, changeFrequency: 'daily', priority: 1.0 },
+    { url: `${base}/fleet`, changeFrequency: 'daily', priority: 0.8 },
+    ...cars.map((car) => ({
+      url: `${base}/${car.id}`,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
-    }
-  })
+    })),
+  ]
+}
 
-  return [...staticPages, ...tenantPages, ...carPages]
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const tenantSlug = await resolveTenantSlugFromHost(headers().get('host'))
+  if (tenantSlug) return tenantSitemap(tenantSlug)
+  return marketingSitemap()
 }

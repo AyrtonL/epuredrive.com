@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import type React from 'react'
 import FleetBackLink from '@/components/sites/FleetBackLink'
 import FleetBrowseLink from '@/components/sites/FleetBrowseLink'
+import { getSiteBase } from '@/lib/utils/site-base'
 
 interface Props {
   params: { slug: string }
@@ -62,7 +63,7 @@ export default async function BookingConfirmationPage({ params, searchParams }: 
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-24">
       <div className="w-full max-w-lg">
         <div className="mb-10">
-          <FleetBackLink slug={params.slug} />
+          <FleetBackLink base={getSiteBase(params.slug)} />
         </div>
 
         <div className="glass border border-white/10 rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden">
@@ -126,7 +127,7 @@ export default async function BookingConfirmationPage({ params, searchParams }: 
           {/* Actions */}
           <div className="space-y-3 relative z-10">
             <a
-              href={`/sites/${params.slug}/my-booking`}
+              href={`${getSiteBase(params.slug)}/my-booking`}
               className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-white/5 border border-white/5 text-white/40 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -147,7 +148,7 @@ export default async function BookingConfirmationPage({ params, searchParams }: 
                 Follow up on WhatsApp
               </a>
             )}
-            <FleetBrowseLink slug={params.slug} />
+            <FleetBrowseLink base={getSiteBase(params.slug)} />
           </div>
 
           <p className="text-center text-[9px] font-bold uppercase tracking-[0.3em] text-white/15 mt-8 relative z-10">

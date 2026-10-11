@@ -10,6 +10,7 @@ import FleetPreview from '@/components/sites/FleetPreview'
 import ExperienceSection from '@/components/sites/ExperienceSection'
 import HowItWorksSection from '@/components/sites/HowItWorksSection'
 import ConciergeSection from '@/components/sites/ConciergeSection'
+import { getSiteBase } from '@/lib/utils/site-base'
 
 interface Props {
   params: { slug: string }
@@ -24,7 +25,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .single()
 
   if (!tenant) return { title: 'Fleet' }
-  return buildFleetMetadata(tenant as Pick<Tenant, 'name' | 'brand_name' | 'slug' | 'logo_url'>, params.slug)
+  const meta = buildFleetMetadata(tenant as Pick<Tenant, 'name' | 'brand_name' | 'slug' | 'logo_url'>, params.slug)
+  // The [slug] layout's title template doesn't reach a page in its own
+  // segment, so opt out of the root "| éPure Drive" suffix explicitly.
+  return { ...meta, title: { absolute: meta.title as string } }
 }
 
 export default async function TenantLandingPage({ params }: Props) {
@@ -60,11 +64,16 @@ export default async function TenantLandingPage({ params }: Props) {
     { name: displayName, url: tenantUrl },
   ])
 
+  const rates = fleet.map((c) => Number(c.daily_rate)).filter((r) => r > 0)
   const autoRentalSchema = buildAutoRentalSchema({
     name: displayName,
     slug: typedTenant.slug!,
     logoUrl: typedTenant.logo_url,
     description: typedTenant.tagline,
+    telephone: typedTenant.company_phone || typedTenant.whatsapp_phone,
+    address: typedTenant.company_address,
+    areaServed: typedTenant.pickup_locations.map((l) => l.label).filter(Boolean),
+    dailyRateRange: rates.length > 0 ? { min: Math.min(...rates), max: Math.max(...rates) } : null,
   })
 
   return (
@@ -78,7 +87,7 @@ export default async function TenantLandingPage({ params }: Props) {
         locations={typedTenant.pickup_locations}
       />
 
-      <FleetPreview cars={fleet} slug={params.slug} theme={typedTenant.site_theme || 'dark'} />
+      <FleetPreview cars={fleet} base={getSiteBase(params.slug)} theme={typedTenant.site_theme || 'dark'} />
 
       <HowItWorksSection tenant={typedTenant} />
 

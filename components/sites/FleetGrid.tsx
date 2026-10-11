@@ -5,7 +5,8 @@ import type { Car, PickupLocation } from '@/lib/supabase/types'
 
 interface Props {
   cars: Car[]
-  slug: string
+  /** Site path prefix from getSiteBase(): '' on a tenant host, '/sites/[slug]' otherwise */
+  base: string
   tenantId: string
   pickupLocations?: PickupLocation[]
   whatsappPhone?: string | null
@@ -17,16 +18,12 @@ function resolveImageUrl(url: string | null): string {
   return `/${url}`
 }
 
-export default function FleetGrid({ cars, slug }: Props) {
+export default function FleetGrid({ cars, base }: Props) {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const [base, setBase] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
-    if (window.location.pathname.startsWith('/sites/')) {
-      setBase(`/sites/${slug}`)
-    }
     // Forward date/time/location params to car detail links
     const params = new URLSearchParams(window.location.search)
     const forward = new URLSearchParams()
@@ -36,7 +33,7 @@ export default function FleetGrid({ cars, slug }: Props) {
     }
     const qs = forward.toString()
     if (qs) setSearchQuery(`?${qs}`)
-  }, [slug])
+  }, [])
 
   const categories = useMemo(() => {
     const seen = new Set<string>()

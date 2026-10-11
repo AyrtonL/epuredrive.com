@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import BookingLookup from './BookingLookup'
 import FleetBackLink from '@/components/sites/FleetBackLink'
+import { getSiteBase } from '@/lib/utils/site-base'
 
 interface Props {
   params: { slug: string }
@@ -28,7 +29,7 @@ export default async function MyBookingPage({ params }: Props) {
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-24">
       <div className="w-full max-w-lg">
         <div className="mb-10">
-          <FleetBackLink slug={params.slug} />
+          <FleetBackLink base={getSiteBase(params.slug)} />
         </div>
 
         <div className="glass border border-white/10 rounded-[2.5rem] p-10 shadow-2xl">

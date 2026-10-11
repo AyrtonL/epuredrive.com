@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import type { Tenant, PickupLocation } from '@/lib/supabase/types'
 import QuickSearchBar from './QuickSearchBar'
+import { getSiteBase } from '@/lib/utils/site-base'
 
 interface Props {
   tenant: Tenant
@@ -81,7 +82,7 @@ export default function HeroSection({ tenant, carCount, slug, locations }: Props
 
         {/* Search bar — primary CTA; relative z-10 ensures this stacking context beats the animated buttons sibling below */}
         <div className="animate-fade-in animation-delay-400 mb-8 relative z-10">
-          <QuickSearchBar slug={slug} locations={locations} inline theme={isLight ? 'light' : 'dark'} />
+          <QuickSearchBar base={getSiteBase(slug)} locations={locations} inline theme={isLight ? 'light' : 'dark'} />
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in animation-delay-500">

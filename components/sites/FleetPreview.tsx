@@ -1,11 +1,11 @@
 'use client'
-import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import type { Car } from '@/lib/supabase/types'
 
 interface Props {
   cars: Car[]
-  slug: string
+  /** Site path prefix from getSiteBase(): '' on a tenant host, '/sites/[slug]' otherwise */
+  base: string
   theme?: 'dark' | 'light'
 }
 
@@ -15,15 +15,8 @@ function resolveImageUrl(url: string | null): string {
   return `/${url}`
 }
 
-export default function FleetPreview({ cars, slug, theme = 'dark' }: Props) {
-  const [base, setBase] = useState('')
+export default function FleetPreview({ cars, base, theme = 'dark' }: Props) {
   const isLight = theme === 'light'
-
-  useEffect(() => {
-    if (window.location.pathname.startsWith('/sites/')) {
-      setBase(`/sites/${slug}`)
-    }
-  }, [slug])
   const featured = cars.slice(0, 6)
 
   if (featured.length === 0) return null

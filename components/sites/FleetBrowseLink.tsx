@@ -1,14 +1,10 @@
-'use client'
-
 interface Props {
-  slug: string
+  /** Site path prefix from getSiteBase(): '' on a tenant host, '/sites/[slug]' otherwise */
+  base: string
 }
 
-export default function FleetBrowseLink({ slug }: Props) {
-  const href =
-    typeof window !== 'undefined' && !window.location.pathname.startsWith('/sites/')
-      ? '/fleet'
-      : `/sites/${slug}/fleet`
+export default function FleetBrowseLink({ base }: Props) {
+  const href = `${base}/fleet`
 
   return (
     <a

@@ -2,9 +2,11 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Tenant, Car } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
+import { buildFleetListMetadata } from '@/lib/utils/fleet-metadata'
 import FleetGrid from '@/components/sites/FleetGrid'
 import BackLink from '@/components/sites/FleetBackLink'
 import QuickSearchBar from '@/components/sites/QuickSearchBar'
+import { getSiteBase } from '@/lib/utils/site-base'
 
 interface Props {
   params: { slug: string }
@@ -15,15 +17,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = createClient()
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('name, brand_name')
+    .select('name, brand_name, slug, logo_url')
     .eq('slug', params.slug)
     .single()
 
-  const displayName = tenant?.brand_name || tenant?.name || 'Fleet'
-  return {
-    title: `${displayName} — Full Fleet`,
-    description: `Browse all vehicles available from ${displayName}.`,
-  }
+  if (!tenant) notFound()
+  return buildFleetListMetadata(tenant as Pick<Tenant, 'name' | 'brand_name' | 'slug' | 'logo_url'>)
 }
 
 export default async function FleetSubPage({ params, searchParams }: Props) {
@@ -85,7 +84,7 @@ export default async function FleetSubPage({ params, searchParams }: Props) {
     <main>
       {/* Header */}
       <div className="max-w-6xl mx-auto px-6 pt-12 pb-6">
-        <BackLink slug={params.slug} />
+        <BackLink base={getSiteBase(params.slug)} />
 
         <div className="text-center mb-8">
           <p className="text-[10px] font-black uppercase tracking-[.4em] text-primary/60 mb-3">Complete Collection</p>
@@ -102,7 +101,7 @@ export default async function FleetSubPage({ params, searchParams }: Props) {
         {/* Quick Search Bar */}
         <div className="mb-6">
           <QuickSearchBar
-            slug={params.slug}
+            base={getSiteBase(params.slug)}
             locations={typedTenant.pickup_locations}
             inline
             initialPickDate={searchParams.pickup || ''}
@@ -130,7 +129,7 @@ export default async function FleetSubPage({ params, searchParams }: Props) {
 
       <FleetGrid
         cars={fleet}
-        slug={params.slug}
+        base={getSiteBase(params.slug)}
         tenantId={typedTenant.id}
         pickupLocations={typedTenant.pickup_locations}
         whatsappPhone={typedTenant.whatsapp_phone}

@@ -47,11 +47,19 @@ describe('buildFleetMetadata', () => {
     expect(result.title).toBe('Acme Rentals — Fleet')
   })
 
-  it('includes OG image from logo_url when present', () => {
-    const tenant = { ...baseTenant, logo_url: 'https://cdn.example.com/logo.png' }
+  it('leaves the OG image to the generated opengraph-image route (logos may be SVG)', () => {
+    const tenant = { ...baseTenant, logo_url: 'https://cdn.example.com/logo.svg' }
     const result = buildFleetMetadata(tenant, 'acme')
-    const og = result.openGraph as { images?: { url: string }[] }
-    expect(og?.images?.[0]?.url).toBe('https://cdn.example.com/logo.png')
+    const og = result.openGraph as { images?: unknown[]; url?: string }
+    expect(og?.images).toBeUndefined()
+    expect(og?.url).toBe('https://acme.epuredrive.com')
+  })
+
+  it('sets its own Twitter card instead of inheriting the platform one', () => {
+    const result = buildFleetMetadata(baseTenant, 'acme')
+    const tw = result.twitter as { title?: string; card?: string }
+    expect(tw?.title).toBe('Acme Rentals — Fleet')
+    expect(tw?.card).toBe('summary_large_image')
   })
 
   it('omits OG images when logo_url is null', () => {

@@ -3,6 +3,49 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getTenantSlug } from '@/lib/utils/routing'
 import { createEdgeClient } from '@/lib/supabase/edge'
+import { TENANT_HOST_HEADER } from '@/lib/utils/site-base-header'
+
+/**
+ * Root-level files that must not be rewritten into a tenant site: the
+ * host-aware robots.txt / sitemap.xml routes and anything in /public
+ * (manifest, service worker, icons). Without this, the [carId] route
+ * caught them and answered 200 with an HTML "Vehicle" page.
+ */
+function isRootLevelFile(pathname: string): boolean {
+  return /^\/[^/]+\.[a-z0-9]+$/i.test(pathname)
+}
+
+/** Single-segment tenant routes besides car IDs (/[carId]). */
+const TENANT_PAGES = new Set(['fleet', 'my-booking', 'booking-confirmation'])
+
+/**
+ * Decides whether a tenant-site path exists, so unknown URLs answer a real 404.
+ * The [carId] route sits under loading.tsx, which streams a 200 before the page
+ * can call notFound(); checking here is the only way to send the right status.
+ */
+async function tenantPathExists(slug: string, rest: string): Promise<boolean> {
+  const segments = rest.split('/').filter(Boolean)
+  if (segments.length !== 1) return true // '/', or nested routes Next resolves itself
+  const [segment] = segments
+  if (TENANT_PAGES.has(segment) || segment.startsWith('opengraph-image')) return true
+  if (!/^\d+$/.test(segment)) return false
+
+  try {
+    const { data, error } = await createEdgeClient()
+      .from('cars')
+      .select('id, tenants!inner(slug)')
+      .eq('id', Number(segment))
+      .eq('tenants.slug', slug)
+      .maybeSingle()
+    if (error) return true // never 404 a page because of a lookup failure
+    return !!data
+  } catch {
+    return true
+  }
+}
+
+/** Rewrite target for paths that don't exist: Next serves app/not-found.tsx with a 404. */
+const NOT_FOUND_PATH = '/__not-found'
 
 // Crawlers we never want to auto-redirect on `/` so they always see the
 // canonical English landing page and correctly index /es via hreflang.
@@ -17,16 +60,30 @@ export async function middleware(request: NextRequest) {
   // set <html lang> correctly (needed for /es to be identified as Spanish).
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-pathname', pathname)
+  // Only middleware may mark a request as coming from a tenant host.
+  requestHeaders.delete(TENANT_HOST_HEADER)
 
   // Path 1: epuredrive.com subdomain → slug-based rewrite (no DB call)
   const slug = getTenantSlug(host)
   if (slug) {
-    // Don't rewrite API routes — they live at the app root
-    if (pathname.startsWith('/api/')) {
+    requestHeaders.set(TENANT_HOST_HEADER, '1')
+    // Don't rewrite API routes, robots.txt / sitemap.xml (host-aware app
+    // routes) or static files — they live at the app root.
+    if (pathname.startsWith('/api/') || isRootLevelFile(pathname)) {
       return NextResponse.next({ request: { headers: requestHeaders } })
     }
     const url = request.nextUrl.clone()
-    url.pathname = `/sites/${slug}${pathname === '/' ? '' : pathname}`
+    url.pathname = (await tenantPathExists(slug, pathname))
+      ? `/sites/${slug}${pathname === '/' ? '' : pathname}`
+      : NOT_FOUND_PATH
+    return NextResponse.rewrite(url, { request: { headers: requestHeaders } })
+  }
+
+  // Direct /sites/[slug]/[segment] paths on the main domain get the same check.
+  const directMatch = pathname.match(/^\/sites\/([^/]+)(\/[^/]+)$/)
+  if (directMatch && !(await tenantPathExists(directMatch[1], directMatch[2]))) {
+    const url = request.nextUrl.clone()
+    url.pathname = NOT_FOUND_PATH
     return NextResponse.rewrite(url, { request: { headers: requestHeaders } })
   }
 
@@ -65,8 +122,9 @@ export async function middleware(request: NextRequest) {
 
   // Path 3: custom domain → look up tenant by custom_domain column
   if (!isEpureDomain) {
-    // Don't rewrite API routes — they live at the app root
-    if (pathname.startsWith('/api/')) {
+    requestHeaders.set(TENANT_HOST_HEADER, '1')
+    // Don't rewrite API routes, robots.txt / sitemap.xml or static files
+    if (pathname.startsWith('/api/') || isRootLevelFile(pathname)) {
       return NextResponse.next({ request: { headers: requestHeaders } })
     }
 
@@ -82,7 +140,9 @@ export async function middleware(request: NextRequest) {
     }
 
     const url = request.nextUrl.clone()
-    url.pathname = `/sites/${data.slug}${pathname === '/' ? '' : pathname}`
+    url.pathname = (await tenantPathExists(data.slug, pathname))
+      ? `/sites/${data.slug}${pathname === '/' ? '' : pathname}`
+      : NOT_FOUND_PATH
     return NextResponse.rewrite(url, { request: { headers: requestHeaders } })
   }
 

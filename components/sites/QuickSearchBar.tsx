@@ -5,7 +5,8 @@ import type { PickupLocation } from '@/lib/supabase/types'
 import DateRangePicker from './DateRangePicker'
 
 interface Props {
-  slug: string
+  /** Site path prefix from getSiteBase(): '' on a tenant host, '/sites/[slug]' otherwise */
+  base: string
   locations: PickupLocation[]
   /** When true, renders without the outer section wrapper (for embedding inside HeroSection) */
   inline?: boolean
@@ -24,7 +25,7 @@ const TIME_OPTIONS = [
 ]
 
 export default function QuickSearchBar({
-  slug, locations, inline = false,
+  base, locations, inline = false,
   initialPickDate = '', initialRetDate = '',
   initialPickTime = '10:00 AM', initialRetTime = '10:00 AM',
   initialLocation, theme = 'dark',
@@ -43,10 +44,7 @@ export default function QuickSearchBar({
     if (pickTime) params.set('pickTime', pickTime)
     if (retTime) params.set('retTime', retTime)
     if (location) params.set('location', location)
-    // When on a subdomain, the browser path starts at "/" — middleware handles the /sites/slug rewrite internally.
-    // Navigating to /sites/slug/fleet from a subdomain would double the prefix → 404.
-    const onSubdomain = !window.location.pathname.startsWith('/sites/')
-    const fleetPath = onSubdomain ? '/fleet' : `/sites/${slug}/fleet`
+    const fleetPath = `${base}/fleet`
     window.location.href = `${fleetPath}?${params.toString()}`
   }
 

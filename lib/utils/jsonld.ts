@@ -5,11 +5,11 @@ export function buildOrganizationSchema(): Record<string, unknown> {
     name: 'éPure Drive',
     alternateName: 'Epure Drive',
     url: 'https://epuredrive.com',
-    logo: 'https://epuredrive.com/favicon.svg',
+    logo: 'https://epuredrive.com/icon-512.png',
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer support',
-      email: 'support@epuredrive.com',
+      email: 'info@epuredrive.com',
     },
   }
 }
@@ -21,11 +21,8 @@ export function buildWebSiteSchema(): Record<string, unknown> {
     name: 'éPure Drive',
     alternateName: 'Epure Drive',
     url: 'https://epuredrive.com',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: 'https://epuredrive.com/?s={search_term_string}',
-      'query-input': 'required name=search_term_string',
-    },
+    // No SearchAction: the site has no search page, and Google retired the
+    // sitelinks search box in 2024.
   }
 }
 
@@ -90,16 +87,47 @@ interface AutoRentalInput {
   slug: string
   logoUrl: string | null
   description?: string | null
+  telephone?: string | null
+  address?: string | null
+  /** Pickup / delivery locations shown on the site (e.g. "MIA Airport") */
+  areaServed?: string[]
+  /** Lowest and highest daily rate of the active fleet, in USD */
+  dailyRateRange?: { min: number; max: number } | null
+}
+
+/** Schema.org expects international phone numbers; DB values are often bare digits. */
+function formatTelephone(raw: string): string {
+  const trimmed = raw.trim()
+  if (trimmed.startsWith('+')) return trimmed
+  const digits = trimmed.replace(/\D/g, '')
+  if (digits.length === 10) return `+1${digits}`
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`
+  return trimmed
+}
+
+/** Car images can be stored as site-relative paths ("assets/images/..."). */
+function absoluteImageUrl(url: string): string {
+  if (url.startsWith('http')) return url
+  return `https://epuredrive.com/${url.replace(/^\//, '')}`
 }
 
 export function buildAutoRentalSchema(tenant: AutoRentalInput): Record<string, unknown> {
+  const range = tenant.dailyRateRange
   return {
     '@context': 'https://schema.org',
     '@type': 'AutoRental',
     name: tenant.name,
     url: `https://${tenant.slug}.epuredrive.com`,
-    ...(tenant.logoUrl ? { image: tenant.logoUrl } : {}),
+    ...(tenant.logoUrl ? { image: tenant.logoUrl, logo: tenant.logoUrl } : {}),
     ...(tenant.description ? { description: tenant.description } : {}),
+    ...(tenant.telephone ? { telephone: formatTelephone(tenant.telephone) } : {}),
+    ...(tenant.address ? { address: tenant.address } : {}),
+    ...(tenant.areaServed && tenant.areaServed.length > 0
+      ? { areaServed: tenant.areaServed.map((name) => ({ '@type': 'Place', name })) }
+      : {}),
+    ...(range
+      ? { priceRange: range.min === range.max ? `$${range.min}/day` : `$${range.min}–$${range.max}/day` }
+      : {}),
   }
 }
 
@@ -111,6 +139,8 @@ interface CarProductInput {
   imageUrl: string | null
   dailyRate: number | null
   year: number | null
+  /** Canonical URL of the car detail page */
+  url?: string
 }
 
 export function buildCarProductSchema(
@@ -123,12 +153,14 @@ export function buildCarProductSchema(
     '@type': 'Product',
     name: `${car.make} ${modelDisplay}`,
     ...(car.description ? { description: car.description } : {}),
-    ...(car.imageUrl ? { image: car.imageUrl } : {}),
+    ...(car.imageUrl ? { image: absoluteImageUrl(car.imageUrl) } : {}),
     ...(car.year ? { model: modelDisplay, vehicleModelDate: String(car.year) } : {}),
     brand: { '@type': 'Brand', name: car.make },
+    ...(car.url ? { url: car.url } : {}),
     offers: {
       '@type': 'Offer',
       priceCurrency: 'USD',
+      ...(car.url ? { url: car.url } : {}),
       ...(car.dailyRate ? { price: String(car.dailyRate) } : {}),
       availability: 'https://schema.org/InStock',
       seller: {

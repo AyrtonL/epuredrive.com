@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { Tenant } from '@/lib/supabase/types'
 import type { Metadata } from 'next'
 import CookieConsent from '@/components/sites/CookieConsent'
+import { getSiteBase } from '@/lib/utils/site-base'
 
 interface Props {
   children: React.ReactNode
@@ -16,14 +17,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = createClient()
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('name, brand_name')
+    .select('id, name, brand_name')
     .eq('slug', params.slug)
     .single()
 
   const displayName = tenant?.brand_name || tenant?.name || 'Fleet'
+
+  // Only tenants with at least one bookable vehicle are offered to search
+  // engines; empty / test sites stay reachable but are kept out of the index.
+  let hasActiveFleet = false
+  if (tenant?.id) {
+    const { count } = await supabase
+      .from('cars')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', tenant.id)
+      .in('status', ['available', 'active'])
+    hasActiveFleet = (count ?? 0) > 0
+  }
+
   return {
-    title: `${displayName} — Fleet`,
+    // Tenant sites are white-label: no "| éPure Drive" suffix from the root template.
+    title: { absolute: `${displayName} — Fleet`, template: '%s' },
     description: `Browse available vehicles from ${displayName}.`,
+    ...(hasActiveFleet ? {} : { robots: { index: false, follow: true } }),
   }
 }
 
@@ -38,6 +54,8 @@ export default async function TenantLayout({ children, params }: Props) {
   if (!tenant) notFound()
 
   const typedTenant = tenant as Tenant
+  const base = getSiteBase(params.slug)
+  const home = base || '/'
   const displayName = typedTenant.brand_name || typedTenant.name
   const tagline = typedTenant.tagline || 'Premium Fleet'
   const theme = typedTenant.site_theme || 'dark'
@@ -98,7 +116,7 @@ export default async function TenantLayout({ children, params }: Props) {
                   <span className="font-outfit font-black text-xl text-primary tracking-tighter">É</span>
                 )}
               </div>
-              <a href={`/sites/${typedTenant.slug}`} className="flex flex-col -space-y-1 min-w-0">
+              <a href={home} className="flex flex-col -space-y-1 min-w-0">
                 <span className="font-outfit font-black text-base sm:text-lg tracking-tight truncate group-hover/logo:text-glow transition-all duration-500">{displayName}</span>
                 <span className={`text-[10px] font-black uppercase tracking-[.3em] truncate ${isLight ? 'text-gray-400' : 'text-white/20'}`}>{tagline}</span>
               </a>
@@ -106,13 +124,13 @@ export default async function TenantLayout({ children, params }: Props) {
 
             <div className="flex items-center gap-2 md:gap-8 shrink-0">
               <div className="hidden md:flex items-center gap-6">
-                <a href={`/sites/${typedTenant.slug}#fleet`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>Fleet</a>
-                <a href={`/sites/${typedTenant.slug}#experience`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>Experience</a>
-                <a href={`/sites/${typedTenant.slug}#concierge`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>Concierge</a>
-                <a href={`/sites/${typedTenant.slug}/my-booking`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>My Booking</a>
+                <a href={`${home}#fleet`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>Fleet</a>
+                <a href={`${home}#experience`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>Experience</a>
+                <a href={`${home}#concierge`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>Concierge</a>
+                <a href={`${base}/my-booking`} className={`text-[10px] font-black uppercase tracking-[.2em] transition-colors ${isLight ? 'text-gray-500 hover:text-gray-900' : 'text-white/70 hover:text-white'}`}>My Booking</a>
               </div>
               <a
-                href={`/sites/${typedTenant.slug}`}
+                href={home}
                 className={`font-black uppercase tracking-widest text-[10px] px-5 md:px-8 py-3 md:py-3.5 rounded-full whitespace-nowrap hover:scale-105 active:scale-95 transition-all shadow-xl ${
                   isLight
                     ? 'bg-gray-900 text-white hover:bg-gray-700 shadow-gray-900/10'
@@ -134,10 +152,10 @@ export default async function TenantLayout({ children, params }: Props) {
                 <div className={`absolute right-0 top-12 w-56 p-2 rounded-2xl border shadow-2xl ${
                   isLight ? 'bg-white border-gray-200' : 'bg-[#0b0b0b] border-white/10'
                 }`}>
-                  <a href={`/sites/${typedTenant.slug}#fleet`} className={`block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-[.2em] ${isLight ? 'text-gray-700 hover:bg-gray-100' : 'text-white/80 hover:bg-white/5'}`}>Fleet</a>
-                  <a href={`/sites/${typedTenant.slug}#experience`} className={`block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-[.2em] ${isLight ? 'text-gray-700 hover:bg-gray-100' : 'text-white/80 hover:bg-white/5'}`}>Experience</a>
-                  <a href={`/sites/${typedTenant.slug}#concierge`} className={`block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-[.2em] ${isLight ? 'text-gray-700 hover:bg-gray-100' : 'text-white/80 hover:bg-white/5'}`}>Concierge</a>
-                  <a href={`/sites/${typedTenant.slug}/my-booking`} className={`block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-[.2em] ${isLight ? 'text-gray-700 hover:bg-gray-100' : 'text-white/80 hover:bg-white/5'}`}>My Booking</a>
+                  <a href={`${home}#fleet`} className={`block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-[.2em] ${isLight ? 'text-gray-700 hover:bg-gray-100' : 'text-white/80 hover:bg-white/5'}`}>Fleet</a>
+                  <a href={`${home}#experience`} className={`block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-[.2em] ${isLight ? 'text-gray-700 hover:bg-gray-100' : 'text-white/80 hover:bg-white/5'}`}>Experience</a>
+                  <a href={`${home}#concierge`} className={`block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-[.2em] ${isLight ? 'text-gray-700 hover:bg-gray-100' : 'text-white/80 hover:bg-white/5'}`}>Concierge</a>
+                  <a href={`${base}/my-booking`} className={`block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-[.2em] ${isLight ? 'text-gray-700 hover:bg-gray-100' : 'text-white/80 hover:bg-white/5'}`}>My Booking</a>
                 </div>
               </details>
             </div>
