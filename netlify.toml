@@ -8,6 +8,15 @@
   status = 301
   force = true
 
+# The pre-Next.js static dashboard (public/admin/) was removed 2026-10-11.
+# Old bookmarks land in the current dashboard. Only matches the top-level
+# /admin path — /dashboard/admin (superadmin pages) is unaffected.
+[[redirects]]
+  from = "/admin/*"
+  to = "/dashboard"
+  status = 301
+  force = true
+
 [build.environment]
   NODE_VERSION = "22"
   NPM_FLAGS = ""
@@ -42,12 +51,6 @@
     Cache-Control = "no-cache, no-store, must-revalidate"
     Pragma = "no-cache"
     Referrer-Policy = "no-referrer"
-
-[[headers]]
-  for = "/admin/*"
-  [headers.values]
-    X-Robots-Tag = "noindex, nofollow"
-    Cache-Control = "no-cache, no-store, must-revalidate"
 
 [[headers]]
   for = "/sw.js"

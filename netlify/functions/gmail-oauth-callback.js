@@ -8,8 +8,9 @@
 const SUPABASE_URL  = process.env.SUPABASE_URL;
 const TOKEN_URL     = 'https://oauth2.googleapis.com/token';
 const REDIRECT_URI  = 'https://epuredrive.com/.netlify/functions/gmail-oauth-callback';
-const DASHBOARD_URL = '/admin/dashboard.html?gmail=connected#turo';
-const ERROR_URL     = '/admin/dashboard.html?gmail=error#turo';
+// Legacy static dashboard is gone — send users to the current Turo integration page.
+const DASHBOARD_URL = '/dashboard/integrations/turo?gmail=connected';
+const ERROR_URL     = '/dashboard/integrations/turo?gmail=error';
 
 function sbHeaders(serviceKey) {
   return {
