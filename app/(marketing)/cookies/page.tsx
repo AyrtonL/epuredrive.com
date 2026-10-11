@@ -2,15 +2,20 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy — éPure Drive',
+  title: { absolute: 'Cookie Policy | éPure Drive' },
   description:
     'Cookie Policy for the éPure Drive software platform — what cookies we use, why, and how to manage your preferences.',
   alternates: { canonical: 'https://epuredrive.com/cookies' },
   openGraph: {
-    title: 'Cookie Policy — éPure Drive',
+    title: 'Cookie Policy | éPure Drive',
     description:
       'Cookie Policy for the éPure Drive software platform — what cookies we use, why, and how to manage your preferences.',
     url: 'https://epuredrive.com/cookies',
+  },
+  twitter: {
+    title: 'Cookie Policy | éPure Drive',
+    description:
+      'Cookie Policy for the éPure Drive software platform — what cookies we use, why, and how to manage your preferences.',
   },
 }
 

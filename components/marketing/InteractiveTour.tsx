@@ -97,7 +97,7 @@ const COPY: Record<Lang, Copy> = {
     badge: 'Tour interactivo',
     title: 'Cinco clics. Todo el producto.',
     subtitle:
-      'Recorré las pantallas reales — sin registro, sin llamada de ventas. Así se ve tu operación desde el día uno.',
+      'Recorre las pantallas reales — sin registro, sin llamada de ventas. Así se ve tu operación desde el día uno.',
     next: 'Siguiente',
     prev: 'Atrás',
     restart: 'Reiniciar tour',
@@ -112,7 +112,7 @@ const COPY: Record<Lang, Copy> = {
         number: '01',
         title: 'Tu sitio con tu marca, online en 30 segundos',
         description:
-          'Elegí subdominio, subí tu flota, definí precios. Tus clientes reservan desde un sitio que parece tuyo — no nuestro.',
+          'Elige tu subdominio, sube tu flota, define precios. Tus clientes reservan desde un sitio que parece tuyo — no nuestro.',
         hotspot: { top: '22%', left: '50%', label: 'Disponibilidad en vivo' },
       },
       {
@@ -132,7 +132,7 @@ const COPY: Record<Lang, Copy> = {
         number: '03',
         title: 'Toda la flota de un vistazo',
         description:
-          'Timeline visual con cada vehículo, reserva, conflicto y día libre. Se acabó el cruce de planillas.',
+          'Timeline visual con cada vehículo, reserva, conflicto y día libre. Se acabó el cruce de hojas de cálculo.',
         hotspot: { top: '50%', left: '60%', label: 'Detección visual de conflictos' },
       },
       {
@@ -140,9 +140,9 @@ const COPY: Record<Lang, Copy> = {
         alt: 'Pagos online y depósitos',
         url: 'app.epuredrive.com/payments',
         number: '04',
-        title: 'Cobrá online — seña y saldo',
+        title: 'Cobra online — depósito y saldo',
         description:
-          'Stripe y Square se conectan una sola vez. Seña al reservar, saldo al retirar, reembolsos en un clic. La plata va directo a tu cuenta.',
+          'Stripe y Square se conectan una sola vez. Depósito al reservar, saldo al retirar, reembolsos en un clic. El dinero va directo a tu cuenta.',
         hotspot: { top: '35%', left: '70%', label: 'Stripe + Square, nativos' },
       },
       {
@@ -152,7 +152,7 @@ const COPY: Record<Lang, Copy> = {
         number: '05',
         title: 'Tus números, vehículo por vehículo',
         description:
-          'Ingresos, utilización, ROI y reportes listos para impuestos — calculados desde tus reservas. Decidí qué conservar, vender o sumar.',
+          'Ingresos, utilización, ROI y reportes listos para impuestos — calculados desde tus reservas. Decide qué conservar, vender o sumar.',
         hotspot: { top: '45%', left: '40%', label: 'ROI por auto, automático' },
       },
     ],
@@ -316,7 +316,7 @@ export default function InteractiveTour({ lang = 'en' }: Props) {
                 width={1440}
                 height={900}
                 className="w-full h-auto block transition-opacity duration-300"
-                priority={active === 0}
+                priority={false}
               />
 
               {/* Hotspot annotation */}

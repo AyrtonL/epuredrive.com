@@ -13,6 +13,10 @@ export const metadata: Metadata = {
     description: 'Answers to common questions about éPure Drive, fleet management, pricing, and getting started.',
     url: 'https://epuredrive.com/faq',
   },
+  twitter: {
+    title: SEO_TITLE,
+    description: 'Answers to common questions about éPure Drive, fleet management, pricing, and getting started.',
+  },
 }
 
 const faqs = [
@@ -21,7 +25,7 @@ const faqs = [
     items: [
       {
         q: 'What is éPure Drive?',
-        a: 'éPure Drive is a fleet management SaaS platform built for car rental operators. It gives you a branded fleet page, booking management, customer tracking, and business analytics — all in one dashboard.',
+        a: 'éPure Drive (also written Epure Drive) is rental car fleet management software for independent operators. It gives you a branded booking site, online payments via Stripe or Square, a live availability calendar, and full reservation management from a single dashboard — no developer or code required.',
       },
       {
         q: 'How do I create my fleet page?',
@@ -29,7 +33,7 @@ const faqs = [
       },
       {
         q: 'Is there a free plan?',
-        a: 'Yes. The Free plan supports up to 5 vehicles and 1 team member with basic reporting. Upgrade to Pro, Max, or Enterprise for more vehicles, team members, and advanced features.',
+        a: 'Yes. The Starter plan is free forever — up to 5 vehicles, a branded booking site on your own subdomain, and full booking management, with no credit card required. Upgrade to Pro, Max, or Enterprise for more vehicles, team members, and advanced features.',
       },
       {
         q: 'Can I use my own domain?',
@@ -93,7 +97,7 @@ const faqs = [
     items: [
       {
         q: 'How do I contact support?',
-        a: 'Email us at support@epuredrive.com or use the contact form on our website. Pro, Max, and Enterprise customers receive priority support.',
+        a: 'Email us at info@epuredrive.com or use the contact form on our website. Pro, Max, and Enterprise customers receive priority support.',
       },
       {
         q: 'Do you offer onboarding help?',
@@ -114,8 +118,8 @@ export default function FAQPage() {
         </h1>
         <p className="text-white/40 text-lg max-w-xl mx-auto">
           Everything you need to know about éPure Drive. Can&apos;t find what you&apos;re looking for? Contact us at{' '}
-          <a href="mailto:support@epuredrive.com" className="text-white/60 hover:text-white transition-colors">
-            support@epuredrive.com
+          <a href="mailto:info@epuredrive.com" className="text-white/60 hover:text-white transition-colors">
+            info@epuredrive.com
           </a>
         </p>
       </div>

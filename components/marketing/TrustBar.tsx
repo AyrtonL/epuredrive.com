@@ -10,7 +10,7 @@ const COPY: Record<Lang, { title: string; sub: string }[]> = {
   es: [
     { title: 'Pagos PCI-compliant', sub: 'Procesados con Stripe y Square — SSL de nivel bancario en cada reserva' },
     { title: 'Alojado en Supabase', sub: 'Datos en EU y US, backups diarios, 99.9% uptime' },
-    { title: 'Tus datos, tus reglas', sub: 'Exportá flota, reservas y clientes cuando quieras — sin lock-in' },
+    { title: 'Tus datos, tus reglas', sub: 'Exporta flota, reservas y clientes cuando quieras — sin lock-in' },
     { title: 'Hecho por operadores de rent a car', sub: 'Pensado para flotas independientes, no para grandes corporaciones' },
   ],
 }

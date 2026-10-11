@@ -19,8 +19,8 @@ const COPY: Record<Lang, {
     closeLabel: 'Close demo',
   },
   es: {
-    pill: 'Mirá',
-    title: 'Conocé éPure Drive en 2 minutos',
+    pill: 'Mira',
+    title: 'Conoce éPure Drive en 2 minutos',
     subtitle: 'Un recorrido rápido por el panel, tu página pública de reservas y cómo fluye una reserva de principio a fin.',
     playLabel: 'Reproducir video demo del producto',
     closeLabel: 'Cerrar demo',

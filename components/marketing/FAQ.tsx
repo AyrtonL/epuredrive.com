@@ -12,15 +12,15 @@ type Lang = 'en' | 'es'
 const FREE_LAUNCH_OVERRIDES: Record<Lang, Record<string, string>> = {
   en: {
     'How much does éPure Drive cost?':
-      'éPure Drive is currently free during our launch period — every account gets full access to all features (live telematics, integrations, team management, custom agreements, priority support) at no cost. A flat 1% transaction fee applies on online payments. Subscription pricing will be announced when the Free Launch period ends, and existing accounts will receive at least 30 days\' notice before any change.',
+      'The Starter plan is free forever — no credit card required. During our Free Launch period, every account also gets every paid feature (live telematics, integrations, team management, custom agreements, priority support) at no cost. A flat 1% transaction fee applies on online payments. When paid plans launch, existing accounts get at least 30 days\' notice, and the free Starter plan stays free.',
     'What payment processors do you support?':
       'éPure Drive integrates with Stripe and Square for online card payments. You connect your own account, so payouts go directly to your bank — we never hold your money. During the Free Launch period a flat 1% platform fee applies to every account.',
   },
   es: {
     '¿Cuánto cuesta éPure Drive?':
-      'éPure Drive es gratis durante nuestro período de lanzamiento — cada cuenta tiene acceso completo a todas las funciones (telematría en vivo, integraciones, gestión de equipo, contratos personalizados, soporte prioritario) sin costo. Se aplica una comisión plana del 1% sobre pagos online. Los precios de suscripción se anunciarán cuando termine el período de lanzamiento, y las cuentas existentes tendrán al menos 30 días de aviso antes de cualquier cambio.',
+      'El plan Starter es gratis para siempre, sin tarjeta de crédito. Durante nuestro período de lanzamiento, además, cada cuenta tiene todas las funciones pagas (telemetría en vivo, integraciones, gestión de equipo, contratos personalizados, soporte prioritario) sin costo. Se aplica una comisión fija del 1% sobre pagos online. Cuando lancemos los planes pagos, las cuentas existentes tendrán al menos 30 días de aviso, y el plan Starter seguirá siendo gratis.',
     '¿Qué procesadores de pago soportan?':
-      'éPure Drive se integra con Stripe y Square para pagos con tarjeta online. Conectás tu propia cuenta, así los depósitos van directo a tu banco — nunca tocamos tu dinero. Durante el período de lanzamiento se aplica una comisión plana del 1% a todas las cuentas.',
+      'éPure Drive se integra con Stripe y Square para pagos con tarjeta online. Conectas tu propia cuenta, así los depósitos van directo a tu banco; nunca tocamos tu dinero. Durante el período de lanzamiento se aplica una comisión fija del 1% a todas las cuentas.',
   },
 }
 
@@ -78,31 +78,31 @@ const FAQS: Record<Lang, { q: string; a: string }[]> = {
     },
     {
       q: '¿Cuánto cuesta éPure Drive?',
-      a: 'El plan Starter es gratis para siempre — incluye hasta 5 vehículos, una página de flota con tu marca en un subdominio {slug}.epuredrive.com y gestión completa de reservas. Los planes pagos arrancan en $19/mes e incluyen más vehículos, menor comisión y funciones avanzadas.',
+      a: 'El plan Starter es gratis para siempre — incluye hasta 5 vehículos, una página de flota con tu marca en un subdominio {slug}.epuredrive.com y gestión completa de reservas. Los planes pagos empiezan en $19/mes e incluyen más vehículos, menor comisión y funciones avanzadas.',
     },
     {
       q: '¿Necesito tarjeta de crédito para empezar?',
-      a: 'No. Podés crear tu cuenta, agregar tu flota y salir en vivo sin cargar ningún dato de pago. Solo pasás a un plan pago cuando necesitás más vehículos o funciones avanzadas.',
+      a: 'No. Puedes crear tu cuenta, agregar tu flota y publicar tu sitio sin ingresar ningún dato de pago. Solo pasas a un plan pago cuando necesitas más vehículos o funciones avanzadas.',
     },
     {
       q: '¿Cuánto tarda el setup?',
-      a: 'La mayoría de operadores queda en vivo en 5 minutos. Creás la cuenta, subís las fotos y los precios de tus autos, y tu sitio de reservas queda disponible al instante en tu subdominio. Sin desarrollador, sin código, sin migraciones.',
+      a: 'La mayoría de los operadores está en línea en 5 minutos. Creas la cuenta, subes las fotos y los precios de tus autos, y tu sitio de reservas queda disponible al instante en tu subdominio. Sin desarrollador, sin código, sin migraciones.',
     },
     {
       q: '¿Puedo usar mi propio dominio?',
-      a: 'Sí, desde el plan Pro en adelante. Es self-service: cargás tu dominio en el dashboard, lo registramos automáticamente de nuestro lado, y vos apuntás un registro DNS desde tu proveedor — el SSL se emite solo una vez que verifica. El plan Starter corre en un subdominio con tu marca — ej. tualquiler.epuredrive.com — con SSL incluido.',
+      a: 'Sí, desde el plan Pro en adelante. Es autoservicio: ingresas tu dominio en el panel, lo registramos automáticamente de nuestro lado, y tú apuntas un registro DNS desde tu proveedor; el SSL se emite solo cuando se verifica. El plan Starter funciona en un subdominio con tu marca (por ejemplo, turentadora.epuredrive.com) con SSL incluido.',
     },
     {
       q: '¿Qué procesadores de pago soportan?',
-      a: 'éPure Drive se integra con Stripe y Square para pagos con tarjeta online. Conectás tu propia cuenta, así los depósitos van directo a tu banco — nunca tocamos tu dinero. Los planes Pro pagan 1% de comisión de plataforma; los Max pagan 0%.',
+      a: 'éPure Drive se integra con Stripe y Square para pagos con tarjeta online. Conectas tu propia cuenta, así los depósitos van directo a tu banco; nunca tocamos tu dinero. Los planes Pro pagan 1% de comisión de plataforma; los Max pagan 0%.',
     },
     {
       q: '¿Se integra con Turo?',
-      a: 'Sí. Podés sincronizar la disponibilidad desde Turo (y cualquier plataforma compatible con iCal) para mantener tu calendario actualizado entre canales — evitando reservas duplicadas automáticamente.',
+      a: 'Sí. Puedes sincronizar la disponibilidad desde Turo (y cualquier plataforma compatible con iCal) para mantener tu calendario actualizado entre canales — evitando reservas duplicadas automáticamente.',
     },
     {
       q: '¿Puedo manejar varias sucursales u oficinas?',
-      a: 'Sí. El plan Enterprise soporta gestión multi-sucursal, con inventario y personal separados por sede pero un único panel de reportes. Escribinos para ver precio.',
+      a: 'Sí. El plan Enterprise soporta gestión multi-sucursal, con inventario y personal separados por sede pero un único panel de reportes. Escríbenos para conocer el precio.',
     },
     {
       q: '¿Mis datos y los de mis clientes están seguros?',
@@ -110,7 +110,7 @@ const FAQS: Record<Lang, { q: string; a: string }[]> = {
     },
     {
       q: '¿Qué pasa si quiero cancelar?',
-      a: 'Cancelás cuando quieras desde la configuración de facturación. Sin contratos, sin costo de cancelación. Conservás acceso de lectura a tus datos históricos para exportarlos, y tu plan Starter gratis queda activo.',
+      a: 'Cancelas cuando quieras desde la configuración de facturación. Sin contratos, sin costo de cancelación. Conservas acceso de lectura a tus datos históricos para exportarlos, y tu plan Starter gratis sigue activo.',
     },
     {
       q: '¿Ofrecen soporte?',
@@ -129,12 +129,19 @@ const LABELS: Record<Lang, { pill: string; title: string; help: string; email: s
   es: {
     pill: 'Preguntas frecuentes',
     title: 'Preguntas comunes',
-    help: '¿No encontrás lo que buscás? Escribinos a',
+    help: '¿No encuentras lo que buscas? Escríbenos a',
     email: 'info@epuredrive.com',
   },
 }
 
-export default function FAQ({ lang = 'en' }: { lang?: Lang }) {
+export default function FAQ({
+  lang = 'en',
+  schema = true,
+}: {
+  lang?: Lang
+  /** Emit FAQPage JSON-LD. Off on the English home page: /faq is the canonical FAQ. */
+  schema?: boolean
+}) {
   const labels = LABELS[lang]
   const overrides = isFreeLaunchMode() ? FREE_LAUNCH_OVERRIDES[lang] : null
   const faqs = overrides
@@ -190,7 +197,7 @@ export default function FAQ({ lang = 'en' }: { lang?: Lang }) {
         </div>
       </section>
 
-      <JsonLd schema={buildFAQPageSchema(faqs)} />
+      {schema && <JsonLd schema={buildFAQPageSchema(faqs)} />}
     </>
   )
 }

@@ -3,8 +3,19 @@ import type { Metadata } from 'next'
 import SignUpForm from '@/components/SignUpForm'
 
 export const metadata: Metadata = {
-  title: 'Sign Up — éPure Drive Platform',
+  title: { absolute: 'Create Your Free Account | éPure Drive' },
+  description: 'Create a free éPure Drive account and launch a branded booking site for your rental fleet in minutes.',
+  // Crawlable (not blocked in robots.txt) so search engines can see this noindex.
   robots: { index: false, follow: false },
+  openGraph: {
+    title: 'Create Your Free Account | éPure Drive',
+    description: 'Create a free éPure Drive account and launch a branded booking site for your rental fleet in minutes.',
+    url: 'https://epuredrive.com/sign-up',
+  },
+  twitter: {
+    title: 'Create Your Free Account | éPure Drive',
+    description: 'Create a free éPure Drive account and launch a branded booking site for your rental fleet in minutes.',
+  },
 }
 
 export default function SignUpPage() {

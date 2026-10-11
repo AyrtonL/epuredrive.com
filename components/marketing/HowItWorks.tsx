@@ -39,17 +39,17 @@ const COPY: Record<Lang, {
       {
         num: '01',
         title: 'Registrate en 30 segundos',
-        body: 'Creá tu cuenta sin tarjeta de crédito. Elegí tu subdominio y subí tu logo.',
+        body: 'Crea tu cuenta sin tarjeta de crédito. Elige tu subdominio y sube tu logo.',
       },
       {
         num: '02',
-        title: 'Agregá tu flota',
-        body: 'Subí fotos, definí precios diarios y configurá la disponibilidad. Tu sitio de reservas con tu marca queda online al instante.',
+        title: 'Agrega tu flota',
+        body: 'Sube fotos, define precios diarios y configura la disponibilidad. Tu sitio de reservas con tu marca queda online al instante.',
       },
       {
         num: '03',
-        title: 'Cobrá en piloto automático',
-        body: 'Tus clientes reservan y pagan online. Vos manejás todo — reservas, pagos, impuestos — desde un solo panel.',
+        title: 'Cobra en piloto automático',
+        body: 'Tus clientes reservan y pagan online. Tú manejas todo — reservas, pagos, impuestos — desde un solo panel.',
       },
     ],
   },

@@ -5,15 +5,20 @@ import { isFreeLaunchMode } from '@/lib/plan/effective-plan'
 const FREE_LAUNCH = isFreeLaunchMode()
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — éPure Drive',
+  title: { absolute: 'Terms of Service | éPure Drive' },
   description:
     'Terms of Service for the éPure Drive software platform — account, subscription, acceptable use, tenant responsibilities, and limitation of liability.',
   alternates: { canonical: 'https://epuredrive.com/terms' },
   openGraph: {
-    title: 'Terms of Service — éPure Drive',
+    title: 'Terms of Service | éPure Drive',
     description:
       'Terms of Service for the éPure Drive software platform — account, subscription, acceptable use, tenant responsibilities, and limitation of liability.',
     url: 'https://epuredrive.com/terms',
+  },
+  twitter: {
+    title: 'Terms of Service | éPure Drive',
+    description:
+      'Terms of Service for the éPure Drive software platform — account, subscription, acceptable use, tenant responsibilities, and limitation of liability.',
   },
 }
 

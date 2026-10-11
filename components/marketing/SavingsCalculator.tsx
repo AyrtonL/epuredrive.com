@@ -27,7 +27,7 @@ interface Copy {
 const COPY: Record<Lang, Copy> = {
   en: {
     badge: 'Savings calculator',
-    title: 'See how much you save during our free launch.',
+    title: 'See how much you save with our free plan.',
     subtitle:
       'Most rental software charges a flat monthly fee — even when you have no bookings. We don’t. Drag the slider to see your savings.',
     inputLabel: 'What you currently pay (or would pay) on competitor software',
@@ -40,7 +40,7 @@ const COPY: Record<Lang, Copy> = {
     savingsLabel: 'Total saved',
     pocketLabel: 'In your pocket — reinvest in your fleet, marketing, or yourself.',
     disclaimer:
-      'Reference monthly pricing observed on public pricing pages of HQ Rental, RentSyst, Bookinglayer and similar SaaS as of 2026. Free during our launch period.',
+      'Reference monthly pricing observed on public pricing pages of HQ Rental, RentSyst, Bookinglayer and similar SaaS as of 2026. éPure Drive Starter plan: free forever; a 1% fee applies to online payments.',
     monthlyLabel: '/ month',
     yearlyLabel: '/ year',
     vehiclesLabel: 'Or estimate by fleet size',
@@ -48,10 +48,10 @@ const COPY: Record<Lang, Copy> = {
   },
   es: {
     badge: 'Calculadora de ahorro',
-    title: 'Veé cuánto te ahorrás durante nuestro free launch.',
+    title: 'Mira cuánto ahorras con nuestro plan gratis.',
     subtitle:
-      'La mayoría de los softwares de rent a car cobran una mensualidad fija — aunque no tengas reservas. Nosotros no. Mové el slider y veé tu ahorro.',
-    inputLabel: 'Lo que pagás (o pagarías) en otro software',
+      'La mayoría de los softwares de rent a car cobran una mensualidad fija — aunque no tengas reservas. Nosotros no. Mueve el control y mira tu ahorro.',
+    inputLabel: 'Lo que pagas (o pagarías) en otro software',
     inputHint: 'Promedio del mercado: $99/mes',
     resultLabel: 'Tu ahorro del primer año en éPure Drive',
     yearLabel: 'al año',
@@ -59,12 +59,12 @@ const COPY: Record<Lang, Copy> = {
     ePureValue: '$0',
     competitorsLabel: 'Competidor típico',
     savingsLabel: 'Total ahorrado',
-    pocketLabel: 'En tu bolsillo — reinvertí en tu flota, marketing o en vos.',
+    pocketLabel: 'En tu bolsillo: reinviértelo en tu flota, tu marketing o en ti.',
     disclaimer:
-      'Referencia: precios mensuales públicos de HQ Rental, RentSyst, Bookinglayer y SaaS similares (2026). Gratis durante nuestro período de lanzamiento.',
+      'Referencia: precios mensuales públicos de HQ Rental, RentSyst, Bookinglayer y SaaS similares (2026). Plan Starter de éPure Drive: gratis para siempre; se aplica una comisión del 1% a los pagos online.',
     monthlyLabel: '/ mes',
     yearlyLabel: '/ año',
-    vehiclesLabel: 'O estimá por tamaño de flota',
+    vehiclesLabel: 'O estima por tamaño de flota',
     vehiclesUnit: 'vehículos',
   },
 }

@@ -10,13 +10,18 @@ const SEO_TITLE = 'Features — Car Rental Management Software | éPure Drive'
 export const metadata: Metadata = {
   title: { absolute: SEO_TITLE },
   description:
-    'Fleet management, online bookings, branded fleet pages, digital agreements, Stripe & Square payments, QuickBooks sync, tax management, team roles, and financial reporting — all in one platform for car rental businesses.',
+    'Car rental management software: fleet, bookings, branded fleet pages, digital agreements, Stripe & Square payments, QuickBooks sync and tax reports.',
   alternates: { canonical: 'https://epuredrive.com/features' },
   openGraph: {
     title: SEO_TITLE,
     description:
       'Everything car rental operators need to manage their fleet, accept bookings, track finances, and grow their business.',
     url: 'https://epuredrive.com/features',
+  },
+  twitter: {
+    title: SEO_TITLE,
+    description:
+      'Everything car rental operators need to manage their fleet, accept bookings, track finances, and grow their business.',
   },
 }
 
@@ -172,6 +177,8 @@ export default function FeaturesPage() {
       <section className="relative py-24 bg-black">
         <div className="section-divider absolute top-0 left-0 right-0" />
         <div className="max-w-6xl mx-auto px-6">
+          {/* Section heading for the card titles below (h1 → h2 → h3); visually hidden */}
+          <h2 className="sr-only">Core features</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {HERO_FEATURES.map((feature) => (
               <div

@@ -12,26 +12,23 @@ describe('buildOrganizationSchema', () => {
     expect(schema['@type']).toBe('Organization')
     expect(schema.name).toBe('éPure Drive')
     expect(schema.url).toBe('https://epuredrive.com')
-    expect(schema.logo).toBe('https://epuredrive.com/favicon.svg')
+    expect(schema.logo).toBe('https://epuredrive.com/icon-512.png')
     expect(schema.contactPoint).toMatchObject({
       '@type': 'ContactPoint',
       contactType: 'customer support',
-      email: 'support@epuredrive.com',
+      email: 'info@epuredrive.com',
     })
   })
 })
 
 describe('buildWebSiteSchema', () => {
-  it('returns correct @type and potentialAction', () => {
+  it('returns correct @type and no search box (the site has no search page)', () => {
     const schema = buildWebSiteSchema()
     expect(schema['@context']).toBe('https://schema.org')
     expect(schema['@type']).toBe('WebSite')
     expect(schema.name).toBe('éPure Drive')
     expect(schema.url).toBe('https://epuredrive.com')
-    expect(schema.potentialAction).toMatchObject({
-      '@type': 'SearchAction',
-      target: expect.stringContaining('epuredrive.com'),
-    })
+    expect(schema.potentialAction).toBeUndefined()
   })
 })
 
@@ -61,7 +58,7 @@ describe('buildFAQPageSchema', () => {
     expect(schema['@context']).toBe('https://schema.org')
     expect(schema['@type']).toBe('FAQPage')
     expect(schema.mainEntity).toHaveLength(2)
-    expect(schema.mainEntity[0]).toMatchObject({
+    expect((schema.mainEntity as unknown[])[0]).toMatchObject({
       '@type': 'Question',
       name: 'What is it?',
       acceptedAnswer: { '@type': 'Answer', text: 'A SaaS platform.' },

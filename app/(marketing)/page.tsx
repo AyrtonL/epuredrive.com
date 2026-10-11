@@ -51,9 +51,9 @@ const PRICING_PLANS = [
   },
 ]
 
-const SEO_TITLE = 'Rental Car Software — Launch Your Booking Site in Minutes | éPure Drive'
+const SEO_TITLE = 'Rental Car Software — Booking Site in Minutes | éPure Drive'
 const SEO_DESCRIPTION =
-  'Fleet management software for independent car rental operators. Launch a branded booking site, accept online payments, and manage every vehicle from one dashboard. Free forever plan — no credit card required.'
+  'Fleet management software for car rental operators: a branded booking site, online payments and one dashboard. Free forever plan, no credit card.'
 const OG_IMAGE = 'https://epuredrive.com/og-image.jpg'
 
 export const metadata: Metadata = {
@@ -508,7 +508,7 @@ export default function HomePage() {
       </section>}
 
       {/* ─────────────────── FAQ ─────────────────── */}
-      <FAQ />
+      <FAQ schema={false} />
 
       {/* ─────────────────── Final CTA ─────────────────── */}
       <section className="relative py-32 bg-black overflow-hidden">

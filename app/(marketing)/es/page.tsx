@@ -50,9 +50,9 @@ const PRICING_PLANS_ES = [
   },
 ]
 
-const SEO_TITLE = 'Software para Rent a Car — Tu sitio de reservas en minutos | éPure Drive'
+const SEO_TITLE = 'Software para Rent a Car — Reservas Online | éPure Drive'
 const SEO_DESCRIPTION =
-  'Software de gestión de flota para empresas de alquiler de autos independientes. Lanzá tu sitio de reservas con tu marca, aceptá pagos online y manejá cada vehículo desde un solo panel. Plan gratis para siempre — sin tarjeta de crédito.'
+  'Software de flota para rent a car: sitio de reservas con tu marca, pagos online y un solo panel. Plan gratis para siempre, sin tarjeta.'
 const OG_IMAGE = 'https://epuredrive.com/og-image.jpg'
 
 export const metadata: Metadata = {
@@ -103,7 +103,7 @@ const SPLIT_FEATURES = [
     ),
     title: 'Tu sitio de reservas con tu marca,\nen vivo en minutos.',
     description:
-      'Lanzá un sitio profesional de alquiler que muestre tus vehículos — con disponibilidad en tiempo real, precios y tu marca. Sin código, sin desarrollador, sin esperas.',
+      'Lanza un sitio profesional de alquiler que muestre tus vehículos — con disponibilidad en tiempo real, precios y tu marca. Sin código, sin desarrollador, sin esperas.',
     bullets: ['Subdominio personalizado incluido', 'Calendario de disponibilidad en vivo', 'Sincroniza con tu inventario'],
     screenshot: '/assets/screenshots/site-fleet.webp',
     alt: 'Sitio público del tenant',
@@ -116,7 +116,7 @@ const SPLIT_FEATURES = [
     ),
     title: 'Cada reserva,\nbajo control.',
     description:
-      'Llevá todas tus rentas en un solo lugar — quién reservó, qué vehículo, fechas, montos y estado. Las confirmaciones automáticas mantienen informados a tus clientes sin que muevas un dedo.',
+      'Lleva todas tus rentas en un solo lugar — quién reservó, qué vehículo, fechas, montos y estado. Las confirmaciones automáticas mantienen informados a tus clientes sin que muevas un dedo.',
     bullets: ['Sincronización con Turo e iCal', 'Confirmaciones automáticas', 'Ficha de cliente por reserva'],
     screenshot: '/assets/screenshots/dash-bookings.webp',
     alt: 'Panel de reservas',
@@ -158,8 +158,8 @@ export default function HomePageEs() {
           </h1>
 
           <p className="text-lg md:text-xl text-grey max-w-2xl mx-auto mb-12 animate-fade-in-up animation-delay-100 font-light leading-relaxed">
-            Lanzá un sitio de reservas con tu marca, aceptá pagos online y
-            manejá cada vehículo desde un solo panel. Gratis para empezar —
+            Lanza un sitio de reservas con tu marca, acepta pagos online y
+            maneja cada vehículo desde un solo panel. Gratis para empezar —
             sin tarjeta, sin desarrollador, sin llamadas de onboarding.
           </p>
 
@@ -200,7 +200,7 @@ export default function HomePageEs() {
         <div className="section-divider absolute top-0 left-0 right-0" />
         <div className="max-w-5xl mx-auto px-6">
           <p className="text-center text-[11px] font-bold tracking-[0.3em] text-white/20 uppercase mb-6">
-            Funciona con las herramientas que ya usás
+            Funciona con las herramientas que ya usas
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             {['Turo', 'Stripe', 'Square', 'QuickBooks', 'iCal', 'Google Calendar', 'WhatsApp'].map((name) => (
@@ -236,7 +236,7 @@ export default function HomePageEs() {
               Gestión de flota, reservas<br />y pagos — un solo panel.
             </h2>
             <p className="text-lg text-charcoal font-light max-w-xl mx-auto">
-              Basta de hacer malabares con planillas, mensajes y calendarios. Manejá tu negocio de rent a car desde un solo lugar.
+              Basta de hacer malabares con hojas de cálculo, mensajes y calendarios. Maneja tu negocio de rent a car desde un solo lugar.
             </p>
           </div>
 
@@ -320,7 +320,7 @@ export default function HomePageEs() {
               Precios simples
             </h2>
             <p className="text-lg text-charcoal font-light">
-              Empezá gratis. Actualizá cuando necesites más.
+              Empieza gratis. Mejora tu plan cuando necesites más.
             </p>
           </div>
 
@@ -380,7 +380,7 @@ export default function HomePageEs() {
                 location="pricing-starter-es"
                 className="block text-center bg-white text-black font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/90 transition-colors mt-auto"
               >
-                Lanzá tu negocio
+                Lanza tu negocio
               </TrackedCTA>
             </div>
 
@@ -489,7 +489,7 @@ export default function HomePageEs() {
           </div>
 
           <p className="text-center text-sm text-charcoal mt-12 font-light">
-            ¿Manejás varias sucursales o necesitás vehículos ilimitados?{' '}
+            ¿Manejas varias sucursales o necesitas vehículos ilimitados?{' '}
             <a
               href="mailto:info@epuredrive.com?subject=Consulta%20Enterprise"
               className="text-white font-medium underline underline-offset-4 hover:text-white/80"
@@ -518,10 +518,10 @@ export default function HomePageEs() {
                 <span className="text-[11px] font-bold tracking-[0.25em] text-grey uppercase">Listo para arrancar</span>
               </span>
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-                Lanzá tu negocio de rent a car<br />online hoy.
+                Lanza tu negocio de rent a car<br />online hoy.
               </h2>
               <p className="text-charcoal mb-10 font-light text-lg max-w-lg mx-auto">
-                Sumate a los operadores que manejan su flota, reservas y clientes
+                Únete a los operadores que manejan su flota, reservas y clientes
                 en éPure Drive. Listo en 5 minutos — sin tarjeta de crédito.
               </p>
               <TrackedCTA
@@ -532,7 +532,7 @@ export default function HomePageEs() {
                 Empezar gratis
               </TrackedCTA>
               <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-7">
-                {['Sin tarjeta de crédito', 'Cancelás cuando quieras', 'Gratis para siempre'].map((t) => (
+                {['Sin tarjeta de crédito', 'Cancela cuando quieras', 'Gratis para siempre'].map((t) => (
                   <span key={t} className="flex items-center gap-1.5 text-[12px] text-white/25">
                     <svg className="w-3 h-3 text-white/20 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -560,7 +560,7 @@ export default function HomePageEs() {
           schema={buildVideoObjectSchema({
             name: 'éPure Drive — demo del producto en 2 minutos',
             description:
-              'Mirá cómo lanzar tu sitio de reservas de alquiler con tu marca, aceptar pagos online y manejar tu flota desde un panel en 2 minutos.',
+              'Mira cómo lanzar tu sitio de reservas de alquiler con tu marca, aceptar pagos online y manejar tu flota desde un panel en 2 minutos.',
             thumbnailUrl: 'https://epuredrive.com/og-image.jpg',
             uploadDate: '2026-04-20',
             embedUrl: DEMO_VIDEO_URL,

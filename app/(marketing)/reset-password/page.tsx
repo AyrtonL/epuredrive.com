@@ -2,8 +2,19 @@ import type { Metadata } from 'next'
 import ResetPasswordForm from './ResetPasswordForm'
 
 export const metadata: Metadata = {
-  title: 'Set New Password — éPure Drive Platform',
+  title: { absolute: 'Set New Password | éPure Drive' },
+  description: 'Choose a new password for your éPure Drive account.',
+  // Crawlable (not blocked in robots.txt) so search engines can see this noindex.
   robots: { index: false, follow: false },
+  openGraph: {
+    title: 'Set New Password | éPure Drive',
+    description: 'Choose a new password for your éPure Drive account.',
+    url: 'https://epuredrive.com/reset-password',
+  },
+  twitter: {
+    title: 'Set New Password | éPure Drive',
+    description: 'Choose a new password for your éPure Drive account.',
+  },
 }
 
 export default function ResetPasswordPage() {

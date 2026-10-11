@@ -3,8 +3,19 @@ import type { Metadata } from 'next'
 import LoginForm from '@/components/LoginForm'
 
 export const metadata: Metadata = {
-  title: 'Sign In — éPure Drive Platform',
+  title: { absolute: 'Sign In | éPure Drive' },
+  description: 'Sign in to your éPure Drive dashboard to manage your fleet, bookings and payments.',
+  // Crawlable (not blocked in robots.txt) so search engines can see this noindex.
   robots: { index: false, follow: false },
+  openGraph: {
+    title: 'Sign In | éPure Drive',
+    description: 'Sign in to your éPure Drive dashboard to manage your fleet, bookings and payments.',
+    url: 'https://epuredrive.com/login',
+  },
+  twitter: {
+    title: 'Sign In | éPure Drive',
+    description: 'Sign in to your éPure Drive dashboard to manage your fleet, bookings and payments.',
+  },
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
