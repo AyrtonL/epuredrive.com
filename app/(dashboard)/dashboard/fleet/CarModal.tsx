@@ -22,16 +22,19 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
 
   const [formData, setFormData] = useState<Partial<Car>>({})
   const [showCustomColor, setShowCustomColor] = useState(false)
+  const [featuresText, setFeaturesText] = useState('')
 
   useEffect(() => {
     if (car) {
       setFormData(car)
+      setFeaturesText(Array.isArray(car.features) ? car.features.join(', ') : '')
       setShowCustomColor(!!(car as any).color && !COMMON_CAR_COLORS.includes((car as any).color))
     } else {
       setFormData({
         status: 'active',
         category: 'economy',
       })
+      setFeaturesText('')
       setShowCustomColor(false)
     }
     setErrorStr(null)
@@ -124,7 +127,10 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
       seats: numOrNull(formData.seats),
       transmission: formData.transmission || null,
       hp: formData.hp || null,
-      features: formData.features || null,
+      features: (() => {
+        const list = featuresText.split(',').map(f => f.trim()).filter(Boolean).slice(0, 20)
+        return list.length > 0 ? list : null
+      })(),
       description: formData.description || null,
       turo_vehicle_id: formData.turo_vehicle_id || null,
       mileage: numOrNull(formData.mileage),
@@ -156,7 +162,7 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
       <div className="glass w-full max-w-2xl rounded-t-3xl sm:rounded-3xl max-sm:bg-none max-sm:bg-[#0d0d0d] border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up mt-auto sm:my-auto">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/10 bg-white/5">
           <h3 className="text-lg font-bold text-white tracking-wide">
             {isEditing ? 'Edit Vehicle' : 'Add New Vehicle'}
           </h3>
@@ -169,7 +175,7 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6 max-h-[80dvh] sm:max-h-[75vh] overflow-y-auto custom-scrollbar">
           {errorStr && (
             <div className="p-4 bg-red-500/20 text-red-300 rounded-xl text-sm border border-red-500/30">
               {errorStr}
@@ -312,13 +318,13 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
 
             <div className="space-y-1 md:col-span-2">
               <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">VIN</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   placeholder="e.g. 1HGBH41JXMN109186"
                   value={formData.vin || ''}
                   onChange={e => setFormData({ ...formData, vin: e.target.value })}
-                  className="flex-1 bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+                  className="flex-1 min-w-0 bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
                 />
                 <button
                   type="button"
@@ -329,6 +335,71 @@ export default function CarModal({ isOpen, onClose, car }: Props) {
                   {isDecoding ? 'Decoding…' : '🔍 Decode VIN'}
                 </button>
               </div>
+            </div>
+
+            {/* Shown on the public car page. These used to be settable only via
+                VIN decode, so most cars had them empty. */}
+            <div className="md:col-span-2 pt-2">
+              <div className="text-[10px] font-black text-white/35 uppercase tracking-[0.2em]">Public site details</div>
+              <p className="text-[11px] text-white/35 mt-1">Shown to customers on this car&apos;s page. Empty fields are hidden.</p>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Seats</label>
+              <input
+                type="number" min="1" max="20" inputMode="numeric" placeholder="e.g. 5"
+                value={formData.seats ?? ''}
+                onChange={e => setFormData({...formData, seats: e.target.value === '' ? null : Number(e.target.value)})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Transmission</label>
+              <select
+                value={formData.transmission || ''}
+                onChange={e => setFormData({...formData, transmission: e.target.value || null})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              >
+                <option value="" className="bg-[#0d0d0d]">Not set</option>
+                <option value="Automatic" className="bg-[#0d0d0d]">Automatic</option>
+                <option value="Manual" className="bg-[#0d0d0d]">Manual</option>
+                {formData.transmission && !['Automatic', 'Manual'].includes(formData.transmission) && (
+                  <option value={formData.transmission} className="bg-[#0d0d0d]">{formData.transmission}</option>
+                )}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Horsepower</label>
+              <input
+                type="text" placeholder="e.g. 276 HP"
+                value={formData.hp || ''}
+                onChange={e => setFormData({...formData, hp: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Features</label>
+              <input
+                type="text" placeholder="e.g. Apple CarPlay, Third row, Sunroof"
+                value={featuresText}
+                onChange={e => setFeaturesText(e.target.value)}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white"
+              />
+              <p className="text-[10px] text-white/30">Separate with commas</p>
+            </div>
+
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-[11px] font-bold text-white/50 uppercase tracking-widest">Description</label>
+              <textarea
+                rows={3} maxLength={1000}
+                placeholder="A short description customers will read on the car page"
+                value={formData.description || ''}
+                onChange={e => setFormData({...formData, description: e.target.value})}
+                className="w-full bg-white/5 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-white/20 text-white resize-y"
+              />
             </div>
 
             <div className="space-y-1 md:col-span-2">

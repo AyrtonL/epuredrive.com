@@ -1,6 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { cache } from 'react'
+import * as React from 'react'
+
+// Next.js bundles a React build that exports cache(); the stable react@18
+// package used by Jest does not. Fall back to a passthrough there (cache() is
+// already a passthrough outside a React render).
+const cache: <T extends (...args: never[]) => unknown>(fn: T) => T =
+  (React as { cache?: <T>(fn: T) => T }).cache ?? ((fn) => fn)
 
 export function createClient() {
   const cookieStore = cookies()

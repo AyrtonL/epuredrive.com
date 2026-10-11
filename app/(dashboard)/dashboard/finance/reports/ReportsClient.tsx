@@ -326,13 +326,13 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
         </div>
       </div>
 
-      {/* Parity Ledger: Audit Trail */}
+      {/* Recent activity */}
       <div className="glass border border-white/10 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] -mr-32 -mt-32" />
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6 md:mb-10 relative z-10">
           <div>
-            <h3 className="text-white font-black italic tracking-tight text-xl uppercase">Daily Ledger Audit</h3>
-            <p className="text-[10px] text-white/20 uppercase tracking-[.3em] font-black mt-1">100% Legacy Parity Mode</p>
+            <h3 className="text-white font-black italic tracking-tight text-xl uppercase">Recent Activity</h3>
+            <p className="text-[10px] text-white/20 uppercase tracking-[.3em] font-black mt-1">Latest bookings and expenses in this range</p>
           </div>
           <div className="flex gap-4">
              <div className="px-5 py-2.5 rounded-xl border border-white/5 bg-white/5 flex flex-col items-end">
@@ -346,10 +346,10 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
           <table className="m-cards w-full text-left">
             <thead>
               <tr className="text-[10px] font-black uppercase tracking-widest text-white/20 border-b border-white/5">
-                <th className="pb-4 px-4">Registry Date</th>
-                <th className="pb-4 px-4">Entity / Transaction</th>
-                <th className="pb-4 px-4">Status / Event</th>
-                <th className="pb-4 px-4 text-right">Credit / Debit</th>
+                <th className="pb-4 px-4">Date</th>
+                <th className="pb-4 px-4">Description</th>
+                <th className="pb-4 px-4">Status</th>
+                <th className="pb-4 px-4 text-right">Amount</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 font-outfit">
@@ -376,7 +376,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
               ))}
               {recentLedger.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-20 text-center italic text-white/20 text-sm font-black uppercase tracking-widest">Zero activity detected in current temporal window</td>
+                  <td colSpan={4} className="py-20 text-center italic text-white/20 text-sm font-black uppercase tracking-widest">No activity in this date range</td>
                 </tr>
               )}
             </tbody>
@@ -412,7 +412,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
         <div className="glass border border-white/10 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10 lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <h3 className="text-white font-black italic tracking-tight text-lg uppercase">Revenue per Vehicle</h3>
-            <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">Performance Ranking</span>
+            <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">Top earners first</span>
           </div>
           <div className="space-y-8">
             {byCar.slice(0, 5).map(([model, amount], i) => {
@@ -443,7 +443,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
           </button>
         </div>
         {byMonth.length === 0 ? (
-          <p className="text-white/30 text-sm py-12 text-center italic">Aggregate data unavailable for this range.</p>
+          <p className="text-white/30 text-sm py-12 text-center italic">No revenue in this date range.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
             {byMonth.map(([month, amount]) => {
@@ -469,14 +469,14 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
       {/* Expenses Breakdown */}
       <div className="glass border border-white/10 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <h3 className="text-white font-black italic tracking-tight text-lg uppercase text-white/60">Expense Audit Log</h3>
+          <h3 className="text-white font-black italic tracking-tight text-lg uppercase text-white/60">Expenses</h3>
           <button onClick={exportExpensesCSV} disabled={filteredExp.length === 0}
             className="flex items-center gap-2 bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/10">
             Download Expenses CSV
           </button>
         </div>
         {filteredExp.length === 0 ? (
-          <p className="text-white/30 text-sm py-12 text-center italic">No outgoing transactions found.</p>
+          <p className="text-white/30 text-sm py-12 text-center italic">No expenses in this date range.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="m-cards w-full text-sm">

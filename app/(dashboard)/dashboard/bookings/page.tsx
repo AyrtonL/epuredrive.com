@@ -5,7 +5,7 @@ import StatCard from '@/components/dashboard/StatCard'
 import BookingsTable from './BookingsTable'
 import type { Reservation, Car, RentalExtra } from '@/lib/supabase/types'
 
-export default async function BookingsPage() {
+export default async function BookingsPage({ searchParams }: { searchParams?: { q?: string } }) {
   const { supabase, tenantId } = await requireTenantId()
 
   const [{ data: reservations }, { data: cars }, { data: tenant }, { data: extras }] = await Promise.all([
@@ -54,6 +54,8 @@ export default async function BookingsPage() {
 
       <div className="glass border border-white/10 rounded-2xl md:rounded-3xl p-3 sm:p-6 md:p-8">
         <BookingsTable
+          key={searchParams?.q ?? ''}
+          initialQuery={typeof searchParams?.q === 'string' ? searchParams.q.slice(0, 100) : ''}
           reservations={rows}
           cars={carRows}
           rentalExtras={extraRows}

@@ -40,11 +40,13 @@ interface Props {
   rentalExtras: RentalExtra[]
   chargePerLevel: number
   cardSurchargeRate: number | null
+  /** Pre-filled search, e.g. from the Overview search box (?q=). */
+  initialQuery?: string
 }
 
-export default function BookingsTable({ reservations, cars, rentalExtras, chargePerLevel, cardSurchargeRate }: Props) {
+export default function BookingsTable({ reservations, cars, rentalExtras, chargePerLevel, cardSurchargeRate, initialQuery = '' }: Props) {
   const router = useRouter()
-  const [filter, setFilter] = useState('')
+  const [filter, setFilter] = useState(initialQuery)
   const [statusFilter, setStatusFilter] = useState('')
   const [carFilter, setCarFilter] = useState('')
   const [dateFrom, setDateFrom] = useState('')

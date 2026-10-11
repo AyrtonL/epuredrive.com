@@ -357,7 +357,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
 
           {/* ── Sticky Summary Header ── */}
           <div className="border-b border-white/10 bg-white/[0.04] flex-shrink-0">
-            <div className="flex items-start justify-between px-6 pt-4 pb-2 gap-3">
+            <div className="flex items-start justify-between px-4 sm:px-6 pt-4 pb-2 gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-3 flex-wrap">
                   <h3 className="text-lg font-bold text-white tracking-wide">
@@ -384,7 +384,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
             </div>
 
             {/* Status pills + total */}
-            <div className="flex items-center justify-between gap-4 px-6 pb-3 flex-wrap">
+            <div className="flex items-center justify-between gap-3 sm:gap-4 px-4 sm:px-6 pb-3 flex-wrap">
               <div className="flex gap-1.5 flex-wrap">
                 {STATUS_OPTIONS.map((opt) => {
                   const active = (formData.status ?? 'pending') === opt.value
@@ -447,7 +447,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
 
           {/* ── Form Body ── */}
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-6">
               {errorStr && (
                 <div className="p-4 bg-red-500/20 text-red-300 rounded-xl text-sm border border-red-500/30">
                   {errorStr}
@@ -1298,22 +1298,22 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
             </div>
 
             {/* Footer */}
-            <div className="flex justify-between items-center gap-3 px-6 py-4 border-t border-white/10 bg-white/[0.02] flex-shrink-0">
+            <div className="flex justify-between items-center gap-3 px-4 sm:px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4 border-t border-white/10 bg-white/[0.02] flex-shrink-0">
               <div className="text-[10px] text-white/30 font-medium hidden sm:block">
                 {nights != null && `${nights} ${nights === 1 ? 'night' : 'nights'}`}
               </div>
-              <div className="flex gap-3 ml-auto">
+              <div className="flex gap-3 ml-auto w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="bg-white/5 text-white/80 hover:bg-white/10 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                  className="flex-1 sm:flex-none bg-white/5 text-white/80 hover:bg-white/10 px-6 py-3 sm:py-2.5 rounded-xl text-sm font-semibold transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="bg-white text-black hover:bg-white/90 px-6 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+                  className="flex-[2] sm:flex-none bg-white text-black hover:bg-white/90 px-6 py-3 sm:py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
                 >
                   {isPending ? 'Saving…' : isEditing ? 'Save Changes' : 'Create Booking'}
                 </button>

@@ -139,18 +139,21 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-extrabold text-white tracking-tight">Overview</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2 md:gap-3">
-          <div className="relative hidden md:block">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          {/* Opens Bookings with the search applied (name, email, ref #, vehicle). */}
+          <form action="/dashboard/bookings" method="get" role="search" className="relative w-full md:w-auto">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <circle cx="11" cy="11" r="8" />
               <path strokeLinecap="round" d="m21 21-4.35-4.35" />
             </svg>
             <input
-              type="text"
+              type="search"
+              name="q"
+              enterKeyHint="search"
+              aria-label="Search bookings"
               placeholder="Search bookings, customers, vehicles..."
-              className="w-64 lg:w-80 bg-white/[0.04] border border-white/[0.08] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white/80 placeholder:text-white/30 focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all"
-              readOnly
+              className="w-full md:w-64 lg:w-80 bg-white/[0.04] border border-white/[0.08] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white/80 placeholder:text-white/30 focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all"
             />
-          </div>
+          </form>
           <NotificationBell />
           {tenant?.slug && (
             <Link
