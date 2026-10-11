@@ -65,7 +65,7 @@ function carName(c: CarInfo | undefined, carId: number): string {
 async function notifyTenant(supabase: SupabaseClient, tenantId: string, recalls: PendingRecall[]): Promise<number> {
   const carIds = Array.from(new Set(recalls.map((r) => r.car_id)))
   const [{ data: cars }, { data: tenant }] = await Promise.all([
-    supabase.from('cars').select('id, make, model, model_full, year, vin').in('id', carIds),
+    supabase.from('cars').select('id, make, model, model_full, year, vin').in('id', carIds).eq('tenant_id', tenantId),
     supabase.from('tenants').select('brand_name, name').eq('id', tenantId).single(),
   ])
   const carMap = new Map(((cars ?? []) as CarInfo[]).map((c) => [c.id, c]))
