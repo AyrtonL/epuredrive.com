@@ -47,6 +47,9 @@ async function tenantPathExists(slug: string, rest: string): Promise<boolean> {
 /** Rewrite target for paths that don't exist: Next serves app/not-found.tsx with a 404. */
 const NOT_FOUND_PATH = '/__not-found'
 
+/** Keep in sync with next.config.mjs. Netlify purges its CDN cache on every deploy. */
+const MARKETING_CDN_CACHE = 'public, s-maxage=3600, stale-while-revalidate=86400, durable'
+
 // Crawlers we never want to auto-redirect on `/` so they always see the
 // canonical English landing page and correctly index /es via hreflang.
 const BOT_UA_REGEX =
@@ -112,11 +115,19 @@ export async function middleware(request: NextRequest) {
         const res = NextResponse.redirect(url, 307)
         // Make CDNs cache per-language to avoid serving the wrong redirect
         res.headers.set('Vary', 'Accept-Language')
+        // The redirect depends on the visitor's language: never let a CDN keep it.
+        res.headers.set('Netlify-CDN-Cache-Control', 'no-store')
+        res.headers.set('Cache-Control', 'private, no-store')
         return res
       }
     }
     const res = NextResponse.next({ request: { headers: requestHeaders } })
     res.headers.set('Vary', 'Accept-Language')
+    // The English landing page itself is the same for everyone, so the CDN may
+    // cache it (see MARKETING_CDN_CACHE in next.config.mjs for the other pages).
+    // This middleware runs before Netlify's cache, so Spanish visitors are still
+    // redirected above.
+    res.headers.set('Netlify-CDN-Cache-Control', MARKETING_CDN_CACHE)
     return res
   }
 

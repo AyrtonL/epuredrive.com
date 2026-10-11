@@ -115,3 +115,19 @@ describe('middleware — unknown tenant paths', () => {
     expect(res.headers.get('x-middleware-rewrite')).toContain('/__not-found')
   })
 })
+
+describe('middleware — CDN caching of the landing page', () => {
+  it('lets the CDN cache the English landing page', async () => {
+    const res = await middleware(makeRequest('epuredrive.com', '/'))
+    expect(res.headers.get('netlify-cdn-cache-control')).toContain('s-maxage')
+  })
+
+  it('never lets the CDN cache the Spanish redirect', async () => {
+    const req = new NextRequest('http://epuredrive.com/', {
+      headers: { host: 'epuredrive.com', 'accept-language': 'es-US,es;q=0.9' },
+    })
+    const res = await middleware(req)
+    expect(res.status).toBe(307)
+    expect(res.headers.get('netlify-cdn-cache-control')).toBe('no-store')
+  })
+})
