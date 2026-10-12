@@ -1,5 +1,5 @@
 // __tests__/lib/overview-metrics.test.ts
-import { dailyCarsOutSeries, dailyRevenueSeries, formatDateRange, monthToDateRevenue, sameDayLastMonthISO } from '@/lib/dashboard/overview-metrics'
+import { dailyCarsOutSeries, dailyRevenueSeries, formatDateRange, monthRevenue, sameDayLastMonthISO } from '@/lib/dashboard/overview-metrics'
 import type { Reservation } from '@/lib/supabase/types'
 
 function res(partial: Partial<Reservation>): Reservation {
@@ -51,56 +51,61 @@ describe('sameDayLastMonthISO', () => {
   })
 })
 
-describe('monthToDateRevenue', () => {
+describe('monthRevenue', () => {
   const today = '2026-10-12'
 
-  it('splits earned and in-progress revenue, prorated to the days inside the month so far', () => {
+  it('counts completed revenue plus the October days of active rentals, including days still ahead', () => {
     const rows = [
-      // completed, fully inside Oct 1–12: all $100 counts as earned
+      // completed inside October: all $100 earned
       res({ id: 1, pickup_date: '2026-10-01', return_date: '2026-10-02', total_amount: 100, status: 'completed' }),
-      // active Oct 10–19 (10 days, $1000): Oct 10–12 = 3 days → $300 in progress
+      // active Oct 10–19: every day is in October → full $1000, even the days after today
       res({ id: 2, pickup_date: '2026-10-10', return_date: '2026-10-19', total_amount: 1000, status: 'active' }),
+      // active Sep 22 – Nov 10 (50 days, $500 → $10/day): only Oct's 31 days count
+      res({ id: 3, pickup_date: '2026-09-22', return_date: '2026-11-10', total_amount: 500, status: 'active' }),
     ]
-    const r = monthToDateRevenue(rows, today)
+    const r = monthRevenue(rows, today)
     expect(r.earned).toBeCloseTo(100)
-    expect(r.inProgress).toBeCloseTo(300)
-    expect(r.current).toBeCloseTo(400)
+    expect(r.inProgress).toBeCloseTo(1310)
+    expect(r.current).toBeCloseTo(1410)
   })
 
-  it('compares against the same window last month, not the whole month', () => {
+  it('totals all of last month and reports this month as a share of it', () => {
     const rows = [
-      // Sep 1–12 window: 2 of 4 days of a $400 rental → $200
-      res({ id: 3, pickup_date: '2026-09-11', return_date: '2026-09-14', total_amount: 400, status: 'completed' }),
-      // after Sep 12 → must not count toward the comparison
-      res({ id: 4, pickup_date: '2026-09-20', return_date: '2026-09-22', total_amount: 900, status: 'completed' }),
-      res({ id: 5, pickup_date: '2026-10-05', return_date: '2026-10-06', total_amount: 300, status: 'completed' }),
+      res({ id: 4, pickup_date: '2026-09-11', return_date: '2026-09-14', total_amount: 400, status: 'completed' }),
+      res({ id: 5, pickup_date: '2026-09-20', return_date: '2026-09-22', total_amount: 600, status: 'completed' }),
+      res({ id: 6, pickup_date: '2026-10-05', return_date: '2026-10-06', total_amount: 250, status: 'completed' }),
     ]
-    const r = monthToDateRevenue(rows, today)
-    expect(r.previous).toBeCloseTo(200)
-    expect(r.current).toBeCloseTo(300)
-    expect(r.trendPct).toBe(50)
+    const r = monthRevenue(rows, today)
+    expect(r.lastMonthTotal).toBeCloseTo(1000)
+    expect(r.pctOfLastMonth).toBe(25)
+    expect(r.lastMonthLabel).toBe('Sep')
   })
 
   it('ignores cancelled and upcoming reservations', () => {
     const rows = [
-      res({ id: 6, status: 'cancelled', total_amount: 999 }),
-      res({ id: 7, status: 'confirmed', total_amount: 999 }),
-      res({ id: 8, status: 'pending', total_amount: 999 }),
+      res({ id: 7, status: 'cancelled', total_amount: 999 }),
+      res({ id: 8, status: 'confirmed', total_amount: 999 }),
+      res({ id: 9, status: 'pending', total_amount: 999 }),
     ]
-    const r = monthToDateRevenue(rows, today)
+    const r = monthRevenue(rows, today)
     expect(r.current).toBe(0)
-    expect(r.previous).toBe(0)
+    expect(r.lastMonthTotal).toBe(0)
   })
 
-  it('returns a null trend when there is nothing to compare against', () => {
-    const r = monthToDateRevenue([res({ pickup_date: '2026-10-03', return_date: '2026-10-03' })], today)
-    expect(r.trendPct).toBeNull()
+  it('has no share when last month had no revenue', () => {
+    const r = monthRevenue([res({ pickup_date: '2026-10-03', return_date: '2026-10-03' })], today)
+    expect(r.pctOfLastMonth).toBeNull()
   })
 
-  it('treats an active rental with no return date as ongoing through today', () => {
-    const r = monthToDateRevenue([res({ pickup_date: '2026-10-11', return_date: null, total_amount: 200, status: 'active' })], today)
-    // open-ended: whole amount is attributed to the 2 days so far
+  it('treats an active rental with no return date as running through today', () => {
+    const r = monthRevenue([res({ pickup_date: '2026-10-11', return_date: null, total_amount: 200, status: 'active' })], today)
     expect(r.inProgress).toBeCloseTo(200)
+  })
+
+  it('rolls the previous month back across the year boundary', () => {
+    const r = monthRevenue([res({ pickup_date: '2025-12-10', return_date: '2025-12-11', total_amount: 80 })], '2026-01-05')
+    expect(r.lastMonthTotal).toBeCloseTo(80)
+    expect(r.lastMonthLabel).toBe('Dec')
   })
 })
 

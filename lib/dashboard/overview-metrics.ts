@@ -6,15 +6,19 @@
 import type { Reservation } from '@/lib/supabase/types'
 import { inclusiveDays, proratedAmountInRange, revenueBucket } from '@/lib/finance/revenue'
 
-export interface MonthToDateRevenue {
-  /** earned + inProgress, prorated to the days of this month so far */
+export interface MonthRevenue {
+  /** earned + inProgress for this calendar month */
   current: number
+  /** completed reservations, prorated to this month's days */
   earned: number
+  /** active rentals, counting all of their days that fall in this month (incl. days still ahead) */
   inProgress: number
-  /** same calculation for the same days of last month */
-  previous: number
-  /** % change vs previous, null when there is nothing to compare against */
-  trendPct: number | null
+  /** completed + active revenue for all of last month */
+  lastMonthTotal: number
+  /** current as a % of lastMonthTotal; null when last month had none */
+  pctOfLastMonth: number | null
+  /** "Sep" */
+  lastMonthLabel: string
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -39,16 +43,21 @@ function firstOfMonth(iso: string): string {
   return `${y}-${pad(m)}-01`
 }
 
+function lastOfMonth(iso: string): string {
+  const { y, m } = parts(iso)
+  return `${y}-${pad(m)}-${pad(new Date(Date.UTC(y, m, 0)).getUTCDate())}`
+}
+
 /**
- * Revenue for the month so far. Earned (completed) follows the policy in
- * lib/finance/revenue.ts; in-progress (active) rentals are shown alongside
- * it explicitly so an operator with cars out early in the month doesn't see
- * "$0 · −100%". Both windows are prorated by rental days, so the comparison
- * is like for like.
+ * This month's revenue. Earned (completed) follows the policy in
+ * lib/finance/revenue.ts; active rentals are opted in explicitly and count
+ * every day they have in this month — they're already on the road, so
+ * October will collect them. Days that spill into next month don't count.
+ * Compared with the whole of last month as a share ("62% of Sep"), since a
+ * month in progress can't be compared like for like with a finished one.
  */
-export function monthToDateRevenue(rows: readonly Reservation[], today: string): MonthToDateRevenue {
-  // Open-ended active rentals run through today — fix their end once so the
-  // same rental isn't attributed in full to both windows.
+export function monthRevenue(rows: readonly Reservation[], today: string): MonthRevenue {
+  // Open-ended active rentals have no known end — count them through today.
   const normalized = rows.map((r) => (r.return_date ? r : { ...r, return_date: today }))
 
   const sumWindow = (from: string, to: string, bucket: 'earned' | 'active'): number =>
@@ -57,16 +66,23 @@ export function monthToDateRevenue(rows: readonly Reservation[], today: string):
       .reduce((s, r) => s + proratedAmountInRange(r, from, to), 0)
 
   const curFrom = firstOfMonth(today)
-  const prevTo = sameDayLastMonthISO(today)
+  const curTo = lastOfMonth(today)
+  const prevTo = lastOfMonth(sameDayLastMonthISO(today))
   const prevFrom = firstOfMonth(prevTo)
 
-  const earned = sumWindow(curFrom, today, 'earned')
-  const inProgress = sumWindow(curFrom, today, 'active')
+  const earned = sumWindow(curFrom, curTo, 'earned')
+  const inProgress = sumWindow(curFrom, curTo, 'active')
   const current = earned + inProgress
-  const previous = sumWindow(prevFrom, prevTo, 'earned') + sumWindow(prevFrom, prevTo, 'active')
-  const trendPct = previous > 0 ? Math.round(((current - previous) / previous) * 100) : null
+  const lastMonthTotal = sumWindow(prevFrom, prevTo, 'earned') + sumWindow(prevFrom, prevTo, 'active')
 
-  return { current, earned, inProgress, previous, trendPct }
+  return {
+    current,
+    earned,
+    inProgress,
+    lastMonthTotal,
+    pctOfLastMonth: lastMonthTotal > 0 ? Math.round((current / lastMonthTotal) * 100) : null,
+    lastMonthLabel: MONTHS[parts(prevTo).m - 1],
+  }
 }
 
 const isRevenueBearing = (r: Pick<Reservation, 'status'>): boolean => {

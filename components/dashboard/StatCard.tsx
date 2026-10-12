@@ -4,6 +4,8 @@ interface Props {
   sub?: string
   trend?: number | null
   trendLabel?: string
+  /** Neutral chip next to the value (e.g. "62% of Sep") — not good/bad colored. */
+  badge?: string
   accentColor?: string
   variant?: 'default' | 'primary'
   /** Optional daily values rendered as a sparkline under the value. */
@@ -37,7 +39,7 @@ function Sparkline({ values, label }: { values: readonly number[]; label?: strin
   )
 }
 
-export default function StatCard({ label, value, sub, trend, trendLabel, accentColor, variant = 'default', sparkline, sparklineLabel }: Props) {
+export default function StatCard({ label, value, sub, trend, trendLabel, accentColor, variant = 'default', badge, sparkline, sparklineLabel }: Props) {
   const isPrimary = variant === 'primary'
   const trendPositive = trend != null && trend >= 0
   const trendColor = trendPositive ? 'text-emerald-400' : 'text-red-400'
@@ -56,6 +58,9 @@ export default function StatCard({ label, value, sub, trend, trendLabel, accentC
             <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${trendColor} ${trendBg}`}>
               {trendPositive ? '+' : ''}{trend}{trendLabel ?? '%'}
             </span>
+          )}
+          {badge && (
+            <span className="text-[11px] font-bold px-1.5 py-0.5 rounded text-white/70 bg-white/[0.08] whitespace-nowrap">{badge}</span>
           )}
         </div>
         {sub && <div className="text-[12px] text-white/60 font-medium mt-1.5 md:truncate">{sub}</div>}

@@ -14,7 +14,7 @@ import {
   dailyCarsOutSeries,
   dailyRevenueSeries,
   formatDateRange,
-  monthToDateRevenue,
+  monthRevenue,
   sameDayLastMonthISO,
 } from '@/lib/dashboard/overview-metrics'
 
@@ -104,7 +104,7 @@ export default async function DashboardPage() {
   const carName = (id: number | null | undefined): string => (id != null ? carMap[id] ?? `Car #${id}` : 'Unassigned')
 
   // --- Stat calculations ---
-  const revenue = monthToDateRevenue(historyRows, today)
+  const revenue = monthRevenue(historyRows, today)
   const revenueSeries = dailyRevenueSeries(historyRows, windowStart, today)
 
   const inFleetCars = carRows.filter((c) => c.status !== 'retired')
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
     .sort((a, b) => b.percentage - a.percentage)
 
   // --- Today ---
-  const toTodayItem = (r: { id: number; booking_code: string | null; customer_name: string | null; car_id: number | null }, time: string | null): TodayItem => ({
+  const toTodayItem = (r: { id: string; booking_code: string | null; customer_name: string | null; car_id: number | null }, time: string | null): TodayItem => ({
     id: r.id,
     customer: r.customer_name || 'Unknown',
     vehicle: carName(r.car_id),
@@ -158,7 +158,7 @@ export default async function DashboardPage() {
     parkIt: r.park_it,
   }))
 
-  const hasRevenue = revenue.current > 0 || revenue.previous > 0
+  const hasRevenue = revenue.current > 0 || revenue.lastMonthTotal > 0
 
   return (
     <div className="max-w-screen-2xl mx-auto space-y-8">
@@ -208,12 +208,12 @@ export default async function DashboardPage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <StatCard
-          label="Revenue · Month to date"
+          label="Revenue · This month"
           value={hasRevenue ? money(revenue.current) : '—'}
-          trend={revenue.trendPct}
+          badge={revenue.pctOfLastMonth != null ? `${revenue.pctOfLastMonth}% of ${revenue.lastMonthLabel}` : undefined}
           sub={
             hasRevenue
-              ? `${money(revenue.earned)} earned · ${money(revenue.inProgress)} in progress`
+              ? `${money(revenue.earned)} earned · ${money(revenue.inProgress)} on active rentals`
               : 'No rentals yet this month'
           }
           variant="primary"
@@ -238,9 +238,9 @@ export default async function DashboardPage() {
           sub={pendingCount > 0 ? 'pending bookings' : 'All caught up'}
         />
       </div>
-      {revenue.trendPct != null && (
+      {revenue.pctOfLastMonth != null && (
         <p className="-mt-5 text-[12px] text-white/45">
-          Revenue change compares {formatDateRange(firstOfMonth, today, today)} with the same days last month.
+          Revenue counts completed rentals plus each active rental&apos;s days in this month. {revenue.lastMonthLabel} total: {money(revenue.lastMonthTotal)}.
         </p>
       )}
 
