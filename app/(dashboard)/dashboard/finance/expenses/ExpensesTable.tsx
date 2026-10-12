@@ -8,6 +8,8 @@ import ExpenseModal from './ExpenseModal'
 import { todayISO } from '@/lib/finance/revenue'
 import { carDisplayName } from '@/lib/utils/car-display-name'
 import { formatDate, formatMoney } from '@/lib/utils/format'
+import { categoryName } from '@/lib/expenses/recurring'
+import { useToast } from '@/components/ui/Toast'
 
 const PAGE_SIZE = 15
 
@@ -18,6 +20,7 @@ interface Props {
 
 export default function ExpensesTable({ expenses, cars }: Props) {
   const router = useRouter()
+  const toast = useToast()
   const [filter, setFilter] = useState('')
   const [isPending, startTransition] = useTransition()
   
@@ -46,10 +49,14 @@ export default function ExpensesTable({ expenses, cars }: Props) {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
 
-  function handleDelete(id: number) {
+  function handleDelete(id: string) {
     if (!confirm('Delete this expense record?')) return
     startTransition(async () => {
-      await deleteTransaction(id)
+      const result = await deleteTransaction(id)
+      if (result.error) {
+        toast.error(result.error)
+        return
+      }
       router.refresh()
     })
   }
@@ -195,7 +202,7 @@ export default function ExpensesTable({ expenses, cars }: Props) {
                     </td>
                     <td data-label="Category" className="py-4 pr-4">
                       <span className="text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-lg bg-white/[0.08] border border-white/[0.10] text-white/70">
-                        {e.category || 'General'}
+                        {categoryName(e.category)}
                       </span>
                     </td>
                     <td data-primary className="py-4 pr-4 text-white/80">

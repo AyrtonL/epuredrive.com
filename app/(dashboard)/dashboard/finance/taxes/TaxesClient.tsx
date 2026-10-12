@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Transaction, TaxSetting, Reservation } from '@/lib/supabase/types'
 import DatePicker from '@/components/ui/DatePicker'
 import { formatMoney } from '@/lib/utils/format'
+import { isOperatingExpense } from '@/lib/expenses/recurring'
 
 interface Props {
   transactions: Transaction[]
@@ -73,7 +74,8 @@ export default function TaxesClient({ transactions, reservations, taxSettings: i
         r.date != null && r.date >= dateFrom && r.date <= dateTo)
   }, [reservations, dateFrom, dateTo])
 
-  const expenses = useMemo(() => filtered.filter(r => r.type === 'expense'), [filtered])
+  // Deductible expenses: loan principal is debt repayment, not a deduction.
+  const expenses = useMemo(() => filtered.filter(isOperatingExpense), [filtered])
 
   const activeRates = useMemo(() => settings.filter(s => s.is_active), [settings])
 

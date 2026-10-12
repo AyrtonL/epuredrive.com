@@ -6,6 +6,7 @@
 
 import type { Consignment, ConsignmentOwner, Reservation, Transaction } from '@/lib/supabase/types'
 import { isEarned, revenueBucket, overlapsRange } from '@/lib/finance/revenue'
+import { isOperatingExpense } from '@/lib/expenses/recurring'
 
 const WIDE_FROM = '0001-01-01'
 const WIDE_TO = '9999-12-31'
@@ -66,7 +67,7 @@ export function computeCarPayout(
 
   const carExpenses = expenses
     .filter((e) => {
-      if (e.car_id !== carId) return false
+      if (e.car_id !== carId || !isOperatingExpense(e)) return false
       const d = e.transaction_date ?? ''
       return d >= from && d <= to
     })

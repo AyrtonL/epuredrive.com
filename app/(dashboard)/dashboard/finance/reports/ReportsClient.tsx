@@ -13,6 +13,7 @@ import {
 } from '@/lib/finance/revenue'
 import { carDisplayName } from '@/lib/utils/car-display-name'
 import { formatDate, formatMoney } from '@/lib/utils/format'
+import { isOperatingExpense } from '@/lib/expenses/recurring'
 
 interface ReportCar {
   id: number
@@ -103,7 +104,8 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
   const accountsReceivable = filteredAllRes
     .filter((r) => revenueBucket(r.status) === 'upcoming')
     .reduce((s, r) => s + companyAmount(r), 0)
-  const totalExpenses = filteredExp.reduce((s, e) => s + (Number(e.amount) || 0), 0)
+  // Loan principal is debt repayment, not a cost — it's listed but not subtracted.
+  const totalExpenses = filteredExp.filter(isOperatingExpense).reduce((s, e) => s + (Number(e.amount) || 0), 0)
   const netProfit = totalRevenue - totalExpenses
   
   // Utilization Logic

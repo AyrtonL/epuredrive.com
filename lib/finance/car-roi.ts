@@ -64,7 +64,7 @@ function parts(iso: string): { y: number; m: number; d: number } {
 }
 
 /** Due date of installment k (0-based), clamped to the month's last day. */
-function dueDate(first: string, k: number): string {
+export function dueDate(first: string, k: number): string {
   const { y, m, d } = parts(first)
   const total = (m - 1) + k
   const year = y + Math.floor(total / 12)
@@ -79,37 +79,42 @@ function monthsBetween(from: string, to: string): number {
   return (b.y - a.y) * 12 + (b.m - a.m) - (b.d < a.d ? 1 : 0)
 }
 
-export function loanStatus(loan: LoanTerms, today: string): LoanStatus {
+export interface Installment {
+  /** 1-based installment number */
+  n: number
+  dueDate: string
+  interest: number
+  principal: number
+}
+
+/** Full amortization schedule: each installment's due date and interest/principal split. */
+export function installmentSchedule(loan: LoanTerms): Installment[] {
   const payment = monthlyPayment(loan.amount, loan.aprPct, loan.termMonths)
   const r = loan.aprPct / 100 / 12
-
   let balance = loan.amount
-  let interestPaid = 0
-  let totalInterest = 0
-  let paymentsMade = 0
-  let balanceToday = loan.amount
-
-  // Walk the full amortization schedule; installments due on or before
-  // today count as paid.
+  const out: Installment[] = []
   for (let k = 0; k < loan.termMonths; k++) {
     const interest = balance * r
-    balance -= Math.min(payment - interest, balance)
-    totalInterest += interest
-    if (dueDate(loan.firstPaymentDate, k) <= today) {
-      interestPaid += interest
-      paymentsMade += 1
-      balanceToday = balance
-    }
+    const principal = Math.min(payment - interest, balance)
+    balance -= principal
+    out.push({ n: k + 1, dueDate: dueDate(loan.firstPaymentDate, k), interest, principal })
   }
+  return out
+}
+
+export function loanStatus(loan: LoanTerms, today: string): LoanStatus {
+  const schedule = installmentSchedule(loan)
+  const paid = schedule.filter((i) => i.dueDate <= today)
+  const principalPaid = paid.reduce((s, i) => s + i.principal, 0)
 
   return {
-    payment,
-    paymentsMade,
-    principalPaid: loan.amount - balanceToday,
-    interestPaid,
-    balance: Math.max(0, balanceToday),
-    totalInterest,
-    paidOff: paymentsMade >= loan.termMonths,
+    payment: monthlyPayment(loan.amount, loan.aprPct, loan.termMonths),
+    paymentsMade: paid.length,
+    principalPaid,
+    interestPaid: paid.reduce((s, i) => s + i.interest, 0),
+    balance: Math.max(0, loan.amount - principalPaid),
+    totalInterest: schedule.reduce((s, i) => s + i.interest, 0),
+    paidOff: paid.length >= loan.termMonths,
   }
 }
 

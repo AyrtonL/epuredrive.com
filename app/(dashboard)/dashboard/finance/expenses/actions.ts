@@ -21,7 +21,7 @@ export async function createTransaction(
 }
 
 export async function updateTransaction(
-  id: number,
+  id: string,
   data: Partial<Omit<Transaction, 'id' | 'tenant_id'>>
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
@@ -31,9 +31,19 @@ export async function updateTransaction(
   return { error: error?.message ?? null }
 }
 
-export async function deleteTransaction(id: number): Promise<{ error: string | null }> {
+export async function deleteTransaction(id: string): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
+
+  // Generated rows would be recreated by the next sync — point to the source instead.
+  const { data: row } = await supabase.from('transactions').select('source_key').eq('id', id).eq('tenant_id', tenantId).maybeSingle()
+  if (row?.source_key?.startsWith('loan:')) {
+    return { error: 'This loan payment comes from the car’s financing. Edit the loan on the vehicle page instead.' }
+  }
+  if (row?.source_key?.startsWith('rec:')) {
+    return { error: 'This was created by a recurring expense. Edit or stop it under Expenses → Recurring.' }
+  }
+
   const { error } = await supabase.from('transactions').delete().eq('id', id).eq('tenant_id', tenantId)
   revalidatePath('/dashboard/finance/expenses')
   return { error: error?.message ?? null }

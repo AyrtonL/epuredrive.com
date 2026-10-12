@@ -5,6 +5,7 @@ import { carDisplayName } from '@/lib/utils/car-display-name'
 import InvestmentTable, { type InvestmentRow } from './InvestmentTable'
 import { carRoi } from '@/lib/finance/car-roi'
 import { todayISO } from '@/lib/finance/revenue'
+import { LOAN_CATEGORIES } from '@/lib/expenses/recurring'
 
 function fmt(n: number) {
   const abs = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -63,7 +64,10 @@ export default async function ROIPage() {
   // car_services is the single source of truth for maintenance cost. Remaining
   // per-car transactions (manual expenses, not maintenance mirrors) count as
   // "other expenses" — so every distinct expense is deducted exactly once.
-  txRows.forEach((t) => {
+  // Loan interest + principal are already in "cash invested" (car_financing),
+  // so generated loan rows are left out of operating expenses here.
+  const opTx = txRows.filter((t) => !LOAN_CATEGORIES.has(t.category ?? ''))
+  opTx.forEach((t) => {
     if (t.car_id != null && !mirroredTxnIds.has(String(t.id))) {
       transactionExpenseMap[t.car_id] = (transactionExpenseMap[t.car_id] ?? 0) + (Number(t.amount) || 0)
     }
@@ -83,7 +87,7 @@ export default async function ROIPage() {
     const consignment = consignmentRows.find((con) => con.car_id === c.id)
     return s + (consignment?.owner_percentage ? gross * (consignment.owner_percentage / 100) : 0)
   }, 0)
-  const generalExpenses = txRows.filter(t => t.car_id == null).reduce((s, t) => s + (Number(t.amount) || 0), 0)
+  const generalExpenses = opTx.filter(t => t.car_id == null).reduce((s, t) => s + (Number(t.amount) || 0), 0)
   const fleetNet = fleetGross - fleetMaint - fleetOwnerPayouts - generalExpenses - Object.values(transactionExpenseMap).reduce((s, v) => s + v, 0)
 
   // Per-car operating net (same formula as the table below) → real ROI for

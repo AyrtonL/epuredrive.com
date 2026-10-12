@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
+import { todayISO } from '@/lib/finance/revenue'
+import { clearLoanTransactions, syncTenantRecurring } from '@/lib/expenses/sync'
 
 const MAX_MONEY = 10_000_000
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
@@ -66,7 +68,17 @@ export async function saveCarFinancing(carId: number, input: FinancingInput): Pr
     return { error: 'Could not save financing details' }
   }
 
+  // Loan installments are generated expenses — rebuild them from the new terms.
+  try {
+    await clearLoanTransactions(supabase, tenantId, carId)
+    await syncTenantRecurring(supabase, tenantId, todayISO())
+  } catch (err) {
+    console.error('[saveCarFinancing] loan expenses', err instanceof Error ? err.message : err)
+    return { error: 'Financing saved, but loan payments could not be added to Expenses. Try saving again.' }
+  }
+
   revalidatePath(`/dashboard/fleet/${carId}`)
   revalidatePath('/dashboard/finance/roi')
+  revalidatePath('/dashboard/finance/expenses')
   return { error: null }
 }

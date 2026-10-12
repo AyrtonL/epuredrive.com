@@ -220,7 +220,7 @@ export interface Consignment {
 }
 
 export interface Transaction {
-  id: number
+  id: string
   transaction_date: string | null
   type: string | null
   category: string | null

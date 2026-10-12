@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { qboRequest, qboQuery } from '@/lib/quickbooks/api-client'
 import type { Transaction } from '@/lib/supabase/types'
+import { isOperatingExpense } from '@/lib/expenses/recurring'
 
 /**
  * POST /api/integrations/quickbooks/sync
@@ -56,9 +57,10 @@ export async function POST(request: NextRequest) {
     .eq('tenant_id', tenantId)
     .order('transaction_date', { ascending: true })
 
+  // Loan principal is a balance-sheet movement, not an expense — never push it to QBO as one.
   const unsynced = (allTxns as Transaction[] ?? []).filter(t => {
     const desc = t.description || ''
-    return !desc.includes('[QBO:')
+    return !desc.includes('[QBO:') && (t.type === 'income' || isOperatingExpense(t))
   })
 
   if (unsynced.length === 0) {
