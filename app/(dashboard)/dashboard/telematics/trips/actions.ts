@@ -22,6 +22,7 @@ import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
 
 const BOUNCIE_FLAG = 'bouncie_telematics'
 const MAX_POINTS = 2000 // cap row payload for the modal polyline
+const PAGE_SIZE = 1000 // PostgREST max rows per response
 
 export interface TripPositionPoint {
   lat: number
@@ -86,21 +87,27 @@ export async function getTripPositionsAction(
 
   const endedAt = tripRow.ended_at ?? new Date().toISOString()
 
-  const { data: positions, error: posErr } = await admin
-    .from('telematics_positions')
-    .select('lat, lon, recorded_at, speed_mph')
-    .eq('tenant_id', tenantId)
-    .eq('device_id', tripRow.device_id)
-    .gte('recorded_at', tripRow.started_at)
-    .lte('recorded_at', endedAt)
-    .order('recorded_at', { ascending: true })
-    .limit(MAX_POINTS)
+  // PostgREST returns at most 1000 rows per request, so a long trip was cut
+  // off halfway. Page through it up to MAX_POINTS.
+  const rows: PositionRow[] = []
+  for (let from = 0; from < MAX_POINTS; from += PAGE_SIZE) {
+    const { data: page, error: posErr } = await admin
+      .from('telematics_positions')
+      .select('lat, lon, recorded_at, speed_mph')
+      .eq('tenant_id', tenantId)
+      .eq('device_id', tripRow.device_id)
+      .gte('recorded_at', tripRow.started_at)
+      .lte('recorded_at', endedAt)
+      .order('recorded_at', { ascending: true })
+      .range(from, Math.min(from + PAGE_SIZE, MAX_POINTS) - 1)
 
-  if (posErr) {
-    return { ok: false, error: 'Could not load trip route.', points: [] }
+    if (posErr) {
+      return { ok: false, error: 'Could not load trip route.', points: [] }
+    }
+    const batch = (page as PositionRow[] | null) ?? []
+    rows.push(...batch)
+    if (batch.length < PAGE_SIZE) break
   }
-
-  const rows = (positions as PositionRow[] | null) ?? []
   const points: TripPositionPoint[] = rows
     .filter((r): r is PositionRow & { lat: number; lon: number } =>
       r.lat !== null && r.lon !== null,
