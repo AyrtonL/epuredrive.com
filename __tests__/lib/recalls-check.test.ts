@@ -1,4 +1,4 @@
-import { findRecallsForCar, toRecallRow } from '@/lib/recalls/check'
+import { consignedCarIds, findRecallsForCar, toRecallRow } from '@/lib/recalls/check'
 import type { NhtsaRecall } from '@/lib/recalls/nhtsa'
 import type { VehicleCandidate } from '@/lib/recalls/match'
 
@@ -82,5 +82,26 @@ describe('toRecallRow', () => {
       matched_model: 'CAYENNE',
       matched_year: 2021,
     })
+  })
+})
+
+describe('consignedCarIds', () => {
+  const today = '2026-10-12'
+  it('includes cars under an open-ended or still-running contract', () => {
+    const ids = consignedCarIds([
+      { car_id: 26, contract_start: '2026-07-21', contract_end: '2028-04-30' },
+      { car_id: 27, contract_start: null, contract_end: null },
+    ], today)
+    expect(Array.from(ids).sort()).toEqual([26, 27])
+  })
+  it('excludes cars whose contract ended or has not started', () => {
+    const ids = consignedCarIds([
+      { car_id: 30, contract_start: '2025-01-01', contract_end: '2026-10-11' },
+      { car_id: 31, contract_start: '2026-11-01', contract_end: null },
+    ], today)
+    expect(ids.size).toBe(0)
+  })
+  it('treats the end date as inclusive', () => {
+    expect(consignedCarIds([{ car_id: 5, contract_start: null, contract_end: today }], today).has(5)).toBe(true)
   })
 })

@@ -1,7 +1,9 @@
 /**
- * Daily recall sweep: for every car with a year (or decodable VIN), look up
+ * Daily recall sweep: for every owned car with a year (or decodable VIN), look up
  * NHTSA recall campaigns and record any campaign not already stored for that car.
  * Rows land with notified_at = null; lib/recalls/notify.ts sends the alerts.
+ * Cars under an active consignment contract are skipped — recalls on those are
+ * the owner's responsibility, not the operator's.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { buildCandidates, parseNhtsaDate, type DecodedVin, type VehicleCandidate } from './match'
@@ -66,6 +68,21 @@ export function toRecallRow(
   }
 }
 
+export interface ConsignmentContract {
+  car_id: number | null
+  contract_start: string | null
+  contract_end: string | null
+}
+
+/** Car ids under a contract running today (both dates inclusive; null = open-ended). */
+export function consignedCarIds(contracts: ConsignmentContract[], today: string): Set<number> {
+  return new Set(
+    contracts
+      .filter((c) => (!c.contract_start || c.contract_start <= today) && (!c.contract_end || c.contract_end >= today))
+      .flatMap((c) => (c.car_id == null ? [] : [c.car_id])),
+  )
+}
+
 interface CarRow extends RecallCar {
   id: number
   tenant_id: string | null
@@ -86,9 +103,15 @@ export async function sweepRecalls(supabase: SupabaseClient): Promise<SweepResul
     .or('status.is.null,status.neq.retired')
   if (error) throw new Error(`load cars: ${error.message}`)
 
+  const { data: contracts, error: consignErr } = await supabase
+    .from('consignments')
+    .select('car_id, contract_start, contract_end')
+  if (consignErr) throw new Error(`load consignments: ${consignErr.message}`)
+  const consigned = consignedCarIds(contracts ?? [], new Date().toISOString().slice(0, 10))
+
   const deps: RecallDeps = { fetchRecalls, decodeVin, cache: new Map() }
   const result: SweepResult = { carsChecked: 0, carsWithRecalls: 0, inserted: 0, errors: 0 }
-  const queue = [...((cars ?? []) as CarRow[])]
+  const queue = ((cars ?? []) as CarRow[]).filter((c) => !consigned.has(c.id))
 
   async function worker() {
     for (let car = queue.shift(); car; car = queue.shift()) {
