@@ -5,9 +5,9 @@
  * only after the tenant was processed, so a crash mid-run retries next day.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { sendEmail } from '@/lib/email/resend'
 import { recallAlertEmail, type RecallEmailVehicle } from '@/lib/email/templates/recalls'
 import { createInAppNotification } from '@/lib/notifications/create'
+import { emailTeam } from '@/lib/notifications/email-team'
 
 export const RECALL_EVENT = 'vehicle_recall'
 
@@ -86,7 +86,7 @@ async function notifyTenant(supabase: SupabaseClient, tenantId: string, recalls:
       })),
   }))
 
-  const emailsSent = await emailTeam(supabase, tenantId, recallAlertEmail({ tenantName, vehicles }))
+  const emailsSent = await emailTeam(supabase, tenantId, RECALL_EVENT, recallAlertEmail({ tenantName, vehicles }))
 
   const urgent = recalls.some((r) => r.park_it || r.park_outside)
   await createInAppNotification({
@@ -105,25 +105,4 @@ async function notifyTenant(supabase: SupabaseClient, tenantId: string, recalls:
     .in('id', recalls.map((r) => r.id))
   if (error) throw new Error(`mark notified: ${error.message}`)
   return emailsSent
-}
-
-async function emailTeam(
-  supabase: SupabaseClient,
-  tenantId: string,
-  email: { subject: string; html: string },
-): Promise<number> {
-  const { data: pref } = await supabase
-    .from('notification_preferences')
-    .select('email_enabled')
-    .eq('tenant_id', tenantId)
-    .eq('event', RECALL_EVENT)
-    .maybeSingle()
-  if (pref && !pref.email_enabled) return 0
-
-  const { data: profiles } = await supabase.from('profiles').select('id').eq('tenant_id', tenantId)
-  const users = await Promise.allSettled((profiles ?? []).map((p) => supabase.auth.admin.getUserById(p.id)))
-  const emails = users.flatMap((u) => (u.status === 'fulfilled' && u.value.data?.user?.email ? [u.value.data.user.email] : []))
-
-  const results = await Promise.allSettled(emails.map((to) => sendEmail({ to, ...email })))
-  return results.filter((r) => r.status === 'fulfilled' && !r.value.error).length
 }

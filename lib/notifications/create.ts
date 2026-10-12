@@ -62,5 +62,6 @@ export async function createInAppNotification({
 function pushUrlFor(event: string): string {
   if (event === 'maintenance_due') return '/dashboard/maintenance'
   if (event === 'vehicle_recall') return '/dashboard/fleet'
+  if (event === 'daily_schedule') return '/dashboard'
   return '/dashboard/bookings'
 }

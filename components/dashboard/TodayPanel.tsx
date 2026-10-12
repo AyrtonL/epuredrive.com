@@ -1,7 +1,8 @@
 import Link from 'next/link'
+import { formatClock as formatTime } from '@/lib/daily-schedule/build'
 
 export interface TodayItem {
-  id: number
+  id: string
   customer: string
   vehicle: string
   time: string | null
@@ -20,15 +21,6 @@ interface Props {
   pickups: TodayItem[]
   returns: TodayItem[]
   recalls: OpenRecall[]
-}
-
-function formatTime(t: string | null): string | null {
-  if (!t) return null
-  const [h, m] = t.split(':').map(Number)
-  if (Number.isNaN(h)) return null
-  const suffix = h >= 12 ? 'pm' : 'am'
-  const h12 = h % 12 || 12
-  return m ? `${h12}:${String(m).padStart(2, '0')}${suffix}` : `${h12}${suffix}`
 }
 
 function ItemList({ title, items, empty }: { title: string; items: TodayItem[]; empty: string }) {

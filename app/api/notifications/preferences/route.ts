@@ -13,6 +13,7 @@ const NOTIFICATION_EVENTS = [
   'booking_cancelled',
   'maintenance_due',
   'vehicle_recall',
+  'daily_schedule',
   'rental.return.overdue',
   'document_expiring',
   'payment_received',
