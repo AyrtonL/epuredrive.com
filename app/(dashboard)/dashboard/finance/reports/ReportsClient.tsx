@@ -12,6 +12,7 @@ import {
   daysAgoISO,
 } from '@/lib/finance/revenue'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { formatDate, formatMoney } from '@/lib/utils/format'
 
 interface ReportCar {
   id: number
@@ -30,7 +31,7 @@ interface Props {
 }
 
 function fmt(n: number) {
-  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return formatMoney(n, { cents: 'always' })
 }
 
 // Timezone-safe (app timezone), not UTC — avoids off-by-one near midnight.
@@ -167,6 +168,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
   const maxMonth = byMonth.length > 0 ? Math.max(...byMonth.map(([, v]) => v)) : 1
 
   // Growth Assessment Logic
+  const hasGrowthData = byMonth.length >= 2
   const growthAssessment = useMemo(() => {
     if (byMonth.length < 2) return { status: 'Analyzing...', color: 'text-white/40', advice: 'Collect more data for trend analysis.' }
     const current = byMonth[0][1]
@@ -306,25 +308,27 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
       {activeTab === 'finance' && <>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+      <div className={`grid grid-cols-2 gap-4 md:gap-6 ${hasGrowthData ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
         {[
           { label: 'Gross Revenue', value: fmt(totalRevenue), color: 'text-emerald-400' },
           { label: 'Accounts Receivable', value: fmt(accountsReceivable), color: 'text-orange-400' },
           { label: 'Net Profit', value: fmt(netProfit), color: netProfit >= 0 ? 'text-primary' : 'text-red-400' },
           { label: 'Fleet Utilization', value: `${utilization}%`, color: 'text-white' },
         ].map((s) => (
-          <div key={s.label} className="glass border border-white/10 rounded-3xl p-6 relative overflow-hidden group">
+          <div key={s.label} className="kpi-card glass border border-white/10 rounded-3xl p-4 md:p-6 relative overflow-hidden group">
             <div className={`absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-3xl -mr-12 -mt-12 transition-all duration-500 group-hover:bg-primary/10`} />
-            <div className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-3 relative z-10">{s.label}</div>
-            <div className={`text-2xl font-black tracking-tighter relative z-10 ${s.color}`}>{s.value}</div>
+            <div className="text-[10px] font-black text-white/55 uppercase tracking-widest mb-3 relative z-10">{s.label}</div>
+            <div className={`kpi-value font-black tracking-tight relative z-10 ${s.color}`}>{s.value}</div>
           </div>
         ))}
-        {/* Growth Assessment Card */}
+        {/* Growth Assessment Card — hidden until there are two months to compare */}
+        {hasGrowthData && (
         <div className="glass border border-white/10 rounded-3xl p-6 md:col-span-1 relative overflow-hidden group">
-          <div className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-3">Growth Outlook</div>
+          <div className="text-[10px] font-black text-white/55 uppercase tracking-widest mb-3">Growth Outlook</div>
           <div className={`text-xl font-black tracking-tighter mb-2 ${growthAssessment.color}`}>{growthAssessment.status}</div>
-          <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase tracking-tight">{growthAssessment.advice}</p>
+          <p className="text-[12px] text-white/55 leading-relaxed">{growthAssessment.advice}</p>
         </div>
+        )}
       </div>
 
       {/* Recent activity */}
@@ -332,13 +336,13 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] -mr-32 -mt-32" />
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6 md:mb-10 relative z-10">
           <div>
-            <h3 className="text-white font-black italic tracking-tight text-xl uppercase">Recent Activity</h3>
+            <h3 className="text-white font-bold text-base">Recent Activity</h3>
             <p className="text-[10px] text-white/20 uppercase tracking-[.3em] font-black mt-1">Latest bookings and expenses in this range</p>
           </div>
           <div className="flex gap-4">
              <div className="px-5 py-2.5 rounded-xl border border-white/5 bg-white/5 flex flex-col items-end">
                <span className="text-[8px] font-black uppercase tracking-widest text-white/20">Operational Margin</span>
-               <span className="text-xs font-black text-white italic">{((netProfit / (totalRevenue || 1)) * 100).toFixed(1)}%</span>
+               <span className="text-xs font-black text-white">{((netProfit / (totalRevenue || 1)) * 100).toFixed(1)}%</span>
              </div>
           </div>
         </div>
@@ -357,7 +361,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
               {recentLedger.map((item, idx) => (
                 <tr key={idx} className="group hover:bg-white/5 transition-all duration-300">
                   <td data-label="Date" className="py-5 px-4">
-                    <span className="text-[11px] font-black text-white/40 group-hover:text-white/60 transition-colors">{item.date}</span>
+                    <span className="text-[11px] font-black text-white/40 group-hover:text-white/60 transition-colors">{formatDate(item.date)}</span>
                   </td>
                   <td data-primary className="py-5 px-4">
                     <div className="flex flex-col">
@@ -370,14 +374,14 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
                        {item.status}
                      </span>
                   </td>
-                  <td data-badge className={`py-5 px-4 text-right font-black italic text-sm whitespace-nowrap ${item.color}`}>
+                  <td data-badge className={`py-5 px-4 text-right font-black text-sm whitespace-nowrap ${item.color}`}>
                      {item.amount >= 0 ? '+' : ''}{fmt(item.amount)}
                   </td>
                 </tr>
               ))}
               {recentLedger.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-20 text-center italic text-white/20 text-sm font-black uppercase tracking-widest">No activity in this date range</td>
+                  <td colSpan={4} className="py-20 text-center text-white/20 text-sm font-black uppercase tracking-widest">No activity in this date range</td>
                 </tr>
               )}
             </tbody>
@@ -388,7 +392,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Source Mix */}
         <div className="glass border border-white/10 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10 lg:col-span-1">
-          <h3 className="text-white font-black italic tracking-tight text-lg mb-8 uppercase">Booking Sources</h3>
+          <h3 className="text-white font-bold text-base mb-8">Booking Sources</h3>
           <div className="space-y-8">
             {Object.entries(sources).map(([src, count]) => {
               const total = Object.values(sources).reduce((a, b) => a + b, 0)
@@ -412,7 +416,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
         {/* Revenue by Car */}
         <div className="glass border border-white/10 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10 lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-            <h3 className="text-white font-black italic tracking-tight text-lg uppercase">Revenue per Vehicle</h3>
+            <h3 className="text-white font-bold text-base">Revenue per Vehicle</h3>
             <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">Top earners first</span>
           </div>
           <div className="space-y-8">
@@ -425,11 +429,11 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
                   <div className="flex-1 h-3 bg-white/5 rounded-full overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-primary to-primary/40 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]" style={{ width: `${pct}%`, transitionDelay: `${i * 100}ms` }} />
                   </div>
-                  <div className="w-24 text-right text-sm font-black text-white italic">{fmt(amount)}</div>
+                  <div className="w-24 text-right text-sm font-black text-white">{fmt(amount)}</div>
                 </div>
               )
             })}
-            {byCar.length === 0 && <p className="text-white/20 text-center py-12 italic text-sm">No revenue data for this selection.</p>}
+            {byCar.length === 0 && <p className="text-white/20 text-center py-12 text-sm">No revenue data for this selection.</p>}
           </div>
         </div>
       </div>
@@ -437,14 +441,14 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
       {/* Revenue by Month */}
       <div className="glass border border-white/10 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <h3 className="text-white font-black italic tracking-tight text-lg uppercase text-white/60">Revenue History</h3>
+          <h3 className="text-white font-bold text-base">Revenue History</h3>
           <button onClick={exportCSV} disabled={filteredRes.length === 0}
             className="flex items-center gap-2 bg-white text-black hover:bg-white/90 disabled:opacity-30 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
             Download Revenue CSV
           </button>
         </div>
         {byMonth.length === 0 ? (
-          <p className="text-white/30 text-sm py-12 text-center italic">No revenue in this date range.</p>
+          <p className="text-white/30 text-sm py-12 text-center">No revenue in this date range.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
             {byMonth.map(([month, amount]) => {
@@ -455,7 +459,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
                     <span className="text-[11px] font-black text-white/50 uppercase tracking-tight">
                       {new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)) - 1, 1).toLocaleDateString('en', { month: 'short', year: 'numeric' })}
                     </span>
-                    <span className="text-white font-black italic">{fmt(amount)}</span>
+                    <span className="text-white font-black">{fmt(amount)}</span>
                   </div>
                   <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                     <div className="h-full bg-white/20 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
@@ -470,14 +474,14 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
       {/* Expenses Breakdown */}
       <div className="glass border border-white/10 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <h3 className="text-white font-black italic tracking-tight text-lg uppercase text-white/60">Expenses</h3>
+          <h3 className="text-white font-bold text-base">Expenses</h3>
           <button onClick={exportExpensesCSV} disabled={filteredExp.length === 0}
             className="flex items-center gap-2 bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/10">
             Download Expenses CSV
           </button>
         </div>
         {filteredExp.length === 0 ? (
-          <p className="text-white/30 text-sm py-12 text-center italic">No expenses in this date range.</p>
+          <p className="text-white/30 text-sm py-12 text-center">No expenses in this date range.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="m-cards w-full text-sm">
@@ -499,7 +503,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
                       </span>
                     </td>
                     <td data-primary className="py-4 px-4 text-white/60 font-medium">{e.description || '—'}</td>
-                    <td data-badge className="py-4 px-4 text-right text-red-500 font-bold italic whitespace-nowrap">{fmt(Number(e.amount) || 0)}</td>
+                    <td data-badge className="py-4 px-4 text-right text-red-500 font-bold whitespace-nowrap">{fmt(Number(e.amount) || 0)}</td>
                   </tr>
                 ))}
               </tbody>

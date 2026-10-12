@@ -4,6 +4,7 @@ import PageHeader from '@/components/dashboard/PageHeader'
 import StatCard from '@/components/dashboard/StatCard'
 import BookingsTable from './BookingsTable'
 import type { Reservation, Car, RentalExtra } from '@/lib/supabase/types'
+import { formatMoney } from '@/lib/utils/format'
 
 export default async function BookingsPage({ searchParams }: { searchParams?: { q?: string } }) {
   const { supabase, tenantId } = await requireTenantId()
@@ -45,11 +46,11 @@ export default async function BookingsPage({ searchParams }: { searchParams?: { 
     <div className="max-w-6xl mx-auto">
       <PageHeader title="Bookings" description="All reservations across your fleet." />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
         <StatCard label="Total Bookings" value={rows.length} />
         <StatCard label="Confirmed" value={confirmed} />
         <StatCard label="Pending" value={pending} sub={pending > 0 ? 'needs attention' : undefined} />
-        <StatCard label="Completed Revenue" value={`$${totalRevenue.toFixed(0)}`} />
+        <StatCard label="Completed Revenue" value={formatMoney(totalRevenue, { cents: false })} />
       </div>
 
       <div className="glass border border-white/10 rounded-2xl md:rounded-3xl p-3 sm:p-6 md:p-8">

@@ -71,7 +71,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
               </svg>
             </div>
             <div>
-              <h3 className="text-white font-black italic tracking-tight uppercase">Stripe Integration</h3>
+              <h3 className="text-white font-bold text-base">Stripe Integration</h3>
               <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Payments & Payouts</p>
             </div>
           </div>
@@ -139,7 +139,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
               </svg>
             </div>
             <div>
-              <h3 className="text-white font-black italic tracking-tight uppercase">Square Integration</h3>
+              <h3 className="text-white font-bold text-base">Square Integration</h3>
               <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">In-Person & Online Payments</p>
             </div>
           </div>
@@ -195,7 +195,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
               </svg>
             </div>
             <div>
-              <h3 className="text-white font-black italic tracking-tight uppercase">Transaction Fee</h3>
+              <h3 className="text-white font-bold text-base">Transaction Fee</h3>
               <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Per Online Payment</p>
             </div>
           </div>
@@ -257,7 +257,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
             </svg>
           </div>
           <div>
-            <h3 className="text-white font-black italic tracking-tight uppercase">Rental Fees</h3>
+            <h3 className="text-white font-bold text-base">Rental Fees</h3>
             <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Fuel & Charges</p>
           </div>
         </div>

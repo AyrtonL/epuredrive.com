@@ -68,7 +68,7 @@ export default function RecentPayments({ payments, chargesEnabled }: RecentPayme
             </svg>
           </div>
           <div>
-            <h3 className="text-white font-black italic tracking-tight uppercase">Recent Payments</h3>
+            <h3 className="text-white font-bold text-base">Recent Payments</h3>
             <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Rental Transactions</p>
           </div>
         </div>

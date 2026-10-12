@@ -3,6 +3,7 @@ import PageHeader from '@/components/dashboard/PageHeader'
 import StatCard from '@/components/dashboard/StatCard'
 import ExpensesTable from './ExpensesTable'
 import type { Transaction, Car } from '@/lib/supabase/types'
+import { formatMoney } from '@/lib/utils/format'
 
 export default async function ExpensesPage() {
   const { supabase, tenantId } = await requireTenantId()
@@ -22,7 +23,7 @@ export default async function ExpensesPage() {
       <PageHeader title="Business Expenses" description="Track category-based outgoings and maintenance overhead." />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <StatCard label="Total Expenses" value={`$${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} />
+        <StatCard label="Total Expenses" value={formatMoney(total)} />
         <StatCard label="Total Records" value={rows.length} />
       </div>
 

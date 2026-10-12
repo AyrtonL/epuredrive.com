@@ -86,7 +86,7 @@ export default async function ROIPage() {
       <PageHeader title="Net Profit by Vehicle" description="All time · Earned revenue (completed rentals) minus maintenance, owner splits, and expenses per vehicle. (True ROI, which needs each vehicle's purchase cost, is coming with fleet cost-basis tracking.)" />
 
       {/* Fleet Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { label: 'Gross Revenue · All time', value: fmt(fleetGross), color: 'text-white' },
           { label: 'Maintenance Cost', value: fmt(fleetMaint), color: 'text-red-400' },
@@ -94,9 +94,9 @@ export default async function ROIPage() {
           { label: 'Business Expenses', value: fmt(generalExpenses), color: 'text-red-400/80' },
           { label: 'Fleet Net Profit', value: fmt(fleetNet), color: fleetNet >= 0 ? 'text-emerald-400' : 'text-red-400' },
         ].map((s) => (
-          <div key={s.label} className="glass border border-white/[0.14] rounded-2xl p-4">
+          <div key={s.label} className="kpi-card glass border border-white/[0.14] rounded-2xl p-4">
             <div className="text-[10px] font-bold text-white/55 uppercase tracking-widest mb-2">{s.label}</div>
-            <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
+            <div className={`kpi-value font-bold ${s.color}`}>{s.value}</div>
           </div>
         ))}
       </div>

@@ -5,6 +5,7 @@ import MaintenanceTable from './MaintenanceTable'
 import MaintenanceAlerts from './MaintenanceAlerts'
 import FleetMileagePanel from './FleetMileagePanel'
 import type { CarService, Car } from '@/lib/supabase/types'
+import { formatMoney } from '@/lib/utils/format'
 
 export default async function MaintenancePage() {
   const { supabase, tenantId } = await requireTenantId()
@@ -51,9 +52,9 @@ export default async function MaintenancePage() {
     <div className="max-w-6xl mx-auto space-y-8">
       <PageHeader title="Maintenance" description="Service and repair records." />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Service Records" value={rows.length} />
-        <StatCard label="Total Cost" value={`$${totalCost.toLocaleString()}`} />
+        <StatCard label="Total Cost" value={formatMoney(totalCost, { cents: false })} />
         <StatCard label="Overdue" value={overdue} sub={upcoming > 0 ? `${upcoming} due in 30 days` : 'by date or mileage'} />
         <StatCard label="Avg Mileage" value={`${avgMileage.toLocaleString()} mi`} sub={trackedCars.length > 0 ? `across ${trackedCars.length} vehicles` : undefined} />
       </div>

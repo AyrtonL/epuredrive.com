@@ -9,6 +9,7 @@ import OwnerModal from './OwnerModal'
 import ConsignmentModal from './ConsignmentModal'
 import DatePicker from '@/components/ui/DatePicker'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { formatDate, formatMoney } from '@/lib/utils/format'
 
 interface Props {
   owners: ConsignmentOwner[]
@@ -18,7 +19,7 @@ interface Props {
   expenses: Transaction[]
 }
 
-const money = (n: number) => `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+const money = (n: number) => formatMoney(n, { cents: false })
 
 export default function ConsignmentsManager({ owners, consignments, cars, reservations, expenses }: Props) {
   const router = useRouter()
@@ -150,8 +151,8 @@ export default function ConsignmentsManager({ owners, consignments, cars, reserv
                   {g.cars.map(cp => {
                     const con = cp.consignment
                     const contract = con.contract_start && con.contract_end
-                      ? `${con.contract_start} → ${con.contract_end}`
-                      : con.contract_start ? `From ${con.contract_start}` : 'No contract dates'
+                      ? `${formatDate(con.contract_start)} → ${formatDate(con.contract_end)}`
+                      : con.contract_start ? `From ${formatDate(con.contract_start)}` : 'No contract dates'
                     return (
                       <div key={con.id} className="px-6 py-4 flex flex-wrap items-center justify-between gap-4 group">
                         <div className="min-w-[180px]">
@@ -171,7 +172,7 @@ export default function ConsignmentsManager({ owners, consignments, cars, reserv
                           </div>
                           <div>
                             <div className="text-[9px] text-white/30 uppercase tracking-widest">Expenses</div>
-                            <div className="text-sm font-bold text-red-400/60">-{money(cp.expenses)}</div>
+                            <div className="text-sm font-bold text-red-400/60">{cp.expenses > 0 ? `-${money(cp.expenses)}` : money(0)}</div>
                           </div>
                           <div>
                             <div className="text-[9px] text-white/30 uppercase tracking-widest">Owner Share</div>

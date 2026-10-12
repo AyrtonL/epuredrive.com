@@ -36,7 +36,7 @@ export default async function FleetPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <PageHeader title="Fleet Management" description="Manage your vehicles, pricing, and availability." />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Vehicles" value={rows.length} />
         <StatCard label="Active Fleet" value={active} sub="available or rented" />
         <StatCard label="In Maintenance" value={maintenance} />

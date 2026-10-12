@@ -7,6 +7,7 @@ import { updateReservation, deleteReservation, bulkUpdateReservations } from './
 import BookingModal from './BookingModal'
 import DatePicker from '@/components/ui/DatePicker'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { formatDate, formatMoney } from '@/lib/utils/format'
 
 const STATUS_COLORS: Record<string, string> = {
   confirmed: 'bg-green-500/20 text-green-400',
@@ -27,13 +28,7 @@ function expiringDocs(r: Reservation): string[] {
 }
 
 // 'YYYY-MM-DD' → 'Dec 12, 2025' for the compact mobile cards.
-function shortDate(d: string | null | undefined): string {
-  if (!d) return '—'
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d)
-  if (!m) return d
-  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-    .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
+const shortDate = formatDate
 
 interface Props {
   reservations: Reservation[]
@@ -257,7 +252,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
       ) : (
         <>
           {/* Mobile: card list */}
-          <ul className="md:hidden space-y-2.5">
+          <ul className="lg:hidden space-y-2.5">
             {paginated.map((r) => {
               const docs = expiringDocs(r)
               return (
@@ -303,7 +298,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
                       <div className="mt-2 flex items-center justify-between gap-2">
                         <span className="font-mono text-[11px] text-white/60 bg-white/5 px-2 py-0.5 rounded">{r.booking_code}</span>
                         <span className="text-white font-semibold">
-                          {r.total_amount != null ? `$${Number(r.total_amount).toLocaleString()}` : '—'}
+                          {formatMoney(r.total_amount)}
                         </span>
                       </div>
                     </button>
@@ -339,7 +334,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
           </ul>
 
           {/* Desktop: table */}
-          <div className="data-table hidden md:block">
+          <div className="data-table hidden lg:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-white/55 border-b border-white/[0.10] bg-white/[0.04]">
@@ -392,11 +387,11 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
                       {r.car_id ? carMap[r.car_id] ?? `Car #${r.car_id}` : '—'}
                     </td>
                     <td className="py-4 pr-4 text-white/70 text-xs">
-                      <div><span className="text-white/45">Pick:</span> {r.pickup_date || '—'}</div>
-                      <div className="mt-0.5"><span className="text-white/45">Ret:</span> {r.return_date || '—'}</div>
+                      <div><span className="text-white/45">Pick:</span> {formatDate(r.pickup_date)}</div>
+                      <div className="mt-0.5"><span className="text-white/45">Ret:</span> {formatDate(r.return_date)}</div>
                     </td>
                     <td className="py-4 pr-4 text-white font-medium">
-                      {r.total_amount != null ? `$${Number(r.total_amount).toLocaleString()}` : '—'}
+                      {formatMoney(r.total_amount)}
                     </td>
                     <td className="py-4 pr-4">
                       <span className={`text-[10px] font-bold uppercase tracking-widest rounded-full px-2.5 py-1 ${STATUS_COLORS[r.status ?? ''] ?? 'bg-white/10 text-white/40'}`}>

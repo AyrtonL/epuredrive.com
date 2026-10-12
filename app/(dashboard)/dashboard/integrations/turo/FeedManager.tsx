@@ -98,10 +98,10 @@ export default function FeedManager({ sync, tenantId }: Props) {
       <div className="glass border border-white/10 rounded-3xl p-8 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div className="max-w-md">
-            <h3 className="text-white text-xl font-black italic tracking-tight mb-2">Turo & Upcar Email Reader</h3>
-            <p className="text-white/40 text-sm leading-relaxed">
+            <h3 className="text-white text-base font-bold mb-2">Turo & Upcar Email Reader</h3>
+            <p className="text-white/60 text-sm leading-relaxed">
               Automatically sync new bookings, modifications, and cancellations directly from your Turo and Upcar emails.
             </p>
           </div>

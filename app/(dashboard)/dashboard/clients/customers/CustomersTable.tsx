@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { Customer } from '@/lib/supabase/types'
 import { isEarned } from '@/lib/finance/revenue'
 import { syncCustomersFromReservations, deleteCustomer, bulkDeleteCustomers } from './actions'
+import { formatDate, formatMoney } from '@/lib/utils/format'
 
 type ReservationSummary = {
   customer_name: string | null
@@ -194,7 +195,7 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
                     </div>
                   </td>
                   <td data-label="Lifetime value" className="py-4 pr-4">
-                    <div className="text-emerald-400 font-black tracking-tighter text-base">${(c.ltv || 0).toLocaleString()}</div>
+                    <div className="text-emerald-400 font-black tracking-tighter text-base">{formatMoney(c.ltv || 0)}</div>
                   </td>
                   <td data-label="Trips" className="py-4 pr-4">
                     <span className="bg-white/[0.08] border border-white/[0.10] text-white/70 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide">
@@ -202,7 +203,7 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
                     </span>
                   </td>
                   <td data-label="Since" className="py-4 pr-4 text-white/50 text-[11px] font-medium">
-                    {c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}
+                    {formatDate(c.created_at)}
                   </td>
                   <td data-actions className="py-4 text-right pr-4">
                     <button onClick={() => handleDelete(c.id)} disabled={isPending}

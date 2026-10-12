@@ -7,6 +7,7 @@ import { deleteTransaction, bulkCreateTransactions } from './actions'
 import ExpenseModal from './ExpenseModal'
 import { todayISO } from '@/lib/finance/revenue'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { formatDate, formatMoney } from '@/lib/utils/format'
 
 const PAGE_SIZE = 15
 
@@ -133,7 +134,7 @@ export default function ExpensesTable({ expenses, cars }: Props) {
   return (
     <div>
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-6 justify-between items-stretch md:items-center">
+      <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 mb-6 justify-between items-stretch lg:items-center">
         <input
           type="text"
           placeholder="Search expenses…"
@@ -142,9 +143,9 @@ export default function ExpensesTable({ expenses, cars }: Props) {
             setFilter(e.target.value)
             setPage(1)
           }}
-          className="w-full md:max-w-sm dash-input px-4 py-3"
+          className="w-full lg:max-w-sm dash-input px-4 py-3"
         />
-        <div className="flex gap-3 w-full md:w-auto">
+        <div className="flex gap-3 w-full lg:w-auto">
           <input
             type="file"
             id="csv-import"
@@ -190,7 +191,7 @@ export default function ExpensesTable({ expenses, cars }: Props) {
                 {paginated.map((e) => (
                   <tr key={e.id} className="hover:bg-white/5 transition-colors">
                     <td data-label="Date" className="py-4 pl-6 pr-4 text-white/80 font-medium whitespace-nowrap">
-                      {e.transaction_date || '—'}
+                      {formatDate(e.transaction_date)}
                     </td>
                     <td data-label="Category" className="py-4 pr-4">
                       <span className="text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-lg bg-white/[0.08] border border-white/[0.10] text-white/70">
@@ -204,7 +205,7 @@ export default function ExpensesTable({ expenses, cars }: Props) {
                       {e.car_id ? carMap[e.car_id] ?? `Car #${e.car_id}` : '—'}
                     </td>
                     <td data-badge className="py-4 pr-4 text-white font-medium">
-                      {e.amount != null ? `$${Number(e.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                      {formatMoney(e.amount)}
                     </td>
                     <td data-actions className="py-4 pr-6 text-right space-x-3">
                       <button

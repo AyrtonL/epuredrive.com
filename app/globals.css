@@ -157,7 +157,8 @@
 }
 
 /* ── Dashboard tables ───────────────────────────────────────────────
-   Desktop: aligned numbers. Mobile (<768px): any <table class="m-cards">
+   Desktop: aligned numbers. Below 1024px (where the 240px sidebar leaves
+   too little room for wide tables): any <table class="m-cards">
    turns into a stack of cards. Mark cells with:
      data-primary   → card title (top-left, no label)
      data-badge     → top-right (status pill)
@@ -170,7 +171,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 1023.98px) {
   /* The table's own wrapper (data-table / glass box) gets out of the way
      so each card stands on its own. */
   :has(> table.m-cards) {
@@ -298,6 +299,17 @@
 /* Long-form marketing content (guides, comparisons, pricing notes).
    No typography plugin in this project, so the prose styles live here. */
 @layer components {
+  /* KPI cards: the number scales with the card's own width (container query
+     units) instead of being cut off with an ellipsis in narrow grids. */
+  .kpi-card {
+    container-type: inline-size;
+  }
+  .kpi-value {
+    font-size: clamp(1rem, 12cqi, 1.875rem);
+    line-height: 1.1;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
   .article-body {
     @apply text-white/60 text-[17px] leading-relaxed font-light;
   }

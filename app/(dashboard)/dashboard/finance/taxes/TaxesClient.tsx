@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Transaction, TaxSetting, Reservation } from '@/lib/supabase/types'
 import DatePicker from '@/components/ui/DatePicker'
+import { formatMoney } from '@/lib/utils/format'
 
 interface Props {
   transactions: Transaction[]
@@ -18,7 +19,7 @@ function recognitionDate(r: Reservation): string | null {
 }
 
 function fmt(n: number) {
-  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return formatMoney(n, { cents: 'always' })
 }
 
 function pct(n: number) {
@@ -308,17 +309,17 @@ export default function TaxesClient({ transactions, reservations, taxSettings: i
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {[
           { label: 'Gross Revenue', value: fmt(totalRevenue), color: 'text-emerald-400' },
           { label: 'Total Expenses', value: fmt(totalExpenses), color: 'text-red-400' },
           { label: 'Tax Paid', value: fmt(totalTaxPaid), color: 'text-amber-400' },
           { label: 'Estimated Tax Due', value: fmt(totalEstimatedTax), color: 'text-violet-400' },
         ].map((s) => (
-          <div key={s.label} className="glass border border-white/10 rounded-3xl p-6 relative overflow-hidden group">
+          <div key={s.label} className="kpi-card glass border border-white/10 rounded-3xl p-4 md:p-6 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-3xl -mr-12 -mt-12 transition-all duration-500 group-hover:bg-primary/10" />
-            <div className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-3 relative z-10">{s.label}</div>
-            <div className={`text-2xl font-black tracking-tighter relative z-10 ${s.color}`}>{s.value}</div>
+            <div className="text-[10px] font-black text-white/55 uppercase tracking-widest mb-3 relative z-10">{s.label}</div>
+            <div className={`kpi-value font-black tracking-tight relative z-10 ${s.color}`}>{s.value}</div>
           </div>
         ))}
       </div>

@@ -226,13 +226,13 @@ export default async function UtilizationPage({
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map((card) => (
-          <div key={card.label} className="glass border border-white/[0.14] rounded-2xl p-4">
+          <div key={card.label} className="kpi-card glass border border-white/[0.14] rounded-2xl p-4">
             <div className="text-[10px] font-bold text-white/55 uppercase tracking-widest mb-2">
               {card.label}
             </div>
-            <div className={`text-xl font-bold ${card.color}`}>{card.value}</div>
+            <div className={`kpi-value font-bold ${card.color}`}>{card.value}</div>
           </div>
         ))}
       </div>
