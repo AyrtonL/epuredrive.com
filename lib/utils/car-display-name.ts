@@ -38,3 +38,11 @@ export function carDisplayName(car: CarNameFields): string {
   if (startsWithWord(model, make)) return `${make}${model.slice(make.length)}`
   return `${make} ${model}`
 }
+
+/** "suv" → "SUV", "economy" → "Economy" — categories are typed freehand. */
+export function categoryLabel(category: string | null | undefined): string | null {
+  const c = (category ?? '').trim()
+  if (!c) return null
+  if (c.length <= ACRONYM_MAX_LENGTH) return c.toUpperCase()
+  return c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()
+}

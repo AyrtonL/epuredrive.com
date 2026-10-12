@@ -1,5 +1,5 @@
 // __tests__/lib/car-display-name.test.ts
-import { carDisplayName } from '@/lib/utils/car-display-name'
+import { carDisplayName, categoryLabel } from '@/lib/utils/car-display-name'
 
 describe('carDisplayName', () => {
   it('joins make and model_full', () => {
@@ -36,5 +36,15 @@ describe('carDisplayName', () => {
   it('handles a missing make', () => {
     expect(carDisplayName({ make: null, model: 'Y', model_full: null })).toBe('Y')
     expect(carDisplayName({ make: '', model: '', model_full: null })).toBe('Vehicle')
+  })
+})
+
+describe('categoryLabel', () => {
+  it('uppercases short categories and capitalizes the rest', () => {
+    expect(categoryLabel('suv')).toBe('SUV')
+    expect(categoryLabel('economy')).toBe('Economy')
+    expect(categoryLabel('LUXURY')).toBe('Luxury')
+    expect(categoryLabel('')).toBeNull()
+    expect(categoryLabel(null)).toBeNull()
   })
 })

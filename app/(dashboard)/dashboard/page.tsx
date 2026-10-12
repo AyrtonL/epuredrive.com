@@ -9,8 +9,9 @@ import ActiveRentalsPanel, { type ActiveRental } from '@/components/dashboard/Ac
 import NotificationBell from '@/components/dashboard/NotificationBell'
 import MaintenanceAlerts from './maintenance/MaintenanceAlerts'
 import type { Reservation, Car, CarService } from '@/lib/supabase/types'
-import { overlapsRange, inclusiveDays, daysAgoISO, todayISO, startOfMonthISO } from '@/lib/finance/revenue'
+import { inclusiveDays, daysAgoISO, todayISO, startOfMonthISO } from '@/lib/finance/revenue'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { rentedDaysByCar } from '@/lib/fleet/car-status'
 import {
   dailyCarsOutSeries,
   dailyRevenueSeries,
@@ -128,19 +129,11 @@ export default async function DashboardPage() {
   // --- Real per-car utilization over the trailing window ---
   // Utilization % = rented days in the window ÷ window length. Computed
   // from actual reservation date overlaps — never estimated or randomised.
-  const rentedDaysByCar: Record<number, number> = {}
-  for (const r of historyRows) {
-    if (r.car_id == null || !r.pickup_date) continue
-    if (!overlapsRange(r, windowStart, today)) continue
-    const start = r.pickup_date > windowStart ? r.pickup_date : windowStart
-    const end = (r.return_date ?? today) < today ? (r.return_date ?? today) : today
-    if (end < start) continue
-    rentedDaysByCar[r.car_id] = (rentedDaysByCar[r.car_id] ?? 0) + inclusiveDays(start, end)
-  }
+  const rentedDays = rentedDaysByCar(historyRows, windowStart, today)
   const carUtilization = inFleetCars
     .map((c) => ({
       name: carMap[c.id],
-      percentage: Math.min(100, Math.round(((rentedDaysByCar[c.id] ?? 0) / WINDOW_DAYS) * 100)),
+      percentage: Math.min(100, Math.round(((rentedDays.get(c.id) ?? 0) / WINDOW_DAYS) * 100)),
     }))
     .sort((a, b) => b.percentage - a.percentage)
 

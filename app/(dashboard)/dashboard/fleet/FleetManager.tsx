@@ -2,18 +2,32 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import type { Car } from '@/lib/supabase/types'
 import { deleteCar } from './actions'
 import CarModal from './CarModal'
 import { useToast } from '@/components/ui/Toast'
-import { carDisplayName } from '@/lib/utils/car-display-name'
+import { carDisplayName, categoryLabel } from '@/lib/utils/car-display-name'
+import { formatMoney } from '@/lib/utils/format'
+import type { CarStatusKind, FleetCarInsight } from '@/lib/fleet/car-status'
+
+const STATUS_BADGE: Record<CarStatusKind, string> = {
+  on_rent: 'bg-sky-500/20 text-sky-200 border-sky-400/30',
+  overdue: 'bg-red-500/25 text-red-200 border-red-400/40',
+  available: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30',
+  maintenance: 'bg-amber-500/20 text-amber-200 border-amber-400/30',
+  retired: 'bg-white/10 text-white/60 border-white/20',
+}
+
+const IDLE_THRESHOLD_PCT = 15
 
 interface Props {
   initialCars: Car[]
   consignedCarIds?: number[]
+  insights?: Record<number, FleetCarInsight>
 }
 
-export default function FleetManager({ initialCars, consignedCarIds = [] }: Props) {
+export default function FleetManager({ initialCars, consignedCarIds = [], insights = {} }: Props) {
   const consignedIds = new Set(consignedCarIds)
   const router = useRouter()
   const toast = useToast()
@@ -107,8 +121,8 @@ export default function FleetManager({ initialCars, consignedCarIds = [] }: Prop
               className="group relative bg-white/[0.07] border border-white/[0.13] rounded-2xl overflow-hidden hover:bg-white/[0.11] transition-all duration-300 hover:-translate-y-1 flex flex-col"
               style={{boxShadow: '0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)'}}
             >
-              {/* Image Header */}
-              <div className="h-48 w-full bg-black/40 relative overflow-hidden">
+              {/* Image Header — opens the vehicle page */}
+              <Link href={`/dashboard/fleet/${c.id}`} className="block h-48 w-full bg-black/40 relative overflow-hidden" aria-label={`Open ${carDisplayName(c)}`}>
                 {c.image_url ? (
                   <img
                     src={c.image_url.startsWith('http') ? c.image_url : `/${c.image_url}`}
@@ -120,16 +134,14 @@ export default function FleetManager({ initialCars, consignedCarIds = [] }: Prop
                     No Image
                   </div>
                 )}
-                {/* Status Badge */}
-                <div className="absolute top-4 right-4">
-                  <span className={`text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full backdrop-blur-md border ${
-                    c.status === 'active' ? 'bg-green-500/20 text-green-300 border-green-500/30' :
-                    c.status === 'retired' ? 'bg-red-500/20 text-red-300 border-red-500/30' :
-                    'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
-                  }`}>
-                    {c.status || 'Active'}
-                  </span>
-                </div>
+                {/* Live status badge (on rent / overdue / available / …) */}
+                {insights[c.id] && (
+                  <div className="absolute top-4 right-4">
+                    <span className={`text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full backdrop-blur-md border ${STATUS_BADGE[insights[c.id].status.kind]}`}>
+                      {insights[c.id].status.label}
+                    </span>
+                  </div>
+                )}
                 {/* Consignment Badge */}
                 {consignedIds.has(c.id) && (
                   <div className="absolute top-4 left-4">
@@ -138,26 +150,50 @@ export default function FleetManager({ initialCars, consignedCarIds = [] }: Prop
                     </span>
                   </div>
                 )}
-              </div>
+              </Link>
 
               {/* Body */}
               <div className="p-6 flex-1 flex flex-col">
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <h3 className="text-white font-bold text-lg leading-tight">
-                      {carDisplayName(c)}
+                      <Link href={`/dashboard/fleet/${c.id}`} className="hover:underline underline-offset-4">
+                        {carDisplayName(c)}
+                      </Link>
                     </h3>
                     <p className="text-white/55 text-[11px] font-semibold tracking-widest uppercase mt-1">
-                      {c.year || 'N/A'} • {c.category || 'Economy'}
+                      {[c.year, categoryLabel(c.category), c.plate].filter(Boolean).join(' • ') || '—'}
                     </p>
                   </div>
                 </div>
+
+                {insights[c.id] && (
+                  <div className="mt-3 space-y-3">
+                    <p className={`text-[13px] ${insights[c.id].status.kind === 'overdue' ? 'text-red-300' : 'text-white/75'}`}>
+                      {insights[c.id].status.detail}
+                    </p>
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] mb-1">
+                        <span className="text-white/55">Utilization · 30d</span>
+                        <span className={`font-bold tabular-nums ${insights[c.id].utilizationPct < IDLE_THRESHOLD_PCT ? 'text-amber-300/90' : 'text-white/70'}`}>
+                          {insights[c.id].utilizationPct}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-white/[0.10] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${insights[c.id].utilizationPct < IDLE_THRESHOLD_PCT ? 'bg-amber-400/80' : 'bg-white/70'}`}
+                          style={{ width: `${Math.max(insights[c.id].utilizationPct, 1)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-auto pt-6 flex items-center justify-between border-t border-white/[0.12]">
                   <div className="flex flex-col">
                     <span className="text-[10px] text-white/55 uppercase tracking-widest font-bold mb-0.5">Daily Rate</span>
                     <span className="text-white font-medium">
-                      {c.daily_rate != null ? `$${Number(c.daily_rate).toFixed(0)}` : '—'}
+                      {c.daily_rate != null ? `${formatMoney(c.daily_rate)}/day` : '—'}
                     </span>
                   </div>
                   
