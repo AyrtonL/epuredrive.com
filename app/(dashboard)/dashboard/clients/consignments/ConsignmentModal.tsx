@@ -6,6 +6,7 @@ import type { Consignment, Car } from '@/lib/supabase/types'
 import { createConsignment, updateConsignment, type ConsignmentInput } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 import DatePicker from '@/components/ui/DatePicker'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   isOpen: boolean
@@ -73,7 +74,7 @@ export default function ConsignmentModal({ isOpen, onClose, ownerId, consignment
               <select required value={form.car_id || ''} onChange={e => setForm({ ...form, car_id: Number(e.target.value) })}
                 className={inputCls}>
                 <option value="" disabled className="bg-[#0d0d0d]">Select vehicle...</option>
-                {cars.map(c => <option key={c.id} value={c.id} className="bg-[#0d0d0d]">{c.make} {c.model_full || c.model}</option>)}
+                {cars.map(c => <option key={c.id} value={c.id} className="bg-[#0d0d0d]">{carDisplayName(c)}</option>)}
               </select>
             </div>
 

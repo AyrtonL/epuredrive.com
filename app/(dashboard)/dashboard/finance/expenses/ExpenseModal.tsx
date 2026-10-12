@@ -7,6 +7,7 @@ import { createTransaction, updateTransaction } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 import DatePicker from '@/components/ui/DatePicker'
 import { todayISO } from '@/lib/finance/revenue'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   isOpen: boolean
@@ -180,7 +181,7 @@ export default function ExpenseModal({ isOpen, onClose, expense, cars }: Props) 
                   <option value="" className="bg-[#0d0d0d]">-- General / No Car --</option>
                   {cars.map(c => (
                     <option key={c.id} value={c.id} className="bg-[#0d0d0d]">
-                      {c.make} {c.model_full || c.model}
+                      {carDisplayName(c)}
                     </option>
                   ))}
                 </select>

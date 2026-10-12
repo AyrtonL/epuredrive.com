@@ -200,7 +200,7 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
               ${Number(car.daily_rate) || 0}
               <span className="text-[10px] font-black uppercase tracking-widest text-white/40 not-italic ml-1">/ day</span>
             </div>
-            <div className="text-[10px] text-white/40 mt-1 truncate">{car.make} {car.model_full || car.model}</div>
+            <div className="text-[10px] text-white/40 mt-1 truncate">{carDisplayName(car)}</div>
           </div>
           <a
             href="#book"

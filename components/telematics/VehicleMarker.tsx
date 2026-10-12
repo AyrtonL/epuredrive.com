@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
 import { Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import { statusColor, statusLabel, type MapVehicle } from './types'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 function buildDivIcon(color: string): L.DivIcon {
   const html = `
@@ -39,7 +40,7 @@ interface Props {
 export default function VehicleMarker({ vehicle, onSelect, children }: Props) {
   if (vehicle.lat === null || vehicle.lon === null) return null
   const color = statusColor(vehicle.status)
-  const label = [vehicle.make, vehicle.model].filter(Boolean).join(' ') || 'Vehicle'
+  const label = carDisplayName(vehicle) || 'Vehicle'
   return (
     <Marker
       position={[vehicle.lat, vehicle.lon]}

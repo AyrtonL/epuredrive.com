@@ -6,6 +6,7 @@ import type { Car } from '@/lib/supabase/types'
 import { createBlockedDate, createBlockedDateForAllCars } from './actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 import DatePicker from '@/components/ui/DatePicker'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   isOpen: boolean
@@ -78,7 +79,7 @@ export default function BlockDateModal({ isOpen, onClose, cars, defaultStartDate
               <option value="all" className="bg-[#0d0d0d]">All Vehicles</option>
               {cars.map(c => (
                 <option key={c.id} value={c.id} className="bg-[#0d0d0d]">
-                  {c.make} {c.model_full || c.model}
+                  {carDisplayName(c)}
                 </option>
               ))}
             </select>

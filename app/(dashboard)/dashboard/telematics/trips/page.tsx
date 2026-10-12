@@ -14,6 +14,7 @@ import TripsTable, {
   type CarOption,
   type TripRow,
 } from '@/components/telematics/TripsTable'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface TripRaw {
   id: string
@@ -54,7 +55,7 @@ const MAX_ROWS = 500
 
 function carLabel(car: CarRaw | undefined, fallback: number | null): string {
   if (!car) return fallback !== null ? `Car ${fallback}` : 'Unknown car'
-  const name = [car.make, car.model].filter(Boolean).join(' ') || `Car ${car.id}`
+  const name = carDisplayName(car) || `Car ${car.id}`
   return car.plate ? `${name} (${car.plate})` : name
 }
 

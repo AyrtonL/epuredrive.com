@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit } from '@/lib/rate-limit'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 const HASH_REGEX = /^[a-f0-9]{64}$/
 
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
       .maybeSingle()
     if (car) {
       const c = car as CarRow
-      const label = `${c.make ?? ''} ${c.model_full || c.model || ''}`.trim()
+      const label = carDisplayName(c)
       carName = label || null
     }
   }

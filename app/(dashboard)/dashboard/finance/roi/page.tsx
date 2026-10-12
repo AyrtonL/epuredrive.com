@@ -1,9 +1,11 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import type { Reservation, Car, CarService, Consignment, Transaction } from '@/lib/supabase/types'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 function fmt(n: number) {
-  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const abs = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return n < 0 ? `-$${abs}` : `$${abs}`
 }
 
 export default async function ROIPage() {
@@ -81,12 +83,12 @@ export default async function ROIPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <PageHeader title="Net Profit by Vehicle" description="Earned revenue minus maintenance, owner splits, and expenses per vehicle. (True ROI, which needs each vehicle's purchase cost, is coming with fleet cost-basis tracking.)" />
+      <PageHeader title="Net Profit by Vehicle" description="All time · Earned revenue (completed rentals) minus maintenance, owner splits, and expenses per vehicle. (True ROI, which needs each vehicle's purchase cost, is coming with fleet cost-basis tracking.)" />
 
       {/* Fleet Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
-          { label: 'Gross Revenue', value: fmt(fleetGross), color: 'text-white' },
+          { label: 'Gross Revenue · All time', value: fmt(fleetGross), color: 'text-white' },
           { label: 'Maintenance Cost', value: fmt(fleetMaint), color: 'text-red-400' },
           { label: 'Owner Payouts', value: fmt(fleetOwnerPayouts), color: 'text-orange-400' },
           { label: 'Business Expenses', value: fmt(generalExpenses), color: 'text-red-400/80' },
@@ -135,14 +137,14 @@ export default async function ROIPage() {
                 return (
                   <tr key={c.id} className="hover:bg-white/5 transition-colors group">
                     <td data-primary className="px-6 py-4 text-white font-medium">
-                      {c.make} {c.model_full || c.model}
+                      {carDisplayName(c)}
                       {consignment && (
                         <div className="text-[10px] text-primary/80 uppercase tracking-widest mt-1">
                           Owned by: {consignment.owner_name}
                         </div>
                       )}
                     </td>
-                    <td data-label="Bookings" className="px-6 py-4 text-white/65">{bookings} bookings</td>
+                    <td data-label="Bookings" className="px-6 py-4 text-white/65">{bookings} booking{bookings === 1 ? '' : 's'}</td>
                     <td data-label="Gross revenue" className="px-6 py-4 text-white font-medium">{fmt(gross)}</td>
                     <td data-label="Maintenance" className="px-6 py-4 text-red-400/80">
                       {maint > 0 ? `-${fmt(maint)}` : '—'}

@@ -30,8 +30,12 @@ export function computeVehicleStatus(
   if (!lastSeenAt) return 'offline'
   const ts = new Date(lastSeenAt).getTime()
   if (Number.isNaN(ts)) return 'offline'
-  if (Date.now() - ts > OFFLINE_THRESHOLD_MS) return 'offline'
   if (online === false) return 'offline'
+  const stale = Date.now() - ts > OFFLINE_THRESHOLD_MS
+  // Bouncie only pings while the car is driving, so a stale ping on a device
+  // that still reports online means "parked", not "offline". Ping age only
+  // decides offline when the device state is unknown.
+  if (stale) return online === true ? 'idle' : 'offline'
   if (speedMph !== null && speedMph > 1) return 'moving'
   return 'idle'
 }
@@ -53,7 +57,7 @@ export function statusLabel(status: VehicleStatus): string {
     case 'moving':
       return 'Moving'
     case 'idle':
-      return 'Idle'
+      return 'Parked'
     case 'offline':
     default:
       return 'Offline'

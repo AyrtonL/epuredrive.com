@@ -1,6 +1,7 @@
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import StatCard from '@/components/dashboard/StatCard'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface ReviewRow {
   id: string
@@ -50,7 +51,7 @@ export default async function ReviewsPage() {
 
   const customerMap = new Map((reservations ?? []).map((r) => [r.id, r.customer_name]))
   const carMap = new Map(
-    (cars ?? []).map((c) => [c.id, `${c.make ?? ''} ${c.model_full || c.model || ''}`.trim() || 'Vehicle']),
+    (cars ?? []).map((c) => [c.id, carDisplayName(c) || 'Vehicle']),
   )
 
   const avgRating = rows.length ? rows.reduce((sum, r) => sum + r.rating, 0) / rows.length : 0

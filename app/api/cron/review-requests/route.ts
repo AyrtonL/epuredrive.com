@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { reviewRequestCustomerEmail } from '@/lib/email/templates/rentals'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
         }),
   ])
 
-  const carMap = new Map((cars ?? []).map(c => [c.id, `${c.make ?? ''} ${c.model_full || c.model || ''}`.trim() || 'Vehicle']))
+  const carMap = new Map((cars ?? []).map(c => [c.id, carDisplayName(c) || 'Vehicle']))
   const tenantMap = new Map((tenants ?? []).map(t => [t.id, t]))
 
   let sent = 0

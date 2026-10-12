@@ -145,7 +145,7 @@ export default function FleetManager({ initialCars, consignedCarIds = [] }: Prop
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <h3 className="text-white font-bold text-lg leading-tight">
-                      {c.make} {c.model_full || c.model}
+                      {carDisplayName(c)}
                     </h3>
                     <p className="text-white/55 text-[11px] font-semibold tracking-widest uppercase mt-1">
                       {c.year || 'N/A'} • {c.category || 'Economy'}

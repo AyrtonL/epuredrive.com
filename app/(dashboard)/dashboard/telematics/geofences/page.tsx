@@ -11,6 +11,7 @@ import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import GeofencesClient from '@/components/telematics/GeofencesClient'
 import type { TelematicsGeofence } from '@/lib/supabase/types'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface CarRow {
   id: number
@@ -20,7 +21,7 @@ interface CarRow {
 }
 
 function carLabel(c: CarRow): string {
-  const name = [c.make, c.model].filter(Boolean).join(' ') || `Car ${c.id}`
+  const name = carDisplayName(c) || `Car ${c.id}`
   return c.plate ? `${name} (${c.plate})` : name
 }
 

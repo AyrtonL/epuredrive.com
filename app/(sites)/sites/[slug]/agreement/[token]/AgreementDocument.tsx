@@ -4,6 +4,7 @@ import type React from 'react'
 import Image from 'next/image'
 import type { ReservationExtra, DamageMark } from '@/lib/supabase/types'
 import CarDamageDiagram from '@/components/dashboard/CarDamageDiagram'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 export interface AgreementCar {
   make: string
@@ -193,7 +194,7 @@ export default function AgreementDocument({
               <tbody>
                 <tr>
                   <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2 w-1/4">Brand &amp; Model</td>
-                  <td className="border border-gray-200 px-3 py-2">{car.make} {car.model_full || car.model}</td>
+                  <td className="border border-gray-200 px-3 py-2">{carDisplayName(car)}</td>
                   <td className="bg-gray-50 font-bold border border-gray-200 px-3 py-2 w-1/4">Year</td>
                   <td className="border border-gray-200 px-3 py-2">{car.year || '—'}</td>
                 </tr>

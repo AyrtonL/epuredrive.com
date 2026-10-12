@@ -8,6 +8,7 @@ import Link from 'next/link'
 import type { TelematicsEvent } from '@/lib/supabase/types'
 import type { MapVehicle } from './types'
 import { formatRelative, statusColor, statusLabel } from './types'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   vehicle: MapVehicle | null
@@ -54,10 +55,10 @@ export default function VehicleDrawer({
                   Vehicle
                 </div>
                 <div className="text-white font-bold text-xl">
-                  {vehicle.plate ?? ([vehicle.make, vehicle.model].filter(Boolean).join(' ') || 'Unknown')}
+                  {vehicle.plate ?? (carDisplayName(vehicle) || 'Unknown')}
                 </div>
                 <div className="text-white/60 text-sm mt-1">
-                  {[vehicle.make, vehicle.model].filter(Boolean).join(' ')}
+                  {carDisplayName(vehicle)}
                 </div>
                 <span
                   className="inline-flex items-center gap-2 mt-3 rounded-full bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-wider"

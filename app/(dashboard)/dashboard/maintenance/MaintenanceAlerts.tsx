@@ -3,6 +3,7 @@
 import React from 'react'
 import type { CarService, Car } from '@/lib/supabase/types'
 import { todayISO, daysAgoISO } from '@/lib/finance/revenue'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   services: CarService[]
@@ -48,7 +49,7 @@ export default function MaintenanceAlerts({ services, cars }: Props) {
               {isOverdue ? 'Overdue Service' : 'Upcoming Service'}
             </div>
             <div className={`text-sm font-medium ${isOverdue ? 'text-red-100' : 'text-amber-100'}`}>
-              <span className="font-bold text-white">{car.make} {car.model_full || car.model}</span>
+              <span className="font-bold text-white">{carDisplayName(car)}</span>
               {' — '}
               {s.service_type?.replace('_', ' ') || 'Maintenance'} due on <span className="font-bold">{s.next_service_date}</span>
             </div>
@@ -89,7 +90,7 @@ export default function MaintenanceAlerts({ services, cars }: Props) {
               {isOverdue ? 'Mileage Overdue' : 'Mileage Warning'}
             </div>
             <div className={`text-sm font-medium ${isOverdue ? 'text-red-100' : 'text-amber-100'}`}>
-              <span className="font-bold text-white">{car.make} {car.model_full || car.model}</span>
+              <span className="font-bold text-white">{carDisplayName(car)}</span>
               {' — '}
               {isOverdue
                 ? `Overdue by ${Math.abs(remaining).toLocaleString()} mi`

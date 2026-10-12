@@ -19,6 +19,7 @@ import {
 } from '@/lib/email/templates/rentals'
 import { createInAppNotification } from '@/lib/notifications/create'
 import { notifyExpiringDocuments } from '@/lib/notifications/expiring-documents'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface TenantRow {
   id: string
@@ -73,7 +74,7 @@ function buildBrand(tenant: TenantRow): TenantBrand {
 
 function carName(car: CarRow | null): string {
   if (!car) return 'Vehicle'
-  return `${car.make ?? ''} ${car.model_full || car.model || ''}`.trim() || 'Vehicle'
+  return carDisplayName(car) || 'Vehicle'
 }
 
 export async function POST(request: NextRequest) {

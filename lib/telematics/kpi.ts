@@ -3,7 +3,8 @@
 //
 // Returns the 4 numbers the Live Map header displays:
 //   onlineCount / totalCount : devices online out of tenant total
-//   unackedAlerts            : telematics_events rows with acknowledged_at is null
+//   unackedAlerts            : unacknowledged warning/critical telematics_events
+//                              (info rows like trip_start/trip_end aren't alerts)
 //   milesToday               : sum across devices of (max - min) odometer today
 //   avgSpeedToday            : mean of today's position speeds, rounded, or null
 //
@@ -89,6 +90,7 @@ export async function loadTelematicsKpi(
       .from('telematics_events')
       .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
+      .in('severity', ['warning', 'critical'])
       .is('acknowledged_at', null),
     sb
       .from('telematics_positions')

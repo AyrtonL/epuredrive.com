@@ -232,7 +232,7 @@ export default function CalendarClient({
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
                       {/* Label */}
                       <span className={`text-sm truncate ${checked ? 'text-white font-medium' : 'text-white/60'}`}>
-                        {car.make} {car.model_full || car.model}
+                        {carDisplayName(car)}
                       </span>
                     </button>
                   )

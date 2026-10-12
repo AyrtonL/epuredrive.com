@@ -5,7 +5,7 @@
 // from FleetMap.tsx so window/document references can't fail during SSR.
 import { useEffect, useMemo, useRef } from 'react'
 import { MapContainer, TileLayer, useMap } from 'react-leaflet'
-import type { Map as LeafletMap } from 'leaflet'
+import { latLngBounds, type Map as LeafletMap } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import VehicleMarker from './VehicleMarker'
 import type { MapVehicle } from './types'
@@ -14,6 +14,8 @@ import type { MapVehicle } from './types'
 const FALLBACK_CENTER: [number, number] = [25.76, -80.19]
 const DEFAULT_ZOOM = 11
 const FOCUSED_ZOOM = 15
+const FIT_PADDING_PX = 40
+const FIT_MAX_ZOOM = 13
 
 interface Props {
   vehicles: MapVehicle[]
@@ -57,6 +59,30 @@ function FlyToFocused({
   return null
 }
 
+/**
+ * On first render with coordinates, frames every vehicle. A centroid alone
+ * lands between far-apart cars (Miami + Orlando → Okeechobee) and shows none.
+ * Runs once so polling updates don't yank the view while the user pans.
+ */
+function FitToVehicles({ vehicles }: { vehicles: MapVehicle[] }) {
+  const map = useMap()
+  const fitted = useRef(false)
+  useEffect(() => {
+    if (fitted.current) return
+    const points = vehicles
+      .filter((v) => v.lat !== null && v.lon !== null)
+      .map((v) => [v.lat, v.lon] as [number, number])
+    if (points.length === 0) return
+    fitted.current = true
+    if (points.length === 1) {
+      map.setView(points[0], FIT_MAX_ZOOM)
+      return
+    }
+    map.fitBounds(latLngBounds(points), { padding: [FIT_PADDING_PX, FIT_PADDING_PX], maxZoom: FIT_MAX_ZOOM })
+  }, [vehicles, map])
+  return null
+}
+
 export default function FleetMapInner({ vehicles, onSelectCar, focusCarId }: Props) {
   const center = useMemo(() => computeCentroid(vehicles), [vehicles])
   const mapRef = useRef<LeafletMap | null>(null)
@@ -78,6 +104,7 @@ export default function FleetMapInner({ vehicles, onSelectCar, focusCarId }: Pro
       {vehicles.map((v) => (
         <VehicleMarker key={v.id} vehicle={v} onSelect={onSelectCar} />
       ))}
+      <FitToVehicles vehicles={vehicles} />
       <FlyToFocused vehicles={vehicles} focusCarId={focusCarId} />
     </MapContainer>
   )

@@ -461,7 +461,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
               <div>
                 <div className="text-sm font-black text-white uppercase tracking-wider">Reservation Requested</div>
                 <p className="text-white/40 text-xs mt-2 leading-relaxed">
-                  We&apos;ll confirm your {car.make} {car.model} reservation shortly via email or phone.
+                  We&apos;ll confirm your {carDisplayName(car)} reservation shortly via email or phone.
                 </p>
               </div>
               {whatsappPhone && (

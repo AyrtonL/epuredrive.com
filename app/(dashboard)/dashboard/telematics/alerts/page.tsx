@@ -19,6 +19,7 @@ import type {
   TelematicsEventType,
   TelematicsSeverity,
 } from '@/lib/supabase/types'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface EventRaw {
   id: string
@@ -100,7 +101,7 @@ function parseDate(raw: string | undefined, fallback: Date): Date {
 
 function carLabel(car: CarRaw | undefined, fallback: number | null): string {
   if (!car) return fallback !== null ? `Car ${fallback}` : 'Unknown car'
-  const name = [car.make, car.model].filter(Boolean).join(' ') || `Car ${car.id}`
+  const name = carDisplayName(car) || `Car ${car.id}`
   return car.plate ? `${name} (${car.plate})` : name
 }
 

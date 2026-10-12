@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface SearchParams {
   period?: string
@@ -254,7 +255,7 @@ export default async function UtilizationPage({
             </thead>
             <tbody className="divide-y divide-white/[0.07]">
               {rows.map((row) => {
-                const carLabel = `${row.car.make ?? ''} ${row.car.model_full || row.car.model || ''}`.trim()
+                const carLabel = carDisplayName(row.car)
                 return (
                   <tr key={row.car.id} className="hover:bg-white/5 transition-colors group">
                     <td data-primary className="px-6 py-4 text-white font-medium">

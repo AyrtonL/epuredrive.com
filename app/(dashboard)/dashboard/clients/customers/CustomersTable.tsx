@@ -3,6 +3,7 @@
 import { useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Customer } from '@/lib/supabase/types'
+import { isEarned } from '@/lib/finance/revenue'
 import { syncCustomersFromReservations, deleteCustomer, bulkDeleteCustomers } from './actions'
 
 type ReservationSummary = {
@@ -10,6 +11,7 @@ type ReservationSummary = {
   customer_email: string | null
   customer_phone: string | null
   total_amount: number | null
+  status: string | null
 }
 
 interface Props {
@@ -42,7 +44,8 @@ export default function CustomersTable({ customers, reservations, tenantId }: Pr
         return false
       })
 
-      const ltv = matchingReservations.reduce((sum, r) => sum + (Number(r.total_amount) || 0), 0)
+      // Lifetime value = earned (completed) revenue only; count includes upcoming/active trips.
+      const ltv = matchingReservations.filter(isEarned).reduce((sum, r) => sum + (Number(r.total_amount) || 0), 0)
       const count = matchingReservations.length
       return { ...c, ltv, count }
     })

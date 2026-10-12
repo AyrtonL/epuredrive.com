@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import type { Reservation } from '@/lib/supabase/types'
 import { calcCarStats, calcFleetSummary, type CarStats } from '@/lib/utils/fleet-performance-utils'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface ReportCar {
   id: number
@@ -28,7 +29,7 @@ export default function FleetPerformanceTab({ reservations, cars, dateFrom, date
   const carStats: CarStats[] = useMemo(() => {
     return cars
       .map(car => {
-        const name = car.model_full || `${car.make} ${car.model}`
+        const name = carDisplayName(car)
         return { carId: car.id, name, ...calcCarStats(car.id, reservations, dateFrom, dateTo) }
       })
       .sort((a, b) => b.utilization - a.utilization)

@@ -764,7 +764,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                       </option>
                       {cars.map((c) => (
                         <option key={c.id} value={c.id} className="bg-[#0d0d0d]">
-                          {c.make} {c.model_full || c.model}
+                          {carDisplayName(c)}
                         </option>
                       ))}
                     </select>

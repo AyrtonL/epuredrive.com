@@ -184,7 +184,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
             <option value="" className="bg-[#0d0d0d]">All Vehicles</option>
             {cars.map(c => (
               <option key={c.id} value={c.id} className="bg-[#0d0d0d]">
-                {c.make} {c.model_full || c.model}
+                {carDisplayName(c)}
               </option>
             ))}
           </select>

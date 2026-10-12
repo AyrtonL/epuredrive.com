@@ -6,6 +6,7 @@ import type { CarService, Car } from '@/lib/supabase/types'
 import { updateCarMileage } from './actions'
 import ServiceModal from './ServiceModal'
 import { useToast } from '@/components/ui/Toast'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   cars: Car[]
@@ -108,7 +109,7 @@ export default function FleetMileagePanel({ cars, services }: Props) {
               return (
                 <tr key={car.id} className="hover:bg-white/5 transition-colors">
                   <td data-primary className="py-4 pr-4 font-semibold text-white">
-                    {car.make} {car.model_full || car.model}
+                    {carDisplayName(car)}
                   </td>
 
                   <td data-label="Mileage" className="py-4 pr-4">

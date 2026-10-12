@@ -11,6 +11,7 @@ import PageHeader from '@/components/dashboard/PageHeader'
 import DeviceRow, { type DeviceRowData } from '@/components/telematics/DeviceRow'
 import DevicesToolbar, { type DeviceFilter } from '@/components/telematics/DevicesToolbar'
 import type { CarOption } from '@/components/telematics/LinkCarDropdown'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface DeviceRaw {
   id: string
@@ -42,7 +43,7 @@ function parseFilter(raw: string | undefined): DeviceFilter {
 }
 
 function carLabel(car: CarRaw): string {
-  const name = [car.make, car.model].filter(Boolean).join(' ') || `Car ${car.id}`
+  const name = carDisplayName(car) || `Car ${car.id}`
   return car.plate ? `${name} (${car.plate})` : name
 }
 

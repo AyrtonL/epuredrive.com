@@ -1,6 +1,7 @@
 // components/CarCard.tsx
 import Image from 'next/image'
 import type { Car } from '@/lib/supabase/types'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   car: Car
@@ -36,7 +37,7 @@ export default function CarCard({ car, slug }: Props) {
           </span>
         )}
         <h3 className="font-bold text-white text-lg leading-tight">
-          {car.make} {car.model_full || car.model}
+          {carDisplayName(car)}
         </h3>
         <div className="flex gap-3 text-xs text-white/50 mt-1 mb-3">
           {car.year && <span>{car.year}</span>}

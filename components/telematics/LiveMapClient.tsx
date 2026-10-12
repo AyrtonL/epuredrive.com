@@ -18,6 +18,7 @@ import {
   statusLabel,
   type MapVehicle,
 } from './types'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 const POLL_MS = 15_000
 
@@ -114,7 +115,7 @@ export default function LiveMapClient({ initialVehicles }: Props) {
               </li>
             )}
             {filtered.map((v) => {
-              const label = v.plate ?? [v.make, v.model].filter(Boolean).join(' ') ?? 'Vehicle'
+              const label = v.plate ?? carDisplayName(v) ?? 'Vehicle'
               return (
                 <li key={v.id}>
                   <button
@@ -134,7 +135,7 @@ export default function LiveMapClient({ initialVehicles }: Props) {
                       </span>
                     </div>
                     <div className="text-white/40 text-[11px] mt-0.5 truncate">
-                      {[v.make, v.model].filter(Boolean).join(' ')}
+                      {carDisplayName(v)}
                     </div>
                     <div className="text-white/30 text-[11px] mt-0.5">
                       {formatRelative(v.last_seen_at)}

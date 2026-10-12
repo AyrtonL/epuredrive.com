@@ -8,6 +8,7 @@ import ModalPortal from '@/components/ui/ModalPortal'
 import DatePicker from '@/components/ui/DatePicker'
 import { useToast } from '@/components/ui/Toast'
 import { todayISO } from '@/lib/finance/revenue'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   isOpen: boolean
@@ -154,7 +155,7 @@ export default function ServiceModal({ isOpen, onClose, service, cars, preselect
                     <option value="" disabled className="bg-[#0d0d0d]">Choose vehicle...</option>
                     {cars.map(c => (
                       <option key={c.id} value={c.id} className="bg-[#0d0d0d]">
-                        {c.make} {c.model_full || c.model}
+                        {carDisplayName(c)}
                       </option>
                     ))}
                   </select>
