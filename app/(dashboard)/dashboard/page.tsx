@@ -5,6 +5,7 @@ import StatCard from '@/components/dashboard/StatCard'
 import UtilizationPanel from '@/components/dashboard/UtilizationPanel'
 import TodayPanel, { type OpenRecall, type TodayItem } from '@/components/dashboard/TodayPanel'
 import CopyRef from '@/components/dashboard/CopyRef'
+import ActiveRentalsPanel, { type ActiveRental } from '@/components/dashboard/ActiveRentalsPanel'
 import NotificationBell from '@/components/dashboard/NotificationBell'
 import MaintenanceAlerts from './maintenance/MaintenanceAlerts'
 import type { Reservation, Car, CarService } from '@/lib/supabase/types'
@@ -15,6 +16,7 @@ import {
   dailyRevenueSeries,
   formatDateRange,
   monthRevenue,
+  rentalProgress,
   sameDayLastMonthISO,
 } from '@/lib/dashboard/overview-metrics'
 
@@ -79,6 +81,7 @@ export default async function DashboardPage() {
     { data: pickupsToday },
     { data: returnsToday },
     { data: openRecalls },
+    { data: activeRes },
   ] = await Promise.all([
     supabase.from('tenants').select('slug').eq('id', tenantId).single(),
     supabase.from('cars').select('id, make, model, model_full, status, mileage').eq('tenant_id', tenantId),
@@ -92,6 +95,7 @@ export default async function DashboardPage() {
     supabase.from('reservations').select('id, booking_code, customer_name, car_id, pickup_time').eq('tenant_id', tenantId).eq('pickup_date', today).in('status', ['pending', 'confirmed', 'active']).order('pickup_time', { ascending: true }),
     supabase.from('reservations').select('id, booking_code, customer_name, car_id, return_time').eq('tenant_id', tenantId).eq('return_date', today).eq('status', 'active').order('return_time', { ascending: true }),
     supabase.from('car_recalls').select('id, car_id, component, park_it').eq('tenant_id', tenantId).eq('status', 'open').order('park_it', { ascending: false }).limit(RECALLS_LIMIT),
+    supabase.from('reservations').select('id, booking_code, customer_name, car_id, pickup_date, return_date, return_time, total_amount').eq('tenant_id', tenantId).eq('status', 'active').order('return_date', { ascending: true, nullsFirst: false }),
   ])
 
   const carRows = (cars ?? []) as Car[]
@@ -157,6 +161,19 @@ export default async function DashboardPage() {
     component: r.component,
     parkIt: r.park_it,
   }))
+
+  const activeRentalRows: ActiveRental[] = (activeRes ?? [])
+    .filter((r) => r.pickup_date)
+    .map((r) => ({
+      id: r.id,
+      bookingCode: r.booking_code,
+      customer: r.customer_name || 'Unknown',
+      vehicle: carName(r.car_id),
+      dates: formatDateRange(r.pickup_date, r.return_date, today),
+      returnTime: r.return_time,
+      total: r.total_amount != null ? Number(r.total_amount) : null,
+      progress: rentalProgress(r.pickup_date, r.return_date, today),
+    }))
 
   const hasRevenue = revenue.current > 0 || revenue.lastMonthTotal > 0
 
@@ -251,6 +268,9 @@ export default async function DashboardPage() {
 
       {/* Main Content: Bookings Table + Today / Utilization */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 items-start">
+        <div className="space-y-6 min-w-0">
+        <ActiveRentalsPanel rentals={activeRentalRows} />
+
         {/* Bookings Table */}
         <div className="glass rounded-2xl border border-white/[0.10] overflow-hidden">
           <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-4 border-b border-white/[0.06]">
@@ -339,6 +359,7 @@ export default async function DashboardPage() {
               View all bookings &rarr;
             </Link>
           </div>
+        </div>
         </div>
 
         {/* Right column */}

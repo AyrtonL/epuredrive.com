@@ -1,10 +1,10 @@
 // __tests__/lib/overview-metrics.test.ts
-import { dailyCarsOutSeries, dailyRevenueSeries, formatDateRange, monthRevenue, sameDayLastMonthISO } from '@/lib/dashboard/overview-metrics'
+import { dailyCarsOutSeries, dailyRevenueSeries, formatDateRange, monthRevenue, rentalProgress, sameDayLastMonthISO } from '@/lib/dashboard/overview-metrics'
 import type { Reservation } from '@/lib/supabase/types'
 
 function res(partial: Partial<Reservation>): Reservation {
   return {
-    id: 1,
+    id: 'r1',
     car_id: 1,
     pickup_date: '2026-10-01',
     return_date: '2026-10-02',
@@ -57,11 +57,11 @@ describe('monthRevenue', () => {
   it('counts completed revenue plus the October days of active rentals, including days still ahead', () => {
     const rows = [
       // completed inside October: all $100 earned
-      res({ id: 1, pickup_date: '2026-10-01', return_date: '2026-10-02', total_amount: 100, status: 'completed' }),
+      res({ id: 'r1', pickup_date: '2026-10-01', return_date: '2026-10-02', total_amount: 100, status: 'completed' }),
       // active Oct 10–19: every day is in October → full $1000, even the days after today
-      res({ id: 2, pickup_date: '2026-10-10', return_date: '2026-10-19', total_amount: 1000, status: 'active' }),
+      res({ id: 'r2', pickup_date: '2026-10-10', return_date: '2026-10-19', total_amount: 1000, status: 'active' }),
       // active Sep 22 – Nov 10 (50 days, $500 → $10/day): only Oct's 31 days count
-      res({ id: 3, pickup_date: '2026-09-22', return_date: '2026-11-10', total_amount: 500, status: 'active' }),
+      res({ id: 'r3', pickup_date: '2026-09-22', return_date: '2026-11-10', total_amount: 500, status: 'active' }),
     ]
     const r = monthRevenue(rows, today)
     expect(r.earned).toBeCloseTo(100)
@@ -71,9 +71,9 @@ describe('monthRevenue', () => {
 
   it('totals all of last month and reports this month as a share of it', () => {
     const rows = [
-      res({ id: 4, pickup_date: '2026-09-11', return_date: '2026-09-14', total_amount: 400, status: 'completed' }),
-      res({ id: 5, pickup_date: '2026-09-20', return_date: '2026-09-22', total_amount: 600, status: 'completed' }),
-      res({ id: 6, pickup_date: '2026-10-05', return_date: '2026-10-06', total_amount: 250, status: 'completed' }),
+      res({ id: 'r4', pickup_date: '2026-09-11', return_date: '2026-09-14', total_amount: 400, status: 'completed' }),
+      res({ id: 'r5', pickup_date: '2026-09-20', return_date: '2026-09-22', total_amount: 600, status: 'completed' }),
+      res({ id: 'r6', pickup_date: '2026-10-05', return_date: '2026-10-06', total_amount: 250, status: 'completed' }),
     ]
     const r = monthRevenue(rows, today)
     expect(r.lastMonthTotal).toBeCloseTo(1000)
@@ -83,9 +83,9 @@ describe('monthRevenue', () => {
 
   it('ignores cancelled and upcoming reservations', () => {
     const rows = [
-      res({ id: 7, status: 'cancelled', total_amount: 999 }),
-      res({ id: 8, status: 'confirmed', total_amount: 999 }),
-      res({ id: 9, status: 'pending', total_amount: 999 }),
+      res({ id: 'r7', status: 'cancelled', total_amount: 999 }),
+      res({ id: 'r8', status: 'confirmed', total_amount: 999 }),
+      res({ id: 'r9', status: 'pending', total_amount: 999 }),
     ]
     const r = monthRevenue(rows, today)
     expect(r.current).toBe(0)
@@ -113,8 +113,8 @@ describe('dailyRevenueSeries', () => {
   it('spreads each rental evenly across its days inside the window', () => {
     const rows = [
       res({ pickup_date: '2026-10-01', return_date: '2026-10-02', total_amount: 100, status: 'completed' }),
-      res({ id: 2, pickup_date: '2026-10-02', return_date: '2026-10-02', total_amount: 30, status: 'active' }),
-      res({ id: 3, pickup_date: '2026-10-02', return_date: '2026-10-03', total_amount: 999, status: 'cancelled' }),
+      res({ id: 'r2', pickup_date: '2026-10-02', return_date: '2026-10-02', total_amount: 30, status: 'active' }),
+      res({ id: 'r3', pickup_date: '2026-10-02', return_date: '2026-10-03', total_amount: 999, status: 'cancelled' }),
     ]
     expect(dailyRevenueSeries(rows, '2026-10-01', '2026-10-03')).toEqual([50, 80, 0])
   })
@@ -124,10 +124,34 @@ describe('dailyCarsOutSeries', () => {
   it('counts distinct cars out each day, ignoring upcoming and cancelled', () => {
     const rows = [
       res({ car_id: 1, pickup_date: '2026-10-01', return_date: '2026-10-02', status: 'completed' }),
-      res({ id: 2, car_id: 1, pickup_date: '2026-10-02', return_date: '2026-10-03', status: 'active' }),
-      res({ id: 3, car_id: 2, pickup_date: '2026-10-02', return_date: '2026-10-02', status: 'completed' }),
-      res({ id: 4, car_id: 3, pickup_date: '2026-10-01', return_date: '2026-10-03', status: 'confirmed' }),
+      res({ id: 'r2', car_id: 1, pickup_date: '2026-10-02', return_date: '2026-10-03', status: 'active' }),
+      res({ id: 'r3', car_id: 2, pickup_date: '2026-10-02', return_date: '2026-10-02', status: 'completed' }),
+      res({ id: 'r4', car_id: 3, pickup_date: '2026-10-01', return_date: '2026-10-03', status: 'confirmed' }),
     ]
     expect(dailyCarsOutSeries(rows, '2026-10-01', '2026-10-03')).toEqual([1, 2, 1])
+  })
+})
+
+describe('rentalProgress', () => {
+  const today = '2026-10-12'
+
+  it('reports the current day of the rental and days until return', () => {
+    expect(rentalProgress('2026-10-10', '2026-10-24', today)).toEqual({
+      day: 3, totalDays: 15, pct: 20, daysLeft: 12, label: 'Returns in 12 days', tone: 'normal',
+    })
+  })
+
+  it('flags today and tomorrow returns', () => {
+    expect(rentalProgress('2026-10-09', '2026-10-12', today)).toMatchObject({ day: 4, totalDays: 4, pct: 100, daysLeft: 0, label: 'Returns today', tone: 'today' })
+    expect(rentalProgress('2026-10-09', '2026-10-13', today)).toMatchObject({ daysLeft: 1, label: 'Returns tomorrow', tone: 'today' })
+  })
+
+  it('marks rentals past their return date as overdue and caps progress', () => {
+    expect(rentalProgress('2026-10-01', '2026-10-10', today)).toMatchObject({ pct: 100, daysLeft: -2, label: '2 days overdue', tone: 'overdue' })
+    expect(rentalProgress('2026-10-01', '2026-10-11', today)).toMatchObject({ label: '1 day overdue' })
+  })
+
+  it('handles an open-ended rental', () => {
+    expect(rentalProgress('2026-10-10', null, today)).toMatchObject({ day: 3, totalDays: null, pct: null, daysLeft: null, label: 'No return date', tone: 'normal' })
   })
 })

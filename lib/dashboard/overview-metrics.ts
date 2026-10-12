@@ -135,3 +135,36 @@ export function formatDateRange(pickup: string | null, ret: string | null, today
   const needsYear = a.y !== b.y || b.y !== currentYear
   return `${start} – ${end}${needsYear ? `, ${b.y}` : ''}`
 }
+
+export interface RentalProgress {
+  /** 1-based day of the rental today */
+  day: number
+  totalDays: number | null
+  /** 0–100, null when the rental has no return date */
+  pct: number | null
+  /** negative when overdue */
+  daysLeft: number | null
+  label: string
+  tone: 'normal' | 'today' | 'overdue'
+}
+
+const dayDiff = (from: string, to: string): number =>
+  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000)
+
+/** Where an active rental stands today: "day 3 of 15 · Returns in 12 days". */
+export function rentalProgress(pickup: string, ret: string | null, today: string): RentalProgress {
+  const day = Math.max(1, dayDiff(pickup, today) + 1)
+  if (!ret) return { day, totalDays: null, pct: null, daysLeft: null, label: 'No return date', tone: 'normal' }
+
+  const totalDays = inclusiveDays(pickup, ret)
+  const daysLeft = dayDiff(today, ret)
+  const pct = Math.min(100, Math.round((Math.min(day, totalDays) / totalDays) * 100))
+
+  if (daysLeft < 0) {
+    const late = -daysLeft
+    return { day, totalDays, pct, daysLeft, label: `${late} day${late === 1 ? '' : 's'} overdue`, tone: 'overdue' }
+  }
+  if (daysLeft === 0) return { day, totalDays, pct, daysLeft, label: 'Returns today', tone: 'today' }
+  if (daysLeft === 1) return { day, totalDays, pct, daysLeft, label: 'Returns tomorrow', tone: 'today' }
+  return { day, totalDays, pct, daysLeft, label: `Returns in ${daysLeft} days`, tone: 'normal' }
+}
