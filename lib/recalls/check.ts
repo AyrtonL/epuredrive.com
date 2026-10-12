@@ -2,6 +2,12 @@
  * Daily recall sweep: for every owned car with a year (or decodable VIN), look up
  * NHTSA recall campaigns and record any campaign not already stored for that car.
  * Rows land with notified_at = null; lib/recalls/notify.ts sends the alerts.
+ *
+ * Only NEW campaigns alert. NHTSA has no keyless per-VIN API (the nhtsa.gov VIN
+ * search is reCAPTCHA-gated), so a model's recall backlog is mostly units that
+ * were repaired long ago. The first check of a car — or of a car whose
+ * make/model/year/VIN changed (cars.recall_baseline_key) — stores the backlog
+ * as silent status='baseline' rows; anything published afterwards alerts.
  * Cars under an active consignment contract are skipped — recalls on those are
  * the owner's responsibility, not the operator's.
  */
@@ -49,6 +55,7 @@ export function toRecallRow(
   car: { id: number; tenant_id: string },
   match: VehicleCandidate,
   r: NhtsaRecall,
+  { baseline }: { baseline: boolean },
 ) {
   return {
     tenant_id: car.tenant_id,
@@ -65,7 +72,15 @@ export function toRecallRow(
     matched_make: match.make,
     matched_model: match.model,
     matched_year: match.year,
+    status: baseline ? 'baseline' : 'open',
+    notified_at: baseline ? new Date().toISOString() : null,
   }
+}
+
+/** Identity the baseline was taken for; a change means "start a fresh baseline". */
+export function recallBaselineKey(car: RecallCar): string {
+  const norm = (v: string | number | null) => String(v ?? '').trim().replace(/\s+/g, ' ').toUpperCase()
+  return [car.make, car.model, car.year, car.vin].map(norm).join('|')
 }
 
 export interface ConsignmentContract {
@@ -86,6 +101,7 @@ export function consignedCarIds(contracts: ConsignmentContract[], today: string)
 interface CarRow extends RecallCar {
   id: number
   tenant_id: string | null
+  recall_baseline_key: string | null
 }
 
 export interface SweepResult {
@@ -98,7 +114,7 @@ export interface SweepResult {
 export async function sweepRecalls(supabase: SupabaseClient): Promise<SweepResult> {
   const { data: cars, error } = await supabase
     .from('cars')
-    .select('id, tenant_id, make, model, year, vin')
+    .select('id, tenant_id, make, model, year, vin, recall_baseline_key')
     .not('tenant_id', 'is', null)
     .or('status.is.null,status.neq.retired')
   if (error) throw new Error(`load cars: ${error.message}`)
@@ -111,7 +127,15 @@ export async function sweepRecalls(supabase: SupabaseClient): Promise<SweepResul
 
   const deps: RecallDeps = { fetchRecalls, decodeVin, cache: new Map() }
   const result: SweepResult = { carsChecked: 0, carsWithRecalls: 0, inserted: 0, errors: 0 }
-  const queue = ((cars ?? []) as CarRow[]).filter((c) => !consigned.has(c.id))
+  const allCars = (cars ?? []) as CarRow[]
+  const queue = allCars.filter((c) => !consigned.has(c.id))
+
+  // A consigned car gets a fresh baseline when it comes back to the operator.
+  const staleConsigned = allCars.filter((c) => consigned.has(c.id) && c.recall_baseline_key).map((c) => c.id)
+  if (staleConsigned.length > 0) {
+    const { error: resetErr } = await supabase.from('cars').update({ recall_baseline_key: null }).in('id', staleConsigned)
+    if (resetErr) console.error('[recalls] reset consigned baselines:', resetErr.message)
+  }
 
   async function worker() {
     for (let car = queue.shift(); car; car = queue.shift()) {
@@ -135,15 +159,27 @@ async function checkOneCar(
   deps: RecallDeps,
   result: SweepResult,
 ): Promise<number> {
+  const key = recallBaselineKey(car)
+  const baseline = car.recall_baseline_key !== key
   const found = await findRecallsForCar(car, deps)
-  if (!found) return 0
-  result.carsWithRecalls += 1
 
-  const rows = found.recalls.map((r) => toRecallRow({ id: car.id, tenant_id: car.tenant_id! }, found.match, r))
-  const { data, error } = await supabase
-    .from('car_recalls')
-    .upsert(rows, { onConflict: 'car_id,campaign_number', ignoreDuplicates: true })
-    .select('id')
-  if (error) throw new Error(`upsert: ${error.message}`)
-  return data?.length ?? 0
+  let inserted = 0
+  if (found) {
+    result.carsWithRecalls += 1
+    const rows = found.recalls.map((r) => toRecallRow({ id: car.id, tenant_id: car.tenant_id! }, found.match, r, { baseline }))
+    const { data, error } = await supabase
+      .from('car_recalls')
+      .upsert(rows, { onConflict: 'car_id,campaign_number', ignoreDuplicates: true })
+      .select('id')
+    if (error) throw new Error(`upsert: ${error.message}`)
+    inserted = data?.length ?? 0
+  }
+
+  // Record the baseline only after the lookup succeeded, so a failed NHTSA
+  // call retries the baseline next run instead of alerting on the backlog.
+  if (baseline) {
+    const { error } = await supabase.from('cars').update({ recall_baseline_key: key }).eq('id', car.id)
+    if (error) throw new Error(`set baseline: ${error.message}`)
+  }
+  return inserted
 }

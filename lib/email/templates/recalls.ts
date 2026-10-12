@@ -60,10 +60,10 @@ export function recallAlertEmail(params: {
     subject: `${urgent ? 'URGENT ' : ''}Safety recall${total !== 1 ? 's' : ''} — ${carCount} vehicle${carCount !== 1 ? 's' : ''} — ${params.tenantName}`,
     html: compactLayout({
       subheadline: 'Safety Recall Alert',
-      headline: `${total} new recall${total !== 1 ? 's' : ''} found for your fleet.`,
-      body: `NHTSA published recall campaigns that may affect these vehicles.${params.vehicles.map(vehicleBlock).join('')}`,
+      headline: `NHTSA published ${total} new recall${total !== 1 ? 's' : ''} for vehicles in your fleet.`,
+      body: `These campaigns cover the model of the vehicles below. Check each VIN to see whether your unit is included.${params.vehicles.map(vehicleBlock).join('')}`,
       cta: { label: 'Review Recalls', href: `${APP_URL}/dashboard/fleet` },
-      note: 'Recalls are matched by make, model and year, so not every unit is affected and some may already be repaired. Confirm with the VIN at nhtsa.gov/recalls or any dealer — repairs are free — then mark each one resolved on the vehicle page.',
+      note: 'Recalls are announced per model, so not every unit is affected. Enter the VIN at nhtsa.gov/recalls (it can take a few weeks for new campaigns to list every VIN) or ask any dealer — repairs are free — then mark each one on the vehicle page.',
     }),
   }
 }

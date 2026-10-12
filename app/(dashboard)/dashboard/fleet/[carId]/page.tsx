@@ -21,6 +21,7 @@ export default async function CarEditPage({ params }: Props) {
       .select('id, campaign_number, component, summary, consequence, remedy, report_received_date, park_it, park_outside, matched_make, matched_model, matched_year, status')
       .eq('car_id', carId)
       .eq('tenant_id', tenantId)
+      .neq('status', 'baseline')
       .order('status', { ascending: true })
       .order('report_received_date', { ascending: false }),
   ])

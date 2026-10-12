@@ -92,7 +92,7 @@ async function notifyTenant(supabase: SupabaseClient, tenantId: string, recalls:
   await createInAppNotification({
     tenantId,
     event: RECALL_EVENT,
-    title: urgent ? 'Urgent safety recall' : 'Safety recall found',
+    title: urgent ? 'Urgent safety recall — check VIN' : 'New recall for your model — check VIN',
     body: vehicles.length === 1
       ? `${vehicles[0].name}: ${recalls.length} recall${recalls.length !== 1 ? 's' : ''}`
       : `${recalls.length} recalls across ${vehicles.length} vehicles`,

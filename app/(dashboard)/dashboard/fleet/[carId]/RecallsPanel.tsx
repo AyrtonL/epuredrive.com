@@ -120,7 +120,7 @@ export default function RecallsPanel({ recalls, vin }: Props) {
         </a>
       </div>
       <p className="text-xs text-white/40 mb-3">
-        Checked daily against NHTSA by make, model and year. Not every unit is affected — confirm with the VIN, then mark each one.
+        New NHTSA recalls for this model, checked daily. Not every unit is affected — look up the VIN on nhtsa.gov, then mark each one.
       </p>
       <ul className="space-y-3">
         {recalls.map((r) => <RecallItem key={r.id} recall={r} />)}

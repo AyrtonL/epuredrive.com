@@ -1,4 +1,4 @@
-import { consignedCarIds, findRecallsForCar, toRecallRow } from '@/lib/recalls/check'
+import { consignedCarIds, findRecallsForCar, recallBaselineKey, toRecallRow } from '@/lib/recalls/check'
 import type { NhtsaRecall } from '@/lib/recalls/nhtsa'
 import type { VehicleCandidate } from '@/lib/recalls/match'
 
@@ -69,6 +69,7 @@ describe('toRecallRow', () => {
       { id: 3, tenant_id: 't1' },
       { make: 'PORSCHE', model: 'CAYENNE', year: 2021 },
       recall('22V040000', { parkIt: true, Remedy: 'Dealers will inspect' }),
+      { baseline: false },
     )
     expect(row).toMatchObject({
       tenant_id: 't1',
@@ -103,5 +104,31 @@ describe('consignedCarIds', () => {
   })
   it('treats the end date as inclusive', () => {
     expect(consignedCarIds([{ car_id: 5, contract_start: null, contract_end: today }], today).has(5)).toBe(true)
+  })
+})
+
+describe('baseline (only alert on recalls published after a car is first checked)', () => {
+  const car = { make: 'Porsche ', model: 'Cayenne', year: 2021, vin: 'wp1ba2ay7mda42894' }
+
+  it('builds a stable key from the identity fields', () => {
+    expect(recallBaselineKey(car)).toBe('PORSCHE|CAYENNE|2021|WP1BA2AY7MDA42894')
+    expect(recallBaselineKey({ ...car, make: 'PORSCHE' })).toBe(recallBaselineKey(car))
+  })
+
+  it('changes when the vehicle identity changes', () => {
+    expect(recallBaselineKey({ ...car, year: 2022 })).not.toBe(recallBaselineKey(car))
+    expect(recallBaselineKey({ ...car, vin: null })).not.toBe(recallBaselineKey(car))
+  })
+
+  it('stores backlog recalls as silent baseline rows', () => {
+    const row = toRecallRow({ id: 3, tenant_id: 't1' }, { make: 'PORSCHE', model: 'CAYENNE', year: 2021 }, recall('21V271000'), { baseline: true })
+    expect(row.status).toBe('baseline')
+    expect(row.notified_at).not.toBeNull()
+  })
+
+  it('stores later recalls as open and un-notified', () => {
+    const row = toRecallRow({ id: 3, tenant_id: 't1' }, { make: 'PORSCHE', model: 'CAYENNE', year: 2021 }, recall('26V999000'), { baseline: false })
+    expect(row.status).toBe('open')
+    expect(row.notified_at).toBeNull()
   })
 })
