@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { agreementClosedOutCustomerEmail } from '@/lib/email/templates'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 export async function POST(req: NextRequest) {
   try {
@@ -120,7 +121,7 @@ export async function POST(req: NextRequest) {
         .eq('id', reservation.car_id)
         .maybeSingle()
 
-      const carName = car ? `${car.make} ${car.model_full || car.model}` : 'Vehicle'
+      const carName = car ? `${carDisplayName(car)}` : 'Vehicle'
 
       Promise.resolve().then(async () => {
         try {

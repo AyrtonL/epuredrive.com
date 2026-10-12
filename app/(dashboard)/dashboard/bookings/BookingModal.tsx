@@ -22,6 +22,7 @@ import TimePicker from '@/components/ui/TimePicker'
 import LicensePhotoUploader from './LicensePhotoUploader'
 import { calculateCardSurcharge } from '@/lib/pricing/cardSurcharge'
 import { todayISO } from '@/lib/finance/revenue'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   isOpen: boolean
@@ -171,7 +172,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
   const isEditing = !!reservation
   const carName = useMemo(() => {
     const c = cars.find((c) => c.id === Number(formData.car_id))
-    return c ? `${c.make} ${c.model_full || c.model}` : null
+    return c ? `${carDisplayName(c)}` : null
   }, [cars, formData.car_id])
   const nights = calcNights(formData.pickup_date, formData.return_date)
 

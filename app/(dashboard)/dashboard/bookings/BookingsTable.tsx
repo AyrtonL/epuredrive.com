@@ -6,6 +6,7 @@ import type { Reservation, Car, RentalExtra } from '@/lib/supabase/types'
 import { updateReservation, deleteReservation, bulkUpdateReservations } from './actions'
 import BookingModal from './BookingModal'
 import DatePicker from '@/components/ui/DatePicker'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 const STATUS_COLORS: Record<string, string> = {
   confirmed: 'bg-green-500/20 text-green-400',
@@ -60,7 +61,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
   const [editingRes, setEditingRes] = useState<Reservation | null>(null)
 
   const carMap = useMemo(() => {
-    return Object.fromEntries(cars.map((c) => [c.id, `${c.make} ${c.model_full || c.model}`]))
+    return Object.fromEntries(cars.map((c) => [c.id, `${carDisplayName(c)}`]))
   }, [cars])
 
   const filtered = useMemo(() => {

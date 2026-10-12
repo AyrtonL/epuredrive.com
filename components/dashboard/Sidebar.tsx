@@ -274,10 +274,10 @@ export default function Sidebar({ email, role, name, tenantName, tenantLogoUrl, 
                 {/* Section header label */}
                 <button
                   onClick={() => toggle(entry.label)}
-                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-[12px] font-bold tracking-[0.15em] uppercase transition-all duration-200 ${
+                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-[13px] font-medium tracking-wide transition-all duration-200 ${
                     groupActive
                       ? 'text-white/90 bg-white/[0.06]'
-                      : 'text-white/50 hover:text-white/80 hover:bg-white/[0.04]'
+                      : 'text-white/60 hover:text-white/90 hover:bg-white/[0.04]'
                   } ${isAdmin ? 'text-amber-400/70 hover:text-amber-400/95' : ''}`}
                 >
                   {renderIcon(entry.label, `w-4 h-4 shrink-0 ${isAdmin ? 'text-amber-400/50' : 'opacity-50'}`)}

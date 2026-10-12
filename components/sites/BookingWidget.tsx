@@ -5,6 +5,7 @@ import type { Car, PickupLocation, RentalExtra, ReservationExtra } from '@/lib/s
 import DateRangePicker from './DateRangePicker'
 import { trackBookingStart, trackBookingSubmit, trackWhatsAppInquiry } from '@/lib/analytics'
 import { calculateCardSurcharge, getCardSurchargeRate } from '@/lib/pricing/cardSurcharge'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   car: Car
@@ -145,7 +146,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
     trackWhatsAppInquiry({ car_make: car.make, car_model: car.model_full || car.model })
     const addons = rentalExtras.filter(e => selectedExtras[e.id]).map(e => e.name)
 
-    const msg = `Hello! I'd like to reserve the *${car.make} ${car.model_full || car.model}*.\n\n`
+    const msg = `Hello! I'd like to reserve the *${carDisplayName(car)}*.\n\n`
       + `Pickup: ${pickDate} at ${pickTime}\n`
       + `Return: ${retDate} at ${retTime}\n`
       + `Location: ${locationLabel}\n`

@@ -10,6 +10,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { createInAppNotification } from '@/lib/notifications/create'
 import { maintenanceDueEmail } from '@/lib/email/templates/rentals'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
       .in('id', carIds as number[])
 
     const carMap = new Map(
-      (cars ?? []).map(c => [c.id, `${c.make} ${c.model_full || c.model}`])
+      (cars ?? []).map(c => [c.id, `${carDisplayName(c)}`])
     )
 
     // Get tenant name

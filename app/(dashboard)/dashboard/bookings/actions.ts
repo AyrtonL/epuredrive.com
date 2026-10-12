@@ -22,6 +22,7 @@ import {
 } from '@/lib/email/templates'
 import { createReservationCalendarEvent, deleteReservationCalendarEvent, updateReservationCalendarEvent } from '@/lib/google-calendar'
 import type { TenantBrand } from '@/lib/email/templates/_layout'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 const TENANT_BRAND_COLUMNS =
   'name, brand_name, slug, logo_url, owner_email, owner_phone, company_phone, whatsapp_phone, company_address'
@@ -202,7 +203,7 @@ async function getCarName(supabase: ReturnType<typeof createClient>, carId: numb
   if (!carId) return 'Unknown Vehicle'
   const { data } = await supabase.from('cars').select('make, model, model_full').eq('id', carId).single()
   if (!data) return `Car #${carId}`
-  return `${data.make} ${data.model_full || data.model}`
+  return `${carDisplayName(data)}`
 }
 
 async function getTenantName(supabase: ReturnType<typeof createClient>, tenantId: string): Promise<string> {

@@ -8,6 +8,7 @@ import { groupOwnerPayouts } from '@/lib/consignments/payouts'
 import OwnerModal from './OwnerModal'
 import ConsignmentModal from './ConsignmentModal'
 import DatePicker from '@/components/ui/DatePicker'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   owners: ConsignmentOwner[]
@@ -34,7 +35,7 @@ export default function ConsignmentsManager({ owners, consignments, cars, reserv
   const [editingCar, setEditingCar] = useState<Consignment | null>(null)
 
   const carMap = useMemo(
-    () => Object.fromEntries(cars.map(c => [c.id, `${c.make} ${c.model_full || c.model}`])),
+    () => Object.fromEntries(cars.map(c => [c.id, `${carDisplayName(c)}`])),
     [cars]
   )
 

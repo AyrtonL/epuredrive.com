@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import type { Car, PickupLocation, RentalExtra } from '@/lib/supabase/types'
 import BookingWidget from './BookingWidget'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   car: Car
@@ -72,7 +73,7 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
           
           <Image
             src={resolveImageUrl(gallery[activeIndex] ?? null)}
-            alt={`${car.year ? `${car.year} ` : ''}${car.make} ${car.model_full ?? car.model}${gallery.length > 1 ? ` — photo ${activeIndex + 1} of ${gallery.length}` : ''}`}
+            alt={`${car.year ? `${car.year} ` : ''}${carDisplayName(car)}${gallery.length > 1 ? ` — photo ${activeIndex + 1} of ${gallery.length}` : ''}`}
             fill
             priority
             sizes="100vw"
@@ -142,7 +143,7 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
           </div>
 
           <p className="text-white/40 text-base sm:text-lg leading-relaxed font-bold font-inter max-w-xl">
-            {car.description || `Reserve the ${car.make} ${car.model_full || car.model} online — pick your dates, choose pickup or delivery, and you're set.`}
+            {car.description || `Reserve the ${carDisplayName(car)} online — pick your dates, choose pickup or delivery, and you're set.`}
           </p>
 
           {/* Features (only what the operator entered) */}

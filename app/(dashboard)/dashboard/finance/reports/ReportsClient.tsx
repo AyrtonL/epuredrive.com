@@ -11,6 +11,7 @@ import {
   todayISO,
   daysAgoISO,
 } from '@/lib/finance/revenue'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface ReportCar {
   id: number
@@ -147,7 +148,7 @@ export default function ReportsClient({ reservations, expenses, cars, consignmen
     return Array.from(map.entries())
       .map(([carId, total]) => {
         const car = cars.find(c => c.id === carId)
-        const name = car ? `${car.make} ${car.model_full || car.model}` : `Car #${carId}`
+        const name = car ? `${carDisplayName(car)}` : `Car #${carId}`
         return [name, total] as [string, number]
       })
       .sort(([, a], [, b]) => b - a)

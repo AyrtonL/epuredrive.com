@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { agreementSignedCustomerEmail, agreementSignedOperatorEmail } from '@/lib/email/templates'
 import { rateLimit } from '@/lib/rate-limit'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 function sha256Hex(input: string): string {
   return createHash('sha256').update(input).digest('hex')
@@ -181,7 +182,7 @@ export async function POST(req: NextRequest) {
       phone: tenant?.company_phone || tenant?.whatsapp_phone || tenant?.owner_phone || null,
       address: tenant?.company_address ?? null,
     }
-    const carName = car ? `${car.make} ${car.model_full || car.model}` : 'Vehicle'
+    const carName = car ? `${carDisplayName(car)}` : 'Vehicle'
 
     // Link the customer back to their signed agreement (view / download PDF).
     // The client-side PDF is uploaded after signing, so we point at the

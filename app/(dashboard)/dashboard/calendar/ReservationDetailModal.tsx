@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { Reservation, Car } from '@/lib/supabase/types'
 import { updateReservation } from '../bookings/actions'
 import ModalPortal from '@/components/ui/ModalPortal'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   reservation: Reservation | null
@@ -31,7 +32,7 @@ export default function ReservationDetailModal({ reservation: r, cars, dailyRate
   if (!r) return null
 
   const currentStatus = localStatus ?? r.status ?? 'pending'
-  const carMap = Object.fromEntries(cars.map(c => [c.id, `${c.make} ${c.model_full || c.model}`]))
+  const carMap = Object.fromEntries(cars.map(c => [c.id, `${carDisplayName(c)}`]))
 
   // Late fee calculation
   const today = new Date()

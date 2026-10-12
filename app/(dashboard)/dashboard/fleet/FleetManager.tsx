@@ -6,6 +6,7 @@ import type { Car } from '@/lib/supabase/types'
 import { deleteCar } from './actions'
 import CarModal from './CarModal'
 import { useToast } from '@/components/ui/Toast'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   initialCars: Car[]
@@ -170,7 +171,7 @@ export default function FleetManager({ initialCars, consignedCarIds = [] }: Prop
                     </button>
                     {c.status !== 'retired' && (
                       <button
-                        onClick={() => handleDelete(c.id, `${c.make} ${c.model_full || c.model}`)}
+                        onClick={() => handleDelete(c.id, `${carDisplayName(c)}`)}
                         className="bg-red-500/10 hover:bg-red-500/20 text-red-400 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
                         title="Retire vehicle"
                       >

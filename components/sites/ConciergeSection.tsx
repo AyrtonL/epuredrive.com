@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { Tenant, Car } from '@/lib/supabase/types'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   tenant: Tenant
@@ -33,7 +34,7 @@ export default function ConciergeSection({ tenant, cars }: Props) {
   const [message, setMessage] = useState('')
   const [formState, setFormState] = useState<FormState>('idle')
 
-  const vehicleOptions = cars.map(c => `${c.year ?? ''} ${c.make} ${c.model_full ?? c.model}`.trim())
+  const vehicleOptions = cars.map(c => `${c.year ?? ''} ${carDisplayName(c)}`.trim())
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -6,6 +6,7 @@ import type { CarService, Car } from '@/lib/supabase/types'
 import { deleteService } from './actions'
 import ServiceModal from './ServiceModal'
 import { useToast } from '@/components/ui/Toast'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 const PAGE_SIZE = 15
 
@@ -25,7 +26,7 @@ export default function MaintenanceTable({ services, cars }: Props) {
   const [editingService, setEditingService] = useState<CarService | null>(null)
 
   const carMap = useMemo(() => {
-    return Object.fromEntries(cars.map((c) => [c.id, `${c.make} ${c.model_full || c.model}`]))
+    return Object.fromEntries(cars.map((c) => [c.id, `${carDisplayName(c)}`]))
   }, [cars])
 
   const filtered = useMemo(() => {

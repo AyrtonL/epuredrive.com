@@ -18,6 +18,7 @@ import {
   bookingConfirmedCustomerEmail,
   type TenantBrand,
 } from '@/lib/email/templates/rentals'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 const TENANT_BRAND_COLUMNS =
   'name, brand_name, slug, logo_url, owner_email, owner_phone, company_phone, whatsapp_phone, company_address'
@@ -128,7 +129,7 @@ export async function POST(request: Request) {
       .eq('tenant_id', tenantId)
       .single()
 
-    const carName = car ? `${car.make} ${car.model_full || car.model}` : `Car #${carId}`
+    const carName = car ? `${carDisplayName(car)}` : `Car #${carId}`
 
     // Parse extras from checkout metadata
     let extras: unknown = null

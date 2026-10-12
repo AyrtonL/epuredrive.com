@@ -4,6 +4,7 @@ import { sendEmail } from '@/lib/email/resend'
 import { createInAppNotification } from '@/lib/notifications/create'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 import { generateBookingCode } from '@/lib/booking-code'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 const rateLimitStore = new Map<string, number[]>()
 
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
   const reservationId = inserted.id
   const resBookingCode = inserted.booking_code as string
   const tenantName = tenant.brand_name || tenant.name
-  const vehicleName = `${car.make} ${car.model_full || car.model}`
+  const vehicleName = `${carDisplayName(car)}`
   const customerName = String(data.customer_name).trim()
   const customerEmail = String(data.customer_email).trim()
   const pickupDate = String(data.pickup_date)

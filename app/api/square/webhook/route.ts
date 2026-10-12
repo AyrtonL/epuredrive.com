@@ -10,6 +10,7 @@ import {
   type TenantBrand,
 } from '@/lib/email/templates/rentals'
 import crypto from 'crypto'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 /**
  * Verify Square webhook signature.
@@ -150,7 +151,7 @@ export async function POST(request: NextRequest) {
         .select('make, model, model_full')
         .eq('id', carId)
         .maybeSingle()
-      if (car) carName = `${car.make} ${car.model_full || car.model}`
+      if (car) carName = `${carDisplayName(car)}`
     }
 
     const days = pendingCheckout?.pickup_date && pendingCheckout?.return_date

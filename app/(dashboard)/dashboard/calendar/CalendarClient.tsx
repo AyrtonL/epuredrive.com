@@ -7,6 +7,7 @@ import type { Reservation, Car, BlockedDate } from '@/lib/supabase/types'
 import { deleteBlockedDate } from './actions'
 import BlockDateModal from './BlockDateModal'
 import ReservationDetailModal from './ReservationDetailModal'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 // FullCalendar (~500KB with plugins) is heavy and only used on this page.
 // Dynamic import keeps it out of the route's initial JS chunk; users see
@@ -76,7 +77,7 @@ export default function CalendarClient({
   }
 
   const carMap = useMemo(() => {
-    return Object.fromEntries(cars.map((c) => [c.id, `${c.make} ${c.model_full || c.model}`]))
+    return Object.fromEntries(cars.map((c) => [c.id, `${carDisplayName(c)}`]))
   }, [cars])
 
   const filterLabel = selectedCars.size === 0

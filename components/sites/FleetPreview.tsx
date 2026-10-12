@@ -1,6 +1,7 @@
 'use client'
 import Image from 'next/image'
 import type { Car } from '@/lib/supabase/types'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   cars: Car[]
@@ -63,7 +64,7 @@ export default function FleetPreview({ cars, base, theme = 'dark' }: Props) {
             <div className="aspect-[16/10] overflow-hidden relative">
               <Image
                 src={resolveImageUrl(car.image_url)}
-                alt={`${car.year ? `${car.year} ` : ''}${car.make} ${car.model_full ?? car.model}`}
+                alt={`${car.year ? `${car.year} ` : ''}${carDisplayName(car)}`}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="object-cover transition-transform duration-1000 group-hover:scale-110"

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
     .eq('id', data.car_id)
     .single()
 
-  const vehicleName = car ? `${car.make} ${car.model_full || car.model}` : 'Vehicle'
+  const vehicleName = car ? `${carDisplayName(car)}` : 'Vehicle'
 
   return NextResponse.json({
     reservation: {

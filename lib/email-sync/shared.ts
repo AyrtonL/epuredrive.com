@@ -7,6 +7,7 @@ import {
   deleteReservationCalendarEvent,
 } from '@/lib/google-calendar'
 import type { EmailSync, ParsedEmail, ExistingReservation } from './types'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 export const GMAIL_BASE = 'https://gmail.googleapis.com/gmail/v1/users/me'
 export const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
@@ -320,7 +321,7 @@ export async function syncUpcarCalendarEvent(
         .select('make, model, model_full')
         .eq('id', r.car_id)
         .maybeSingle()
-      if (c) carName = `${c.make} ${c.model_full || c.model}`
+      if (c) carName = `${carDisplayName(c)}`
     }
 
     const details = {

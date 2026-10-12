@@ -6,6 +6,7 @@ import type { Transaction, Car } from '@/lib/supabase/types'
 import { deleteTransaction, bulkCreateTransactions } from './actions'
 import ExpenseModal from './ExpenseModal'
 import { todayISO } from '@/lib/finance/revenue'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 const PAGE_SIZE = 15
 
@@ -24,7 +25,7 @@ export default function ExpensesTable({ expenses, cars }: Props) {
   const [editingExpense, setEditingExpense] = useState<Transaction | null>(null)
 
   const carMap = useMemo(() => {
-    return Object.fromEntries(cars.map((c) => [c.id, `${c.make} ${c.model_full || c.model}`]))
+    return Object.fromEntries(cars.map((c) => [c.id, `${carDisplayName(c)}`]))
   }, [cars])
 
   const filtered = useMemo(() => {

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import { createReservationCalendarEvent } from '@/lib/google-calendar'
 import { todayISO } from '@/lib/finance/revenue'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 export async function disconnectGoogleCalendar(): Promise<{ error: string | null }> {
   const { tenantId } = await requireTenantId()
@@ -23,7 +24,7 @@ async function getCarName(supabase: ReturnType<typeof createClient>, carId: numb
   if (!carId) return 'Unknown Vehicle'
   const { data } = await supabase.from('cars').select('make, model, model_full').eq('id', carId).single()
   if (!data) return `Car #${carId}`
-  return `${data.make} ${data.model_full || data.model}`
+  return `${carDisplayName(data)}`
 }
 
 /**

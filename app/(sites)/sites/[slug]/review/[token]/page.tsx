@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import ReviewForm from './ReviewForm'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   params: { slug: string; token: string }
@@ -54,7 +55,7 @@ export default async function ReviewPage({ params }: Props) {
   }
 
   const tenantName = tenant.brand_name || tenant.name || 'Your rental company'
-  const carName = car ? `${car.make} ${car.model_full || car.model}` : 'your rental'
+  const carName = car ? `${carDisplayName(car)}` : 'your rental'
   const accentColor = tenant.primary_color || '#00d2ff'
 
   return (

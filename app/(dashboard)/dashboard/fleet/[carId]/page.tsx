@@ -5,6 +5,7 @@ import PageHeader from '@/components/dashboard/PageHeader'
 import CarEditForm from './CarEditForm'
 import RecallsPanel, { type CarRecall } from './RecallsPanel'
 import type { Car } from '@/lib/supabase/types'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   params: { carId: string }
@@ -38,7 +39,7 @@ export default async function CarEditPage({ params }: Props) {
         </Link>
       </div>
       <PageHeader
-        title={`${c.make} ${c.model_full || c.model}`}
+        title={`${carDisplayName(c)}`}
         description={`Car ID: ${c.id}`}
       />
       {recalls && recalls.length > 0 && <RecallsPanel recalls={recalls as CarRecall[]} vin={c.vin} />}

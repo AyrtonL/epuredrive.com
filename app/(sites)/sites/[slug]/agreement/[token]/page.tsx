@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import AgreementSigner from './AgreementSigner'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   params: { slug: string; token: string }
@@ -35,7 +36,7 @@ export default async function AgreementPage({ params }: Props) {
     .maybeSingle()
 
   const tenantName = tenant.brand_name || tenant.name
-  const carName = car ? `${car.make} ${car.model_full || car.model}` : 'Vehicle'
+  const carName = car ? `${carDisplayName(car)}` : 'Vehicle'
   const accentColor = tenant.primary_color || '#00d2ff'
 
   // license-photos is a private bucket (PII) — resolve short-lived signed
