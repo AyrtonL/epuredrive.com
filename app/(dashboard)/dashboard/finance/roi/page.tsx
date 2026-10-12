@@ -2,6 +2,9 @@ import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import type { Reservation, Car, CarService, Consignment, Transaction } from '@/lib/supabase/types'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import InvestmentTable, { type InvestmentRow } from './InvestmentTable'
+import { carRoi } from '@/lib/finance/car-roi'
+import { todayISO } from '@/lib/finance/revenue'
 
 function fmt(n: number) {
   const abs = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -17,12 +20,14 @@ export default async function ROIPage() {
     { data: services },
     { data: consignments },
     { data: transactions },
+    { data: financing },
   ] = await Promise.all([
     supabase.from('reservations').select('car_id, total_amount, status').eq('tenant_id', tenantId).eq('status', 'completed'),
     supabase.from('cars').select('id, make, model, model_full, daily_rate').eq('tenant_id', tenantId),
     supabase.from('car_services').select('car_id, cost, transaction_id').eq('tenant_id', tenantId),
     supabase.from('consignments').select('car_id, owner_percentage, owner_name').eq('tenant_id', tenantId),
     supabase.from('transactions').select('id, amount, category, car_id').eq('tenant_id', tenantId),
+    supabase.from('car_financing').select('*').eq('tenant_id', tenantId),
   ])
 
   const rows = (reservations as Reservation[]) ?? []
@@ -81,9 +86,41 @@ export default async function ROIPage() {
   const generalExpenses = txRows.filter(t => t.car_id == null).reduce((s, t) => s + (Number(t.amount) || 0), 0)
   const fleetNet = fleetGross - fleetMaint - fleetOwnerPayouts - generalExpenses - Object.values(transactionExpenseMap).reduce((s, v) => s + v, 0)
 
+  // Per-car operating net (same formula as the table below) → real ROI for
+  // cars with purchase/financing info.
+  const today = todayISO()
+  const financingByCar = new Map((financing ?? []).map((f) => [f.car_id as number, f]))
+  const numOrNull = (v: unknown): number | null => (v == null ? null : Number(v))
+  const investmentRows: InvestmentRow[] = sorted
+    .filter((c) => !consignmentRows.some((con) => con.car_id === c.id))
+    .map((c) => {
+      const gross = revenueMap[c.id] ?? 0
+      const operatingNet = gross - (maintenanceMap[c.id] ?? 0) - (transactionExpenseMap[c.id] ?? 0)
+      const f = financingByCar.get(c.id)
+      const hasData = f && (f.purchase_price != null || f.loan_amount != null || f.down_payment != null)
+      return {
+        carId: c.id,
+        name: carDisplayName(c),
+        operatingNet,
+        roi: hasData
+          ? carRoi({
+              purchasePrice: numOrNull(f.purchase_price),
+              purchaseDate: f.purchase_date,
+              downPayment: numOrNull(f.down_payment),
+              loan: f.loan_amount != null
+                ? { amount: Number(f.loan_amount), aprPct: Number(f.loan_apr), termMonths: Number(f.loan_term_months), firstPaymentDate: f.loan_first_payment_date }
+                : null,
+              currentValue: numOrNull(f.current_value),
+              operatingNet,
+              today,
+            })
+          : null,
+      }
+    })
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <PageHeader title="Net Profit by Vehicle" description="All time · Earned revenue (completed rentals) minus maintenance, owner splits, and expenses per vehicle. (True ROI, which needs each vehicle's purchase cost, is coming with fleet cost-basis tracking.)" />
+      <PageHeader title="ROI" description="All time · Real return per vehicle from purchase and loan details, plus net profit (earned revenue minus maintenance, owner splits and expenses)." />
 
       {/* Fleet Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -101,6 +138,9 @@ export default async function ROIPage() {
         ))}
       </div>
 
+      <InvestmentTable rows={investmentRows} />
+
+      <h2 className="text-white font-bold text-base pt-4">Net profit by vehicle</h2>
       {sorted.length === 0 ? (
         <div className="empty-state">
           No fleet data or completed bookings found.

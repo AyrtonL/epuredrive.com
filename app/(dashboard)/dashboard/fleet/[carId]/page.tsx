@@ -5,6 +5,7 @@ import PageHeader from '@/components/dashboard/PageHeader'
 import CarEditForm from './CarEditForm'
 import RecallsPanel, { type CarRecall } from './RecallsPanel'
 import CarSummary, { type LastService, type SummaryBooking } from './CarSummary'
+import FinancingForm, { type FinancingValues } from './FinancingForm'
 import type { Car, Reservation } from '@/lib/supabase/types'
 import { carDisplayName, categoryLabel } from '@/lib/utils/car-display-name'
 import { daysAgoISO, sumEarnedRevenue, todayISO } from '@/lib/finance/revenue'
@@ -32,7 +33,7 @@ export default async function CarEditPage({ params }: Props) {
 
   const carId = Number(params.carId)
   const today = todayISO()
-  const [{ data: car }, { data: recalls }, { data: reservations }, { data: services }, { data: maintenanceTx }] = await Promise.all([
+  const [{ data: car }, { data: recalls }, { data: reservations }, { data: services }, { data: maintenanceTx }, { data: financing }] = await Promise.all([
     supabase.from('cars').select('*').eq('id', carId).eq('tenant_id', tenantId).single(),
     supabase
       .from('car_recalls')
@@ -65,6 +66,7 @@ export default async function CarEditPage({ params }: Props) {
       .eq('category', 'maintenance')
       .order('transaction_date', { ascending: false })
       .limit(1),
+    supabase.from('car_financing').select('*').eq('car_id', carId).eq('tenant_id', tenantId).maybeSingle(),
   ])
 
   if (!car) notFound()
@@ -89,6 +91,21 @@ export default async function CarEditPage({ params }: Props) {
     tx?.transaction_date ? { date: tx.transaction_date, label: tx.description || 'Maintenance', amount: tx.amount != null ? Number(tx.amount) : null } : null,
   ].filter((x): x is LastService => x != null)
   const lastService = candidates.sort((a, b) => b.date.localeCompare(a.date))[0] ?? null
+
+  const n = (v: unknown): number | null => (v == null ? null : Number(v))
+  const financingValues: FinancingValues | null = financing
+    ? {
+        purchasePrice: n(financing.purchase_price),
+        purchaseDate: financing.purchase_date,
+        downPayment: n(financing.down_payment),
+        loanAmount: n(financing.loan_amount),
+        loanAprPct: n(financing.loan_apr),
+        loanTermMonths: n(financing.loan_term_months),
+        loanFirstPaymentDate: financing.loan_first_payment_date,
+        currentValue: n(financing.current_value),
+        currentValueAsOf: financing.current_value_as_of,
+      }
+    : null
 
   const subtitle = [c.year, categoryLabel(c.category), c.color, c.plate ? `Plate ${c.plate}` : null].filter(Boolean).join(' · ')
 
@@ -115,6 +132,7 @@ export default async function CarEditPage({ params }: Props) {
       />
       <div className="max-w-3xl">
         {recalls && recalls.length > 0 && <RecallsPanel recalls={recalls as CarRecall[]} vin={c.vin} />}
+        <FinancingForm carId={c.id} initial={financingValues} today={today} />
         <h2 className="text-white font-bold text-base mb-4">Vehicle details</h2>
         <CarEditForm car={c} />
       </div>
