@@ -37,7 +37,7 @@ describe('getAgreementViewUrl', () => {
       mockSupabase({ reservation: { agreement_token: null } })
     )
 
-    const result = await getAgreementViewUrl(42)
+    const result = await getAgreementViewUrl('r42')
 
     expect(result.url).toBeNull()
     expect(result.error).toMatch(/no agreement/i)
@@ -46,7 +46,7 @@ describe('getAgreementViewUrl', () => {
   it('returns an error when the reservation is not found for this tenant', async () => {
     ;(createClient as jest.Mock).mockReturnValue(mockSupabase({ reservation: null }))
 
-    const result = await getAgreementViewUrl(42)
+    const result = await getAgreementViewUrl('r42')
 
     expect(result.url).toBeNull()
     expect(result.error).toBeTruthy()
@@ -61,7 +61,7 @@ describe('getAgreementViewUrl', () => {
       })
     )
 
-    const result = await getAgreementViewUrl(42)
+    const result = await getAgreementViewUrl('r42')
 
     expect(result.error).toBeNull()
     expect(result.url).toBe('https://app.epuredrive.com/sites/acme/agreement/tok-123')

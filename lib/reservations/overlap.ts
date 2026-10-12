@@ -14,7 +14,7 @@ import type { Reservation } from '@/lib/supabase/types'
 export const BLOCKING_STATUSES = ['pending', 'confirmed', 'active'] as const
 
 export interface OverlapCandidate {
-  id?: number | null
+  id?: string | null
   car_id: number | null
   pickup_date: string | null
   pickup_time?: string | null

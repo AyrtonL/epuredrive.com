@@ -2,7 +2,7 @@ import { calcCarStats, calcFleetSummary } from '@/lib/utils/fleet-performance-ut
 import type { Reservation } from '@/lib/supabase/types'
 
 const makeRes = (overrides: Partial<Reservation> = {}): Reservation => ({
-  id: 1,
+  id: 'r1',
   booking_code: 'E-TEST01',
   car_id: 1,
   status: 'completed',

@@ -55,7 +55,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
   const [isPending, startTransition] = useTransition()
   
   const [page, setPage] = useState(1)
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   
   const [modalOpen, setModalOpen] = useState(false)
   const [editingRes, setEditingRes] = useState<Reservation | null>(null)
@@ -96,7 +96,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
     }
   }
 
-  function toggleOne(id: number) {
+  function toggleOne(id: string) {
     const next = new Set(selectedIds)
     if (next.has(id)) next.delete(id)
     else next.add(id)
@@ -141,7 +141,7 @@ export default function BookingsTable({ reservations, cars, rentalExtras, charge
     setModalOpen(true)
   }
 
-  function handleDelete(id: number) {
+  function handleDelete(id: string) {
     if (!confirm('Delete this reservation?')) return
     startTransition(async () => {
       await deleteReservation(id)

@@ -3,7 +3,7 @@ import type { Consignment, ConsignmentOwner, Reservation, Transaction } from '@/
 
 function res(p: Partial<Reservation>): Reservation {
   return {
-    id: 1, booking_code: 'B', car_id: 26, customer_name: 'C',
+    id: 'r1', booking_code: 'B', car_id: 26, customer_name: 'C',
     pickup_date: '2026-06-10', return_date: '2026-06-12',
     total_amount: 1000, status: 'completed', ...p,
   } as Reservation
@@ -23,7 +23,7 @@ function owner(p: Partial<ConsignmentOwner>): ConsignmentOwner {
   } as ConsignmentOwner
 }
 function tx(p: Partial<Transaction> = {}): Transaction {
-  return { id: 1, transaction_date: '2026-06-11', type: 'expense',
+  return { id: 'r1', transaction_date: '2026-06-11', type: 'expense',
     category: 'fuel', amount: 100, description: null, car_id: 26, ...p } as Transaction
 }
 
@@ -52,9 +52,9 @@ describe('computeCarPayout', () => {
       c,
       [
         res({ total_amount: 1000, status: 'completed' }),
-        res({ id: 2, total_amount: 500, status: 'active' }),
-        res({ id: 3, total_amount: 400, status: 'confirmed' }),
-        res({ id: 4, total_amount: 999, status: 'cancelled' }),
+        res({ id: 'r2', total_amount: 500, status: 'active' }),
+        res({ id: 'r3', total_amount: 400, status: 'confirmed' }),
+        res({ id: 'r4', total_amount: 999, status: 'cancelled' }),
       ],
       [],
       WIDE_FROM, WIDE_TO
@@ -110,7 +110,7 @@ describe('groupOwnerPayouts', () => {
       ],
       reservations: [
         res({ car_id: 26, total_amount: 1000, status: 'completed' }),
-        res({ id: 2, car_id: 27, total_amount: 2000, status: 'completed' }),
+        res({ id: 'r2', car_id: 27, total_amount: 2000, status: 'completed' }),
       ],
       expenses: [],
     })

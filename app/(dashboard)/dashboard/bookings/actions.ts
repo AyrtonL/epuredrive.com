@@ -217,7 +217,7 @@ async function getTenantBrand(supabase: ReturnType<typeof createClient>, tenantI
 }
 
 interface ReservationForNotify {
-  id: number
+  id: string
   customer_name: string | null
   customer_email: string | null
   customer_phone: string | null
@@ -459,7 +459,7 @@ export async function createReservation(
 }
 
 export async function updateReservation(
-  id: number,
+  id: string,
   data: Partial<Omit<Reservation, 'id' | 'tenant_id'>>,
   options?: { allowOverlap?: boolean }
 ): Promise<{ error: string | null; conflict?: string }> {
@@ -722,7 +722,7 @@ export async function updateReservation(
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function sendAgreement(
-  reservationId: number,
+  reservationId: string,
   extraCc?: string
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
@@ -805,7 +805,7 @@ export async function sendAgreement(
 }
 
 export async function getAgreementViewUrl(
-  reservationId: number
+  reservationId: string
 ): Promise<{ url: string | null; error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
@@ -849,7 +849,7 @@ const EMAIL_ISSUE_LABELS: Record<string, string> = {
  * blind "sent" status once staff clicks Send/Resend.
  */
 export async function getAgreementEmailIssue(
-  reservationId: number
+  reservationId: string
 ): Promise<{ label: string | null; occurredAt: string | null }> {
   const supabase = createClient()
 
@@ -892,7 +892,7 @@ export async function getLatestOdometer(carId: number): Promise<number | null> {
   return typeof data.mileage === 'number' ? data.mileage : null
 }
 
-export async function deleteReservation(id: number): Promise<{ error: string | null }> {
+export async function deleteReservation(id: string): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
   const { error } = await supabase
@@ -905,7 +905,7 @@ export async function deleteReservation(id: number): Promise<{ error: string | n
 }
 
 export async function bulkUpdateReservations(
-  ids: number[],
+  ids: string[],
   data: Partial<Omit<Reservation, 'id' | 'tenant_id'>>
 ): Promise<{ error: string | null }> {
   if (!ids.length) return { error: null }

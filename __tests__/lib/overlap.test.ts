@@ -4,7 +4,7 @@ import type { Reservation } from '@/lib/supabase/types'
 
 function res(p: Partial<Reservation>): Reservation {
   return {
-    id: 1, booking_code: 'B', car_id: 1, customer_name: 'A',
+    id: 'r1', booking_code: 'B', car_id: 1, customer_name: 'A',
     pickup_date: '2026-06-10', return_date: '2026-06-12',
     total_amount: 100, status: 'confirmed', ...p,
   } as Reservation
@@ -12,15 +12,15 @@ function res(p: Partial<Reservation>): Reservation {
 
 describe('findOverlappingReservations', () => {
   const existing = [
-    res({ id: 10, car_id: 1, pickup_date: '2026-06-10', return_date: '2026-06-14', status: 'confirmed' }),
-    res({ id: 11, car_id: 2, pickup_date: '2026-06-10', return_date: '2026-06-14', status: 'confirmed' }),
-    res({ id: 12, car_id: 1, pickup_date: '2026-07-01', return_date: '2026-07-03', status: 'confirmed' }),
-    res({ id: 13, car_id: 1, pickup_date: '2026-06-11', return_date: '2026-06-13', status: 'cancelled' }),
+    res({ id: 'r10', car_id: 1, pickup_date: '2026-06-10', return_date: '2026-06-14', status: 'confirmed' }),
+    res({ id: 'r11', car_id: 2, pickup_date: '2026-06-10', return_date: '2026-06-14', status: 'confirmed' }),
+    res({ id: 'r12', car_id: 1, pickup_date: '2026-07-01', return_date: '2026-07-03', status: 'confirmed' }),
+    res({ id: 'r13', car_id: 1, pickup_date: '2026-06-11', return_date: '2026-06-13', status: 'cancelled' }),
   ]
 
   it('flags an overlapping booking on the same car', () => {
     const hits = findOverlappingReservations({ car_id: 1, pickup_date: '2026-06-12', return_date: '2026-06-13' }, existing)
-    expect(hits.map((h) => h.id)).toEqual([10])
+    expect(hits.map((h) => h.id)).toEqual(['r10'])
   })
 
   it('ignores a different car', () => {
@@ -30,11 +30,11 @@ describe('findOverlappingReservations', () => {
 
   it('ignores cancelled reservations', () => {
     const hits = findOverlappingReservations({ car_id: 1, pickup_date: '2026-06-11', return_date: '2026-06-11' }, existing)
-    expect(hits.map((h) => h.id)).toEqual([10]) // 13 is cancelled, excluded
+    expect(hits.map((h) => h.id)).toEqual(['r10']) // 13 is cancelled, excluded
   })
 
   it('excludes the reservation being edited (same id)', () => {
-    const hits = findOverlappingReservations({ id: 10, car_id: 1, pickup_date: '2026-06-10', return_date: '2026-06-14' }, existing)
+    const hits = findOverlappingReservations({ id: 'r10', car_id: 1, pickup_date: '2026-06-10', return_date: '2026-06-14' }, existing)
     expect(hits).toHaveLength(0)
   })
 
@@ -45,12 +45,12 @@ describe('findOverlappingReservations', () => {
 
   it('treats a null return_date as open-ended and conflicting with all later bookings', () => {
     const hits = findOverlappingReservations({ car_id: 1, pickup_date: '2026-06-13', return_date: null }, existing)
-    expect(hits.map((h) => h.id).sort((a, b) => a - b)).toEqual([10, 12])
+    expect(hits.map((h) => h.id).sort()).toEqual(['r10', 'r12'])
   })
 
   it('does not flag a same-day handover when the return time is before the next pickup time', () => {
     const sameDayExisting = [
-      res({ id: 20, car_id: 1, pickup_date: '2026-06-10', pickup_time: '10:00', return_date: '2026-06-12', return_time: '13:00', status: 'confirmed' }),
+      res({ id: 'r20', car_id: 1, pickup_date: '2026-06-10', pickup_time: '10:00', return_date: '2026-06-12', return_time: '13:00', status: 'confirmed' }),
     ]
     const hits = findOverlappingReservations(
       { car_id: 1, pickup_date: '2026-06-12', pickup_time: '15:00', return_date: '2026-06-14', return_time: '10:00' },
@@ -61,18 +61,18 @@ describe('findOverlappingReservations', () => {
 
   it('flags a same-day handover when the times actually overlap', () => {
     const sameDayExisting = [
-      res({ id: 21, car_id: 1, pickup_date: '2026-06-10', pickup_time: '10:00', return_date: '2026-06-12', return_time: '16:00', status: 'confirmed' }),
+      res({ id: 'r21', car_id: 1, pickup_date: '2026-06-10', pickup_time: '10:00', return_date: '2026-06-12', return_time: '16:00', status: 'confirmed' }),
     ]
     const hits = findOverlappingReservations(
       { car_id: 1, pickup_date: '2026-06-12', pickup_time: '15:00', return_date: '2026-06-14', return_time: '10:00' },
       sameDayExisting
     )
-    expect(hits.map((h) => h.id)).toEqual([21])
+    expect(hits.map((h) => h.id)).toEqual(['r21'])
   })
 
   it('falls back to whole-day blocking when times are missing (legacy rows)', () => {
     const hits = findOverlappingReservations({ car_id: 1, pickup_date: '2026-06-12', return_date: '2026-06-13' }, existing)
-    expect(hits.map((h) => h.id)).toEqual([10])
+    expect(hits.map((h) => h.id)).toEqual(['r10'])
   })
 })
 

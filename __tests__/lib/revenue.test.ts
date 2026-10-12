@@ -15,7 +15,7 @@ import type { Reservation } from '@/lib/supabase/types'
 
 function res(partial: Partial<Reservation>): Reservation {
   return {
-    id: 1,
+    id: 'r1',
     booking_code: 'B1',
     car_id: 1,
     customer_name: 'Test',

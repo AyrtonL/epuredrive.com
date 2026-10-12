@@ -62,7 +62,7 @@ export function agreementSignedOperatorEmail(params: {
   carName: string
   pickupDate: string
   returnDate: string
-  reservationId: number
+  reservationId: string
   bookingCode?: string
 }): { subject: string; html: string } {
   const fmt = (d: string) =>
@@ -206,7 +206,7 @@ export function bookingConfirmedCustomerEmail(params: {
   pickupLocation: string
   pickupTime?: string
   returnTime?: string
-  reservationId: number
+  reservationId: string
   bookingCode?: string
 }): { subject: string; html: string } {
   const contactLine = [params.brand.phone, params.brand.email].filter(Boolean).join(' · ')

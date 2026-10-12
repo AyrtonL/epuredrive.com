@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import SignatureCanvas from 'react-signature-canvas'
 
 interface Props {
-  reservationId: number
+  reservationId: string
   tenantSignedAt: string | null
   onSigned: () => void
 }
