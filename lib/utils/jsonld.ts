@@ -1,3 +1,4 @@
+import { carDisplayName } from '@/lib/utils/car-display-name'
 export function buildOrganizationSchema(): Record<string, unknown> {
   return {
     '@context': 'https://schema.org',
@@ -151,11 +152,11 @@ export function buildCarProductSchema(
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: `${car.make} ${modelDisplay}`,
+    name: carDisplayName({ make: car.make, model: car.model, model_full: car.modelFull }),
     ...(car.description ? { description: car.description } : {}),
     ...(car.imageUrl ? { image: absoluteImageUrl(car.imageUrl) } : {}),
     ...(car.year ? { model: modelDisplay, vehicleModelDate: String(car.year) } : {}),
-    brand: { '@type': 'Brand', name: car.make },
+    brand: { '@type': 'Brand', name: carDisplayName({ make: car.make, model: '' }) },
     ...(car.url ? { url: car.url } : {}),
     offers: {
       '@type': 'Offer',

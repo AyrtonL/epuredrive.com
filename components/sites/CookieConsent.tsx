@@ -28,31 +28,29 @@ export default function CookieConsent() {
 
   if (!visible) return null
 
+  // Compact one-line bar: the old card covered the hero search / booking
+  // form on phones.
   return (
-    <div className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm z-[200] animate-fade-in-up">
-      <div className="glass border border-white/10 rounded-[1.5rem] p-5 shadow-2xl backdrop-blur-2xl">
-        <p className="text-[11px] text-white/50 leading-relaxed mb-4">
-          We use cookies to improve your browsing experience and analyze site traffic.
-          See our{' '}
-          <a href="/cookies" className="text-white/70 underline underline-offset-2 hover:text-white transition-colors">
-            Cookie Policy
+    <div className="fixed bottom-20 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-[200] animate-fade-in-up">
+      <div className="glass border border-white/10 rounded-2xl px-4 py-2.5 shadow-2xl backdrop-blur-2xl flex items-center gap-3">
+        <p className="flex-1 text-[11px] text-white/60 leading-snug">
+          We use cookies.{' '}
+          <a href="/cookies" className="text-white/80 underline underline-offset-2 hover:text-white transition-colors">
+            Policy
           </a>
-          .
         </p>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={accept}
-            className="flex-1 bg-white text-black text-[10px] font-black uppercase tracking-widest py-2.5 rounded-xl hover:bg-white/90 transition-all active:scale-95"
-          >
-            Accept All
-          </button>
-          <button
-            onClick={decline}
-            className="flex-1 bg-white/5 border border-white/10 text-white/40 text-[10px] font-black uppercase tracking-widest py-2.5 rounded-xl hover:bg-white/10 hover:text-white/60 transition-all active:scale-95"
-          >
-            Decline
-          </button>
-        </div>
+        <button
+          onClick={decline}
+          className="text-white/50 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-white/10 hover:text-white/80 transition-all"
+        >
+          Decline
+        </button>
+        <button
+          onClick={accept}
+          className="bg-white text-black text-[11px] font-bold px-3.5 py-1.5 rounded-lg hover:bg-white/90 transition-all active:scale-95"
+        >
+          Accept
+        </button>
       </div>
     </div>
   )

@@ -9,6 +9,7 @@ import { buildBreadcrumbSchema, buildCarProductSchema } from '@/lib/utils/jsonld
 import JsonLd from '@/components/JsonLd'
 import CarDetailView from '@/components/sites/CarDetailView'
 import { PUBLIC_CAR_COLUMNS } from '@/lib/sites/public-car'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface Props {
   params: { slug: string; carId: string }
@@ -90,7 +91,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
   const breadcrumbSchema = buildBreadcrumbSchema([
     { name: 'éPure Drive', url: 'https://epuredrive.com' },
     { name: displayName, url: tenantUrl },
-    { name: `${typedCar.make} ${modelDisplay}`, url: `${tenantUrl}/${typedCar.id}` },
+    { name: carDisplayName(typedCar), url: `${tenantUrl}/${typedCar.id}` },
   ])
 
   const carProductSchema = buildCarProductSchema(

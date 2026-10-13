@@ -13,7 +13,7 @@ interface Props {
 export default function HeroSection({ tenant, carCount, slug, locations }: Props) {
   const displayName = tenant.brand_name || tenant.name
   const tagline = tenant.tagline || 'Premium Vehicles, Direct Booking.'
-  const description = tenant.description || `Browse ${carCount} vehicle${carCount !== 1 ? 's' : ''} available from ${displayName}. No platform fees, no hidden costs — book directly.`
+  const description = tenant.description || `Browse ${carCount} vehicle${carCount !== 1 ? 's' : ''} available from ${displayName}. No hidden costs — book directly.`
 
   const bgImage = tenant.hero_image_url || '/assets/images/Imagenes/kenny-sabugo-wErZFb01-5o-unsplash.jpg'
   const isLight = tenant.site_theme === 'light'
@@ -71,7 +71,12 @@ export default function HeroSection({ tenant, carCount, slug, locations }: Props
           {[
             { value: String(carCount), label: 'Vehicles' },
             { value: '24/7', label: 'Support' },
-            { value: '0%', label: 'Platform Fees' },
+            // Customer-facing third stat (was "0% Platform Fees", an operator pitch).
+            locations.length > 1
+              ? { value: String(locations.length), label: 'Pickup spots' }
+              : locations.some((l) => !Number(l.fee))
+                ? { value: 'Free', label: 'Pickup' }
+                : { value: 'Instant', label: 'Booking' },
           ].map((s) => (
             <div key={s.label} className="text-center">
               <div className={`font-outfit font-black text-2xl italic tracking-tighter ${isLight ? 'text-gray-900' : 'text-white'}`}>{s.value}</div>

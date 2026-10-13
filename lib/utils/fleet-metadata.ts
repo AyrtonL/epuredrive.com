@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { carDisplayName } from '@/lib/utils/car-display-name'
 
 interface TenantMeta {
   name: string
@@ -103,10 +104,10 @@ export function buildFleetListMetadata(tenant: TenantMeta): Metadata {
 
 export function buildCarMetadata(car: CarMeta, tenant: TenantMeta): Metadata {
   const displayName = tenant.brand_name ?? tenant.name
-  const modelDisplay = car.model_full ?? car.model
-  const title = `${car.make} ${modelDisplay} — ${displayName}`
+  const name = carDisplayName(car)
+  const title = `${name} — ${displayName}`
   const description = clampDescription(
-    car.description ?? `Rent the ${car.make} ${car.model} from ${displayName}. Book online today.`
+    car.description ?? `Rent the ${name} from ${displayName}. Book online today.`
   )
   const url = `${tenantSiteUrl(tenant.slug)}/${car.id}`
 
