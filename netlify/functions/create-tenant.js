@@ -109,7 +109,13 @@ exports.handler = async (event) => {
     `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=tenant_id&limit=1`,
     { headers }
   );
+  // A failed read must never look like "no tenant" — that re-provisioned an
+  // existing user into a new empty tenant on 2026-10-13.
+  if (!profileRes.ok) {
+    return { statusCode: 503, body: JSON.stringify({ error: 'Could not read profile — try again' }) };
+  }
   const profiles = await profileRes.json();
+  const hasProfile = Array.isArray(profiles) && profiles.length > 0;
   if (profiles[0]?.tenant_id) {
     return { statusCode: 200, body: JSON.stringify({ tenantId: profiles[0].tenant_id }) };
   }
@@ -136,12 +142,19 @@ exports.handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Tenant created but no ID returned' }) };
   }
 
-  // 3 — Create profile
-  const profileWriteRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
-    method: 'POST',
-    headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' },
-    body: JSON.stringify({ id: userId, tenant_id: tenantId, role: 'admin' }),
-  });
+  // 3 — Link the profile: insert a new one, or fill ONLY a null tenant_id on
+  // an existing one (never replace a tenant or the existing role).
+  const profileWriteRes = hasProfile
+    ? await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&tenant_id=is.null`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ tenant_id: tenantId }),
+      })
+    : await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ id: userId, tenant_id: tenantId, role: 'admin' }),
+      });
   if (!profileWriteRes.ok) {
     const profileErr = await profileWriteRes.json().catch(() => ({}));
     return { statusCode: 500, body: JSON.stringify({ error: profileErr.message || 'Tenant created but profile write failed' }) };

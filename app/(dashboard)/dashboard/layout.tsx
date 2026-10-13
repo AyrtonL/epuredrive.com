@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { headers } from 'next/headers'
 import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getFeatureFlags } from '@/lib/supabase/feature-flags'
 import { getEffectivePlan } from '@/lib/plan/effective-plan'
 import { provisionTenantForUser } from '@/lib/tenant/provision-tenant'
@@ -47,18 +48,30 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect('/login')
 
-  const { data: initialProfile } = await supabase
+  const PROFILE_FIELDS = 'role, tenant_id, full_name, invited_by_user_id, invite_accepted_notified_at'
+  let { data: initialProfile, error: profileError } = await supabase
     .from('profiles')
-    .select('role, tenant_id, full_name, invited_by_user_id, invite_accepted_notified_at')
+    .select(PROFILE_FIELDS)
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
+
+  // A failed read (e.g. mid token refresh) is NOT "this user has no tenant".
+  // Re-read server-side instead of falling into the self-heal below, which on
+  // 2026-10-13 re-provisioned an existing user into a new empty tenant.
+  if (profileError || !initialProfile) {
+    if (profileError) console.error('[dashboard layout] profile read failed, retrying with admin client', profileError.message)
+    const retry = await createAdminClient().from('profiles').select(PROFILE_FIELDS).eq('id', user.id).maybeSingle()
+    initialProfile = retry.data
+    profileError = retry.error
+  }
 
   // Self-heal: signup-time tenant provisioning can fail after the auth
   // account is already confirmed, leaving the user with no tenant_id and no
   // way to retry. Rather than dead-ending on "Profile Incomplete", retry
   // provisioning here on every dashboard load until it succeeds.
   let profile = initialProfile
-  if (!profile?.tenant_id) {
+  // Only when the profile was read successfully and truly has no tenant.
+  if (!profileError && !profile?.tenant_id) {
     const provisionedTenantId = await provisionTenantForUser(
       user.id,
       user.email,

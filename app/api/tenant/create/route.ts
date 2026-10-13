@@ -35,12 +35,17 @@ export async function POST(request: NextRequest) {
   const supabase = createAdminClient()
 
   // 1 — Check if user already has a tenant
-  const { data: profiles } = await supabase
+  const { data: profiles, error: profileReadError } = await supabase
     .from('profiles')
     .select('tenant_id')
     .eq('id', userId)
     .limit(1)
 
+  // A failed read must never look like "no tenant" (incident 2026-10-13).
+  if (profileReadError) {
+    console.error('[tenant/create] profile read failed', profileReadError.message)
+    return NextResponse.json({ error: 'Could not read profile — try again' }, { status: 503 })
+  }
   if (profiles?.[0]?.tenant_id) {
     return NextResponse.json({ tenantId: profiles[0].tenant_id })
   }
@@ -61,8 +66,15 @@ export async function POST(request: NextRequest) {
 
   const tenantId: string = tenants[0].id
 
-  // 3 — Create profile
-  await supabase.from('profiles').upsert({ id: userId, tenant_id: tenantId, role: 'admin' })
+  // 3 — Link the profile: insert a new one, or fill ONLY a null tenant_id
+  // (never replace an existing tenant or role).
+  const { error: linkError } = profiles?.length
+    ? await supabase.from('profiles').update({ tenant_id: tenantId }).eq('id', userId).is('tenant_id', null)
+    : await supabase.from('profiles').insert({ id: userId, tenant_id: tenantId, role: 'admin' })
+  if (linkError) {
+    await supabase.from('tenants').delete().eq('id', tenantId)
+    return NextResponse.json({ error: 'Failed to link profile' }, { status: 500 })
+  }
 
   // 4 — Register tenant subdomain as Netlify domain alias
   const netlifyToken = process.env.NETLIFY_AUTH_TOKEN

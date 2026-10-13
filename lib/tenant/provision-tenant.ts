@@ -9,12 +9,30 @@ import { welcomeEmail, adminNewSignupEmail } from '@/lib/email/templates/platfor
 // screen with no retry. Called from the dashboard layout whenever a logged-in
 // user has no tenant_id, so provisioning is retried on next login instead of
 // requiring manual DB intervention.
+//
+// SAFETY (incident 2026-10-13): the caller's RLS profile read can fail
+// transiently (e.g. mid token refresh). That used to look like "no tenant",
+// so an existing user got a brand-new empty tenant and their profile —
+// tenant AND role — was overwritten. Now the profile is re-read with the
+// admin client first; we only create a tenant when it is confirmed missing,
+// and we only ever fill a NULL tenant_id, never replace one or the role.
 export async function provisionTenantForUser(
   userId: string,
   email: string | undefined,
   metadata: Record<string, unknown>
 ): Promise<string | null> {
   const admin = createAdminClient()
+
+  const { data: existing, error: readError } = await admin
+    .from('profiles')
+    .select('id, tenant_id, role')
+    .eq('id', userId)
+    .maybeSingle()
+  if (readError) {
+    console.error('[provisionTenantForUser] profile read failed — not provisioning', readError.message)
+    return null
+  }
+  if (existing?.tenant_id) return existing.tenant_id as string
 
   const company =
     (metadata.company as string) ||
@@ -34,11 +52,29 @@ export async function provisionTenantForUser(
 
   if (tenantError || !tenant) return null
 
-  const { error: profileError } = await admin
-    .from('profiles')
-    .upsert({ id: userId, tenant_id: tenant.id, role: 'admin' }, { onConflict: 'id' })
-
-  if (profileError) return null
+  if (existing) {
+    // Fill only a missing tenant; keep the existing role untouched.
+    const { data: updated, error: updateError } = await admin
+      .from('profiles')
+      .update({ tenant_id: tenant.id })
+      .eq('id', userId)
+      .is('tenant_id', null)
+      .select('id')
+      .maybeSingle()
+    if (updateError || !updated) {
+      // Someone else linked a tenant in the meantime — drop ours, keep theirs.
+      await admin.from('tenants').delete().eq('id', tenant.id)
+      return null
+    }
+  } else {
+    const { error: insertError } = await admin
+      .from('profiles')
+      .insert({ id: userId, tenant_id: tenant.id, role: 'admin' })
+    if (insertError) {
+      await admin.from('tenants').delete().eq('id', tenant.id)
+      return null
+    }
+  }
 
   if (email) {
     const operatorName = (metadata.company as string) || email.split('@')[0] || 'there'
