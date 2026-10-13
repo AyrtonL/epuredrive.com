@@ -11,6 +11,7 @@ import ExperienceSection from '@/components/sites/ExperienceSection'
 import HowItWorksSection from '@/components/sites/HowItWorksSection'
 import ConciergeSection from '@/components/sites/ConciergeSection'
 import { getSiteBase } from '@/lib/utils/site-base'
+import { PUBLIC_CAR_COLUMNS } from '@/lib/sites/public-car'
 
 interface Props {
   params: { slug: string }
@@ -49,12 +50,12 @@ export default async function TenantLandingPage({ params }: Props) {
 
   const { data: cars } = await supabase
     .from('cars')
-    .select('*')
+    .select(PUBLIC_CAR_COLUMNS)
     .eq('tenant_id', typedTenant.id)
     .in('status', ['available', 'active'])
     .order('daily_rate', { ascending: true })
 
-  const fleet = (cars ?? []) as Car[]
+  const fleet = (cars ?? []) as unknown as Car[] // PUBLIC_CAR_COLUMNS only
 
   const displayName = typedTenant.brand_name ?? typedTenant.name
   const tenantUrl = `https://${typedTenant.slug}.epuredrive.com`

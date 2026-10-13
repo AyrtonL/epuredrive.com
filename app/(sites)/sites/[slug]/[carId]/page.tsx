@@ -8,6 +8,7 @@ import { buildCarMetadata } from '@/lib/utils/fleet-metadata'
 import { buildBreadcrumbSchema, buildCarProductSchema } from '@/lib/utils/jsonld'
 import JsonLd from '@/components/JsonLd'
 import CarDetailView from '@/components/sites/CarDetailView'
+import { PUBLIC_CAR_COLUMNS } from '@/lib/sites/public-car'
 
 interface Props {
   params: { slug: string; carId: string }
@@ -60,7 +61,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
 
   const { data: car } = await supabase
     .from('cars')
-    .select('*')
+    .select(PUBLIC_CAR_COLUMNS)
     .eq('id', Number(params.carId))
     .eq('tenant_id', tenant.id)
     .single()
@@ -80,7 +81,8 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
     .order('sort_order')
     .order('created_at')
 
-  const typedCar = car as Car
+  // Public row: only PUBLIC_CAR_COLUMNS are present (no VIN/plate/GPS).
+  const typedCar = car as unknown as Car
   const displayName = tenant.brand_name || tenant.name
   const tenantUrl = `https://${tenant.slug}.epuredrive.com`
   const modelDisplay = typedCar.model_full ?? typedCar.model
@@ -124,7 +126,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
         ← Back to fleet
       </a>
       <CarDetailView
-        car={car as Car}
+        car={car as unknown as Car}
         tenantId={tenant.id}
         slug={tenant.slug!}
         paymentsEnabled={!!tenant.stripe_account_id || !!tenant.square_merchant_id}

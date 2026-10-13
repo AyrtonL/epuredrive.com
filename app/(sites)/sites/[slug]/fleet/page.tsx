@@ -7,6 +7,7 @@ import FleetGrid from '@/components/sites/FleetGrid'
 import BackLink from '@/components/sites/FleetBackLink'
 import QuickSearchBar from '@/components/sites/QuickSearchBar'
 import { getSiteBase } from '@/lib/utils/site-base'
+import { PUBLIC_CAR_COLUMNS } from '@/lib/sites/public-car'
 
 interface Props {
   params: { slug: string }
@@ -63,7 +64,7 @@ export default async function FleetSubPage({ params, searchParams }: Props) {
 
   let carsQuery = supabase
     .from('cars')
-    .select('*')
+    .select(PUBLIC_CAR_COLUMNS)
     .eq('tenant_id', typedTenant.id)
     .in('status', ['available', 'active'])
     .order('daily_rate', { ascending: true })
@@ -74,7 +75,7 @@ export default async function FleetSubPage({ params, searchParams }: Props) {
 
   const { data: cars } = await carsQuery
 
-  const fleet = (cars ?? []) as Car[]
+  const fleet = (cars ?? []) as unknown as Car[] // PUBLIC_CAR_COLUMNS only
   const displayName = typedTenant.brand_name || typedTenant.name
 
   const formatDate = (d: string) =>
