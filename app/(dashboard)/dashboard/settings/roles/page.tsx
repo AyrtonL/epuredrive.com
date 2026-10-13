@@ -4,6 +4,7 @@ import { getEffectivePlan } from '@/lib/plan/effective-plan'
 import PageHeader from '@/components/dashboard/PageHeader'
 import type { Profile } from '@/lib/supabase/types'
 import InviteModal from './InviteModal'
+import { formatDate } from '@/lib/utils/format'
 
 const ROLE_CONFIG: Record<string, { color: string; description: string; permissions: string[]; displayName?: string }> = {
   superuser: {
@@ -62,7 +63,10 @@ export default async function RolesPage() {
     .not('full_name', 'is', null)
     .order('created_at')
 
-  const rows = ((members as Profile[]) ?? []).filter(m => m.role !== 'superuser')
+  // Platform superusers stay hidden from other tenants' lists, but you always
+  // see yourself — otherwise an owner who is also a superuser vanished from
+  // their own team page.
+  const rows = ((members as Profile[]) ?? []).filter(m => m.role !== 'superuser' || m.id === user?.id)
 
   // Pending invites: invited to this tenant but haven't completed onboarding yet.
   // Uses admin client scoped to this tenant via user_metadata (set at invite time).
@@ -139,7 +143,7 @@ export default async function RolesPage() {
                       )}
                     </div>
                     <div className="text-white/30 text-xs mt-0.5">
-                      Joined {member.created_at ? new Date(member.created_at).toLocaleDateString() : 'N/A'}
+                      Joined {formatDate(member.created_at)}
                     </div>
                   </div>
                 </div>

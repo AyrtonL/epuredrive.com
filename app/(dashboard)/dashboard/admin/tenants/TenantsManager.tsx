@@ -77,10 +77,13 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
     })
   }
 
-  const freePlan = tenants.filter(t => !t.plan || t.plan === 'free').length
-  const paidPlan = tenants.filter(t => t.plan && t.plan !== 'free').length
-  const activeCount = tenants.filter(t => t.status !== 'suspended').length
-  const suspendedCount = tenants.filter(t => t.status === 'suspended').length
+  // Legacy deactivation lived in the plan column (plan = 'deactivated'), so
+  // treat it like a suspension and never count it as a paid plan.
+  const isInactive = (t: Tenant) => t.status === 'suspended' || t.plan === 'deactivated'
+  const freePlan = tenants.filter(t => !isInactive(t) && (!t.plan || t.plan === 'free')).length
+  const paidPlan = tenants.filter(t => !isInactive(t) && !!t.plan && t.plan !== 'free').length
+  const activeCount = tenants.filter(t => !isInactive(t)).length
+  const suspendedCount = tenants.filter(isInactive).length
 
   return (
     <div className="space-y-6">
@@ -95,7 +98,7 @@ export default function TenantsManager({ tenants, memberCounts, carCounts, booki
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Total Tenants', value: tenants.length },
-          { label: suspendedCount > 0 ? `Active · ${suspendedCount} suspended` : 'Active', value: activeCount },
+          { label: suspendedCount > 0 ? `Active · ${suspendedCount} inactive` : 'Active', value: activeCount },
           { label: 'Free Plan', value: freePlan },
           { label: 'Paid Plans', value: paidPlan },
         ].map((s) => (

@@ -149,6 +149,9 @@ export default async function TelematicsAlertsPage({ searchParams }: Props) {
         .from('telematics_events')
         .select('id', { count: 'exact', head: true })
         .eq('tenant_id', tenantId)
+        // Same definition as the Live Map KPI: info rows (trip start/end)
+        // are a log, not something to review.
+        .in('severity', ['warning', 'critical'])
         .is('acknowledged_at', null),
     ])
 
@@ -177,8 +180,8 @@ export default async function TelematicsAlertsPage({ searchParams }: Props) {
 
   const subtitle =
     (unackedCount ?? 0) === 0
-      ? 'All clear — no unacknowledged alerts'
-      : `${unackedCount} unacked alert${unackedCount === 1 ? '' : 's'}`
+      ? 'All clear — nothing needs review'
+      : `${unackedCount} alert${unackedCount === 1 ? '' : 's'} need${unackedCount === 1 ? 's' : ''} review`
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

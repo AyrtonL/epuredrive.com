@@ -283,7 +283,7 @@ export default function AlertsClient({
             Apply filters
           </button>
           <div className="text-white/40 text-xs">
-            {totalUnacked} unacked total
+            {totalUnacked} need review
           </div>
           {selectableUnacked.length > 0 && (
             <label className="flex items-center gap-2 text-xs text-white/60 ml-auto">

@@ -17,7 +17,7 @@ export default async function BillingPage({
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('name, plan, slug, brand_name')
+    .select('name, plan, slug, brand_name, stripe_subscription_id')
     .eq('id', tenantId)
     .single()
 
@@ -97,7 +97,9 @@ export default async function BillingPage({
             Active
           </div>
         </div>
-        {plan !== 'free' && (
+        {/* Only a real Stripe subscription can be cancelled — not the free
+            launch, nor a plan set manually (e.g. Enterprise). */}
+        {plan !== 'free' && !freeLaunch && tenant?.stripe_subscription_id && (
           <div className="mt-6 pt-6 border-t border-white/5">
             <CancelSubscriptionButton plan={plan} />
           </div>

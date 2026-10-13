@@ -33,8 +33,9 @@ export default async function PlatformStatsPage() {
     planCounts[p] = (planCounts[p] ?? 0) + 1
   }
 
-  // Plan tiers incl. Starter (present in Stripe but previously invisible here).
-  const PLAN_PRICES: Record<string, number> = { free: 0, starter: 0, pro: 19, max: 39 }
+  // Plan tiers incl. Starter (present in Stripe but previously invisible here)
+  // and Enterprise (custom pricing, invoiced outside Stripe → 0 in the estimate).
+  const PLAN_PRICES: Record<string, number> = { free: 0, starter: 0, pro: 19, max: 39, enterprise: 0 }
 
   // Prefer REAL MRR from live Stripe subscriptions. Fall back to the plan-column
   // estimate only if Stripe is unreachable, and label it clearly as an estimate.
@@ -73,7 +74,7 @@ export default async function PlatformStatsPage() {
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           <div className="p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-center">
-            <div className="text-[10px] font-bold text-emerald-400/50 uppercase tracking-widest mb-2">Gross Booking Revenue</div>
+            <div className="text-[10px] font-bold text-emerald-400/50 uppercase tracking-widest mb-2">Earned Booking Revenue · completed</div>
             <div className="text-3xl font-black text-emerald-400">${totalPlatformRevenue.toLocaleString()}</div>
           </div>
           <div className="p-6 rounded-2xl bg-amber-500/5 border border-amber-500/10 text-center">
@@ -99,7 +100,7 @@ export default async function PlatformStatsPage() {
       {/* Plan Distribution */}
       <div className="glass border border-white/10 rounded-3xl p-8">
         <h3 className="text-white font-bold mb-6">Plan Distribution</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
           {Object.entries(PLAN_PRICES).map(([plan, price]) => {
             const count = planCounts[plan] ?? 0
             const pct = (tenantCount ?? 0) > 0 ? Math.round((count / (tenantCount ?? 1)) * 100) : 0

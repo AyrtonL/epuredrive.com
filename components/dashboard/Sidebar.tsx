@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { ICONS, IconChevron, IconLogout } from './icons'
+import { activeHref } from '@/lib/navigation/active-nav'
 
 // ── Navigation Structure ───────────────────────────────────────────────────────
 
@@ -127,9 +128,11 @@ function isGroup(entry: NavEntry): entry is NavGroup {
   return 'children' in entry
 }
 
+// Every link in the sidebar, so only the most specific one is highlighted.
+const ALL_HREFS: string[] = [...NAV, ADMIN_NAV].flatMap((e) => ('children' in e ? e.children.map((c) => c.href) : [e.href]))
+
 function isActive(pathname: string, href: string): boolean {
-  if (href === '/dashboard') return pathname === '/dashboard'
-  return pathname === href || pathname.startsWith(href + '/')
+  return activeHref(pathname, ALL_HREFS) === href
 }
 
 function hasActiveChild(pathname: string, children: NavItem[]): boolean {

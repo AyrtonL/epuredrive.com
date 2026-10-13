@@ -37,7 +37,10 @@ function StatusPill({ online, battery }: { online: boolean; battery: number | nu
 
 export default function DeviceRow({ device, cars }: Props) {
   const [error, setError] = useState<string | null>(null)
-  const nickname = device.nickname?.trim() || `Device ${device.imei.slice(-6)}`
+  // Prefer what the operator recognises: the linked car, then the Bouncie
+  // nickname, then the IMEI tail.
+  const linkedCar = cars.find((c) => c.id === device.car_id)
+  const nickname = linkedCar?.label || device.nickname?.trim() || `Device ${device.imei.slice(-6)}`
 
   return (
     <tr className="border-t border-white/[0.06] hover:bg-white/[0.02] transition-colors">

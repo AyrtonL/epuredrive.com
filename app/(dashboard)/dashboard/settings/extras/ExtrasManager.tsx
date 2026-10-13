@@ -97,9 +97,9 @@ export default function ExtrasManager({ extras }: Props) {
       <div className="flex justify-end">
         <button
           onClick={() => { setShowCreate(!showCreate); setMsg('') }}
-          className="bg-amber-400 text-black px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-amber-300 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="bg-white text-black px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-white/90 transition-all"
         >
-          {showCreate ? 'Cancel' : 'Add Extra'}
+          {showCreate ? 'Cancel' : '+ Add extra'}
         </button>
       </div>
 

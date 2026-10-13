@@ -187,7 +187,8 @@ function ConnectedCard({
       </div>
 
       <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-        <InfoRow label="Account" value={connection.account_email ?? '—'} />
+        {/* Bouncie's token response has no account email — only show it when known. */}
+        {connection.account_email && <InfoRow label="Account" value={connection.account_email} />}
         <InfoRow label="Connected" value={formatDate(connection.connected_at)} />
         <InfoRow label="Last sync" value={formatRelative(connection.last_sync_at)} />
         <InfoRow
