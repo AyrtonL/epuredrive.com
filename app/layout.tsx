@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import CookieConsentBanner from '@/components/CookieConsentBanner'
 import CookieConsentManager from '@/components/CookieConsentManager'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import { isTenantHostRequest } from '@/lib/utils/site-base'
 import './globals.css'
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['300', '400', '600', '700', '800'], variable: '--font-outfit' })
@@ -56,6 +57,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = headers().get('x-pathname') ?? '/'
   const lang = pathname === '/es' || pathname.startsWith('/es/') ? 'es' : 'en'
+  // Tenant booking sites render their own compact consent bar (same storage
+  // key) — showing both stacked two banners over the booking form.
+  const isTenantSite = isTenantHostRequest() || pathname.startsWith('/sites/')
 
   return (
     <html lang={lang}>
@@ -65,7 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${outfit.variable} ${manrope.variable} ${outfit.className}`}>
         <GoogleAnalytics />
         <CookieConsentManager />
-        <CookieConsentBanner />
+        {!isTenantSite && <CookieConsentBanner />}
         {children}
       </body>
     </html>

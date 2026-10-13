@@ -1,15 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { getStoredConsent, storeConsent } from '@/components/CookieConsentBanner'
 
-const STORAGE_KEY = 'epure_cookie_consent'
+// Older visitors decided under this key before consent was unified with the
+// platform banner (whose key CookieConsentManager reads to load analytics).
+const LEGACY_KEY = 'epure_cookie_consent'
 
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     try {
-      if (!localStorage.getItem(STORAGE_KEY)) setVisible(true)
+      if (getStoredConsent() === null && !localStorage.getItem(LEGACY_KEY)) setVisible(true)
     } catch {
       // localStorage blocked (private browsing etc.) — show the banner
       setVisible(true)
@@ -17,12 +20,13 @@ export default function CookieConsent() {
   }, [])
 
   function accept() {
-    try { localStorage.setItem(STORAGE_KEY, 'accepted') } catch { /* ignore */ }
+    try { storeConsent('granted') } catch { /* ignore */ }
     setVisible(false)
+    window.dispatchEvent(new CustomEvent('cookie-consent-update', { detail: 'granted' }))
   }
 
   function decline() {
-    try { localStorage.setItem(STORAGE_KEY, 'declined') } catch { /* ignore */ }
+    try { storeConsent('denied') } catch { /* ignore */ }
     setVisible(false)
   }
 
