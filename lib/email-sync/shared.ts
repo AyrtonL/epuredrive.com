@@ -425,6 +425,8 @@ export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promis
     } else {
       update.pickup_date = parsed.pickup_date
       update.return_date = parsed.return_date
+      writeIfSet('pickup_time', parsed.pickup_time)
+      writeIfSet('return_time', parsed.return_time)
       update.total_amount = parsed.total_amount
       if (carId) update.car_id = carId
       if (!preserveStatus) update.status = parsed.status

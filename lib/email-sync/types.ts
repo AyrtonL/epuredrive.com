@@ -18,7 +18,7 @@ export interface ParsedEmail {
   vehicle_name?: string
   pickup_date: string | null
   return_date: string | null
-  pickup_time?: string | null // NEW — 24h "HH:MM", Turo leaves undefined
+  pickup_time?: string | null // NEW — 24h "HH:MM"; null when the email carries no time
   return_time?: string | null // NEW
   customer_phone?: string | null // NEW
   customer_dob?: string | null // NEW — "YYYY-MM-01"

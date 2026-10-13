@@ -22,6 +22,19 @@ function parseSlashDate(str: string): string | null {
   return `${yyyy}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`
 }
 
+// "10:30 am" / "10:00 PM" → 24h "HH:MM" (the format reservations.pickup_time uses)
+export function parseTuroTime(str: string): string | null {
+  const m = str.match(/(\d{1,2}):(\d{2})\s*([AP])\.?M\.?/i)
+  if (!m) return null
+  const hour12 = Number(m[1])
+  if (hour12 < 1 || hour12 > 12) return null
+  const isPm = m[3].toUpperCase() === 'P'
+  const hour24 = (hour12 % 12) + (isPm ? 12 : 0)
+  return `${String(hour24).padStart(2, '0')}:${m[2]}`
+}
+
+const TIME_RE = String.raw`(\d{1,2}:\d{2}\s*[AP]\.?M\.?)`
+
 export function parseTuroEmail(body: string, subject: string, messageId: string): ParsedEmail | null {
   const fullText = subject + ' ' + body
 
@@ -89,6 +102,19 @@ export function parseTuroEmail(body: string, subject: string, messageId: string)
   }
   if (!pickupDate || !returnDate) return null
 
+  // Times: structured footer ("Trip start: 10/28/26 10:30 am") first, then the prose
+  // sentence ("booked from Wednesday, October 28, 2026, 10:30 AM to ..."). Null when
+  // absent so the DB default / existing value is kept rather than overwritten.
+  const footerStart = body.match(new RegExp(String.raw`Trip start:?\s*\d{1,2}\/\d{1,2}\/\d{2,4},?\s*` + TIME_RE, 'i'))
+  const footerEnd = body.match(new RegExp(String.raw`Trip end:?\s*\d{1,2}\/\d{1,2}\/\d{2,4},?\s*` + TIME_RE, 'i'))
+  const proseTimes = body.match(
+    new RegExp(String.raw`booked from [^\n]*?\d{4},?\s*` + TIME_RE + String.raw`\s+to\s+[^\n]*?\d{4},?\s*` + TIME_RE, 'i'),
+  )
+  const pickupTimeRaw = footerStart?.[1] ?? proseTimes?.[1]
+  const returnTimeRaw = footerEnd?.[1] ?? proseTimes?.[2]
+  const pickupTime = pickupTimeRaw ? parseTuroTime(pickupTimeRaw) : null
+  const returnTime = returnTimeRaw ? parseTuroTime(returnTimeRaw) : null
+
   const amountMatch =
     body.match(/You[’']ll earn \$([0-9,]+(?:\.\d{2})?)/i) ||
     body.match(/total earnings will be \$([0-9,]+(?:\.\d{2})?)/i) ||
@@ -102,6 +128,8 @@ export function parseTuroEmail(body: string, subject: string, messageId: string)
     vehicle_name: vehicleName,
     pickup_date: pickupDate,
     return_date: returnDate,
+    pickup_time: pickupTime,
+    return_time: returnTime,
     total_amount: amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : null,
     source: 'turo',
     status: 'confirmed',
