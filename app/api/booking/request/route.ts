@@ -2,32 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/resend'
 import { createInAppNotification } from '@/lib/notifications/create'
+import { emailTeam } from '@/lib/notifications/email-team'
 import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 import { generateBookingCode } from '@/lib/booking-code'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { isAllowedBookingOrigin } from '@/lib/booking/origin'
+import { prepareBooking } from '@/lib/booking/prepare'
+import type { PickupLocation } from '@/lib/supabase/types'
 
 const rateLimitStore = new Map<string, number[]>()
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
-function isAllowedOrigin(origin: string | null): boolean {
-  if (!origin) return false
-  try {
-    const { hostname } = new URL(origin)
-    // Allow main domain and all tenant subdomains
-    if (hostname === 'epuredrive.com' || hostname.endsWith('.epuredrive.com')) return true
-    // Allow localhost in development
-    if (hostname === 'localhost' || hostname === '127.0.0.1') return true
-    return false
-  } catch {
-    return false
-  }
-}
-
 export async function POST(request: NextRequest) {
-  // CSRF protection: verify Origin header matches allowed domains
-  const origin = request.headers.get('origin')
-  if (!isAllowedOrigin(origin)) {
+  const supabase = createAdminClient()
+
+  // CSRF protection: platform hosts, localhost, or a tenant's custom domain
+  if (!(await isAllowedBookingOrigin(request.headers.get('origin'), supabase))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -64,12 +55,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing or invalid required fields' }, { status: 400 })
   }
 
-  const supabase = createAdminClient()
+  const pickupDate = data.pickup_date
+  const returnDate = data.return_date
 
   // Verify tenant exists and get their info for notifications
   const { data: tenant, error: tenantErr } = await supabase
     .from('tenants')
-    .select('id, name, brand_name, slug, whatsapp_phone, owner_email')
+    .select('id, name, brand_name, slug, whatsapp_phone, pickup_locations')
     .eq('id', data.tenant_id)
     .single()
 
@@ -84,7 +76,7 @@ export async function POST(request: NextRequest) {
 
   const { data: car, error: carErr } = await supabase
     .from('cars')
-    .select('id, make, model, model_full')
+    .select('id, make, model, model_full, daily_rate')
     .eq('id', data.car_id)
     .eq('tenant_id', data.tenant_id)
     .single()
@@ -92,6 +84,27 @@ export async function POST(request: NextRequest) {
   if (carErr || !car) {
     return NextResponse.json({ error: 'Invalid car' }, { status: 400 })
   }
+
+  const prepared = await prepareBooking(supabase, {
+    tenantId: data.tenant_id,
+    carId: data.car_id,
+    dailyRate: Number(car.daily_rate) || 0,
+    pickupLocations: tenant.pickup_locations as PickupLocation[] | null,
+    surchargeRate: null,
+    card: false,
+    pickupDate,
+    returnDate,
+    pickupTime: data.pickup_time,
+    returnTime: data.return_time,
+    pickupLocation: data.pickup_location,
+    extras: data.extras,
+  })
+  if (!prepared.ok) {
+    return NextResponse.json({ error: prepared.error }, { status: prepared.status })
+  }
+  // Price is computed server-side; the browser's total is ignored
+  const { quote, pickupTime, returnTime, pickupLocation: pickupLocationRaw } = prepared.booking
+  const totalAmount = quote.totalCents / 100
 
   const bookingCode = generateBookingCode()
 
@@ -103,16 +116,18 @@ export async function POST(request: NextRequest) {
       customer_name: String(data.customer_name).trim().slice(0, 200),
       customer_email: String(data.customer_email).trim().slice(0, 200),
       customer_phone: typeof data.customer_phone === 'string' ? data.customer_phone.trim().slice(0, 50) : null,
-      pickup_date: String(data.pickup_date),
-      pickup_time: typeof data.pickup_time === 'string' ? data.pickup_time : null,
-      return_date: String(data.return_date),
-      return_time: typeof data.return_time === 'string' ? data.return_time : null,
-      pickup_location: typeof data.pickup_location === 'string' ? data.pickup_location.trim().slice(0, 200) : null,
-      total_amount: typeof data.total_amount === 'number' ? data.total_amount : null,
+      pickup_date: pickupDate,
+      pickup_time: pickupTime,
+      return_date: returnDate,
+      return_time: returnTime,
+      pickup_location: pickupLocationRaw,
+      total_amount: car.daily_rate ? totalAmount : null,
       status: 'pending',
       source: 'web',
-      notes: typeof data.notes === 'string' ? data.notes.trim().slice(0, 2000) : null,
-      extras: Array.isArray(data.extras) ? data.extras : null,
+      notes: quote.extras.length > 0
+        ? quote.extras.map((e) => `${e.name} ($${e.subtotal})`).join(', ')
+        : null,
+      extras: quote.extras.length > 0 ? quote.extras : null,
       booking_code: bookingCode,
       payment_method: 'cash',
     })
@@ -127,55 +142,56 @@ export async function POST(request: NextRequest) {
   const reservationId = inserted.id
   const resBookingCode = inserted.booking_code as string
   const tenantName = tenant.brand_name || tenant.name
-  const vehicleName = `${carDisplayName(car)}`
+  const vehicleName = carDisplayName(car)
   const customerName = String(data.customer_name).trim()
   const customerEmail = String(data.customer_email).trim()
-  const pickupDate = String(data.pickup_date)
-  const returnDate = String(data.return_date)
-  const pickupTime = typeof data.pickup_time === 'string' ? data.pickup_time : ''
-  const returnTime = typeof data.return_time === 'string' ? data.return_time : ''
-  const pickupLocation = typeof data.pickup_location === 'string' ? data.pickup_location : 'To be confirmed'
-  const total = typeof data.total_amount === 'number' ? `$${data.total_amount.toLocaleString()}` : 'TBD'
-
-  // Send confirmation email to customer (non-blocking)
-  sendEmail({
-    to: customerEmail,
-    subject: `Reservation Request Received — ${vehicleName}`,
-    html: buildCustomerEmail({ customerName, vehicleName, tenantName, pickupDate, returnDate, pickupTime, returnTime, pickupLocation, total, bookingCode: resBookingCode }),
-  }).catch((err) => console.error('[booking] customer email failed:', err))
-
-  // Send notification email to tenant owner (non-blocking)
-  // Prefer owner_email from tenant record, fallback to TENANT_NOTIFY_EMAIL env var
-  const tenantNotifyEmail = (tenant.owner_email as string | null) ?? process.env.TENANT_NOTIFY_EMAIL ?? null
-  if (tenantNotifyEmail) {
-    sendEmail({
-      to: tenantNotifyEmail,
-      subject: `New Booking Request — ${vehicleName} from ${customerName}`,
-      html: buildTenantEmail({ customerName, customerEmail, vehicleName, tenantName, pickupDate, returnDate, pickupTime, returnTime, pickupLocation, total, bookingCode: resBookingCode }),
-    }).catch((err) => console.error('[booking] tenant email failed:', err))
+  const pickupLocation = pickupLocationRaw ?? 'To be confirmed'
+  const total = car.daily_rate ? `$${totalAmount.toLocaleString()}` : 'TBD'
+  const emailFields = {
+    customerName, vehicleName, tenantName, pickupDate, returnDate,
+    pickupTime: pickupTime ?? '', returnTime: returnTime ?? '', pickupLocation, total, bookingCode: resBookingCode,
   }
 
-  // In-app notification
-  createInAppNotification({
-    tenantId: data.tenant_id as string,
-    event: 'new_booking',
-    title: 'New Booking Request',
-    body: `${customerName} requested ${vehicleName} for ${pickupDate} → ${returnDate}`,
-    metadata: { reservation_id: reservationId, car_id: data.car_id, source: 'website' },
-  }).catch(() => {})
+  // Await side effects before responding — serverless may freeze after the
+  // response, dropping un-awaited emails. Failures are logged, never fatal.
+  const results = await Promise.allSettled([
+    sendEmail({
+      to: customerEmail,
+      subject: `Reservation Request Received — ${vehicleName}`,
+      html: buildCustomerEmail(emailFields),
+    }),
+    // Operator: every team member (tenants.owner_email is NULL for all tenants)
+    emailTeam(supabase, data.tenant_id, 'new_booking', {
+      subject: `New Booking Request — ${vehicleName} from ${customerName}`,
+      html: buildTenantEmail({ ...emailFields, customerEmail }),
+    }),
+    createInAppNotification({
+      tenantId: data.tenant_id,
+      event: 'new_booking',
+      title: 'New Booking Request',
+      body: `${customerName} requested ${vehicleName} for ${pickupDate} → ${returnDate}`,
+      metadata: { reservation_id: reservationId, car_id: data.car_id, source: 'website' },
+    }),
+    dispatchWebhookEvent(data.tenant_id, 'booking.created', {
+      reservation_id: reservationId,
+      car_id: data.car_id,
+      customer_name: customerName,
+      customer_email: customerEmail,
+      pickup_date: pickupDate,
+      return_date: returnDate,
+      total_amount: car.daily_rate ? totalAmount : null,
+      source: 'website',
+    }),
+  ])
+  const labels = ['customer email', 'operator email', 'in-app notification', 'webhook dispatch']
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') console.error(`[booking] ${labels[i]} failed:`, r.reason)
+  })
+  if (results[1].status === 'fulfilled' && results[1].value === 0) {
+    console.error('[booking] operator email reached nobody for tenant', data.tenant_id)
+  }
 
-  dispatchWebhookEvent(data.tenant_id as string, 'booking.created', {
-    reservation_id: reservationId,
-    car_id: data.car_id,
-    customer_name: customerName,
-    customer_email: customerEmail,
-    pickup_date: pickupDate,
-    return_date: returnDate,
-    total_amount: data.total_amount ?? null,
-    source: 'website',
-  }).catch((err) => console.error('[booking] webhook dispatch failed:', err))
-
-  return NextResponse.json({ success: true, reservationId, bookingCode: resBookingCode })
+  return NextResponse.json({ success: true, reservationId, bookingCode: resBookingCode, totalAmount })
 }
 
 function buildCustomerEmail(p: {

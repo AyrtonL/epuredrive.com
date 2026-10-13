@@ -3,11 +3,20 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe'
 import { rateLimit } from '@/lib/rate-limit'
 import { getPlatformFeeRate } from '@/lib/plan/effective-plan'
-import { calculateCardSurcharge, getCardSurchargeRate } from '@/lib/pricing/cardSurcharge'
+import { getCardSurchargeRate } from '@/lib/pricing/cardSurcharge'
+import { isAllowedBookingOrigin } from '@/lib/booking/origin'
+import { prepareBooking } from '@/lib/booking/prepare'
+import type { PickupLocation } from '@/lib/supabase/types'
 
 export async function POST(request: NextRequest) {
   const limited = rateLimit(request, 'checkout', { windowMs: 60_000, max: 10 })
   if (limited) return limited
+
+  const supabase = createAdminClient()
+  if (!(await isAllowedBookingOrigin(request.headers.get('origin'), supabase))) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   let body: unknown
   try {
     body = await request.json()
@@ -24,27 +33,10 @@ export async function POST(request: NextRequest) {
   const customerName = String(data.customer_name || '').trim().slice(0, 200)
   const customerEmail = String(data.customer_email || '').trim().slice(0, 200)
   const customerPhone = typeof data.customer_phone === 'string' ? data.customer_phone.trim().slice(0, 50) : ''
-  const pickupTime = typeof data.pickup_time === 'string' ? data.pickup_time : ''
-  const returnTime = typeof data.return_time === 'string' ? data.return_time : ''
-  const pickupLocation = typeof data.pickup_location === 'string' ? data.pickup_location.trim().slice(0, 200) : ''
 
   if (!carId || !tenantId || !startDate || !endDate || !customerName || !customerEmail) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
-
-  // Validate dates
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
-    return NextResponse.json({ error: 'Invalid date range' }, { status: 400 })
-  }
-
-  const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
-  if (days < 1 || days > 365) {
-    return NextResponse.json({ error: 'Invalid rental duration' }, { status: 400 })
-  }
-
-  const supabase = createAdminClient()
 
   // Fetch car and tenant
   const { data: car } = await supabase
@@ -60,7 +52,7 @@ export async function POST(request: NextRequest) {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, brand_name, stripe_account_id, slug, plan, payment_processor, card_surcharge_rate')
+    .select('id, name, brand_name, stripe_account_id, slug, plan, payment_processor, card_surcharge_rate, pickup_locations')
     .eq('id', tenantId)
     .single()
 
@@ -81,94 +73,51 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Payment system not configured' }, { status: 500 })
   }
 
-  const rentalCents = Math.round(car.daily_rate * days * 100)
+  const prepared = await prepareBooking(supabase, {
+    tenantId,
+    carId,
+    dailyRate: Number(car.daily_rate),
+    pickupLocations: tenant.pickup_locations as PickupLocation[] | null,
+    surchargeRate: tenant.card_surcharge_rate,
+    card: true,
+    pickupDate: startDate,
+    returnDate: endDate,
+    pickupTime: data.pickup_time,
+    returnTime: data.return_time,
+    pickupLocation: data.pickup_location,
+    extras: data.extras,
+  })
+  if (!prepared.ok) {
+    return NextResponse.json({ error: prepared.error }, { status: prepared.status })
+  }
+  const { days, quote, pickupTime, returnTime, pickupLocation } = prepared.booking
+
   const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const carName = `${car.make} ${car.model}`
   const tenantName = tenant.brand_name || tenant.name
 
-  // Build line items: base rental + extras
   interface LineItem {
     price_data: { currency: string; product_data: { name: string; description?: string }; unit_amount: number }
     quantity: number
   }
+  const item = (name: string, unitCents: number, quantity = 1, description?: string): LineItem => ({
+    price_data: { currency: 'usd', product_data: description ? { name, description } : { name }, unit_amount: unitCents },
+    quantity,
+  })
 
-  const lineItems: LineItem[] = [
-    {
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: `${carName} — ${days}-day rental`,
-          description: `${startDate} to ${endDate} · ${tenantName}`,
-        },
-        unit_amount: rentalCents,
-      },
-      quantity: 1,
-    },
-  ]
-
-  // Validate and add extras as separate line items (server-side price verification)
-  interface ExtraInput { extra_id: string; name: string; pricing_type: string; unit_price: number; quantity: number; subtotal: number }
-  const clientExtras = Array.isArray(data.extras) ? (data.extras as ExtraInput[]) : []
-  const validatedExtras: ExtraInput[] = []
-
-  if (clientExtras.length > 0) {
-    // Re-fetch prices from DB to prevent tampering
-    const extraIds = clientExtras.map(e => e.extra_id)
-    const { data: dbExtras } = await supabase
-      .from('rental_extras')
-      .select('id, name, pricing_type, price')
-      .in('id', extraIds)
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-
-    for (const dbExtra of dbExtras ?? []) {
-      const qty = dbExtra.pricing_type === 'per_day' ? days : 1
-      const unitCents = Math.round(Number(dbExtra.price) * 100)
-      const subtotal = (unitCents * qty) / 100
-
-      lineItems.push({
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: dbExtra.name,
-            description: dbExtra.pricing_type === 'per_day' ? `$${dbExtra.price}/day × ${qty} days` : 'Flat fee',
-          },
-          unit_amount: unitCents,
-        },
-        quantity: qty,
-      })
-
-      validatedExtras.push({
-        extra_id: dbExtra.id,
-        name: dbExtra.name,
-        pricing_type: dbExtra.pricing_type,
-        unit_price: Number(dbExtra.price),
-        quantity: qty,
-        subtotal,
-      })
-    }
-  }
-
-  // Card payment surcharge — computed server-side from the tenant's configured rate
-  const subtotalCents = lineItems.reduce((sum, li) => sum + li.price_data.unit_amount * li.quantity, 0)
+  // Line items from the server-side quote (rental, pickup fee, extras, surcharge)
   const surchargeRate = getCardSurchargeRate(tenant.card_surcharge_rate)
-  const surchargeCents = calculateCardSurcharge(subtotalCents, tenant.card_surcharge_rate)
-
-  if (surchargeCents > 0) {
-    lineItems.push({
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: `Card payment surcharge (${(surchargeRate * 100).toFixed(2).replace(/\.?0+$/, '')}%)`,
-        },
-        unit_amount: surchargeCents,
-      },
-      quantity: 1,
-    })
-  }
-
-  // Calculate total for fee
-  const totalCents = lineItems.reduce((sum, li) => sum + li.price_data.unit_amount * li.quantity, 0)
+  const lineItems: LineItem[] = [
+    item(`${carName} — ${days}-day rental`, quote.rentalCents, 1, `${startDate} to ${endDate} · ${tenantName}`),
+    ...(quote.locationCents > 0 ? [item(`Pickup / delivery: ${pickupLocation}`, quote.locationCents)] : []),
+    ...quote.extras.map((e) =>
+      item(e.name, Math.round(e.unit_price * 100), e.quantity,
+        e.pricing_type === 'per_day' ? `$${e.unit_price}/day × ${e.quantity} days` : 'Flat fee')),
+    ...(quote.surchargeCents > 0
+      ? [item(`Card payment surcharge (${(surchargeRate * 100).toFixed(2).replace(/\.?0+$/, '')}%)`, quote.surchargeCents)]
+      : []),
+  ]
+  const totalCents = quote.totalCents
 
   // Platform transaction fee — by plan tier, or flat 1% during free launch
   const feeRate = getPlatformFeeRate(tenant.plan)
@@ -191,10 +140,10 @@ export async function POST(request: NextRequest) {
           days: String(days),
           customer_name: customerName,
           customer_phone: customerPhone,
-          pickup_time: pickupTime,
-          return_time: returnTime,
-          pickup_location: pickupLocation,
-          extras: validatedExtras.length > 0 ? JSON.stringify(validatedExtras) : '',
+          pickup_time: pickupTime ?? '',
+          return_time: returnTime ?? '',
+          pickup_location: pickupLocation ?? '',
+          extras: quote.extras.length > 0 ? JSON.stringify(quote.extras) : '',
           payment_method: 'card',
         },
         success_url: `${origin}/sites/${tenant.slug}/${carId}?booked=true`,

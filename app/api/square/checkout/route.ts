@@ -5,29 +5,21 @@ import { refreshSquareToken } from '@/lib/square/oauth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit } from '@/lib/rate-limit'
 import { decryptSquareToken, encryptSquareToken } from '@/lib/square/token-crypto'
-import { calculateCardSurcharge, getCardSurchargeRate } from '@/lib/pricing/cardSurcharge'
+import { getCardSurchargeRate } from '@/lib/pricing/cardSurcharge'
+import { isAllowedBookingOrigin } from '@/lib/booking/origin'
+import { prepareBooking } from '@/lib/booking/prepare'
+import type { PickupLocation } from '@/lib/supabase/types'
 import crypto from 'crypto'
-
-function isAllowedOrigin(origin: string | null): boolean {
-  if (!origin) return false
-  try {
-    const { hostname } = new URL(origin)
-    if (hostname === 'epuredrive.com' || hostname.endsWith('.epuredrive.com')) return true
-    if (hostname === 'localhost' || hostname === '127.0.0.1') return true
-    return false
-  } catch {
-    return false
-  }
-}
 
 export async function POST(request: NextRequest) {
   // Rate limit: 10 requests per minute per IP
   const rateLimited = rateLimit(request, 'square-checkout', { windowMs: 60_000, max: 10 })
   if (rateLimited) return rateLimited
 
-  // Origin validation
+  // Origin validation — platform hosts, localhost, or a tenant's custom domain
+  const supabase = createAdminClient()
   const origin = request.headers.get('origin')
-  if (!isAllowedOrigin(origin)) {
+  if (!(await isAllowedBookingOrigin(origin, supabase))) {
     console.error('[square-checkout] Blocked origin:', origin)
     return NextResponse.json({ error: `Forbidden: origin ${origin} not allowed` }, { status: 403 })
   }
@@ -48,27 +40,10 @@ export async function POST(request: NextRequest) {
   const customerName = String(data.customer_name || '').trim().slice(0, 200)
   const customerEmail = String(data.customer_email || '').trim().slice(0, 200)
   const customerPhone = typeof data.customer_phone === 'string' ? data.customer_phone.trim().slice(0, 50) : null
-  const pickupTime = typeof data.pickup_time === 'string' ? data.pickup_time : null
-  const returnTime = typeof data.return_time === 'string' ? data.return_time : null
-  const pickupLocation = typeof data.pickup_location === 'string' ? data.pickup_location.trim().slice(0, 200) : null
-  const totalAmount = typeof data.total_amount === 'number' ? data.total_amount : null
 
   if (!carId || !tenantId || !startDate || !endDate || !customerName || !customerEmail) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
-
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
-    return NextResponse.json({ error: 'Invalid date range' }, { status: 400 })
-  }
-
-  const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
-  if (days < 1 || days > 365) {
-    return NextResponse.json({ error: 'Invalid rental duration' }, { status: 400 })
-  }
-
-  const supabase = createAdminClient()
 
   // Fetch car
   const { data: car } = await supabase
@@ -85,7 +60,7 @@ export async function POST(request: NextRequest) {
   // Fetch tenant with Square credentials
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, brand_name, slug, plan, square_merchant_id, square_access_token, square_refresh_token, square_token_expires_at, square_location_id, card_surcharge_rate')
+    .select('id, name, brand_name, slug, plan, square_merchant_id, square_access_token, square_refresh_token, square_token_expires_at, square_location_id, card_surcharge_rate, pickup_locations')
     .eq('id', tenantId)
     .single()
 
@@ -118,44 +93,30 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Validate and calculate extras
-  interface ExtraInput { extra_id: string; name: string; pricing_type: string; unit_price: number; quantity: number; subtotal: number }
-  const clientExtras = Array.isArray(data.extras) ? (data.extras as ExtraInput[]) : []
-  let validatedExtras: ExtraInput[] = []
-  let extrasCents = 0
-
-  if (clientExtras.length > 0) {
-    const extraIds = clientExtras.map(e => e.extra_id)
-    const { data: dbExtras } = await supabase
-      .from('rental_extras')
-      .select('id, name, pricing_type, price')
-      .in('id', extraIds)
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-
-    for (const dbExtra of dbExtras ?? []) {
-      const qty = dbExtra.pricing_type === 'per_day' ? days : 1
-      const unitCents = Math.round(Number(dbExtra.price) * 100)
-      extrasCents += unitCents * qty
-
-      validatedExtras.push({
-        extra_id: dbExtra.id,
-        name: dbExtra.name,
-        pricing_type: dbExtra.pricing_type,
-        unit_price: Number(dbExtra.price),
-        quantity: qty,
-        subtotal: (unitCents * qty) / 100,
-      })
-    }
+  const prepared = await prepareBooking(supabase, {
+    tenantId,
+    carId,
+    dailyRate: Number(car.daily_rate),
+    pickupLocations: tenant.pickup_locations as PickupLocation[] | null,
+    surchargeRate: tenant.card_surcharge_rate,
+    card: true,
+    pickupDate: startDate,
+    returnDate: endDate,
+    pickupTime: data.pickup_time,
+    returnTime: data.return_time,
+    pickupLocation: data.pickup_location,
+    extras: data.extras,
+  })
+  if (!prepared.ok) {
+    return NextResponse.json({ error: prepared.error }, { status: prepared.status })
   }
-
-  const rentalCents = Math.round(car.daily_rate * days * 100)
-  const subtotalCents = rentalCents + extrasCents
-
-  // Card payment surcharge — computed server-side from the tenant's configured rate
+  const { days, quote, pickupTime, returnTime, pickupLocation } = prepared.booking
+  const validatedExtras = quote.extras
+  // Rental + pickup fee + extras as one line; surcharge as its own line
+  const subtotalCents = quote.subtotalCents
   const surchargeRate = getCardSurchargeRate(tenant.card_surcharge_rate)
-  const surchargeCents = calculateCardSurcharge(subtotalCents, tenant.card_surcharge_rate)
-  const totalCents = subtotalCents + surchargeCents
+  const surchargeCents = quote.surchargeCents
+  const totalCents = quote.totalCents
 
   const redirectOrigin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const carName = `${car.make} ${car.model}`

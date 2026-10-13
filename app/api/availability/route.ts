@@ -1,67 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit } from '@/lib/rate-limit'
+import { getBusyRanges } from '@/lib/booking/availability'
+import { todayISO } from '@/lib/finance/revenue'
 
 /**
  * GET /api/availability?carId=123&tenantId=uuid
- * Returns booked date ranges for a specific car so the UI can block unavailable dates.
+ * Returns booked/blocked date ranges for a car so the booking widget can grey
+ * them out. Uses the service-role client (anon cannot read reservations — it
+ * used to silently return [] for every car) and returns dates only, no
+ * customer data.
  */
 export async function GET(request: NextRequest) {
   const limited = rateLimit(request, 'availability', { windowMs: 60_000, max: 30 })
   if (limited) return limited
   const { searchParams } = new URL(request.url)
-  const carId = searchParams.get('carId')
+  const carId = Number(searchParams.get('carId'))
   const tenantId = searchParams.get('tenantId')
 
-  if (!carId || !tenantId || isNaN(Number(carId))) {
+  if (!tenantId || !Number.isInteger(carId) || carId <= 0) {
     return NextResponse.json({ error: 'carId and tenantId are required' }, { status: 400 })
   }
 
-  // Fetch active reservations 30 days back and 365 days forward
-  const today = new Date()
-  const from = new Date(today)
-  from.setDate(from.getDate() - 30)
-  const until = new Date(today)
-  until.setDate(until.getDate() + 365)
+  const supabase = createAdminClient()
 
-  // Use anon client — this is a public endpoint; RLS enforces access rules
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  // Verify the car actually belongs to this tenant before returning any data
+  // Only answer for a car of this tenant
   const { data: carCheck } = await supabase
     .from('cars')
     .select('id')
-    .eq('id', Number(carId))
+    .eq('id', carId)
     .eq('tenant_id', tenantId)
-    .single()
+    .maybeSingle()
 
   if (!carCheck) {
     return NextResponse.json({ bookedRanges: [] })
   }
 
-  const { data, error } = await supabase
-    .from('reservations')
-    .select('pickup_date, return_date')
-    .eq('car_id', Number(carId))
-    .eq('tenant_id', tenantId)
-    .in('status', ['pending', 'confirmed'])
-    .gte('return_date', from.toISOString().split('T')[0])
-    .lte('pickup_date', until.toISOString().split('T')[0])
-    .order('pickup_date', { ascending: true })
-
-  if (error) {
+  try {
+    const bookedRanges = await getBusyRanges(supabase, tenantId, carId, todayISO())
+    return NextResponse.json({ bookedRanges }, {
+      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30' },
+    })
+  } catch (err) {
+    console.error('[availability]', err)
     return NextResponse.json({ error: 'Failed to fetch availability' }, { status: 500 })
   }
-
-  const bookedRanges = (data ?? []).map((r) => ({
-    from: r.pickup_date as string,
-    to: r.return_date as string,
-  }))
-
-  return NextResponse.json({ bookedRanges }, {
-    headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30' },
-  })
 }
