@@ -7,7 +7,7 @@ import FleetGrid from '@/components/sites/FleetGrid'
 import BackLink from '@/components/sites/FleetBackLink'
 import QuickSearchBar from '@/components/sites/QuickSearchBar'
 import { getSiteBase } from '@/lib/utils/site-base'
-import { PUBLIC_CAR_COLUMNS } from '@/lib/sites/public-car'
+import { PUBLIC_CAR_COLUMNS, PUBLIC_TENANT_COLUMNS } from '@/lib/sites/public-car'
 
 interface Props {
   params: { slug: string }
@@ -31,7 +31,7 @@ export default async function FleetSubPage({ params, searchParams }: Props) {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('*')
+    .select(PUBLIC_TENANT_COLUMNS)
     .eq('slug', params.slug)
     .single()
 
@@ -40,7 +40,7 @@ export default async function FleetSubPage({ params, searchParams }: Props) {
   const typedTenant = {
     ...tenant,
     pickup_locations: Array.isArray(tenant.pickup_locations) ? tenant.pickup_locations : [],
-  } as Tenant
+  } as unknown as Tenant // PUBLIC_TENANT_COLUMNS only (no tokens / private fields)
 
   const pickupDate = searchParams.pickup
   const returnDate = searchParams.return
