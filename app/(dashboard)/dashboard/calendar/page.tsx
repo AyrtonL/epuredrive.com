@@ -7,7 +7,7 @@ import type { Reservation, Car } from '@/lib/supabase/types'
 export default async function CalendarPage() {
   const { supabase, tenantId } = await requireTenantId()
 
-  const [{ data: reservations }, { data: cars }, { data: blockedDates }] = await Promise.all([
+  const [{ data: reservations }, { data: cars }, { data: blockedDates }, { data: consignments }] = await Promise.all([
     supabase
       .from('reservations')
       .select('*')
@@ -17,30 +17,26 @@ export default async function CalendarPage() {
       .from('cars')
       // daily_rate is required so the reservation detail modal can render the
       // late-fee estimate (overdue days × daily rate) instead of showing $0.
-      .select('id, make, model, model_full, daily_rate')
+      .select('id, make, model, model_full, daily_rate, status, plate')
       .eq('tenant_id', tenantId),
     supabase
       .from('blocked_dates')
       .select('*')
       .eq('tenant_id', tenantId)
-      .order('start_date', { ascending: true })
-      // Suppress error if table doesn't exist yet by just returning [] on error below
+      .order('start_date', { ascending: true }),
+    supabase.from('consignments').select('car_id').eq('tenant_id', tenantId),
   ])
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-screen-2xl mx-auto space-y-6">
       <PageHeader title="Calendar" description="Visual overview of your fleet's availability and reservations." />
       
-      <div className="glass rounded-3xl p-6 md:p-8 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-        <div className="relative z-10 w-full overflow-x-auto custom-scrollbar">
-          <CalendarClient 
-            reservations={(reservations as Reservation[]) ?? []} 
-            cars={(cars as Car[]) ?? []} 
-            blockedDates={blockedDates ?? []} 
-          />
-        </div>
-      </div>
+      <CalendarClient
+        reservations={(reservations as Reservation[]) ?? []}
+        cars={(cars as Car[]) ?? []}
+        blockedDates={blockedDates ?? []}
+        consignedCarIds={Array.from(new Set((consignments ?? []).map((c) => c.car_id as number)))}
+      />
     </div>
   )
 }

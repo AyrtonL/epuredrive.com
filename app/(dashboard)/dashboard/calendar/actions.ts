@@ -37,7 +37,7 @@ export async function createBlockedDateForAllCars(data: {
   return { error: error?.message ?? null }
 }
 
-export async function deleteBlockedDate(id: number): Promise<{ error: string | null }> {
+export async function deleteBlockedDate(id: string): Promise<{ error: string | null }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
   const { error } = await supabase.from('blocked_dates').delete().eq('id', id).eq('tenant_id', tenantId)

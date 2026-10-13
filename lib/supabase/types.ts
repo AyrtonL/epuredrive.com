@@ -252,7 +252,7 @@ export interface CarService {
 
 
 export interface BlockedDate {
-  id: number
+  id: string
   start_date: string
   end_date: string
   car_id: number | null

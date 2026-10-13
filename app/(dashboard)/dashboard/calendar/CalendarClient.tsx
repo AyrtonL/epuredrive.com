@@ -7,6 +7,7 @@ import type { Reservation, Car, BlockedDate } from '@/lib/supabase/types'
 import { deleteBlockedDate } from './actions'
 import BlockDateModal from './BlockDateModal'
 import ReservationDetailModal from './ReservationDetailModal'
+import TimelineView from './TimelineView'
 import { carDisplayName } from '@/lib/utils/car-display-name'
 
 // FullCalendar (~500KB with plugins) is heavy and only used on this page.
@@ -44,10 +45,12 @@ export default function CalendarClient({
   reservations,
   cars,
   blockedDates,
+  consignedCarIds = [],
 }: {
   reservations: Reservation[]
   cars: Car[]
   blockedDates: BlockedDate[]
+  consignedCarIds?: number[]
 }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
@@ -55,6 +58,8 @@ export default function CalendarClient({
   const [filterOpen, setFilterOpen] = useState(false)
   const [blockModalOpen, setBlockModalOpen] = useState(false)
   const [detailRes, setDetailRes] = useState<Reservation | null>(null)
+  // Timeline (cars × days) is the default; Month keeps the classic calendar.
+  const [view, setView] = useState<'timeline' | 'month'>('timeline')
   const filterRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -125,19 +130,22 @@ export default function CalendarClient({
     return [...resEvents, ...blockEvents]
   }, [reservations, blockedDates, selectedCars, carMap])
 
+  function removeBlock(block: BlockedDate) {
+    const carName = carMap[block.car_id ?? -1] || 'this vehicle'
+    if (confirm(`Remove block "${block.reason || 'Blocked'}" for ${carName}?`)) {
+      startTransition(async () => {
+        await deleteBlockedDate(block.id)
+        router.refresh()
+      })
+    }
+  }
+
   function handleEventClick(info: any) {
     const { type, data } = info.event.extendedProps
     if (type === 'reservation') {
       setDetailRes(data)
     } else if (type === 'blocked') {
-      const blockId = data.id
-      const carName = carMap[data.car_id] || 'this vehicle'
-      if (confirm(`Remove block "${data.reason || 'Blocked'}" for ${carName}?`)) {
-        startTransition(async () => {
-          await deleteBlockedDate(blockId)
-          router.refresh()
-        })
-      }
+      removeBlock(data)
     }
   }
 
@@ -255,6 +263,20 @@ export default function CalendarClient({
           )}
         </div>
 
+        <div className="flex items-center gap-3">
+        {/* View switch */}
+        <div className="flex gap-1 p-1 rounded-lg bg-white/[0.05]">
+          {(['timeline', 'month'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`px-3 py-1.5 rounded-md text-[12px] font-semibold ${view === v ? 'bg-white text-black' : 'text-white/65 hover:text-white'}`}
+            >
+              {v === 'timeline' ? 'Timeline' : 'Month'}
+            </button>
+          ))}
+        </div>
+
         {/* Block dates button */}
         <button
           onClick={() => setBlockModalOpen(true)}
@@ -266,11 +288,24 @@ export default function CalendarClient({
           </svg>
           Block Dates
         </button>
+        </div>
       </div>
 
       {/* ── Calendar card ─────────────────────────────────────────────── */}
       <div className="glass border border-white/[0.13] rounded-2xl p-5 md:p-7">
-        <CalendarView events={events} onEventClick={handleEventClick} />
+        {view === 'timeline' ? (
+          <TimelineView
+            cars={cars}
+            consignedCarIds={consignedCarIds}
+            reservations={reservations}
+            blockedDates={blockedDates || []}
+            selectedCars={selectedCars}
+            onReservationClick={setDetailRes}
+            onBlockClick={removeBlock}
+          />
+        ) : (
+          <CalendarView events={events} onEventClick={handleEventClick} />
+        )}
       </div>
 
       <BlockDateModal

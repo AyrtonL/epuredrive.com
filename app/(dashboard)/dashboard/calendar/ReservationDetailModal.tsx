@@ -6,6 +6,8 @@ import type { Reservation, Car } from '@/lib/supabase/types'
 import { updateReservation } from '../bookings/actions'
 import ModalPortal from '@/components/ui/ModalPortal'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { formatDate } from '@/lib/utils/format'
+import { formatClock } from '@/lib/daily-schedule/build'
 
 interface Props {
   reservation: Reservation | null
@@ -116,8 +118,8 @@ export default function ReservationDetailModal({ reservation: r, cars, dailyRate
             ['Email', r.customer_email ? <a key="em" href={`mailto:${r.customer_email}`} className="text-white/70 hover:text-white underline">{r.customer_email}</a> : '—'],
             ['Phone', r.customer_phone ? <a key="ph" href={`tel:${r.customer_phone}`} className="text-white/70 hover:text-white underline">{r.customer_phone}</a> : '—'],
             ['Vehicle', <strong key="veh" className="text-white">{r.car_id ? carMap[r.car_id] ?? `Car #${r.car_id}` : '—'}</strong>],
-            ['Pickup', `${r.pickup_date || '—'} at ${r.pickup_time || '10:00'}`],
-            ['Return', `${r.return_date || '—'} at ${r.return_time || '10:00'}`],
+            ['Pickup', `${formatDate(r.pickup_date)} at ${formatClock(r.pickup_time) ?? '10am'}`],
+            ['Return', `${formatDate(r.return_date)} at ${formatClock(r.return_time) ?? '10am'}`],
             ['Duration', `${days} day${days !== 1 ? 's' : ''}`],
             ['Location', r.pickup_location || '—'],
             ['Total', <strong key="tot" className="text-white">{r.total_amount ? `$${Number(r.total_amount).toLocaleString()}` : '—'}</strong>],
