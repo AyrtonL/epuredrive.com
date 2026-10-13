@@ -17,6 +17,7 @@ export const PUSH_EVENTS = new Set([
   'maintenance_due',
   'vehicle_recall',
   'daily_schedule',
+  'vehicle_document_expiring',
 ])
 
 export interface PushPayload {

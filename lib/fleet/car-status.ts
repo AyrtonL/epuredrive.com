@@ -21,6 +21,8 @@ export interface CarStatus {
 export interface FleetCarInsight {
   status: CarStatus
   utilizationPct: number
+  /** Registration/insurance that is expired or due within 30 days */
+  documentWarning?: string | null
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']

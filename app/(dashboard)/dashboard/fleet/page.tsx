@@ -5,8 +5,20 @@ import FleetManager from './FleetManager'
 import type { Car, Reservation } from '@/lib/supabase/types'
 import { daysAgoISO, todayISO } from '@/lib/finance/revenue'
 import { carStatus, rentedDaysByCar, type FleetCarInsight } from '@/lib/fleet/car-status'
+import { expiryStatus } from '@/lib/fleet/document-expiry'
 
 const WINDOW_DAYS = 30
+
+/** "Registration expired 3 days ago" / "Insurance expires in 7 days" — most urgent first. */
+function documentWarning(c: Car, today: string): string | null {
+  const docs = [
+    { name: 'Registration', s: expiryStatus(c.registration_expiry, today) },
+    { name: 'Insurance', s: expiryStatus(c.insurance_expiry, today) },
+  ].filter((d) => d.s.state === 'expired' || d.s.state === 'soon')
+  if (docs.length === 0) return null
+  const worst = docs.sort((a, b) => (a.s.daysLeft ?? 0) - (b.s.daysLeft ?? 0))[0]
+  return `${worst.name} ${worst.s.label.charAt(0).toLowerCase()}${worst.s.label.slice(1)}`
+}
 
 export default async function FleetPage() {
   const { supabase, tenantId } = await requireTenantId()
@@ -48,6 +60,7 @@ export default async function FleetPage() {
     insights[c.id] = {
       status: carStatus(c.status, resRows.filter((r) => r.car_id === c.id), today),
       utilizationPct: Math.min(100, Math.round(((rentedDays.get(c.id) ?? 0) / WINDOW_DAYS) * 100)),
+      documentWarning: documentWarning(c, today),
     }
   }
   const inFleet = rows.filter((c) => c.status !== 'retired')

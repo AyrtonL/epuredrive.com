@@ -88,6 +88,9 @@ export interface Car {
   vin: string | null
   color: string | null
   plate: string | null
+  /** YYYY-MM-DD; drives the daily vehicle-document expiry alerts */
+  registration_expiry?: string | null
+  insurance_expiry?: string | null
   // Telematics (Bouncie) — present when car is linked to a device
   telematics_device_id: string | null
   last_seen_at: string | null

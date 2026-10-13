@@ -10,6 +10,7 @@ import type { Car, Reservation } from '@/lib/supabase/types'
 import { carDisplayName, categoryLabel } from '@/lib/utils/car-display-name'
 import { daysAgoISO, sumEarnedRevenue, todayISO } from '@/lib/finance/revenue'
 import { carStatus, rentedDaysByCar } from '@/lib/fleet/car-status'
+import { expiryStatus } from '@/lib/fleet/document-expiry'
 
 interface Props {
   params: { carId: string }
@@ -129,6 +130,10 @@ export default async function CarEditPage({ params }: Props) {
         lastService={lastService}
         gps={c.telematics_device_id ? { lastSeenAt: c.last_seen_at } : null}
         mileage={c.mileage ?? null}
+        documents={{
+          registration: { date: c.registration_expiry ?? null, status: expiryStatus(c.registration_expiry, today) },
+          insurance: { date: c.insurance_expiry ?? null, status: expiryStatus(c.insurance_expiry, today) },
+        }}
       />
       <div className="max-w-3xl">
         {recalls && recalls.length > 0 && <RecallsPanel recalls={recalls as CarRecall[]} vin={c.vin} />}

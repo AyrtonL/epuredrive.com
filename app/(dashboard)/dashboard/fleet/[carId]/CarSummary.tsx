@@ -4,6 +4,7 @@ import type { CarStatus } from '@/lib/fleet/car-status'
 import { formatDateRange } from '@/lib/dashboard/overview-metrics'
 import { formatDate, formatMoney } from '@/lib/utils/format'
 import { formatRelative } from '@/components/telematics/types'
+import type { ExpiryStatus } from '@/lib/fleet/document-expiry'
 
 export interface SummaryBooking {
   id: string
@@ -33,6 +34,25 @@ interface Props {
   lastService: LastService | null
   gps: { lastSeenAt: string | null } | null
   mileage: number | null
+  documents: { registration: { date: string | null; status: ExpiryStatus }; insurance: { date: string | null; status: ExpiryStatus } }
+}
+
+const DOC_TONE: Record<ExpiryStatus['state'], string> = {
+  expired: 'text-red-300',
+  soon: 'text-amber-300',
+  ok: 'text-white/60',
+  missing: 'text-white/40',
+}
+
+function DocLine({ name, date, status }: { name: string; date: string | null; status: ExpiryStatus }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <span className="text-sm text-white font-medium">{name}</span>
+      <span className={`text-[12px] text-right ${DOC_TONE[status.state]}`}>
+        {status.state === 'missing' ? 'Not set · add below' : `${formatDate(date)} · ${status.label}`}
+      </span>
+    </div>
+  )
 }
 
 const STATUS_TEXT: Record<CarStatus['kind'], string> = {
@@ -93,7 +113,12 @@ export default function CarSummary(p: Props) {
         <BookingList title="Recent trips" items={p.recent} empty="No completed trips yet." today={p.today} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="glass rounded-2xl border border-white/[0.10] p-5 space-y-1.5">
+          <div className="text-[11px] font-semibold text-white/55 mb-1">Documents</div>
+          <DocLine name="Registration" date={p.documents.registration.date} status={p.documents.registration.status} />
+          <DocLine name="Insurance" date={p.documents.insurance.date} status={p.documents.insurance.status} />
+        </div>
         <div className="glass rounded-2xl border border-white/[0.10] p-5">
           <div className="text-[11px] font-semibold text-white/55 mb-1">Last service</div>
           {p.lastService ? (

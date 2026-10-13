@@ -100,6 +100,8 @@ export default function CarEditForm({ car }: Props) {
       vin: vin || null,
       color: color || null,
       plate: (fd.get('plate') as string) || null,
+      registration_expiry: (fd.get('registration_expiry') as string) || null,
+      insurance_expiry: (fd.get('insurance_expiry') as string) || null,
       image_url: images[0] || null,
       gallery: images.slice(1).length > 0 ? images.slice(1) : null,
     }
@@ -111,6 +113,7 @@ export default function CarEditForm({ car }: Props) {
       } else {
         setSaved(true)
         setTimeout(() => setSaved(false), 2500)
+        router.refresh()
       }
     })
   }
@@ -204,6 +207,24 @@ export default function CarEditForm({ car }: Props) {
             name="plate"
             placeholder="e.g. ABC1234"
             defaultValue={car.plate ?? ''}
+            className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-white/30"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-white/60 mb-1">Registration expires</label>
+          <input
+            type="date"
+            name="registration_expiry"
+            defaultValue={car.registration_expiry ?? ''}
+            className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-white/30"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-white/60 mb-1">Insurance expires</label>
+          <input
+            type="date"
+            name="insurance_expiry"
+            defaultValue={car.insurance_expiry ?? ''}
             className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-white/30"
           />
         </div>

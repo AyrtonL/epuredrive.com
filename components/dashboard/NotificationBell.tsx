@@ -55,6 +55,14 @@ const EVENT_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = {
     ),
     color: 'text-red-400 bg-red-500/15',
   },
+  vehicle_document_expiring: {
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="12" y1="12" x2="12" y2="15" /><line x1="12" y1="18" x2="12.01" y2="18" />
+      </svg>
+    ),
+    color: 'text-amber-400 bg-amber-500/15',
+  },
   daily_schedule: {
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -234,6 +242,10 @@ export default function NotificationBell() {
       }
       case 'daily_schedule':
         return '/dashboard'
+      case 'vehicle_document_expiring': {
+        const carId = n.metadata?.car_id
+        return typeof carId === 'number' ? `/dashboard/fleet/${carId}` : '/dashboard/fleet'
+      }
       case 'payment_received':
         return '/dashboard/bookings'
       case 'team_invite_accepted':

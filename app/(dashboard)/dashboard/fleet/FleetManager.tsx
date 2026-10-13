@@ -172,6 +172,14 @@ export default function FleetManager({ initialCars, consignedCarIds = [], insigh
                     <p className={`text-[13px] ${insights[c.id].status.kind === 'overdue' ? 'text-red-300' : 'text-white/75'}`}>
                       {insights[c.id].status.detail}
                     </p>
+                    {insights[c.id].documentWarning && (
+                      <Link
+                        href={`/dashboard/fleet/${c.id}`}
+                        className="flex items-center gap-1.5 text-[12px] font-semibold text-amber-300 hover:text-amber-200"
+                      >
+                        <span aria-hidden>⚠</span> {insights[c.id].documentWarning}
+                      </Link>
+                    )}
                     <div>
                       <div className="flex items-center justify-between text-[11px] mb-1">
                         <span className="text-white/55">Utilization · 30d</span>
