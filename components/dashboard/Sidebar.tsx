@@ -43,6 +43,7 @@ const NAV: NavEntry[] = [
       { label: 'Profit & Loss', href: '/dashboard/finance/pnl' },
       { label: 'ROI', href: '/dashboard/finance/roi' },
       { label: 'Utilization', href: '/dashboard/finance/utilization' },
+      { label: 'Seasonal Pricing', href: '/dashboard/finance/pricing' },
     ],
   },
   {
