@@ -11,6 +11,7 @@ import { installmentSchedule, loanStatus } from '@/lib/finance/car-roi'
 import { carDisplayName } from '@/lib/utils/car-display-name'
 import { isOperatingExpense, LOAN_PRINCIPAL_CATEGORY } from '@/lib/expenses/recurring'
 import { toRule } from '@/lib/expenses/sync'
+import { fetchConsignedCarIds, sortCarsOwnedFirst } from '@/lib/fleet/ownership'
 
 interface Props {
   searchParams?: { tab?: string }
@@ -21,7 +22,7 @@ export default async function ExpensesPage({ searchParams }: Props) {
   const tab = searchParams?.tab === 'recurring' ? 'recurring' : 'all'
   const today = todayISO()
 
-  const [{ data: transactions }, { data: cars }, { data: rules }, { data: financing }] = await Promise.all([
+  const [{ data: transactions }, { data: cars }, { data: rules }, { data: financing }, consignedIds] = await Promise.all([
     supabase.from('transactions').select('*').eq('tenant_id', tenantId).order('transaction_date', { ascending: false }),
     supabase.from('cars').select('id, make, model, model_full, status').eq('tenant_id', tenantId),
     supabase.from('recurring_expenses').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: true }),
@@ -30,10 +31,11 @@ export default async function ExpensesPage({ searchParams }: Props) {
       .select('car_id, loan_amount, loan_apr, loan_term_months, loan_first_payment_date')
       .eq('tenant_id', tenantId)
       .not('loan_amount', 'is', null),
+    fetchConsignedCarIds(supabase, tenantId),
   ])
 
   const rows = (transactions as Transaction[]) ?? []
-  const carRows = (cars as Car[]) ?? []
+  const carRows = sortCarsOwnedFirst((cars as Car[]) ?? [], consignedIds)
 
   // Loan principal is debt repayment: listed, but not part of expenses totals.
   const operatingTotal = rows.filter(isOperatingExpense).reduce((s, r) => s + (Number(r.amount) || 0), 0)

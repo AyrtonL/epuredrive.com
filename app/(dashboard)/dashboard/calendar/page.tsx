@@ -3,11 +3,12 @@ import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import CalendarClient from './CalendarClient'
 import type { Reservation, Car } from '@/lib/supabase/types'
+import { fetchConsignedCarIds, sortCarsOwnedFirst } from '@/lib/fleet/ownership'
 
 export default async function CalendarPage() {
   const { supabase, tenantId } = await requireTenantId()
 
-  const [{ data: reservations }, { data: cars }, { data: blockedDates }, { data: consignments }] = await Promise.all([
+  const [{ data: reservations }, { data: cars }, { data: blockedDates }, consignedIds] = await Promise.all([
     supabase
       .from('reservations')
       .select('*')
@@ -24,7 +25,7 @@ export default async function CalendarPage() {
       .select('*')
       .eq('tenant_id', tenantId)
       .order('start_date', { ascending: true }),
-    supabase.from('consignments').select('car_id').eq('tenant_id', tenantId),
+    fetchConsignedCarIds(supabase, tenantId),
   ])
 
   return (
@@ -33,9 +34,9 @@ export default async function CalendarPage() {
       
       <CalendarClient
         reservations={(reservations as Reservation[]) ?? []}
-        cars={(cars as Car[]) ?? []}
+        cars={sortCarsOwnedFirst((cars as Car[]) ?? [], consignedIds, (a, b) => a.id - b.id)}
         blockedDates={blockedDates ?? []}
-        consignedCarIds={Array.from(new Set((consignments ?? []).map((c) => c.car_id as number)))}
+        consignedCarIds={Array.from(consignedIds)}
       />
     </div>
   )

@@ -13,6 +13,7 @@ import type { Reservation, Car, CarService } from '@/lib/supabase/types'
 import { inclusiveDays, daysAgoISO, todayISO, startOfMonthISO } from '@/lib/finance/revenue'
 import { carDisplayName } from '@/lib/utils/car-display-name'
 import { rentedDaysByCar } from '@/lib/fleet/car-status'
+import { fetchConsignedCarIds, sortOwnedFirst } from '@/lib/fleet/ownership'
 import {
   dailyCarsOutSeries,
   dailyRevenueSeries,
@@ -90,6 +91,7 @@ export default async function DashboardPage() {
     { data: openRecalls },
     { data: activeRes },
     { data: upcomingRes },
+    consignedIds,
   ] = await Promise.all([
     supabase.from('tenants').select('slug').eq('id', tenantId).single(),
     supabase.from('cars').select('id, make, model, model_full, status, mileage').eq('tenant_id', tenantId),
@@ -105,6 +107,7 @@ export default async function DashboardPage() {
     supabase.from('car_recalls').select('id, car_id, component, park_it').eq('tenant_id', tenantId).eq('status', 'open').order('park_it', { ascending: false }).limit(RECALLS_LIMIT),
     supabase.from('reservations').select('id, booking_code, customer_name, car_id, pickup_date, return_date, return_time, total_amount').eq('tenant_id', tenantId).eq('status', 'active').order('return_date', { ascending: true, nullsFirst: false }),
     supabase.from('reservations').select('id, booking_code, customer_name, car_id, pickup_date, pickup_time, return_date, total_amount, status').eq('tenant_id', tenantId).in('status', ['pending', 'confirmed']).gte('pickup_date', daysAgoISO(UPCOMING_LATE_DAYS)).lte('pickup_date', daysAgoISO(-UPCOMING_DAYS)).order('pickup_date', { ascending: true }).order('pickup_time', { ascending: true, nullsFirst: false }),
+    fetchConsignedCarIds(supabase, tenantId),
   ])
 
   const carRows = (cars ?? []) as Car[]
@@ -138,12 +141,16 @@ export default async function DashboardPage() {
   // Utilization % = rented days in the window ÷ window length. Computed
   // from actual reservation date overlaps — never estimated or randomised.
   const rentedDays = rentedDaysByCar(historyRows, windowStart, today)
-  const carUtilization = inFleetCars
-    .map((c) => ({
+  const carUtilization = sortOwnedFirst(
+    inFleetCars.map((c) => ({
+      id: c.id,
       name: carMap[c.id],
       percentage: Math.min(100, Math.round(((rentedDays.get(c.id) ?? 0) / WINDOW_DAYS) * 100)),
-    }))
-    .sort((a, b) => b.percentage - a.percentage)
+    })),
+    consignedIds,
+    (c) => c.id,
+    (a, b) => b.percentage - a.percentage,
+  ).map(({ name, percentage }) => ({ name, percentage }))
 
   // --- Today ---
   const toTodayItem = (r: { id: string; booking_code: string | null; customer_name: string | null; car_id: number | null }, time: string | null): TodayItem => ({

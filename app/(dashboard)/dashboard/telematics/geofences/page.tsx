@@ -12,6 +12,7 @@ import PageHeader from '@/components/dashboard/PageHeader'
 import GeofencesClient from '@/components/telematics/GeofencesClient'
 import type { TelematicsGeofence } from '@/lib/supabase/types'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { fetchConsignedCarIds, sortCarsOwnedFirst } from '@/lib/fleet/ownership'
 
 interface CarRow {
   id: number
@@ -30,6 +31,8 @@ export const dynamic = 'force-dynamic'
 export default async function TelematicsGeofencesPage() {
   const { supabase, tenantId } = await requireTenantId()
 
+  const consignedIdsPromise = fetchConsignedCarIds(supabase, tenantId)
+
   const [{ data: geofences }, { data: cars }] = await Promise.all([
     supabase
       .from('telematics_geofences')
@@ -44,7 +47,7 @@ export default async function TelematicsGeofencesPage() {
   ])
 
   const geofenceRows = (geofences as TelematicsGeofence[] | null) ?? []
-  const carRows = (cars as CarRow[] | null) ?? []
+  const carRows = sortCarsOwnedFirst((cars as CarRow[] | null) ?? [], await consignedIdsPromise)
   const carOptions = carRows.map((c) => ({ id: c.id, label: carLabel(c) }))
 
   const subtitle =

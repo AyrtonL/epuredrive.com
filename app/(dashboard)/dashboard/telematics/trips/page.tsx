@@ -15,6 +15,7 @@ import TripsTable, {
   type TripRow,
 } from '@/components/telematics/TripsTable'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { fetchConsignedCarIds, sortCarsOwnedFirst } from '@/lib/fleet/ownership'
 
 interface TripRaw {
   id: string
@@ -104,6 +105,8 @@ export default async function TelematicsTripsPage({ searchParams }: Props) {
   if (carIdFilters.length > 0) tripsQuery = tripsQuery.in('car_id', carIdFilters)
   if (minDistance !== null) tripsQuery = tripsQuery.gte('distance_mi', minDistance)
 
+  const consignedIdsPromise = fetchConsignedCarIds(supabase, tenantId)
+
   const [{ data: trips }, { data: cars }] = await Promise.all([
     tripsQuery,
     supabase
@@ -114,7 +117,7 @@ export default async function TelematicsTripsPage({ searchParams }: Props) {
   ])
 
   const tripRows = (trips as TripRaw[] | null) ?? []
-  const carRows = (cars as CarRaw[] | null) ?? []
+  const carRows = sortCarsOwnedFirst((cars as CarRaw[] | null) ?? [], await consignedIdsPromise)
   const carsById = new Map<number, CarRaw>()
   for (const c of carRows) carsById.set(c.id, c)
 

@@ -4,6 +4,7 @@ import PageHeader from '@/components/dashboard/PageHeader'
 import { carDisplayName } from '@/lib/utils/car-display-name'
 import { todayISO } from '@/lib/finance/revenue'
 import { buildPnl, monthsBack, type PnlMonth } from '@/lib/finance/pnl'
+import { fetchConsignedCarIds, sortOwnedFirst } from '@/lib/fleet/ownership'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,12 +44,14 @@ export default async function PnlPage({ searchParams }: { searchParams: SearchPa
     { data: financing },
     { data: recurring },
     { data: cars },
+    consignedIds,
   ] = await Promise.all([
     supabase.from('reservations').select('car_id, pickup_date, return_date, status, total_amount').eq('tenant_id', tenantId),
     supabase.from('transactions').select('transaction_date, type, category, amount, car_id').eq('tenant_id', tenantId),
     supabase.from('car_financing').select('car_id, purchase_price, loan_amount, loan_apr, loan_term_months, loan_first_payment_date, current_value').eq('tenant_id', tenantId),
     supabase.from('recurring_expenses').select('amount, frequency, active, end_date').eq('tenant_id', tenantId),
     supabase.from('cars').select('id, make, model, model_full').eq('tenant_id', tenantId),
+    fetchConsignedCarIds(supabase, tenantId),
   ])
 
   // "All time" starts at the first month with a rental or an expense.
@@ -68,6 +71,7 @@ export default async function PnlPage({ searchParams }: { searchParams: SearchPa
     from,
     today,
   })
+  const carRows = sortOwnedFirst(report.cars, consignedIds, (c) => c.carId)
 
   const { totals, breakEven, months } = report
   const hasData = totals.revenue !== 0 || totals.costs !== 0 || totals.principal !== 0
@@ -177,7 +181,7 @@ export default async function PnlPage({ searchParams }: { searchParams: SearchPa
           </div>
 
           <h2 className="text-white font-bold text-base pt-2">By vehicle</h2>
-          {report.cars.length === 0 ? (
+          {carRows.length === 0 ? (
             <div className="empty-state">No vehicle activity in this period.</div>
           ) : (
             <div className="data-table rounded-2xl">
@@ -198,7 +202,7 @@ export default async function PnlPage({ searchParams }: { searchParams: SearchPa
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.07]">
-                  {report.cars.map((c) => (
+                  {carRows.map((c) => (
                     <tr key={c.carId} className="hover:bg-white/5 transition-colors tabular-nums">
                       <td data-primary className="px-4 py-3 text-white font-medium">
                         <Link href={`/dashboard/fleet/${c.carId}`} className="hover:underline underline-offset-2">{c.name}</Link>

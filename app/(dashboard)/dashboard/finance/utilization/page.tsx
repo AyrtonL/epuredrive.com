@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import PageHeader from '@/components/dashboard/PageHeader'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { fetchConsignedCarIds, sortOwnedFirst } from '@/lib/fleet/ownership'
 
 interface SearchParams {
   period?: string
@@ -102,7 +103,7 @@ export default async function UtilizationPage({
   const periodStartStr = periodStart.toISOString().split('T')[0]
   const periodEndStr = periodEnd.toISOString().split('T')[0]
 
-  const [{ data: cars }, { data: reservations }] = await Promise.all([
+  const [{ data: cars }, { data: reservations }, consignedIds] = await Promise.all([
     supabase
       .from('cars')
       .select('id, make, model, model_full, daily_rate, status')
@@ -117,6 +118,7 @@ export default async function UtilizationPage({
       .eq('tenant_id', tenantId)
       .in('status', ['active', 'completed'])
       .lte('pickup_date', periodEndStr),
+    fetchConsignedCarIds(supabase, tenantId),
   ])
 
   const carRows = (cars as CarRow[]) ?? []
@@ -150,8 +152,9 @@ export default async function UtilizationPage({
 
   const periodDays = period.days
 
-  // Per-vehicle utilization rows, sorted by utilization desc
-  const rows = carRows
+  // Per-vehicle utilization rows: owned first, then consigned; utilization desc within each
+  const rows = sortOwnedFirst(
+    carRows
     .map((car) => {
       const s = stats.get(car.id) ?? { daysRented: 0, bookings: 0, revenue: 0 }
       const cappedDays = Math.min(s.daysRented, periodDays)
@@ -166,8 +169,11 @@ export default async function UtilizationPage({
         utilization: pct,
         potentialRevenue,
       }
-    })
-    .sort((a, b) => b.utilization - a.utilization)
+    }),
+    consignedIds,
+    (r) => r.car.id,
+    (a, b) => b.utilization - a.utilization,
+  )
 
   // Fleet totals
   const fleetSize = carRows.length

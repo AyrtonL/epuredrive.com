@@ -5,6 +5,7 @@ import { carDisplayName } from '@/lib/utils/car-display-name'
 import { todayISO } from '@/lib/finance/revenue'
 import { MIAMI_SEASONS, nextPeak, suggestPrices, type SeasonKind } from '@/lib/pricing/seasonal'
 import ApplyRateButton from './ApplyRateButton'
+import { fetchConsignedCarIds, sortOwnedFirst } from '@/lib/fleet/ownership'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,13 +33,14 @@ export default async function PricingPage() {
   const { supabase, tenantId } = await requireTenantId()
   const today = todayISO()
 
-  const [{ data: cars }, { data: reservations }] = await Promise.all([
+  const [{ data: cars }, { data: reservations }, consignedIds] = await Promise.all([
     supabase.from('cars').select('id, make, model, model_full, daily_rate, status').eq('tenant_id', tenantId),
     supabase
       .from('reservations')
       .select('car_id, pickup_date, return_date, status, source, total_amount')
       .eq('tenant_id', tenantId)
       .in('status', ['completed', 'active']),
+    fetchConsignedCarIds(supabase, tenantId),
   ])
 
   const fleet = (cars ?? [])
@@ -46,7 +48,7 @@ export default async function PricingPage() {
     .map((c) => ({ id: c.id as number, name: carDisplayName(c), dailyRate: c.daily_rate != null ? Number(c.daily_rate) : null }))
 
   const { cars: rows, season } = suggestPrices({ cars: fleet, reservations: reservations ?? [], today })
-  const sorted = [...rows].sort((a, b) => (b.base ?? 0) - (a.base ?? 0))
+  const sorted = sortOwnedFirst(rows, consignedIds, (r) => r.carId, (a, b) => (b.base ?? 0) - (a.base ?? 0))
   const peak = nextPeak(today)
   const m = MIAMI_SEASONS.multipliers
 

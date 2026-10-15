@@ -6,6 +6,7 @@ import type { Car, Reservation } from '@/lib/supabase/types'
 import { daysAgoISO, todayISO } from '@/lib/finance/revenue'
 import { carStatus, rentedDaysByCar, type FleetCarInsight } from '@/lib/fleet/car-status'
 import { expiryStatus } from '@/lib/fleet/document-expiry'
+import { sortCarsOwnedFirst } from '@/lib/fleet/ownership'
 
 const WINDOW_DAYS = 30
 
@@ -50,11 +51,7 @@ export default async function FleetPage() {
   )
 
   // Owned vehicles first, consignment vehicles after (stable sort keeps id order within each group)
-  const rows = [...((cars as Car[]) ?? [])].sort((a, b) => {
-    const aConsigned = consignedCarIds.has(a.id) ? 1 : 0
-    const bConsigned = consignedCarIds.has(b.id) ? 1 : 0
-    return aConsigned - bConsigned
-  })
+  const rows = sortCarsOwnedFirst((cars as Car[]) ?? [], consignedCarIds)
   const insights: Record<number, FleetCarInsight> = {}
   for (const c of rows) {
     insights[c.id] = {

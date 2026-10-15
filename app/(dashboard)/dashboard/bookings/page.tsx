@@ -4,12 +4,13 @@ import PageHeader from '@/components/dashboard/PageHeader'
 import StatCard from '@/components/dashboard/StatCard'
 import BookingsTable from './BookingsTable'
 import type { Reservation, Car, RentalExtra } from '@/lib/supabase/types'
+import { fetchConsignedCarIds, sortCarsOwnedFirst } from '@/lib/fleet/ownership'
 import { formatMoney } from '@/lib/utils/format'
 
 export default async function BookingsPage({ searchParams }: { searchParams?: { q?: string } }) {
   const { supabase, tenantId } = await requireTenantId()
 
-  const [{ data: reservations }, { data: cars }, { data: tenant }, { data: extras }] = await Promise.all([
+  const [{ data: reservations }, { data: cars }, { data: tenant }, { data: extras }, consignedIds] = await Promise.all([
     supabase
       .from('reservations')
       .select('*')
@@ -30,10 +31,11 @@ export default async function BookingsPage({ searchParams }: { searchParams?: { 
       .eq('tenant_id', tenantId)
       .eq('is_active', true)
       .order('sort_order'),
+    fetchConsignedCarIds(supabase, tenantId),
   ])
 
   const rows = (reservations as Reservation[]) ?? []
-  const carRows = (cars as Car[]) ?? []
+  const carRows = sortCarsOwnedFirst((cars as Car[]) ?? [], consignedIds)
   const extraRows = (extras as RentalExtra[]) ?? []
 
   const confirmed = rows.filter((r) => r.status === 'confirmed').length

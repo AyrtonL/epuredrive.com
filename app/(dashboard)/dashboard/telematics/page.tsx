@@ -11,6 +11,7 @@ import KpiRow from '@/components/telematics/KpiRow'
 import LiveMapClient from '@/components/telematics/LiveMapClient'
 import { loadTelematicsKpi } from '@/lib/telematics/kpi'
 import { computeVehicleStatus, type MapVehicle } from '@/components/telematics/types'
+import { fetchConsignedCarIds, sortCarsOwnedFirst } from '@/lib/fleet/ownership'
 
 interface CarRow {
   id: number
@@ -33,6 +34,8 @@ export const dynamic = 'force-dynamic'
 export default async function TelematicsLiveMapPage() {
   const { supabase, tenantId } = await requireTenantId()
 
+  const consignedIdsPromise = fetchConsignedCarIds(supabase, tenantId)
+
   const [kpi, { data: cars }] = await Promise.all([
     loadTelematicsKpi(supabase, tenantId),
     supabase
@@ -42,7 +45,7 @@ export default async function TelematicsLiveMapPage() {
       .not('telematics_device_id', 'is', null),
   ])
 
-  const carRows = (cars as CarRow[] | null) ?? []
+  const carRows = sortCarsOwnedFirst((cars as CarRow[] | null) ?? [], await consignedIdsPromise)
 
   const deviceIds = Array.from(
     new Set(carRows.map((c) => c.telematics_device_id).filter((v): v is string => !!v)),

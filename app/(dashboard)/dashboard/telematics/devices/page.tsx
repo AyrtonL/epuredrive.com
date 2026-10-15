@@ -12,6 +12,7 @@ import DeviceRow, { type DeviceRowData } from '@/components/telematics/DeviceRow
 import DevicesToolbar, { type DeviceFilter } from '@/components/telematics/DevicesToolbar'
 import type { CarOption } from '@/components/telematics/LinkCarDropdown'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { fetchConsignedCarIds, sortCarsOwnedFirst } from '@/lib/fleet/ownership'
 
 interface DeviceRaw {
   id: string
@@ -53,6 +54,8 @@ export default async function TelematicsDevicesPage({ searchParams }: Props) {
   const { supabase, tenantId } = await requireTenantId()
   const filter = parseFilter(searchParams?.filter)
 
+  const consignedIdsPromise = fetchConsignedCarIds(supabase, tenantId)
+
   const [{ data: devices }, { data: cars }] = await Promise.all([
     supabase
       .from('telematics_devices')
@@ -67,7 +70,7 @@ export default async function TelematicsDevicesPage({ searchParams }: Props) {
   ])
 
   const allDevices = (devices as DeviceRaw[] | null) ?? []
-  const allCars = (cars as CarRaw[] | null) ?? []
+  const allCars = sortCarsOwnedFirst((cars as CarRaw[] | null) ?? [], await consignedIdsPromise)
 
   const filteredDevices = allDevices.filter((d) => {
     if (filter === 'linked') return d.car_id !== null

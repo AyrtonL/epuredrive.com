@@ -20,6 +20,7 @@ import type {
   TelematicsSeverity,
 } from '@/lib/supabase/types'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { fetchConsignedCarIds, sortCarsOwnedFirst } from '@/lib/fleet/ownership'
 
 interface EventRaw {
   id: string
@@ -137,6 +138,8 @@ export default async function TelematicsAlertsPage({ searchParams }: Props) {
   if (type !== 'all') query = query.eq('event_type', type)
   if (carId !== null) query = query.eq('car_id', carId)
 
+  const consignedIdsPromise = fetchConsignedCarIds(supabase, tenantId)
+
   const [{ data: events }, { data: cars }, { count: unackedCount }] =
     await Promise.all([
       query,
@@ -156,7 +159,7 @@ export default async function TelematicsAlertsPage({ searchParams }: Props) {
     ])
 
   const eventRows = (events as EventRaw[] | null) ?? []
-  const carRows = (cars as CarRaw[] | null) ?? []
+  const carRows = sortCarsOwnedFirst((cars as CarRaw[] | null) ?? [], await consignedIdsPromise)
   const carsById = new Map<number, CarRaw>()
   for (const c of carRows) carsById.set(c.id, c)
 

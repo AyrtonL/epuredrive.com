@@ -6,17 +6,19 @@ import MaintenanceAlerts from './MaintenanceAlerts'
 import FleetMileagePanel from './FleetMileagePanel'
 import type { CarService, Car } from '@/lib/supabase/types'
 import { formatMoney } from '@/lib/utils/format'
+import { fetchConsignedCarIds, sortCarsOwnedFirst } from '@/lib/fleet/ownership'
 
 export default async function MaintenancePage() {
   const { supabase, tenantId } = await requireTenantId()
 
-  const [{ data: services }, { data: cars }] = await Promise.all([
+  const [{ data: services }, { data: cars }, consignedIds] = await Promise.all([
     supabase.from('car_services').select('*').eq('tenant_id', tenantId).order('service_date', { ascending: false }),
     supabase.from('cars').select('id, make, model, model_full, mileage, telematics_device_id').eq('tenant_id', tenantId).order('make'),
+    fetchConsignedCarIds(supabase, tenantId),
   ])
 
   const rows = (services as CarService[]) ?? []
-  const carRows = (cars as Car[]) ?? []
+  const carRows = sortCarsOwnedFirst((cars as Car[]) ?? [], consignedIds)
   const totalCost = rows.reduce((s, r) => s + (Number(r.cost) || 0), 0)
   const now = new Date()
   const in30Days = new Date(now); in30Days.setDate(now.getDate() + 30)

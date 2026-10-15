@@ -6,6 +6,7 @@ import InvestmentTable, { type InvestmentRow } from './InvestmentTable'
 import { carRoi } from '@/lib/finance/car-roi'
 import { todayISO } from '@/lib/finance/revenue'
 import { LOAN_CATEGORIES } from '@/lib/expenses/recurring'
+import { sortCarsOwnedFirst } from '@/lib/fleet/ownership'
 
 function fmt(n: number) {
   const abs = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -73,11 +74,9 @@ export default async function ROIPage() {
     }
   })
 
-  const sorted = [...carRows].sort((a, b) => {
-    const aRev = (revenueMap[a.id] ?? 0) - (maintenanceMap[a.id] ?? 0) - (transactionExpenseMap[a.id] ?? 0)
-    const bRev = (revenueMap[b.id] ?? 0) - (maintenanceMap[b.id] ?? 0) - (transactionExpenseMap[b.id] ?? 0)
-    return bRev - aRev
-  })
+  const consignedIds = new Set(consignmentRows.map((con) => con.car_id).filter((id): id is number => id != null))
+  const netOf = (id: number) => (revenueMap[id] ?? 0) - (maintenanceMap[id] ?? 0) - (transactionExpenseMap[id] ?? 0)
+  const sorted = sortCarsOwnedFirst(carRows, consignedIds, (a, b) => netOf(b.id) - netOf(a.id))
 
   // Fleet-wide totals
   const fleetGross = Object.values(revenueMap).reduce((s, v) => s + v, 0)
