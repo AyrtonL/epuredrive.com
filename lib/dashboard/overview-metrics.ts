@@ -168,3 +168,22 @@ export function rentalProgress(pickup: string, ret: string | null, today: string
   if (daysLeft === 1) return { day, totalDays, pct, daysLeft, label: 'Returns tomorrow', tone: 'today' }
   return { day, totalDays, pct, daysLeft, label: `Returns in ${daysLeft} days`, tone: 'normal' }
 }
+
+export interface PickupCountdown {
+  label: string
+  tone: 'late' | 'today' | 'soon' | 'normal'
+  /** negative when the pickup date has passed without the rental starting */
+  daysAway: number
+}
+
+/** How far off a booking's handover is: "Today", "Tomorrow", "In 3 days", "2 days late". */
+export function pickupCountdown(pickup: string, today: string): PickupCountdown {
+  const daysAway = dayDiff(today, pickup)
+  if (daysAway < 0) {
+    const late = -daysAway
+    return { label: `${late} day${late === 1 ? '' : 's'} late`, tone: 'late', daysAway }
+  }
+  if (daysAway === 0) return { label: 'Today', tone: 'today', daysAway }
+  if (daysAway === 1) return { label: 'Tomorrow', tone: 'soon', daysAway }
+  return { label: `In ${daysAway} days`, tone: 'normal', daysAway }
+}

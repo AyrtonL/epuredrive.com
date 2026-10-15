@@ -1,5 +1,5 @@
 // __tests__/lib/overview-metrics.test.ts
-import { dailyCarsOutSeries, dailyRevenueSeries, formatDateRange, monthRevenue, rentalProgress, sameDayLastMonthISO } from '@/lib/dashboard/overview-metrics'
+import { dailyCarsOutSeries, dailyRevenueSeries, formatDateRange, monthRevenue, pickupCountdown, rentalProgress, sameDayLastMonthISO } from '@/lib/dashboard/overview-metrics'
 import type { Reservation } from '@/lib/supabase/types'
 
 function res(partial: Partial<Reservation>): Reservation {
@@ -153,5 +153,26 @@ describe('rentalProgress', () => {
 
   it('handles an open-ended rental', () => {
     expect(rentalProgress('2026-10-10', null, today)).toMatchObject({ day: 3, totalDays: null, pct: null, daysLeft: null, label: 'No return date', tone: 'normal' })
+  })
+})
+
+describe('pickupCountdown', () => {
+  const today = '2026-10-15'
+
+  it('flags today and tomorrow', () => {
+    expect(pickupCountdown('2026-10-15', today)).toEqual({ label: 'Today', tone: 'today', daysAway: 0 })
+    expect(pickupCountdown('2026-10-16', today)).toEqual({ label: 'Tomorrow', tone: 'soon', daysAway: 1 })
+  })
+
+  it('counts days within the week', () => {
+    expect(pickupCountdown('2026-10-18', today)).toEqual({ label: 'In 3 days', tone: 'normal', daysAway: 3 })
+  })
+
+  it('crosses month boundaries', () => {
+    expect(pickupCountdown('2026-11-02', '2026-10-30').daysAway).toBe(3)
+  })
+
+  it('treats a missed pickup date as late', () => {
+    expect(pickupCountdown('2026-10-13', today)).toEqual({ label: '2 days late', tone: 'late', daysAway: -2 })
   })
 })

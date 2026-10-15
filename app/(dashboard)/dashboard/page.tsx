@@ -6,6 +6,7 @@ import UtilizationPanel from '@/components/dashboard/UtilizationPanel'
 import TodayPanel, { type OpenRecall, type TodayItem } from '@/components/dashboard/TodayPanel'
 import CopyRef from '@/components/dashboard/CopyRef'
 import ActiveRentalsPanel, { type ActiveRental } from '@/components/dashboard/ActiveRentalsPanel'
+import UpcomingRentalsPanel, { type UpcomingRental } from '@/components/dashboard/UpcomingRentalsPanel'
 import NotificationBell from '@/components/dashboard/NotificationBell'
 import MaintenanceAlerts from './maintenance/MaintenanceAlerts'
 import type { Reservation, Car, CarService } from '@/lib/supabase/types'
@@ -17,6 +18,7 @@ import {
   dailyRevenueSeries,
   formatDateRange,
   monthRevenue,
+  pickupCountdown,
   rentalProgress,
   sameDayLastMonthISO,
 } from '@/lib/dashboard/overview-metrics'
@@ -32,6 +34,10 @@ const STATUS_COLORS: Record<string, string> = {
 const WINDOW_DAYS = 30
 const RECENT_BOOKINGS_LIMIT = 7
 const RECALLS_LIMIT = 5
+const UPCOMING_DAYS = 14
+const UPCOMING_LIMIT = 8
+// Unstarted bookings whose pickup passed this recently still show, flagged late.
+const UPCOMING_LATE_DAYS = 2
 const TABLE_COLS = 'lg:grid-cols-[96px_minmax(0,1.1fr)_minmax(0,1.2fr)_150px_90px_96px]'
 
 function getInitials(name: string): string {
@@ -83,6 +89,7 @@ export default async function DashboardPage() {
     { data: returnsToday },
     { data: openRecalls },
     { data: activeRes },
+    { data: upcomingRes },
   ] = await Promise.all([
     supabase.from('tenants').select('slug').eq('id', tenantId).single(),
     supabase.from('cars').select('id, make, model, model_full, status, mileage').eq('tenant_id', tenantId),
@@ -97,6 +104,7 @@ export default async function DashboardPage() {
     supabase.from('reservations').select('id, booking_code, customer_name, car_id, return_time').eq('tenant_id', tenantId).eq('return_date', today).eq('status', 'active').order('return_time', { ascending: true }),
     supabase.from('car_recalls').select('id, car_id, component, park_it').eq('tenant_id', tenantId).eq('status', 'open').order('park_it', { ascending: false }).limit(RECALLS_LIMIT),
     supabase.from('reservations').select('id, booking_code, customer_name, car_id, pickup_date, return_date, return_time, total_amount').eq('tenant_id', tenantId).eq('status', 'active').order('return_date', { ascending: true, nullsFirst: false }),
+    supabase.from('reservations').select('id, booking_code, customer_name, car_id, pickup_date, pickup_time, return_date, total_amount, status').eq('tenant_id', tenantId).in('status', ['pending', 'confirmed']).gte('pickup_date', daysAgoISO(UPCOMING_LATE_DAYS)).lte('pickup_date', daysAgoISO(-UPCOMING_DAYS)).order('pickup_date', { ascending: true }).order('pickup_time', { ascending: true, nullsFirst: false }),
   ])
 
   const carRows = (cars ?? []) as Car[]
@@ -167,6 +175,19 @@ export default async function DashboardPage() {
       total: r.total_amount != null ? Number(r.total_amount) : null,
       progress: rentalProgress(r.pickup_date, r.return_date, today),
     }))
+
+  const upcomingAll = (upcomingRes ?? []).filter((r) => r.pickup_date)
+  const upcomingRows: UpcomingRental[] = upcomingAll.slice(0, UPCOMING_LIMIT).map((r) => ({
+    id: r.id,
+    bookingCode: r.booking_code,
+    customer: r.customer_name || 'Unknown',
+    vehicle: carName(r.car_id),
+    dates: formatDateRange(r.pickup_date, r.return_date, today),
+    pickupTime: r.pickup_time,
+    total: r.total_amount != null ? Number(r.total_amount) : null,
+    status: r.status,
+    countdown: pickupCountdown(r.pickup_date, today),
+  }))
 
   const hasRevenue = revenue.current > 0 || revenue.lastMonthTotal > 0
 
@@ -263,6 +284,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 items-start">
         <div className="space-y-6 min-w-0">
         <ActiveRentalsPanel rentals={activeRentalRows} />
+        <UpcomingRentalsPanel rentals={upcomingRows} totalCount={upcomingAll.length} windowDays={UPCOMING_DAYS} />
 
         {/* Bookings Table */}
         <div className="glass rounded-2xl border border-white/[0.10] overflow-hidden">
