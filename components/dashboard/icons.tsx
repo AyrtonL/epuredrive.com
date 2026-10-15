@@ -84,6 +84,30 @@ export function IconROI({ className }: IconProps) {
   )
 }
 
+export function IconProfitLoss({ className }: IconProps) {
+  // Balance scale: revenue weighed against costs
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="4" x2="12" y2="20" />
+      <line x1="8" y1="20" x2="16" y2="20" />
+      <line x1="4" y1="7" x2="20" y2="7" />
+      <path d="M4 7l-2.5 6a2.5 2.5 0 005 0L4 7z" />
+      <path d="M20 7l-2.5 6a2.5 2.5 0 005 0L20 7z" />
+    </svg>
+  )
+}
+
+export function IconUtilization({ className }: IconProps) {
+  // Gauge with a needle
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3.5 17a9 9 0 1117 0" />
+      <line x1="12" y1="17" x2="16" y2="10.5" />
+      <circle cx="12" cy="17" r="1.25" />
+    </svg>
+  )
+}
+
 export function IconCustomers({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -455,6 +479,8 @@ export const ICONS: Record<string, (props: { className?: string }) => React.Reac
   Taxes: IconTaxes,
   Reports: IconReports,
   ROI: IconROI,
+  'Profit & Loss': IconProfitLoss,
+  Utilization: IconUtilization,
   Customers: IconCustomers,
   Consignments: IconConsignments,
   Reviews: IconFeedback,
