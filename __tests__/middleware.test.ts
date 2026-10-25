@@ -8,6 +8,11 @@ jest.mock('../lib/supabase/edge', () => ({
   createEdgeClient: jest.fn(),
 }))
 import { createEdgeClient } from '../lib/supabase/edge'
+jest.mock('../lib/supabase/middleware', () => {
+  const { NextResponse } = jest.requireActual('next/server')
+  return { refreshSession: jest.fn(() => NextResponse.next()) }
+})
+import { refreshSession } from '../lib/supabase/middleware'
 
 function makeRequest(host: string, path = '/') {
   return new NextRequest(`http://${host}${path}`, {
@@ -170,6 +175,20 @@ describe('middleware — CDN caching of the landing page', () => {
     const res = await middleware(req)
     expect(res.status).toBe(307)
     expect(res.headers.get('netlify-cdn-cache-control')).toBe('no-store')
+  })
+})
+
+describe('middleware — dashboard session refresh', () => {
+  it('routes dashboard requests through the session refresh', async () => {
+    jest.clearAllMocks()
+    for (const path of ['/dashboard', '/dashboard/bookings']) {
+      await middleware(makeRequest('epuredrive.com', path))
+    }
+    expect(refreshSession).toHaveBeenCalledTimes(2)
+    await middleware(makeRequest('epuredrive.com', '/dashboards-are-cool'))
+    await middleware(makeRequest('epuredrive.com', '/login'))
+    await middleware(makeRequest('myfleet.epuredrive.com', '/dashboard'))
+    expect(refreshSession).toHaveBeenCalledTimes(2)
   })
 })
 

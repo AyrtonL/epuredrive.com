@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getTenantSlug } from '@/lib/utils/routing'
 import { createEdgeClient } from '@/lib/supabase/edge'
+import { refreshSession } from '@/lib/supabase/middleware'
 import { TENANT_HOST_HEADER } from '@/lib/utils/site-base-header'
 
 /**
@@ -170,6 +171,11 @@ export async function middleware(request: NextRequest) {
       ? `/sites/${data.slug}${rest === '/' ? '' : rest}`
       : NOT_FOUND_PATH
     return NextResponse.rewrite(url, { request: { headers: requestHeaders } })
+  }
+
+  // Dashboard: refresh the session once here, where cookies can be written.
+  if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+    return refreshSession(request, requestHeaders)
   }
 
   return NextResponse.next({ request: { headers: requestHeaders } })
