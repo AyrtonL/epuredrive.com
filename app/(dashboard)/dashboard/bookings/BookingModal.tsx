@@ -35,12 +35,11 @@ interface Props {
   cardSurchargeRate: number | null
 }
 
-type TabKey = 'customer' | 'trip' | 'charges' | 'vehicle' | 'agreement'
+type TabKey = 'customer' | 'trip' | 'vehicle' | 'agreement'
 
 const TABS: Array<{ key: TabKey; label: string }> = [
   { key: 'customer', label: 'Customer' },
-  { key: 'trip', label: 'Trip' },
-  { key: 'charges', label: 'Charges' },
+  { key: 'trip', label: 'Trip & Charges' },
   { key: 'vehicle', label: 'Vehicle State' },
   { key: 'agreement', label: 'Agreement' },
 ]
@@ -291,7 +290,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
     }
     if (formData.total_amount == null || formData.total_amount === ('' as unknown as number)) {
       setErrorStr('Total amount is required.')
-      setActiveTab('charges')
+      setActiveTab('trip')
       return
     }
 
@@ -871,8 +870,9 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                 </div>
               </div>
 
-              {/* CHARGES TAB */}
-              <div className={activeTab === 'charges' ? 'space-y-5' : 'hidden'}>
+              {/* CHARGES — shown with the trip so the total sits next to the dates */}
+              <div className={activeTab === 'trip' ? 'space-y-5 border-t border-white/10 pt-6 mt-6' : 'hidden'}>
+                <h3 className={SECTION_HEADING}>Charges</h3>
                 <div className="space-y-1">
                   <label className={LABEL_CLASS}>Payment Method</label>
                   <div className="flex gap-2">
