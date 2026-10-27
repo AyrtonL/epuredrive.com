@@ -18,7 +18,7 @@ export default async function BookingsPage({ searchParams }: { searchParams?: { 
       .order('pickup_date', { ascending: false }),
     supabase
       .from('cars')
-      .select('id, make, model, model_full')
+      .select('id, make, model, model_full, daily_rate')
       .eq('tenant_id', tenantId),
     supabase
       .from('tenants')
