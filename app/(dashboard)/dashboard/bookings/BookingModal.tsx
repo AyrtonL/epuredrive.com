@@ -23,6 +23,7 @@ import LicensePhotoUploader from './LicensePhotoUploader'
 import { calculateCardSurcharge } from '@/lib/pricing/cardSurcharge'
 import { todayISO } from '@/lib/finance/revenue'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { suggestBookingTotal } from '@/lib/booking/suggestedTotal'
 
 interface Props {
   isOpen: boolean
@@ -175,6 +176,10 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
     return c ? `${carDisplayName(c)}` : null
   }, [cars, formData.car_id])
   const nights = calcNights(formData.pickup_date, formData.return_date)
+  const suggestedTotal = useMemo(() => {
+    const car = cars.find((c) => c.id === Number(formData.car_id))
+    return suggestBookingTotal({ dailyRate: car?.daily_rate, nights, extras: formData.extras ?? [] })
+  }, [cars, formData.car_id, nights, formData.extras])
 
   const expirationWarnings = useMemo(() => {
     const returnDate = formData.return_date
@@ -227,6 +232,15 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
       return
     }
     setFormData({ ...formData, payment_method: method })
+  }
+
+  function applySuggestedTotal() {
+    if (!suggestedTotal) return
+    const surcharge =
+      formData.payment_method === 'card'
+        ? calculateCardSurcharge(Math.round(suggestedTotal.total * 100), cardSurchargeRate) / 100
+        : formData.surcharge
+    setFormData({ ...formData, total_amount: suggestedTotal.total, surcharge })
   }
 
   function handlePickCustomer(c: CustomerLookup) {
@@ -893,6 +907,22 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                       }
                       className={INPUT_CLASS}
                     />
+                    {suggestedTotal && Number(formData.total_amount) !== suggestedTotal.total && (
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <span className="text-xs text-white/50">
+                          Suggested ${suggestedTotal.total.toFixed(2)} · {suggestedTotal.nights}{' '}
+                          {suggestedTotal.nights === 1 ? 'night' : 'nights'} × ${suggestedTotal.dailyRate}
+                          {suggestedTotal.extras > 0 && ` + $${suggestedTotal.extras.toFixed(2)} extras`}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={applySuggestedTotal}
+                          className="shrink-0 px-3 py-1 rounded-lg text-[11px] font-bold uppercase tracking-widest bg-white/10 text-white hover:bg-white/20 transition-colors"
+                        >
+                          Auto-calculate
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <label className={LABEL_CLASS}>Security Deposit ($)</label>
