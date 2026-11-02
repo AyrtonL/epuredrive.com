@@ -373,16 +373,6 @@ export async function processEmail(parsed: ParsedEmail, sync: EmailSync): Promis
     return
   }
 
-  if (parsed.type === 'return') {
-    // Only refreshes total_amount with the settled figure - no matching reservation means
-    // the confirm email hasn't been processed yet (or was missed); nothing to attach it to.
-    const existing = await findExistingReservation(parsed, sync.tenant_id)
-    if (existing && parsed.total_amount != null) {
-      await supabase.from('reservations').update({ total_amount: parsed.total_amount }).eq('id', existing.id)
-    }
-    return
-  }
-
   const existing = await findExistingReservation(parsed, sync.tenant_id)
 
   // An Upcar car-swap/modification email carries partial data (no dates, sometimes no

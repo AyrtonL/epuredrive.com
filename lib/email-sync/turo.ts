@@ -39,11 +39,15 @@ export function parseTuroEmail(body: string, subject: string, messageId: string)
   const fullText = subject + ' ' + body
 
   const isCancelled = /cancel/i.test(subject)
-  const isModified = /changed their trip|modif|updated.*trip|trip.*updated/i.test(subject)
+  // "You've confirmed X's change request" carries the new host earnings. The earlier
+  // "X has requested a change" email is only a pending proposal, so it stays ignored.
+  const isModified = /changed their trip|modif|updated.*trip|trip.*updated|confirmed .+ change request/i.test(subject)
   const isConfirmed = /is booked|cha.?ching|trip.*booked|booked.*trip/i.test(fullText)
-  const isReturned = /has returned your/i.test(subject)
 
-  if (!isConfirmed && !isCancelled && !isModified && !isReturned) return null
+  // "X has returned your <car>" is deliberately not parsed: its only amount is "Total
+  // paid" - what the guest paid Turo (fees, protection, taxes included) - not the host's
+  // earnings. Writing it to total_amount inflated revenue (e.g. $1,073.28 vs $474.12).
+  if (!isConfirmed && !isCancelled && !isModified) return null
 
   // The Turo Reservation ID is stable across all of a booking's emails - use it as the
   // primary key so they all update the one row. Format varies: "Reservation ID #123" on
@@ -54,7 +58,8 @@ export function parseTuroEmail(body: string, subject: string, messageId: string)
   // Guest name: the subject is the most reliable source across all three email types.
   const subjGuest =
     subject.match(/^(.+?)[’']s trip with your/i) ||
-    subject.match(/^(.+?) has (?:changed|canceled|cancelled|returned)/i)
+    subject.match(/^(.+?) has (?:changed|canceled|cancelled)/i) ||
+    subject.match(/confirmed (.+?)[’']s change request/i)
   const bodyGuest =
     body.match(/Cha-?ching!\s*(.+?)[’']s trip with your/i) ||
     body.match(/(.+?)[’']s trip with your/i)
@@ -64,27 +69,9 @@ export function parseTuroEmail(body: string, subject: string, messageId: string)
     return { type: 'cancel', messageId, reservationId, customer_name: guestName, pickup_date: null, return_date: null }
   }
 
-  // The return-confirmation email carries the final reconciled "Total paid" for the trip
-  // (extra miles, late fees, etc. already applied) - the one place Turo gives a settled
-  // amount instead of the booking-time estimate. No dates/vehicle needed: this only
-  // refreshes total_amount on the existing reservation, matched by reservationId.
-  if (isReturned) {
-    const totalMatch = body.match(/Total paid[^$]*\$([0-9,]+(?:\.\d{2})?)/i)
-    if (!reservationId || !totalMatch) return null
-    return {
-      type: 'return',
-      messageId,
-      reservationId,
-      customer_name: guestName,
-      pickup_date: null,
-      return_date: null,
-      total_amount: parseFloat(totalMatch[1].replace(/,/g, '')),
-    }
-  }
-
   // Turo sometimes appends the delivery location ("Audi A3 at Fort Lauderdale ... Airport").
   // Strip the " at <location>" suffix so the vehicle name matches a fleet car.
-  const vehicleMatch = body.match(/trip with your (.+?) is (?:booked|confirmed|modified)/i)
+  const vehicleMatch = body.match(/(?:trip|change request) with your (.+?) is (?:now )?(?:booked|confirmed|modified)/i)
   const vehicleName = vehicleMatch?.[1]?.replace(/\s+at\s+.+$/i, '').trim() ?? ''
 
   // Dates: prose ("booked from ... to ...") for confirmations; structured footer

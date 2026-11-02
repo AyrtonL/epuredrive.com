@@ -92,3 +92,58 @@ describe('parseTuroEmail times', () => {
     expect(parsed?.return_time).toBeNull()
   })
 })
+
+// Return email only shows what the GUEST paid Turo - never the host's earnings.
+const RETURNED_BODY = `
+Gustavo has returned your Porsche Cayenne 2021 View its exact location at Dolphin Garage.
+Trip details Start 10/28/26 10:30 AM End 11/1/26 5:00 AM Returned to Dolphin Garage
+Total paid $1,073.28 Distance included 800 mi View trip details Reservation ID: #62267384
+`
+
+const CHANGE_CONFIRMED_BODY = `
+Gustavo’s change request with your Porsche Cayenne is now confirmed. You’ll earn $474.12 .
+Porsche Cayenne 2021 Trip start 10/28/26 10:30 am Trip end 11/1/26 5:00 am You earn $474.12
+Total distance included 800 miles View trip Reservation ID #62267384
+`
+
+const CHANGE_REQUESTED_BODY = `
+If you confirm, your new total earnings will be $474.12 . I had to change my flight
+Trip start 10/28/26 10:30 AM Trip end 11/1/26 5:00 AM 11/1/26 10:00 AM You earn $474.12 $447.12
+Reservation ID #62267384
+`
+
+describe('parseTuroEmail earnings', () => {
+  it('ignores the return email (Total paid is the guest charge, not host earnings)', () => {
+    expect(
+      parseTuroEmail(RETURNED_BODY, 'Gustavo has returned your Porsche Cayenne 2021', 'm3'),
+    ).toBeNull()
+  })
+
+  it('applies host earnings from a confirmed change request', () => {
+    const parsed = parseTuroEmail(
+      CHANGE_CONFIRMED_BODY,
+      'You’ve confirmed Gustavo’s change request with your Porsche Cayenne',
+      'm4',
+    )
+    expect(parsed).toMatchObject({
+      type: 'modify',
+      reservationId: '62267384',
+      customer_name: 'Gustavo',
+      vehicle_name: 'Porsche Cayenne',
+      pickup_date: '2026-10-28',
+      return_date: '2026-11-01',
+      return_time: '05:00',
+      total_amount: 474.12,
+    })
+  })
+
+  it('ignores a change request that has not been confirmed yet', () => {
+    expect(
+      parseTuroEmail(
+        CHANGE_REQUESTED_BODY,
+        'Gustavo has requested a change to their trip with your Porsche Cayenne',
+        'm5',
+      ),
+    ).toBeNull()
+  })
+})

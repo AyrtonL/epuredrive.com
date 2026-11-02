@@ -11,7 +11,7 @@ export interface EmailSync {
 }
 
 export interface ParsedEmail {
-  type: 'confirm' | 'modify' | 'cancel' | 'return'
+  type: 'confirm' | 'modify' | 'cancel'
   messageId: string
   reservationId: string | null
   customer_name: string | null
