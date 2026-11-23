@@ -8,6 +8,11 @@ import BackLink from '@/components/sites/FleetBackLink'
 import QuickSearchBar from '@/components/sites/QuickSearchBar'
 import { getSiteBase } from '@/lib/utils/site-base'
 import { PUBLIC_CAR_COLUMNS, PUBLIC_TENANT_COLUMNS } from '@/lib/sites/public-car'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { getUnavailableCarIds } from '@/lib/booking/availability'
+import { to24h } from '@/lib/booking/dates'
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 interface Props {
   params: { slug: string }
@@ -46,36 +51,37 @@ export default async function FleetSubPage({ params, searchParams }: Props) {
   const returnDate = searchParams.return
   const hasDateSearch = !!(pickupDate && returnDate)
 
-  // Find car IDs that have overlapping confirmed/pending reservations in the requested range
-  let bookedCarIds: number[] = []
-  if (hasDateSearch) {
-    const { data: conflicts } = await supabase
-      .from('reservations')
-      .select('car_id')
-      .eq('tenant_id', typedTenant.id)
-      .in('status', ['pending', 'confirmed'])
-      .lte('pickup_date', returnDate!)
-      .gte('return_date', pickupDate!)
-
-    bookedCarIds = (conflicts ?? [])
-      .map((r) => r.car_id)
-      .filter((id): id is number => id !== null)
+  // Cars already booked/blocked for the requested range. Must use the
+  // service-role client: anon has no SELECT on reservations, so the old anon
+  // query always returned [] and every car showed as available.
+  let unavailableIds = new Set<number>()
+  let availabilityFiltered = false
+  if (hasDateSearch && ISO_DATE.test(pickupDate!) && ISO_DATE.test(returnDate!)) {
+    try {
+      unavailableIds = await getUnavailableCarIds(createAdminClient(), typedTenant.id, {
+        pickupDate: pickupDate!,
+        pickupTime: to24h(searchParams.pickTime),
+        returnDate: returnDate!,
+        returnTime: to24h(searchParams.retTime),
+      })
+      availabilityFiltered = true
+    } catch (err) {
+      // Booking itself is still gated by prepareBooking; show the full fleet.
+      console.error('[fleet] availability lookup failed', err)
+    }
   }
 
-  let carsQuery = supabase
+  const carsQuery = supabase
     .from('cars')
     .select(PUBLIC_CAR_COLUMNS)
     .eq('tenant_id', typedTenant.id)
     .in('status', ['available', 'active'])
     .order('daily_rate', { ascending: true })
 
-  if (bookedCarIds.length > 0) {
-    carsQuery = carsQuery.not('id', 'in', `(${bookedCarIds.join(',')})`)
-  }
-
   const { data: cars } = await carsQuery
 
-  const fleet = (cars ?? []) as unknown as Car[] // PUBLIC_CAR_COLUMNS only
+  const fleet = ((cars ?? []) as unknown as Car[]) // PUBLIC_CAR_COLUMNS only
+    .filter((car) => !unavailableIds.has(car.id))
   const displayName = typedTenant.brand_name || typedTenant.name
 
   const formatDate = (d: string) =>
@@ -114,7 +120,7 @@ export default async function FleetSubPage({ params, searchParams }: Props) {
         </div>
 
         {/* Active date filter badge */}
-        {hasDateSearch && (
+        {availabilityFiltered && (
           <div className="flex justify-center mb-2">
             <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/5 border border-white/10">
               <svg className="w-3.5 h-3.5 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

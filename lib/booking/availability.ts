@@ -95,6 +95,64 @@ export async function isCarAvailable(
   return !findBookingConflicts(window, reservations, blocked)
 }
 
+export type FleetWindow = Omit<BookingWindow, 'carId'>
+
+export interface CarBlockedRange extends BlockedRange {
+  car_id: number | null
+}
+
+/** Car ids that are NOT bookable for `window` (overlapping reservation or blocked dates). */
+export function findUnavailableCarIds(
+  window: FleetWindow,
+  reservations: readonly BusyReservation[],
+  blocked: readonly CarBlockedRange[],
+): Set<number> {
+  const carIds = new Set<number>()
+  for (const r of reservations) if (r.car_id != null) carIds.add(r.car_id)
+  for (const b of blocked) if (b.car_id != null) carIds.add(b.car_id)
+
+  const unavailable = new Set<number>()
+  for (const carId of carIds) {
+    const carBlocked = blocked.filter((b) => b.car_id === carId)
+    if (findBookingConflicts({ ...window, carId }, reservations, carBlocked)) unavailable.add(carId)
+  }
+  return unavailable
+}
+
+/**
+ * Tenant-wide version of isCarAvailable for the public fleet search.
+ * Needs the service-role client (anon can't read reservations). Throws on lookup errors.
+ */
+export async function getUnavailableCarIds(
+  supabase: SupabaseClient,
+  tenantId: string,
+  window: FleetWindow,
+): Promise<Set<number>> {
+  const [res, blk] = await Promise.all([
+    supabase
+      .from('reservations')
+      .select('id, car_id, status, pickup_date, pickup_time, return_date, return_time')
+      .eq('tenant_id', tenantId)
+      .in('status', [...BLOCKING_STATUSES])
+      .lte('pickup_date', window.returnDate)
+      .or(`return_date.gte.${window.pickupDate},return_date.is.null`),
+    supabase
+      .from('blocked_dates')
+      .select('car_id, start_date, end_date')
+      .eq('tenant_id', tenantId)
+      .lte('start_date', window.returnDate)
+      .gte('end_date', window.pickupDate),
+  ])
+  if (res.error || blk.error) {
+    throw new Error(`fleet availability lookup failed: ${res.error?.message ?? blk.error?.message}`)
+  }
+  return findUnavailableCarIds(
+    window,
+    (res.data ?? []) as BusyReservation[],
+    (blk.data ?? []) as CarBlockedRange[],
+  )
+}
+
 /** Busy ranges from `fromDate` on, for greying out the public date picker. */
 export async function getBusyRanges(
   supabase: SupabaseClient,
