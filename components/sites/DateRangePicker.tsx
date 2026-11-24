@@ -17,6 +17,10 @@ interface Props {
   onRetDate: (d: string) => void
   disabledRanges: DisabledRange[]
   theme?: 'dark' | 'light'
+  /** Increment to open the calendar from outside (e.g. "Reserve" pressed without dates). */
+  openSignal?: number
+  /** Show the trigger in an error state (dates required). */
+  invalid?: boolean
 }
 
 function toDate(s: string): Date {
@@ -28,7 +32,7 @@ function toStr(d: Date): string {
 }
 
 export default function DateRangePicker({
-  pickDate, retDate, onPickDate, onRetDate, disabledRanges, theme = 'dark',
+  pickDate, retDate, onPickDate, onRetDate, disabledRanges, theme = 'dark', openSignal = 0, invalid = false,
 }: Props) {
   const isLight = theme === 'light'
   const [open, setOpen] = useState(false)
@@ -38,6 +42,15 @@ export default function DateRangePicker({
   const popupRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setMounted(true) }, [])
+
+  useEffect(() => {
+    if (openSignal <= 0 || !triggerRef.current) return
+    triggerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // Wait for the smooth scroll so the popup anchors to the trigger's final position.
+    const t = window.setTimeout(openCalendar, 350)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openSignal])
 
   // Close on outside click (checks both trigger and popup)
   useEffect(() => {
@@ -138,6 +151,10 @@ export default function DateRangePicker({
       onPickDate('')
       onRetDate('')
     }
+    openCalendar()
+  }
+
+  function openCalendar() {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect()
       setPopupStyle({
@@ -157,15 +174,15 @@ export default function DateRangePicker({
       <button
         type="button"
         onClick={toggleCalendar}
-        className={`w-full text-left border rounded-2xl px-4 py-3 text-xs focus:ring-1 focus:ring-primary/40 outline-none transition-colors ${
+        className={`w-full text-left border rounded-2xl px-4 py-3 text-sm focus:ring-1 focus:ring-primary/40 outline-none transition-colors ${
           isLight
             ? `bg-gray-50 text-gray-900 hover:border-gray-300 ${open ? 'border-primary/40 bg-primary/5' : 'border-gray-200'}`
-            : `bg-white/5 text-white hover:border-white/10 ${open ? 'border-primary/40 bg-primary/5' : 'border-white/5'}`
+            : `bg-white/5 text-white hover:border-white/10 ${open ? 'border-primary/40 bg-primary/5' : invalid ? 'border-amber-400/60 ring-1 ring-amber-400/40' : 'border-white/5'}`
         }`}
       >
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           <div>
-            <span className={`block text-[9px] font-black uppercase tracking-widest mb-0.5 ${
+            <span className={`block text-[10px] font-black uppercase tracking-widest mb-0.5 ${
               isLight
                 ? (waitingForReturn ? 'text-gray-400' : 'text-gray-500')
                 : (waitingForReturn ? 'text-white/30' : 'text-white/40')
@@ -180,7 +197,7 @@ export default function DateRangePicker({
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
           <div className="text-right">
-            <span className={`block text-[9px] font-black uppercase tracking-widest mb-0.5 ${waitingForReturn ? 'text-primary/70' : (isLight ? 'text-gray-500' : 'text-white/40')}`}>
+            <span className={`block text-[10px] font-black uppercase tracking-widest mb-0.5 ${waitingForReturn ? 'text-primary/70' : (isLight ? 'text-gray-500' : 'text-white/40')}`}>
               Return
             </span>
             <span className={retDate ? (isLight ? 'text-gray-900 font-semibold' : 'text-white font-semibold') : waitingForReturn ? 'text-primary/50 animate-pulse' : (isLight ? 'text-gray-400' : 'text-white/40')}>

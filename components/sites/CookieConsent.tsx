@@ -30,13 +30,21 @@ export default function CookieConsent() {
     setVisible(false)
   }
 
+  // Lets other fixed bars (the phone booking bar) sit above this strip.
+  useEffect(() => {
+    const root = document.documentElement
+    if (visible) root.dataset.cookieBanner = 'open'
+    else delete root.dataset.cookieBanner
+    return () => { delete root.dataset.cookieBanner }
+  }, [visible])
+
   if (!visible) return null
 
-  // Compact one-line bar: the old card covered the hero search / booking
-  // form on phones.
+  // Phones: a slim strip flush with the bottom edge (it used to float 80px up,
+  // right over the "Reserve" button and the email field). Desktop: small card.
   return (
-    <div className="fixed bottom-20 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-[200] animate-fade-in-up">
-      <div className="glass border border-white/10 rounded-2xl px-4 py-2.5 shadow-2xl backdrop-blur-2xl flex items-center gap-3">
+    <div className="fixed bottom-0 inset-x-0 sm:bottom-6 sm:left-auto sm:right-6 sm:max-w-md z-[200] animate-fade-in-up">
+      <div className="h-14 sm:h-auto bg-[#0b0b0b]/95 sm:glass border-t sm:border border-white/10 sm:rounded-2xl px-4 py-2 sm:py-2.5 shadow-2xl backdrop-blur-2xl flex items-center gap-3 pb-[env(safe-area-inset-bottom)]">
         <p className="flex-1 text-[11px] text-white/60 leading-snug">
           We use cookies.{' '}
           <a href="/cookies" className="text-white/80 underline underline-offset-2 hover:text-white transition-colors">

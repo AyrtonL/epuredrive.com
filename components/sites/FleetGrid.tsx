@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import type { Car, PickupLocation } from '@/lib/supabase/types'
 import { carDisplayName } from '@/lib/utils/car-display-name'
+import { rentalDays } from '@/lib/booking/dates'
 
 interface Props {
   cars: Car[]
@@ -12,6 +13,8 @@ interface Props {
   pickupLocations?: PickupLocation[]
   whatsappPhone?: string | null
 }
+
+const normCategory = (c: string | null | undefined): string => (c ?? '').trim().toLowerCase()
 
 function resolveImageUrl(url: string | null): string {
   if (!url) return '/assets/images/placeholder.jpg'
@@ -23,6 +26,7 @@ export default function FleetGrid({ cars, base }: Props) {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [tripDays, setTripDays] = useState(0)
 
   useEffect(() => {
     // Forward date/time/location params to car detail links
@@ -34,14 +38,17 @@ export default function FleetGrid({ cars, base }: Props) {
     }
     const qs = forward.toString()
     if (qs) setSearchQuery(`?${qs}`)
+    setTripDays(rentalDays(params.get('pickup') ?? '', params.get('return') ?? ''))
   }, [])
 
   const categories = useMemo(() => {
-    const seen = new Set<string>()
+    // Case/whitespace-insensitive: "SUV" and "Suv " used to show as two chips.
+    const seen = new Map<string, string>()
     for (const car of cars) {
-      if (car.category) seen.add(car.category)
+      const key = normCategory(car.category)
+      if (key && !seen.has(key)) seen.set(key, car.category!.trim())
     }
-    return Array.from(seen).sort()
+    return Array.from(seen.values()).sort((a, b) => a.localeCompare(b))
   }, [cars])
 
   const filtered = useMemo(() => {
@@ -52,7 +59,7 @@ export default function FleetGrid({ cars, base }: Props) {
         car.make.toLowerCase().includes(q) ||
         car.model.toLowerCase().includes(q) ||
         (car.model_full?.toLowerCase().includes(q) ?? false)
-      const matchesCategory = !activeCategory || car.category === activeCategory
+      const matchesCategory = !activeCategory || normCategory(car.category) === normCategory(activeCategory)
       return matchesSearch && matchesCategory
     })
   }, [cars, search, activeCategory])
@@ -60,17 +67,17 @@ export default function FleetGrid({ cars, base }: Props) {
   return (
     <section id="cars" className="max-w-7xl mx-auto px-6 pb-32">
       {/* Search + category filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-10 items-center justify-between sticky top-24 z-[90] py-4 px-6 bg-[#040404]/80 backdrop-blur-xl rounded-[2rem] border border-white/5 shadow-2xl">
+      <div className="flex flex-col md:flex-row gap-4 mb-10 items-center justify-between md:sticky md:top-24 z-[90] py-4 px-6 bg-[#040404]/80 backdrop-blur-xl rounded-[2rem] border border-white/5 shadow-2xl">
         <div className="relative flex-1 w-full">
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
             type="search"
-            placeholder="Search our collection..."
+            placeholder="Search by make or model"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white/5 border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-xs font-black uppercase tracking-widest text-white placeholder-white/10 focus:outline-none focus:ring-1 focus:ring-white/10 transition-all font-outfit"
+            className="w-full bg-white/5 border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-white/10 transition-all font-outfit"
           />
         </div>
 
@@ -78,7 +85,7 @@ export default function FleetGrid({ cars, base }: Props) {
           <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
             <button
               onClick={() => setActiveCategory(null)}
-              className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[.2em] transition-all whitespace-nowrap border ${
+              className={`px-5 py-3 rounded-2xl text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap border ${
                 activeCategory === null
                   ? 'bg-white text-black border-white shadow-lg'
                   : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white'
@@ -90,7 +97,7 @@ export default function FleetGrid({ cars, base }: Props) {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
-                className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[.2em] whitespace-nowrap transition-all border ${
+                className={`px-5 py-3 rounded-2xl text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border ${
                   activeCategory === cat
                     ? 'bg-white text-black border-white shadow-lg'
                     : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white'
@@ -105,7 +112,7 @@ export default function FleetGrid({ cars, base }: Props) {
 
       {/* Results count */}
       {filtered.length > 0 && (
-        <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-6">
+        <p className="text-xs font-semibold text-white/50 mb-6">
           {filtered.length} vehicle{filtered.length === 1 ? '' : 's'}
         </p>
       )}
@@ -151,25 +158,37 @@ export default function FleetGrid({ cars, base }: Props) {
 
               {/* Badge */}
               {(car.badge || car.category) && (
-                <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 text-black text-[8px] font-black uppercase tracking-[.2em] rounded-full">
+                <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 text-black text-[10px] font-black uppercase tracking-[.15em] rounded-full">
                   {car.badge || car.category}
                 </div>
               )}
 
               {/* Info */}
               <div className="absolute bottom-0 left-0 right-0 p-5">
-                <div className="text-[9px] font-black uppercase tracking-[.3em] text-primary/60 mb-0.5">{car.make}</div>
+                <div className="text-[10px] font-black uppercase tracking-[.25em] text-white/60 mb-0.5">{car.make}</div>
                 <h3 className="font-outfit font-black text-lg text-white tracking-tight leading-tight mb-3">
                   {car.model_full || car.model}
                 </h3>
                 <div className="flex items-center justify-between">
                   {car.daily_rate ? (
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-outfit font-black text-xl text-white italic tracking-tighter">${Number(car.daily_rate)}</span>
-                      <span className="text-[9px] font-black uppercase text-white/30">/day</span>
-                    </div>
+                    tripDays > 0 ? (
+                      <div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="font-outfit font-black text-xl text-white tracking-tight">
+                            ${(Number(car.daily_rate) * tripDays).toLocaleString('en-US')}
+                          </span>
+                          <span className="text-[11px] font-semibold text-white/60">total · {tripDays} day{tripDays === 1 ? '' : 's'}</span>
+                        </div>
+                        <div className="text-[11px] text-white/50">${Number(car.daily_rate)}/day · before extras</div>
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-outfit font-black text-xl text-white tracking-tight">${Number(car.daily_rate)}</span>
+                        <span className="text-[11px] font-semibold text-white/60">/day</span>
+                      </div>
+                    )
                   ) : (
-                    <span className="text-[10px] text-white/30 font-bold uppercase">Contact for pricing</span>
+                    <span className="text-xs text-white/60 font-semibold">Contact for pricing</span>
                   )}
                   <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-black text-white/40 transition-all duration-300">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

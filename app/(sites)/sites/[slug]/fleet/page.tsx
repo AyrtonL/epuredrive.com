@@ -98,10 +98,14 @@ export default async function FleetSubPage({ params, searchParams }: Props) {
           <h1 className="text-4xl sm:text-5xl font-outfit font-black text-white tracking-tight mb-3">
             Our Fleet
           </h1>
-          <p className="text-white/30 text-sm">
-            {fleet.length > 0
-              ? `${fleet.length} vehicle${fleet.length === 1 ? '' : 's'} available from ${displayName}`
-              : `No vehicles currently available from ${displayName}`}
+          <p className="text-white/60 text-sm">
+            {availabilityFiltered
+              ? fleet.length > 0
+                ? `${fleet.length} vehicle${fleet.length === 1 ? '' : 's'} free for ${formatDate(pickupDate!)} – ${formatDate(returnDate!)}`
+                : `Every vehicle is booked for ${formatDate(pickupDate!)} – ${formatDate(returnDate!)}. Try other dates.`
+              : fleet.length > 0
+                ? `${fleet.length} vehicle${fleet.length === 1 ? '' : 's'} available from ${displayName}`
+                : `No vehicles currently available from ${displayName}`}
           </p>
         </div>
 
@@ -116,22 +120,10 @@ export default async function FleetSubPage({ params, searchParams }: Props) {
             initialPickTime={searchParams.pickTime || '10:00 AM'}
             initialRetTime={searchParams.retTime || '10:00 AM'}
             initialLocation={searchParams.location || ''}
+            collapsible
           />
         </div>
 
-        {/* Active date filter badge */}
-        {availabilityFiltered && (
-          <div className="flex justify-center mb-2">
-            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/5 border border-white/10">
-              <svg className="w-3.5 h-3.5 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/50">
-                Showing availability: {formatDate(pickupDate!)} — {formatDate(returnDate!)}
-              </span>
-            </div>
-          </div>
-        )}
       </div>
 
       <FleetGrid

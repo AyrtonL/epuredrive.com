@@ -16,6 +16,8 @@ interface Props {
   initialRetTime?: string
   initialLocation?: string
   theme?: 'dark' | 'light'
+  /** Start collapsed to a one-line summary when a search is already applied (fleet page). */
+  collapsible?: boolean
 }
 
 const TIME_OPTIONS = [
@@ -28,7 +30,7 @@ export default function QuickSearchBar({
   base, locations, inline = false,
   initialPickDate = '', initialRetDate = '',
   initialPickTime = '10:00 AM', initialRetTime = '10:00 AM',
-  initialLocation, theme = 'dark',
+  initialLocation, theme = 'dark', collapsible = false,
 }: Props) {
   const isLight = theme === 'light'
   const [pickDate, setPickDate] = useState(initialPickDate)
@@ -36,6 +38,7 @@ export default function QuickSearchBar({
   const [pickTime, setPickTime] = useState(initialPickTime)
   const [retTime, setRetTime] = useState(initialRetTime)
   const [location, setLocation] = useState(initialLocation || locations[0]?.label || '')
+  const [expanded, setExpanded] = useState(!(collapsible && initialPickDate && initialRetDate))
 
   const handleSearch = () => {
     const params = new URLSearchParams()
@@ -52,6 +55,29 @@ export default function QuickSearchBar({
     ? 'w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-3.5 text-sm text-gray-900 focus:ring-1 focus:ring-primary/50 outline-none appearance-none'
     : 'w-full bg-white/10 border border-white/15 rounded-xl px-3 py-3.5 text-sm text-white focus:ring-1 focus:ring-primary/50 outline-none appearance-none [color-scheme:dark]'
   const labelCls = `block text-[9px] font-black uppercase tracking-widest mb-2 ${isLight ? 'text-gray-500' : 'text-white/40'}`
+
+  const shortDate = (d: string) =>
+    new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className="w-full flex items-center justify-between gap-4 rounded-2xl bg-white/[0.06] border border-white/15 px-5 py-4 text-left hover:border-white/30 transition-colors"
+      >
+        <span className="min-w-0">
+          <span className="block text-base font-bold text-white">
+            {shortDate(initialPickDate)} – {shortDate(initialRetDate)}
+          </span>
+          <span className="block text-xs text-white/60 truncate mt-0.5">
+            {pickTime} – {retTime}{location ? ` · ${location}` : ''}
+          </span>
+        </span>
+        <span className="shrink-0 text-xs font-bold uppercase tracking-wider text-white bg-white/10 rounded-xl px-4 py-2.5">Edit</span>
+      </button>
+    )
+  }
 
   const inner = (
     <div className={`backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 shadow-2xl ${

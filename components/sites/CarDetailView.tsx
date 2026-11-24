@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import type { Car, PickupLocation, RentalExtra } from '@/lib/supabase/types'
 import BookingWidget from './BookingWidget'
@@ -39,17 +39,6 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
     : []
 
   const [activeIndex, setActiveIndex] = useState(0)
-
-  // Phone reserve bar: hide it while the booking widget itself is on screen.
-  const bookRef = useRef<HTMLDivElement>(null)
-  const [widgetVisible, setWidgetVisible] = useState(false)
-  useEffect(() => {
-    const el = bookRef.current
-    if (!el || typeof IntersectionObserver === 'undefined') return
-    const io = new IntersectionObserver(([entry]) => setWidgetVisible(entry.isIntersecting), { threshold: 0.15 })
-    io.observe(el)
-    return () => io.disconnect()
-  }, [])
 
   const features: string[] = Array.isArray(car.features)
     ? car.features.filter((f): f is string => typeof f === 'string' && f.trim() !== '')
@@ -176,7 +165,7 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
 
         {/* Booking Sidebar (only on detail page) */}
         {tenantId && slug && (
-          <div id="book" ref={bookRef} className="md:col-span-2 md:sticky md:top-28 scroll-mt-24">
+          <div id="book" className="md:col-span-2 md:sticky md:top-28 scroll-mt-24">
             <BookingWidget
               car={car}
               tenantId={tenantId}
@@ -191,25 +180,6 @@ export default function CarDetailView({ car, tenantId, slug, paymentsEnabled, pa
         )}
       </div>
 
-      {/* Phone: the booking widget sits below the specs, so keep price + a
-          shortcut to it pinned to the bottom of the screen. */}
-      {tenantId && slug && (
-        <div aria-hidden={widgetVisible} className={`md:hidden fixed bottom-0 inset-x-0 z-[60] transition-transform duration-300 ${widgetVisible ? 'translate-y-full' : 'translate-y-0'} px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-[#040404]/90 backdrop-blur-xl border-t border-white/10 flex items-center justify-between gap-4`}>
-          <div className="min-w-0">
-            <div className="text-xl font-black text-white tracking-tighter italic leading-none">
-              ${Number(car.daily_rate) || 0}
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40 not-italic ml-1">/ day</span>
-            </div>
-            <div className="text-[10px] text-white/40 mt-1 truncate">{carDisplayName(car)}</div>
-          </div>
-          <a
-            href="#book"
-            className="shrink-0 bg-white text-black font-black uppercase tracking-[0.15em] text-[11px] px-6 py-3.5 rounded-2xl active:scale-[0.98] transition-transform"
-          >
-            Reserve
-          </a>
-        </div>
-      )}
     </div>
   )
 }

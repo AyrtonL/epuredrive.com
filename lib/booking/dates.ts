@@ -33,6 +33,14 @@ function parseIsoDate(value: string): number | null {
   return new Date(ms).toISOString().slice(0, 10) === value ? ms : null
 }
 
+/** Billable days between two YYYY-MM-DD dates (same count the server charges); 0 when invalid. */
+export function rentalDays(pickupDate: string, returnDate: string): number {
+  const start = parseIsoDate(pickupDate)
+  const end = parseIsoDate(returnDate)
+  if (start === null || end === null || end <= start) return 0
+  return Math.round((end - start) / DAY_MS)
+}
+
 /**
  * Pickup must be today or later (app timezone, passed in as `todayIso`),
  * return strictly after pickup, at most a year long.
