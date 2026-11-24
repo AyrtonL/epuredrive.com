@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import StarRating from '@/components/ui/StarRating'
+import { shouldAskForGoogleReview } from '@/lib/marketing/googleReview'
 
 interface ReviewFormProps {
   token: string
@@ -10,6 +11,8 @@ interface ReviewFormProps {
   carName: string
   customerName: string
   accentColor: string
+  source: string | null
+  googleReviewUrl: string | null
 }
 
 export default function ReviewForm({
@@ -19,6 +22,8 @@ export default function ReviewForm({
   carName,
   customerName,
   accentColor,
+  source,
+  googleReviewUrl,
 }: ReviewFormProps) {
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
@@ -53,11 +58,32 @@ export default function ReviewForm({
   }
 
   if (done) {
+    const askGoogle = shouldAskForGoogleReview({ rating, source, googleReviewUrl })
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
         <div className="bg-white rounded-2xl shadow-sm p-8 max-w-sm w-full text-center">
           <p className="text-gray-900 font-semibold">Thanks for the feedback!</p>
           <p className="text-gray-500 text-sm mt-2">{tenantName} appreciates it.</p>
+          {askGoogle && googleReviewUrl && (
+            <div className="mt-6 space-y-3">
+              <p className="text-gray-700 text-sm">
+                Glad you enjoyed it! Would you share it on Google? It takes 30 seconds and helps a small
+                business a lot.
+              </p>
+              <a
+                href={googleReviewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full py-3 rounded-xl text-white font-semibold text-sm"
+                style={{ backgroundColor: accentColor }}
+              >
+                Post my review on Google
+              </a>
+              {comment.trim() && (
+                <p className="text-gray-400 text-xs">Tip: you can paste what you just wrote.</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     )

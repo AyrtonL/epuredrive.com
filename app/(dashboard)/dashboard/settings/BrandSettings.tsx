@@ -24,6 +24,7 @@ interface Props {
     hero_image_url?: string | null
     whatsapp_phone?: string | null
     business_hours?: string | null
+    google_review_url?: string | null
     pickup_locations?: PickupLocation[]
     experience_pillars?: ExperiencePillar[] | null
     how_it_works?: HowItWorksStep[] | null
@@ -52,6 +53,7 @@ export default function BrandSettings({ tenant }: Props) {
   // Contact
   const [whatsappPhone, setWhatsappPhone] = useState(tenant?.whatsapp_phone || '')
   const [businessHours, setBusinessHours] = useState(tenant?.business_hours || '')
+  const [googleReviewUrl, setGoogleReviewUrl] = useState(tenant?.google_review_url || '')
 
   // Pickup locations
   const [locations, setLocations] = useState<PickupLocation[]>(
@@ -87,6 +89,7 @@ export default function BrandSettings({ tenant }: Props) {
         hero_image_url: heroImageUrl.trim() || null,
         whatsapp_phone: whatsappPhone.replace(/\D/g, '') || null,
         business_hours: businessHours.trim() || null,
+        google_review_url: googleReviewUrl.trim() || null,
         pickup_locations: locations.filter(l => l.label.trim()),
         experience_pillars: pillars,
         how_it_works: howItWorks,
@@ -135,6 +138,7 @@ export default function BrandSettings({ tenant }: Props) {
         <LocationsTab
           whatsappPhone={whatsappPhone} setWhatsappPhone={setWhatsappPhone}
           businessHours={businessHours} setBusinessHours={setBusinessHours}
+          googleReviewUrl={googleReviewUrl} setGoogleReviewUrl={setGoogleReviewUrl}
           locations={locations} setLocations={setLocations}
         />
       )}

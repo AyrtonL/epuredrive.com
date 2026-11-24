@@ -21,6 +21,7 @@ import {
   bookingRejectedCustomerEmail,
 } from '@/lib/email/templates'
 import { createReservationCalendarEvent, deleteReservationCalendarEvent, updateReservationCalendarEvent } from '@/lib/google-calendar'
+import { directContactError } from '@/lib/booking/directContact'
 import type { TenantBrand } from '@/lib/email/templates/_layout'
 import { carDisplayName } from '@/lib/utils/car-display-name'
 
@@ -365,6 +366,14 @@ export async function createReservation(
 ): Promise<{ error: string | null; conflict?: string }> {
   const supabase = createClient()
   const tenantId = await getTenantId()
+
+  const contactError = directContactError({
+    source: data.source,
+    email: data.customer_email,
+    phone: data.customer_phone,
+    isNew: true,
+  })
+  if (contactError) return { error: contactError }
 
   if (!options?.allowOverlap) {
     const conflict = await overbookingConflict(supabase, tenantId, {

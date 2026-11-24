@@ -24,6 +24,7 @@ import { calculateCardSurcharge } from '@/lib/pricing/cardSurcharge'
 import { todayISO } from '@/lib/finance/revenue'
 import { carDisplayName } from '@/lib/utils/car-display-name'
 import { suggestBookingTotal } from '@/lib/booking/suggestedTotal'
+import { directContactError, isDirectSource } from '@/lib/booking/directContact'
 
 interface Props {
   isOpen: boolean
@@ -170,6 +171,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
   }, [isOpen, reservation?.id, reservation?.agreement_sent_at])
 
   const isEditing = !!reservation
+  const contactRequired = !isEditing && isDirectSource(formData.source)
   const carName = useMemo(() => {
     const c = cars.find((c) => c.id === Number(formData.car_id))
     return c ? `${carDisplayName(c)}` : null
@@ -270,6 +272,17 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
 
     if (!formData.customer_name?.trim()) {
       setErrorStr('Customer name is required.')
+      setActiveTab('customer')
+      return
+    }
+    const contactError = directContactError({
+      source: formData.source,
+      email: formData.customer_email,
+      phone: formData.customer_phone,
+      isNew: !isEditing,
+    })
+    if (contactError) {
+      setErrorStr(contactError)
       setActiveTab('customer')
       return
     }
@@ -556,7 +569,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className={LABEL_CLASS}>Email</label>
+                    <label className={LABEL_CLASS}>Email{contactRequired ? ' *' : ''}</label>
                     <input
                       type="email"
                       value={formData.customer_email || ''}
@@ -565,7 +578,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className={LABEL_CLASS}>Phone</label>
+                    <label className={LABEL_CLASS}>Phone{contactRequired ? ' *' : ''}</label>
                     <input
                       type="text"
                       value={formData.customer_phone || ''}
@@ -854,7 +867,7 @@ export default function BookingModal({ isOpen, onClose, reservation, cars, renta
                       <option value="admin" className="bg-[#0d0d0d]">Admin</option>
                       <option value="turo" className="bg-[#0d0d0d]">Turo</option>
                       <option value="ical" className="bg-[#0d0d0d]">iCal</option>
-                      <option value="direct" className="bg-[#0d0d0d]">Direct</option>
+                      <option value="website" className="bg-[#0d0d0d]">Website</option>
                     </select>
                   </div>
                   <div className="space-y-1 md:col-span-2">

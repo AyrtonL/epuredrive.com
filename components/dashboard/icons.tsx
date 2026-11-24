@@ -249,6 +249,16 @@ export function IconFeedback({ className }: IconProps) {
   )
 }
 
+export function IconMarketing({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+      <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+    </svg>
+  )
+}
+
 export function IconDomain({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -495,6 +505,8 @@ export const ICONS: Record<string, (props: { className?: string }) => React.Reac
   Customers: IconCustomers,
   Consignments: IconConsignments,
   Reviews: IconFeedback,
+  Marketing: IconMarketing,
+  Channels: IconMarketing,
   'Tenant Feedback': IconFeedback,
   Team: IconTeam,
   Turo: IconTuro,

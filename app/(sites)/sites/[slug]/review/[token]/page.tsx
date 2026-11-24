@@ -21,7 +21,7 @@ export default async function ReviewPage({ params }: Props) {
 
   const { data: reservation } = await supabase
     .from('reservations')
-    .select('id, tenant_id, car_id, customer_name')
+    .select('id, tenant_id, car_id, customer_name, source')
     .eq('review_token', params.token)
     .maybeSingle()
 
@@ -42,7 +42,7 @@ export default async function ReviewPage({ params }: Props) {
   const [{ data: tenant }, { data: car }] = await Promise.all([
     supabase
       .from('tenants')
-      .select('name, brand_name, slug, logo_url, primary_color')
+      .select('name, brand_name, slug, logo_url, primary_color, google_review_url')
       .eq('id', reservation.tenant_id)
       .maybeSingle(),
     reservation.car_id
@@ -66,6 +66,8 @@ export default async function ReviewPage({ params }: Props) {
       carName={carName}
       customerName={reservation.customer_name || 'there'}
       accentColor={accentColor}
+      source={reservation.source}
+      googleReviewUrl={tenant.google_review_url}
     />
   )
 }

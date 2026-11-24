@@ -7,6 +7,8 @@ interface Props {
   setWhatsappPhone: (v: string) => void
   businessHours: string
   setBusinessHours: (v: string) => void
+  googleReviewUrl: string
+  setGoogleReviewUrl: (v: string) => void
   locations: PickupLocation[]
   setLocations: (v: PickupLocation[] | ((prev: PickupLocation[]) => PickupLocation[])) => void
 }
@@ -18,6 +20,7 @@ const labelCls = 'text-[11px] font-bold text-white/50 uppercase tracking-widest 
 
 export default function LocationsTab({
   whatsappPhone, setWhatsappPhone, businessHours, setBusinessHours,
+  googleReviewUrl, setGoogleReviewUrl,
   locations, setLocations,
 }: Props) {
 
@@ -50,6 +53,14 @@ export default function LocationsTab({
             <label className={labelCls}>Business Hours</label>
             <input type="text" value={businessHours} onChange={e => setBusinessHours(e.target.value)}
               placeholder="e.g. Mon-Sun 8AM - 8PM" className={inputCls} />
+          </div>
+          <div className="space-y-1 md:col-span-2">
+            <label className={labelCls}>Google Review Link</label>
+            <input type="url" value={googleReviewUrl} onChange={e => setGoogleReviewUrl(e.target.value)}
+              placeholder="e.g. https://g.page/r/XXXXXXXX/review" className={inputCls} />
+            <p className="text-[10px] text-white/20 pl-1">
+              From Google Business Profile → &quot;Ask for reviews&quot;. Happy direct customers (4–5★) get a button to post their review on Google. Never shown to Turo guests.
+            </p>
           </div>
         </div>
       </div>

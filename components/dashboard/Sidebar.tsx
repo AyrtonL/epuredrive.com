@@ -55,6 +55,12 @@ const NAV: NavEntry[] = [
     ],
   },
   {
+    label: 'Marketing',
+    children: [
+      { label: 'Channels', href: '/dashboard/marketing' },
+    ],
+  },
+  {
     label: 'Integrations',
     children: [
       { label: 'Turo', href: '/dashboard/integrations/turo' },

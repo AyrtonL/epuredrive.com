@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { normalizeGoogleReviewUrl } from '@/lib/marketing/googleReview'
 import { createClient } from '@/lib/supabase/server'
 import { requireTenantId } from '@/lib/supabase/dashboard-auth'
 import { isFeatureEnabled } from '@/lib/supabase/feature-flags'
@@ -68,6 +69,7 @@ export async function updateTenantBranding(data: {
   hero_image_url?: string | null
   whatsapp_phone?: string | null
   business_hours?: string | null
+  google_review_url?: string | null
   pickup_locations?: Array<{ label: string; address: string; note: string; fee: number; maps_query: string }>
   experience_pillars?: ExperiencePillar[] | null
   how_it_works?: HowItWorksStep[] | null
@@ -112,6 +114,12 @@ export async function updateTenantBranding(data: {
     ) {
       return { error: 'Invalid how it works steps: must be exactly 3 items, each with an icon (≤4 chars), title (≤60 chars) and body (≤200 chars).' }
     }
+  }
+
+  if (data.google_review_url !== undefined) {
+    const { url, error: urlError } = normalizeGoogleReviewUrl(data.google_review_url)
+    if (urlError) return { error: urlError }
+    data = { ...data, google_review_url: url }
   }
 
   // If slug is changing, sync Netlify domain aliases
