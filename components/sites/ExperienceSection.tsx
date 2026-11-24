@@ -156,13 +156,17 @@ export default function ExperienceSection({ cars, tenant }: Props) {
               We come to you.
             </h3>
 
-            <div className="grid md:grid-cols-3 gap-4">
-              {tenant.pickup_locations.map((loc) => (
-                <a
+            <div className={`grid gap-4 ${tenant.pickup_locations.length === 4 ? 'md:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-3'}`}>
+              {tenant.pickup_locations.map((loc) => {
+                // Door delivery has no fixed place to map.
+                const mapUrl = !loc.delivery_to_customer && loc.maps_query
+                  ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.maps_query)}`
+                  : null
+                const Card = mapUrl ? 'a' : 'div'
+                return (
+                <Card
                   key={loc.label}
-                  href={`https://www.google.com/maps/search/?api=1&query=${loc.maps_query}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  {...(mapUrl ? { href: mapUrl, target: '_blank', rel: 'noopener noreferrer' } : {})}
                   className={`group rounded-[2rem] p-8 transition-all duration-500 block ${
                     isLight
                       ? 'bg-white border border-gray-200 hover:border-gray-300 shadow-sm'
@@ -191,17 +195,20 @@ export default function ExperienceSection({ cars, tenant }: Props) {
                     </span>
                   </div>
                   <h4 className={`font-outfit font-black text-lg mb-1 tracking-tight ${isLight ? 'text-gray-900' : 'text-white'}`}>{loc.label}</h4>
-                  <p className={`text-[11px] font-bold mb-2 ${isLight ? 'text-gray-600' : 'text-charcoal'}`}>{loc.address}</p>
+                  <p className={`text-[11px] font-bold mb-2 ${isLight ? 'text-gray-600' : 'text-charcoal'}`}>{loc.delivery_to_customer ? 'Your home, hotel or office' : loc.address}</p>
                   <p className={`text-[10px] font-black uppercase tracking-widest ${isLight ? 'text-gray-400' : 'text-white/20'}`}>{loc.note}</p>
 
+                  {mapUrl && (
                   <div className={`mt-6 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest group-hover:text-primary/60 transition-colors ${isLight ? 'text-gray-400' : 'text-white/20'}`}>
                     <span>View on Google Maps</span>
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                     </svg>
                   </div>
-                </a>
-              ))}
+                  )}
+                </Card>
+                )
+              })}
             </div>
           </div>
         )}

@@ -11,6 +11,8 @@ interface Props {
 }
 
 export default function HeroSection({ tenant, carCount, slug, locations }: Props) {
+  // "Delivery to your address" isn't a place you can pick a car up from.
+  const spots = locations.filter((l) => !l.delivery_to_customer)
   const displayName = tenant.brand_name || tenant.name
   const tagline = tenant.tagline || 'Premium Vehicles, Direct Booking.'
   const description = tenant.description || `Browse ${carCount} vehicle${carCount !== 1 ? 's' : ''} available from ${displayName}. No hidden costs — book directly.`
@@ -72,8 +74,8 @@ export default function HeroSection({ tenant, carCount, slug, locations }: Props
             { value: String(carCount), label: 'Vehicles' },
             { value: '24/7', label: 'Support' },
             // Customer-facing third stat (was "0% Platform Fees", an operator pitch).
-            locations.length > 1
-              ? { value: String(locations.length), label: 'Pickup spots' }
+            spots.length > 1
+              ? { value: String(spots.length), label: 'Pickup spots' }
               : locations.some((l) => !Number(l.fee))
                 ? { value: 'Free', label: 'Pickup' }
                 : { value: 'Instant', label: 'Booking' },

@@ -73,7 +73,7 @@ export default async function TenantLandingPage({ params }: Props) {
     description: typedTenant.tagline,
     telephone: typedTenant.company_phone || typedTenant.whatsapp_phone,
     address: typedTenant.company_address,
-    areaServed: typedTenant.pickup_locations.map((l) => l.label).filter(Boolean),
+    areaServed: typedTenant.pickup_locations.filter((l) => !l.delivery_to_customer).map((l) => l.label).filter(Boolean),
     dailyRateRange: rates.length > 0 ? { min: Math.min(...rates), max: Math.max(...rates) } : null,
   })
 
