@@ -8,12 +8,13 @@ import { carDisplayName } from '@/lib/utils/car-display-name'
 import { rentalDays } from '@/lib/booking/dates'
 import { buildPriceLines } from '@/lib/booking/priceLines'
 import type { CustomerInput } from '@/lib/booking/customer'
+import { pickupLocationText } from '@/lib/booking/locationText'
 import PriceSummary from './booking/PriceSummary'
 import ExtrasPicker from './booking/ExtrasPicker'
 import CustomerDetailsForm from './booking/CustomerDetailsForm'
 import MobileBookingBar from './booking/MobileBookingBar'
 import { useBookingSubmit } from './booking/useBookingSubmit'
-import { CHOICE, FIELD, LABEL, PRIMARY_BTN } from './booking/styles'
+import { CHOICE, FIELD, FIELD_ERROR, LABEL, PRIMARY_BTN } from './booking/styles'
 
 interface Props {
   car: Car
@@ -46,6 +47,9 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   const [pickTime, setPickTime] = useState('10:00 AM')
   const [retTime, setRetTime] = useState('10:00 AM')
   const [locationIdx, setLocationIdx] = useState(0)
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [addressMissing, setAddressMissing] = useState(false)
+  const addressRef = useRef<HTMLInputElement>(null)
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([])
   const [selectedExtras, setSelectedExtras] = useState<Record<string, boolean>>({})
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card')
@@ -109,9 +113,17 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   }), [car.daily_rate, days, selectedLocation, chosenExtras, payByCard, cardSurchargeRate])
   const total = totalCents / 100
 
-  const locationLabel = selectedLocation
-    ? `${selectedLocation.label}${selectedLocation.fee > 0 ? ` ($${selectedLocation.fee})` : ' (Free)'}`
-    : 'Not specified'
+  const needsAddress = !!selectedLocation?.delivery_to_customer
+  const locationLabel = pickupLocationText(selectedLocation, deliveryAddress)
+
+  /** Delivery locations need the customer's address before moving on. */
+  const addressOk = (): boolean => {
+    if (!needsAddress || deliveryAddress.trim().length >= 5) return true
+    setAddressMissing(true)
+    addressRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    window.setTimeout(() => addressRef.current?.focus({ preventScroll: true }), 350)
+    return false
+  }
 
   const askForDates = () => {
     setNeedDates(true)
@@ -121,6 +133,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
   const goToDetails = () => {
     if (!hasDates) { askForDates(); return }
     if (dateConflict) return
+    if (!addressOk()) return
     trackBookingStart({ car_make: car.make, car_model: car.model_full || car.model, daily_rate: Number(car.daily_rate) || 0, days, total })
     clearError()
     setStep('details')
@@ -128,7 +141,7 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
 
   const handleWhatsapp = () => {
     if (!hasDates) { askForDates(); return }
-    if (!whatsappPhone) return
+    if (!whatsappPhone || !addressOk()) return
     trackWhatsAppInquiry({ car_make: car.make, car_model: car.model_full || car.model })
     const addons = chosenExtras.map((e) => e.name)
     const msg = `Hello! I'd like to reserve the *${carDisplayName(car)}*.\n\n`
@@ -219,6 +232,28 @@ export default function BookingWidget({ car, tenantId, pickupLocations = [], wha
                 </option>
               ))}
             </select>
+            {selectedLocation?.note && <p className="text-xs text-white/50 mt-1.5 ml-1">{selectedLocation.note}</p>}
+            {needsAddress && (
+              <div className="mt-3">
+                <label htmlFor="delivery-address" className={LABEL}>Delivery address</label>
+                <input
+                  id="delivery-address"
+                  ref={addressRef}
+                  type="text"
+                  autoComplete="street-address"
+                  enterKeyHint="done"
+                  placeholder="Street, city, ZIP"
+                  maxLength={150}
+                  value={deliveryAddress}
+                  aria-invalid={addressMissing && deliveryAddress.trim().length < 5}
+                  onChange={(e) => { setDeliveryAddress(e.target.value); setAddressMissing(false) }}
+                  className={`${FIELD} ${addressMissing && deliveryAddress.trim().length < 5 ? FIELD_ERROR : ''}`}
+                />
+                {addressMissing && deliveryAddress.trim().length < 5 && (
+                  <p className="text-red-400 text-xs mt-1.5 ml-1">Enter the address where we should deliver the car.</p>
+                )}
+              </div>
+            )}
           </div>
         )}
 

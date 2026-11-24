@@ -4,6 +4,8 @@ export interface PickupLocation {
   note: string
   fee: number
   maps_query: string
+  /** Delivery to the customer's own address: the booking form asks for it. */
+  delivery_to_customer?: boolean
 }
 
 export interface ExperiencePillar {

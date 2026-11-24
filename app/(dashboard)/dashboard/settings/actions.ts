@@ -70,7 +70,7 @@ export async function updateTenantBranding(data: {
   whatsapp_phone?: string | null
   business_hours?: string | null
   google_review_url?: string | null
-  pickup_locations?: Array<{ label: string; address: string; note: string; fee: number; maps_query: string }>
+  pickup_locations?: Array<{ label: string; address: string; note: string; fee: number; maps_query: string; delivery_to_customer?: boolean }>
   experience_pillars?: ExperiencePillar[] | null
   how_it_works?: HowItWorksStep[] | null
   site_theme?: 'dark' | 'light'

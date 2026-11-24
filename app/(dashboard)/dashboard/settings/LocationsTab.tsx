@@ -28,7 +28,7 @@ export default function LocationsTab({
     setLocations(prev => [...prev, { ...EMPTY_LOCATION }])
   }
 
-  function updateLocation(index: number, field: keyof PickupLocation, value: string | number) {
+  function updateLocation(index: number, field: keyof PickupLocation, value: string | number | boolean) {
     setLocations(prev => prev.map((loc, i) => i === index ? { ...loc, [field]: value } : loc))
   }
 
@@ -122,6 +122,13 @@ export default function LocationsTab({
                     placeholder="e.g. Miami+Beach,+FL" className={inputCls} />
                 </div>
               </div>
+
+              <label className="flex items-center gap-3 text-sm text-white/70 cursor-pointer select-none">
+                <input type="checkbox" checked={!!loc.delivery_to_customer}
+                  onChange={e => updateLocation(i, 'delivery_to_customer', e.target.checked)}
+                  className="w-4 h-4 accent-white" />
+                Delivery to the customer&apos;s address — ask for their address when they book
+              </label>
             </div>
           ))}
         </div>

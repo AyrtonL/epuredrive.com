@@ -1,6 +1,28 @@
 import { rentalDays } from '@/lib/booking/dates'
 import { buildPriceLines } from '@/lib/booking/priceLines'
 import { validateCustomer } from '@/lib/booking/customer'
+import { pickupLocationText } from '@/lib/booking/locationText'
+import { resolveLocationFee } from '@/lib/booking/quote'
+
+describe('pickupLocationText', () => {
+  const hq = { label: 'Aventura HQ', address: '', note: '', fee: 0, maps_query: '' }
+  const delivery = { label: 'Delivery to your address', address: '', note: '', fee: 100, maps_query: '', delivery_to_customer: true }
+
+  it('keeps the existing format for regular locations', () => {
+    expect(pickupLocationText(hq)).toBe('Aventura HQ (Free)')
+    expect(pickupLocationText(hq, '123 Main St')).toBe('Aventura HQ (Free)')
+  })
+
+  it('appends the customer address for delivery locations, still resolvable by the server', () => {
+    const text = pickupLocationText(delivery, '  2000 Island Blvd,\n Aventura FL ')
+    expect(text).toBe('Delivery to your address ($100) — 2000 Island Blvd, Aventura FL')
+    expect(resolveLocationFee([hq, delivery], text)).toEqual({ ok: true, fee: 100 })
+  })
+
+  it('caps the text at 200 characters', () => {
+    expect(pickupLocationText(delivery, 'x'.repeat(500)).length).toBe(200)
+  })
+})
 
 describe('validateCustomer', () => {
   it('accepts a complete customer with or without phone', () => {
